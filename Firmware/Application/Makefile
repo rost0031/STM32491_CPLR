@@ -58,11 +58,11 @@ TRACEON=$(TRACE:0=@)
 TRACE_FLAG=$(TRACEON:1=)
 
 # Output file basename (should be the same as the directory name)
-PROJECT_NAME            = CBBootLdr
+PROJECT_NAME            = CBApp
 
 # Leave this blank here.  This gets appended with needed defines as the options
 # are parsed 
-DEFINES                  =
+DEFINES                 =
 
 #------------------------------------------------------------------------------
 #  MCU SETUP - This specifies which core to pass down to all the other makefiles
@@ -76,33 +76,33 @@ MFLAGS                  = -mcpu=$(ARM_CORE) -mthumb -mfloat-abi=soft
 AFLAGS                  = -mcpu=$(ARM_CORE)
 
 ifeq (cortex-m0, $(MCU))
-	ARM_CORE            = cortex-m0
-	MFLAGS              = -mcpu=$(ARM_CORE) -mthumb -mfloat-abi=soft
-	AFLAGS              = -mcpu=$(ARM_CORE)
+    ARM_CORE            = cortex-m0
+    MFLAGS              = -mcpu=$(ARM_CORE) -mthumb -mfloat-abi=soft
+    AFLAGS              = -mcpu=$(ARM_CORE)
 else ifeq (cortex-m0plus, $(MCU))
-	ARM_CORE            = cortex-m0plus
-	MFLAGS              = -mcpu=$(ARM_CORE) -mthumb -mfloat-abi=soft
-	AFLAGS              = -mcpu=$(ARM_CORE)
+    ARM_CORE            = cortex-m0plus
+    MFLAGS              = -mcpu=$(ARM_CORE) -mthumb -mfloat-abi=soft
+    AFLAGS              = -mcpu=$(ARM_CORE)
 else ifeq (cortex-m3, $(MCU))
-	ARM_CORE            = cortex-m3
-	MFLAGS              = -mcpu=$(ARM_CORE) -mthumb -mfloat-abi=soft
-	AFLAGS              = -mcpu=$(ARM_CORE)
+    ARM_CORE            = cortex-m3
+    MFLAGS              = -mcpu=$(ARM_CORE) -mthumb -mfloat-abi=soft
+    AFLAGS              = -mcpu=$(ARM_CORE)
 else ifeq (cortex-m4-vfp, $(MCU))
-	ARM_CORE            = cortex-m4
-	ARM_FPU             = fpv4-sp-d16
-	MFLAGS              = -mcpu=$(ARM_CORE) -mfpu=$(ARM_FPU) -mfloat-abi=softfp \
+    ARM_CORE            = cortex-m4
+    ARM_FPU             = fpv4-sp-d16
+    MFLAGS              = -mcpu=$(ARM_CORE) -mfpu=$(ARM_FPU) -mfloat-abi=softfp \
 						  -mlittle-endian -mthumb
-	AFLAGS              = -mcpu=$(ARM_CORE) -defsym=FPU_VFP_V4_SP_D16=1
+    AFLAGS              = -mcpu=$(ARM_CORE) -defsym=FPU_VFP_V4_SP_D16=1
     DEFINES            += -D__VFP_FP__
 else ifeq (cortex-m4-fpv4-sp-d16, $(MCU))
-	ARM_CORE            = cortex-m4
-	ARM_FPU             = fpv4-sp-d16
-	MFLAGS              = -mcpu=$(ARM_CORE) -mfpu=$(ARM_FPU) -mfloat-abi=hard \
+    ARM_CORE            = cortex-m4
+    ARM_FPU             = fpv4-sp-d16
+    MFLAGS              = -mcpu=$(ARM_CORE) -mfpu=$(ARM_FPU) -mfloat-abi=hard \
 	                      -mlittle-endian -mthumb
-	AFLAGS              = -mcpu=$(ARM_CORE) -defsym=FPU_VFP_V4_SP_D16=1
+    AFLAGS              = -mcpu=$(ARM_CORE) -defsym=FPU_VFP_V4_SP_D16=1
     DEFINES            += -D__VFP_FP__	
 else
-	$(error Must specify the MCU, like MCU=cortex-m0 )
+    $(error Must specify the MCU, like MCU=cortex-m0 )
 endif
 
 #------------------------------------------------------------------------------
@@ -124,19 +124,24 @@ MKDIR                   = mkdir
 #
 #-----------------------------------------------------------------------------
 SRC_DIR                 = ./src
+COMMON_SRC_DIR          = ../Common
+
 APP_DIR                 = $(SRC_DIR)/app
 BSP_DIR                 = $(SRC_DIR)/bsp
 SYS_DIR                 = $(SRC_DIR)/sys
 
+COMMON_BSP_DIR          = $(COMMON_SRC_DIR)/bsp
+COMMON_SYS_DIR          = $(COMMON_SRC_DIR)/sys
+
 # Ethernet Driver
-ETH_DRV_DIR             = $(BSP_DIR)/bsp_shared/STM32F4x7_ETH_Driver
-QP_LWIP_PORT_DIR        = $(BSP_DIR)/bsp_shared/qpc_lwip_port
+ETH_DRV_DIR             = $(COMMON_BSP_DIR)/STM32F4x7_ETH_Driver
+QP_LWIP_PORT_DIR        = $(COMMON_BSP_DIR)/qpc_lwip_port
 
 # Serial Driver and AO
-SERIAL_DIR              = $(BSP_DIR)/bsp_shared/serial
+SERIAL_DIR              = $(COMMON_BSP_DIR)/serial
 
 # I2C Driver and AO
-I2C_DIR                 = $(BSP_DIR)/bsp_shared/i2c
+I2C_DIR                 = $(COMMON_BSP_DIR)/i2c
 
 # NOR Driver and AO
 NOR_DIR                 = $(BSP_DIR)/nor
@@ -145,7 +150,7 @@ NOR_DIR                 = $(BSP_DIR)/nor
 SDRAM_DIR               = $(BSP_DIR)/sdram
 
 # QPC directories
-QPC_DIR                 = $(SYS_DIR)/qpc_5.3.1
+QPC_DIR                 = $(COMMON_SYS_DIR)/qpc_5.3.1
 QP_PORT_DIR             = $(QPC_DIR)/ports/freertos/gnu
 QP_FR_CONF_DIR          = $(QPC_DIR)/ports/freertos/conf
 
@@ -155,18 +160,18 @@ FR_PORT_DIR             = $(FR_DIR)/portable/GCC/ARM_CM4F
 FR_INC_DIR              = $(FR_DIR)/include
 
 # STM32 Drivers
-STM32F4XX_STD_PERIPH_DIR= $(BSP_DIR)/bsp_shared/STM32F4xx_StdPeriph_Driver
+STM32F4XX_STD_PERIPH_DIR= $(COMMON_BSP_DIR)/STM32F4xx_StdPeriph_Driver
 
 # LWIP
-LWIP_DIR                = $(SYS_DIR)/lwip_shared
+LWIP_DIR                = $(COMMON_SYS_DIR)/lwip
 
 # Base64 encoding module
-BASE64_DIR              = $(SYS_DIR)/libb64_shared
+BASE64_DIR              = $(COMMON_SYS_DIR)/libb64
 
 # Directories that need to be passed down to LWIP
-LWIP_PORT_FOR_LWIP      = ../../bsp/bsp_shared/qpc_lwip_port
-BSP_DIR_FOR_LWIP        = ../../bsp/bsp_shared/runtime
-LWIP_SRC_DIR            = ../../
+LWIP_PORT_FOR_LWIP      = ../../bsp/qpc_lwip_port
+BSP_DIR_FOR_LWIP        = ../../bsp/runtime
+LWIP_SRC_DIR            = ../../../Application/src
 
 # Application Comm directory
 APP_COMM_DIR            = $(APP_DIR)/comm
@@ -205,99 +210,99 @@ APP_MENU_INCLUDES       = -I$(APP_MENU_DIR) \
 MENU_CSRCS              = ktree.c \
                           menu.c \
                           menu_top.c \
-						  debug_menu.c \
-						  dbg_out_cntrl.c \
-						  dbg_mod_cntrl.c \
-						  systest_menu.c \
-						  systest_i2c.c						  
+                          debug_menu.c \
+                          dbg_out_cntrl.c \
+                          dbg_mod_cntrl.c \
+                          systest_menu.c \
+                          systest_i2c.c						  
 
 # Console output directory
-CON_OUT_DIR				= $(SYS_DIR)/sys_shared/con_out
+CON_OUT_DIR             = $(COMMON_SYS_DIR)/con_out
 
 # Debug control directory
-DBG_CNTRL_DIR			= $(SYS_DIR)/sys_shared/dbg_cntrl
+DBG_CNTRL_DIR           = $(COMMON_SYS_DIR)/dbg_cntrl
 
 # Settings Database directory 
-DB_SETTINGS_DIR			= $(SYS_DIR)/sys_shared/settings
+DB_SETTINGS_DIR	        = $(COMMON_SYS_DIR)/settings
 
 # K-ary tree directory
 KTREE_DIR               = $(SYS_DIR)/ktree
 
 	
 # Source virtual directories
-VPATH 					= $(APP_DIR) \
-						  $(APP_COMM_DIR) \
-						  $(APP_CPLR_DIR) \
-						  $(APP_DBG_DIR) \
-						  $(APP_MENU_DIRS) \
-						  \
-						  $(BSP_DIR) \
-						  $(BSP_DIR)/bsp_shared \
-						  $(ETH_DRV_DIR)/src \
-						  $(SERIAL_DIR) \
-						  $(I2C_DIR) \
-						  $(NOR_DIR) \
-						  $(SDRAM_DIR) \
-						  \
-						  $(QP_LWIP_PORT_DIR) \
-						  $(QP_LWIP_PORT_DIR)/netif \
-						  \
-						  $(BASE64_DIR) \
-						  $(BSP_DIR)/bsp_shared/runtime \
-						  \
-						  $(STM32F4XX_STD_PERIPH_DIR)/src \
-						  \
-						  $(CON_OUT_DIR) \
-						  $(KTREE_DIR) \
-						  $(DBG_CNTRL_DIR) \
-						  $(DB_SETTINGS_DIR)
+VPATH                   = $(APP_DIR) \
+                          $(APP_COMM_DIR) \
+                          $(APP_CPLR_DIR) \
+                          $(APP_DBG_DIR) \
+                          $(APP_MENU_DIRS) \
+                          \
+                          $(BSP_DIR) \
+                          $(COMMON_BSP_DIR) \
+                          $(ETH_DRV_DIR)/src \
+                          $(SERIAL_DIR) \
+                          $(I2C_DIR) \
+                          $(NOR_DIR) \
+                          $(SDRAM_DIR) \
+                          \
+                          $(QP_LWIP_PORT_DIR) \
+                          $(QP_LWIP_PORT_DIR)/netif \
+                          \
+                          $(BASE64_DIR) \
+                          $(COMMON_BSP_DIR)/runtime \
+                          \
+                          $(STM32F4XX_STD_PERIPH_DIR)/src \
+                          \
+                          $(CON_OUT_DIR) \
+                          $(KTREE_DIR) \
+                          $(DBG_CNTRL_DIR) \
+                          $(DB_SETTINGS_DIR)
 
 # include directories
-INCLUDES  				= -I$(SRC_DIR) \
-						  -I$(APP_DIR) \
-						  \
-						  -I$(APP_COMM_DIR) \
-						  -I$(APP_CPLR_DIR) \
-						  -I$(APP_DBG_DIR) \
-						  \
-						  $(APP_MENU_INCLUDES) \
-						  \
-						  -I$(QPC_DIR)/include \
-						  -I$(QPC_DIR)/qf/source \
-						  -I$(QP_PORT_DIR) \
-						  \
-						  -I$(BSP_DIR)  \
-						  -I$(BSP_DIR)/bsp_shared \
-						  -I$(ETH_DRV_DIR)/inc \
-						  -I$(BASE64_DIR) \
-						  -I$(BSP_DIR)/bsp_shared/runtime \
-						  -I$(SERIAL_DIR) \
-						  -I$(I2C_DIR) \
-						  -I$(NOR_DIR) \
-						  -I$(SDRAM_DIR) \
-						  \
-						  -I$(LWIP_DIR)/src/include \
-						  -I$(LWIP_DIR)/src/include/netif \
-						  -I$(LWIP_DIR)/src/include/lwip \
-						  -I$(LWIP_DIR)/src/include/ipv4 \
-						  \
-						  -I$(BSP_DIR)/bsp_shared/CMSIS_shared/Include \
-						  -I$(BSP_DIR)/bsp_shared/CMSIS_shared/Device/ST/STM32F4xx/Include \
-						  \
-						  -I$(QP_LWIP_PORT_DIR) \
-						  -I$(QP_LWIP_PORT_DIR)/arch \
-						  -I$(QP_LWIP_PORT_DIR)/netif \
-						  \
-						  -I$(STM32F4XX_STD_PERIPH_DIR)/inc \
-						  \
-						  -I$(CON_OUT_DIR) \
-						  -I$(KTREE_DIR) \
-						  -I$(DBG_CNTRL_DIR) \
-						  -I$(DB_SETTINGS_DIR) \
-						  \
-						  -I$(FR_INC_DIR) \
-						  -I$(QP_FR_CONF_DIR) \
-						  -I$(FR_PORT_DIR)
+INCLUDES                = -I$(SRC_DIR) \
+                          -I$(APP_DIR) \
+                          \
+                          -I$(APP_COMM_DIR) \
+                          -I$(APP_CPLR_DIR) \
+                          -I$(APP_DBG_DIR) \
+                          \
+                          $(APP_MENU_INCLUDES) \
+                          \
+                          -I$(QPC_DIR)/include \
+                          -I$(QPC_DIR)/qf/source \
+                          -I$(QP_PORT_DIR) \
+                          \
+                          -I$(BSP_DIR)  \
+                          -I$(COMMON_BSP_DIR) \
+                          -I$(ETH_DRV_DIR)/inc \
+                          -I$(BASE64_DIR) \
+                          -I$(COMMON_BSP_DIR)/runtime \
+                          -I$(SERIAL_DIR) \
+                          -I$(I2C_DIR) \
+                          -I$(NOR_DIR) \
+                          -I$(SDRAM_DIR) \
+                          \
+                          -I$(LWIP_DIR)/src/include \
+                          -I$(LWIP_DIR)/src/include/netif \
+                          -I$(LWIP_DIR)/src/include/lwip \
+                          -I$(LWIP_DIR)/src/include/ipv4 \
+                          \
+                          -I$(COMMON_BSP_DIR)/CMSIS/Include \
+                          -I$(COMMON_BSP_DIR)/CMSIS/Device/ST/STM32F4xx/Include \
+                          \
+                          -I$(QP_LWIP_PORT_DIR) \
+                          -I$(QP_LWIP_PORT_DIR)/arch \
+                          -I$(QP_LWIP_PORT_DIR)/netif \
+                          \
+                          -I$(STM32F4XX_STD_PERIPH_DIR)/inc \
+                          \
+                          -I$(CON_OUT_DIR) \
+                          -I$(KTREE_DIR) \
+                          -I$(DBG_CNTRL_DIR) \
+                          -I$(DB_SETTINGS_DIR) \
+                          \
+                          -I$(FR_INC_DIR) \
+                          -I$(QP_FR_CONF_DIR) \
+                          -I$(FR_PORT_DIR)
 
 #-----------------------------------------------------------------------------
 # defines
@@ -312,71 +317,71 @@ INCLUDES  				= -I$(SRC_DIR) \
 
 # Temporary for devel kit						  
 DEFINES                += -DSTM32F429_439xx \
-						  -DUSE_STDPERIPH_DRIVER \
-						  -DLWIP_TCP=1 \
-						  -DFLASH_BASE=0x08000000
+                          -DUSE_STDPERIPH_DRIVER \
+                          -DLWIP_TCP=1 \
+                          -DFLASH_BASE=0x08000000
 						  
 #-----------------------------------------------------------------------------
 # files
 #
 
 # assembler source files
-ASM_SRCS 				:= \
-						startup_stm32f429xx.S \
-						memcpy.S \
-						stm32_hardfault_handler.S
+ASM_SRCS               := \
+                          startup_stm32f429xx.S \
+                          memcpy.S \
+                          stm32_hardfault_handler.S
 
 # C source files
-C_SRCS                = \
-						main.c \
-						no_heap.c \
-						comm.c \
-						cplr.c \
-						\
-						$(MENU_CSRCS) \
-						\
-						bsp.c \
-						system_stm32f4xx.c \
-						stm32f4xx_it.c \
-						\
-						stm32f4x7_eth.c \
-						stm32f4x7_eth_bsp.c \
-						eth_driver.c \
-						lwip.c \
-						\
-						syscalls.c \
-						\
-						serial.c \
-						console_output.c \
-						time.c \
-						i2c.c \
-						i2c_dev.c \
-						nor.c \
-						sdram.c \
-						dbg_cntrl.c \
-						db.c \
-						\
-						LWIPMgr.c \
-						I2CBusMgr.c \
-						I2C1DevMgr.c \
-						SerialMgr.c \
-						CommStackMgr.c \
-						DbgMgr.c \
-						\
-			            misc.c  \
-			      		stm32f4xx_crc.c \
-			      		stm32f4xx_dma.c \
-			      		stm32f4xx_exti.c \
-			      		stm32f4xx_flash.c \
-			      		stm32f4xx_fmc.c \
-			      		stm32f4xx_i2c.c \
-						stm32f4xx_gpio.c \
-			      		stm32f4xx_pwr.c \
-			      		stm32f4xx_rcc.c \
-			      		stm32f4xx_rtc.c \
-			      		stm32f4xx_syscfg.c \
-			      		stm32f4xx_tim.c \
-			      		stm32f4xx_usart.c
+C_SRCS                  = \
+                          main.c \
+                          no_heap.c \
+                          comm.c \
+                          cplr.c \
+                          \
+                          $(MENU_CSRCS) \
+                          \
+                          bsp.c \
+                          system_stm32f4xx.c \
+                          stm32f4xx_it.c \
+                          \
+                          stm32f4x7_eth.c \
+                          stm32f4x7_eth_bsp.c \
+                          eth_driver.c \
+                          lwip.c \
+                          \
+                          syscalls.c \
+                          \
+                          serial.c \
+                          console_output.c \
+                          time.c \
+                          i2c.c \
+                          i2c_dev.c \
+                          nor.c \
+                          sdram.c \
+                          dbg_cntrl.c \
+                          db.c \
+                          \
+                          LWIPMgr.c \
+                          I2CBusMgr.c \
+                          I2C1DevMgr.c \
+                          SerialMgr.c \
+                          CommStackMgr.c \
+                          DbgMgr.c \
+                          \
+                          misc.c  \
+                          stm32f4xx_crc.c \
+                          stm32f4xx_dma.c \
+                          stm32f4xx_exti.c \
+                          stm32f4xx_flash.c \
+                          stm32f4xx_fmc.c \
+                          stm32f4xx_i2c.c \
+                          stm32f4xx_gpio.c \
+                          stm32f4xx_pwr.c \
+                          stm32f4xx_rcc.c \
+                          stm32f4xx_rtc.c \
+                          stm32f4xx_syscfg.c \
+                          stm32f4xx_tim.c \
+                          stm32f4xx_usart.c
 			      		
 			      		
 # Temporarily not compiled files.  These will need to be added back in before
