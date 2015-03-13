@@ -179,7 +179,7 @@ int_t QF_run(void) {
 void QActive_start_(QActive *me, uint_fast8_t prio,
                     QEvt const *qSto[], uint_fast16_t qLen,
                     void *stkSto, uint_fast16_t stkSize,
-                    QEvt const *ie)
+                    QEvt const *ie, const char* taskName)
 {
     Q_REQUIRE_ID(500, ((uint_fast8_t)0 < prio)
                       && (prio <= (uint_fast8_t)QF_MAX_ACTIVE));

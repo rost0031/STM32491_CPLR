@@ -259,6 +259,7 @@ VPATH                   = $(APP_DIR) \
 
 # include directories
 INCLUDES                = -I$(SRC_DIR) \
+                          -I$(COMMON_SRC_DIR) \
                           -I$(APP_DIR) \
                           \
                           -I$(APP_COMM_DIR) \

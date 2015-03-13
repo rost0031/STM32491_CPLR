@@ -120,22 +120,22 @@ VPATH                       = $(FR_SRC_DIR) $(FR_PORT_DIR) $(FR_MEM_DIR) $(QP_PR
 #-----------------------------------------------------------------------------
 # FreeRTOS port src and objects 
 #
-FR_PORT_CSRC                =  port.c \
-                               heap_1.c
+FR_PORT_CSRC                = port.c \
+                              heap_1.c
                                
-FR_PORT_OBJS                =  $(patsubst %.c, $(BINDIR)/%.o, $(FR_PORT_CSRC))
+FR_PORT_OBJS                = $(patsubst %.c, $(BINDIR)/%.o, $(FR_PORT_CSRC))
 
 #-----------------------------------------------------------------------------
 # FreeRTOS src and objects 
 #			
-FR_CSRC                     =  croutine.c \
-                               event_groups.c \
-                               list.c \
-                               queue.c \
-                               tasks.c \
-                               timers.c
+FR_CSRC                     = croutine.c \
+                              event_groups.c \
+                              list.c \
+                              queue.c \
+                              tasks.c \
+                              timers.c
 							   
-FR_OBJS 					=  $(patsubst %.c, $(BINDIR)/%.o, $(FR_CSRC))
+FR_OBJS 					= $(patsubst %.c, $(BINDIR)/%.o, $(FR_CSRC))
 
 
 #-----------------------------------------------------------------------------
@@ -148,7 +148,9 @@ BINDIR                     := rel
 # gcc options
 # -c    : compile only
 # -O    : optimize
-CCFLAGS                     = -c $(MFLAGS) -std=gnu99 -Wall -ffunction-sections -fdata-sections -Os -DNDEBUG $(DEFINES) -o$@
+CCFLAGS                     = -c $(MFLAGS) -std=gnu99 -Wall \
+                              -ffunction-sections -fdata-sections \
+                              -Os -DNDEBUG $(DEFINES) -o$@
 ASMFLAGS                    = -c $(AFLAGS)
 else ifeq (spy, $(CONF))  # Spy configuration ................................
 BINDIR                     := spy
@@ -157,7 +159,10 @@ BINDIR                     := spy
 # -c    : compile only
 # -g    : source level debugging
 # -D    : define preprocessor macro
-CCFLAGS 					= -g -c $(MFLAGS) -std=gnu99 -Wall -ffunction-sections -fdata-sections -Os -DQ_SPY $(DEFINES) -o$@
+CCFLAGS 					= -g -c $(MFLAGS) -std=gnu99 -Wall \
+                              -ffunction-sections -fdata-sections \
+                              -Os -DQ_SPY $(DEFINES) -o$@
+
 QS_CSRC   					= qs.c \
 					          qs_.c \
 					          qs_blk.c \
@@ -181,7 +186,8 @@ QP_DEP                      = $(QP_INCDIR)\qassert.h
 # gcc options
 # -c    : compile only
 # -g    : source level debugging
-CCFLAGS                     = -g3 -ggdb -c $(MFLAGS) -std=gnu99 -Wall -ffunction-sections -fdata-sections $(DEFINES) -O1
+CCFLAGS                     = -g3 -ggdb -c $(MFLAGS) -std=gnu99 -Wall \
+                              -ffunction-sections -fdata-sections $(DEFINES) -O1
 ASMFLAGS                    = -g3 -ggdb -c $(AFLAGS)
 endif
 
@@ -190,73 +196,73 @@ VPATH += $(QEP_SRCDIR) $(QF_SRCDIR) $(QS_SRCDIR) $(QP_PRTDIR)/src
 #-----------------------------------------------------------------------------
 # QEP src and objects 
 #
-QEP_CSRC 					=  qep.c \
-					           qmsm_ini.c \
-					           qmsm_dis.c \
-					           qmsm_in.c \
-					           qfsm_ini.c \
-					           qfsm_dis.c \
-					           qhsm_ini.c \
-					           qhsm_dis.c \
-					           qhsm_top.c \
-					           qhsm_in.c
+QEP_CSRC 					= qep.c \
+					          qmsm_ini.c \
+					          qmsm_dis.c \
+					          qmsm_in.c \
+					          qfsm_ini.c \
+					          qfsm_dis.c \
+					          qhsm_ini.c \
+					          qhsm_dis.c \
+					          qhsm_top.c \
+					          qhsm_in.c
 
-QEP_OBJS 					=  $(patsubst %.c, $(BINDIR)/%.o, $(QEP_CSRC))
+QEP_OBJS 					= $(patsubst %.c, $(BINDIR)/%.o, $(QEP_CSRC))
 
 #-----------------------------------------------------------------------------
 # QF src and objects 
 #			
-QF_CSRC  					=  qa_ctor.c \
-							   qa_defer.c \
-							   qa_fifo.c \
-							   qa_lifo.c \
-							   qa_get_.c \
-							   qa_sub.c  \
-							   qa_usub.c \
-							   qa_usuba.c \
-							   qeq_fifo.c \
-							   qeq_get.c \
-							   qeq_init.c \
-							   qeq_lifo.c \
-							   qf_act.c \
-							   qf_gc.c \
-							   qf_log2.c \
-							   qf_new.c \
-							   qf_pool.c \
-							   qf_psini.c \
-							   qf_pspub.c \
-							   qf_pwr2.c \
-							   qf_tick.c \
-							   qma_ctor.c \
-							   qmp_get.c \
-							   qmp_init.c \
-							   qmp_put.c \
-							   qte_ctor.c \
-							   qte_arm.c \
-							   qte_darm.c \
-							   qte_rarm.c \
-							   qte_ctr.c \
-							   qf_port.c
+QF_CSRC  					= qa_ctor.c \
+							  qa_defer.c \
+							  qa_fifo.c \
+							  qa_lifo.c \
+							  qa_get_.c \
+							  qa_sub.c  \
+							  qa_usub.c \
+							  qa_usuba.c \
+							  qeq_fifo.c \
+							  qeq_get.c \
+							  qeq_init.c \
+							  qeq_lifo.c \
+							  qf_act.c \
+							  qf_gc.c \
+							  qf_log2.c \
+							  qf_new.c \
+							  qf_pool.c \
+							  qf_psini.c \
+							  qf_pspub.c \
+							  qf_pwr2.c \
+							  qf_tick.c \
+							  qma_ctor.c \
+							  qmp_get.c \
+							  qmp_init.c \
+							  qmp_put.c \
+							  qte_ctor.c \
+							  qte_arm.c \
+							  qte_darm.c \
+							  qte_rarm.c \
+							  qte_ctr.c \
+							  qf_port.c
 
-QF_OBJS 					=  $(patsubst %.c, $(BINDIR)/%.o, $(QF_CSRC))
+QF_OBJS 					= $(patsubst %.c, $(BINDIR)/%.o, $(QF_CSRC))
 
 #-----------------------------------------------------------------------------
 # All src and objects 
 #
-ALL_OBJ = $(QEP_OBJS) $(QF_OBJS) $(QS_OBJS) $(FR_PORT_OBJS) $(FR_OBJS)
-ALL_SRC = $(QEP_CSRC) $(QF_CSRC) $(QS_CSRC) $(FR_PORT_CSRC) $(FR_CSRC)
+ALL_OBJS = $(QEP_OBJS) $(QF_OBJS) $(QS_OBJS) $(FR_PORT_OBJS) $(FR_OBJS)
+ALL_SRCS = $(QEP_CSRC) $(QF_CSRC) $(QS_CSRC) $(FR_PORT_CSRC) $(FR_CSRC)
 
 .default: all
 
 #-----------------------------------------------------------------------------
 # Build Targets
 #
-all: $(BINDIR)/libqp_$(ARM_CORE)_cs.a $(ALL_OBJ)
+all: $(BINDIR)/libqp_$(ARM_CORE)_cs.a $(ALL_OBJS)
 	
 	
-$(BINDIR)/libqp_$(ARM_CORE)_cs.a: $(BINDIR) $(ALL_OBJ)
+$(BINDIR)/libqp_$(ARM_CORE)_cs.a: $(BINDIR) $(ALL_OBJS)
 	-$(RM) $(BINDIR)/*.a
-	$(AR) $(LIBFLAGS) $(BINDIR)/libqp_$(ARM_CORE)_cs.a $(ALL_OBJ)
+	$(AR) $(LIBFLAGS) $(BINDIR)/libqp_$(ARM_CORE)_cs.a $(ALL_OBJS)
 
 $(BINDIR)/%.o: %.c
 	@echo Compiling C object
@@ -290,6 +296,6 @@ show:
 	@echo MFLAGS = $(MFLAGS)
 	@echo CFLAGS = $(CFLAGS)
 	@echo FR_PORT_OBJS = $(FR_PORT_OBJS)
-	@echo ALL_OBJ = $(ALL_OBJ)
+	@echo ALL_OBJS = $(ALL_OBJS)
 	@echo VPATH = $(VPATH)
 	
