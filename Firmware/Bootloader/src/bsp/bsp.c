@@ -24,10 +24,7 @@
 #include "time.h"                              /* processor date/time support */
 #include "i2c.h"                                               /* I2C support */
 #include "serial.h"
-#include "nor.h"                               /* M29WV128G NOR Flash support */
 #include "sdram.h"                          /* MT48LC2M3B2B5-7E SDRAM support */
-#include "projdefs.h"                          /* FreeRTOS base types support */
-#include "task.h"
 
 /* Compile-time called macros ------------------------------------------------*/
 Q_DEFINE_THIS_FILE                  /* For QSPY to know the name of this file */
@@ -54,13 +51,6 @@ QSTimeCtr QS_tickPeriod_;
 
 /* Private function prototypes -----------------------------------------------*/
 
-/**
-  * @brief  Initializes the IO Expander registers.
-  * @param  None
-  * @retval - 0: if all initializations are OK.
-*/
-uint32_t BSP_TSC_Init( void );
-
 /* Private functions ---------------------------------------------------------*/
 /******************************************************************************/
 void BSP_init( void )
@@ -77,7 +67,6 @@ void BSP_init( void )
    /* 2. Initialize the RTC for getting time stamps. */
    TIME_Init();
 
-
    RCC_ClocksTypeDef RCC_Clocks;
    RCC_GetClocksFreq(&RCC_Clocks);
    dbg_slow_printf("Clock speed: %d\n", RCC_Clocks.SYSCLK_Frequency);
@@ -88,32 +77,10 @@ void BSP_init( void )
    /* 4. Initialize the I2C devices and associated busses */
    I2C_BusInit( I2CBus1 );
 
-   /* 5. Initialize the NOR flash */
-   NOR_Init();
 
-   /* NOR IDs structure */
-   NOR_IDTypeDef pNOR_ID;
-   /* Initialize the ID structure */
-   pNOR_ID.Manufacturer_Code = (uint16_t)0x00;
-   pNOR_ID.Device_Code1 = (uint16_t)0x00;
-   pNOR_ID.Device_Code2 = (uint16_t)0x00;
-   pNOR_ID.Device_Code3 = (uint16_t)0x00;
-
-   /* Read the NOR memory ID */
-   NOR_ReadID(&pNOR_ID);
-   dbg_slow_printf("NOR ID: MfgCode  : 0x%04x\n", pNOR_ID.Manufacturer_Code);
-   dbg_slow_printf("NOR ID: DevCode1 : 0x%04x\n", pNOR_ID.Device_Code1);
-   dbg_slow_printf("NOR ID: DevCode2 : 0x%04x\n", pNOR_ID.Device_Code2);
-   dbg_slow_printf("NOR ID: DevCode3 : 0x%04x\n", pNOR_ID.Device_Code3);
-
-   /* 6. Initialize the SDRAM  - this is already init in low_level startup code
+   /* 5. Initialize the SDRAM  - this is already init in low_level startup code
    SDRAM_Init();
     */
-
-   /* 7. Initialize the touchscreen */
-//   dbg_slow_printf("Starting initializing touch screen\n");
-//   BSP_TSC_Init();
-//   dbg_slow_printf("Finished initializing touch screen\n");
 }
 
 /******************************************************************************/
@@ -416,96 +383,20 @@ void QS_onFlush(void) {
 #endif                                                             /* Q_SPY */
 /*--------------------------------------------------------------------------*/
 
-///******************************************************************************/
-//inline void BSP_SysTickCallback( void )
-//{
-//   QF_CRIT_STAT_TYPE intStat;
-//   BaseType_t lHigherPriorityTaskWoken = pdFALSE;
-//
-//   QF_ISR_ENTRY(intStat);                        /* inform QF about ISR entry */
-//
-//#ifdef Q_SPY
-//   uint32_t dummy = SysTick->CTRL;           /* clear NVIC_ST_CTRL_COUNT flag */
-//   QS_tickTime_ += QS_tickPeriod_;          /* account for the clock rollover */
-//#endif
-//
-////   QF_TICK(&l_SysTick_Handler);              /* process all armed time events */
-//
-//   QF_ISR_EXIT(intStat, lHigherPriorityTaskWoken);/* inform QF about ISR exit */
-//
-//   /* yield only when needed... */
-//   if (lHigherPriorityTaskWoken != pdFALSE) {
-//      vTaskMissedYield();
-//   }
-//}
-
 /******************************************************************************/
-void vApplicationTickHook(void)
+inline void BSP_SysTickCallback( void )
 {
-   QF_CRIT_STAT_TYPE intStat;
-   BaseType_t lHigherPriorityTaskWoken = pdFALSE;
-
-   QF_ISR_ENTRY(intStat);                        /* inform QF about ISR entry */
-
+   QK_ISR_ENTRY();                          /* inform QK-nano about ISR entry */
 #ifdef Q_SPY
-   {
-      uint32_t dummy = SysTick->CTRL; /* clear SysTick_CTRL_COUNTFLAG */
-      QS_tickTime_ += QS_tickPeriod_; /* account for the clock rollover */
-   }
+   uint32_t dummy = SysTick->CTRL;           /* clear NVIC_ST_CTRL_COUNT flag */
+   QS_tickTime_ += QS_tickPeriod_;          /* account for the clock rollover */
 #endif
 
-   QF_TICK_X(0U, &l_SysTick_Handler);  /* process all armed time events */
+   QF_TICK(&l_SysTick_Handler);              /* process all armed time events */
 
-   QF_ISR_EXIT(intStat, lHigherPriorityTaskWoken); /* <=== ISR exit */
-
-   /* yield only when needed... */
-   if (lHigherPriorityTaskWoken != pdFALSE) {
-      vTaskMissedYield();
-   }
+   QK_ISR_EXIT();                            /* inform QK-nano about ISR exit */
 }
 
-/******************************************************************************/
-/**
- * @brief  FreeRTOS callback that is called whenever the system is idle.
- *
- * This function is a callback for FreeRTOS that replaces the QK_onIdle() used
- * by QK kernel. It is called whenever QPC/FreeRTOS runs out of things to do and
- * is idle.  It is used by QSPY (if compiled in) to send data out to prevent
- * interfering with the system as much as possible.
- *
- * This function can also be used to visualize idle activity.
- *
- * @param   None
- * @return  None
- */
-void vApplicationIdleHook( void )
-{
-#ifdef Q_SPY
-
-   if ((USART1->SR & USART_FLAG_TXE) != 0) {              /* is TXE empty? */
-      uint16_t b;
-
-      QF_INT_DISABLE();
-      b = QS_getByte();
-      QF_INT_ENABLE();
-
-      if (b != QS_EOD) {                              /* not End-Of-Data? */
-         USART1->DR = (b & 0xFF);             /* put into the DR register */
-      }
-   }
-
-#elif defined NDEBUG
-   __WFI();                                          /* wait for interrupt */
-#endif
-}
-
-/******************************************************************************/
-void vApplicationStackOverflowHook(TaskHandle_t xTask, char *pcTaskName)
-{
-   printf("ERROR: Stack overflow in task: %s\n", pcTaskName);
-   printf("ERROR: Name may be garbled due to crash.  Task address was: 0x%08x\n", xTask);
-   Q_ERROR();
-}
 /**
  * @} end addtogroup groupBSP
  */

@@ -17,7 +17,7 @@
 #include "dbg_out_cntrl.h"
 #include "cplr.h"
 #include "LWIPMgr.h"
-#include "i2c_dev.h"                                 /* For I2C functionality */
+#include "i2c_frt.h"                                 /* For I2C functionality */
 
 /* Compile-time called macros ------------------------------------------------*/
 Q_DEFINE_THIS_FILE                  /* For QSPY to know the name of this file */

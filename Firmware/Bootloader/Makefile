@@ -147,17 +147,11 @@ I2C_DIR                 = $(COMMON_BSP_DIR)/i2c
 NOR_DIR                 = $(BSP_DIR)/nor
 
 # SDRAM Driver and AO
-SDRAM_DIR               = $(BSP_DIR)/sdram
+SDRAM_DIR               = $(COMMON_BSP_DIR)/sdram
 
 # QPC directories
 QPC_DIR                 = $(COMMON_SYS_DIR)/qpc_5.3.1
-QP_PORT_DIR             = $(QPC_DIR)/ports/freertos/gnu
-QP_FR_CONF_DIR          = $(QPC_DIR)/ports/freertos/conf
-
-# FreeRTOS directories
-FR_DIR                  = $(SYS_DIR)/FreeRTOSV8.1.2/FreeRTOS/Source
-FR_PORT_DIR             = $(FR_DIR)/portable/GCC/ARM_CM4F
-FR_INC_DIR              = $(FR_DIR)/include
+QP_PORT_DIR             = $(QPC_DIR)/ports/arm-cm/qk/gnu
 
 # STM32 Drivers
 STM32F4XX_STD_PERIPH_DIR= $(COMMON_BSP_DIR)/STM32F4xx_StdPeriph_Driver
@@ -176,45 +170,8 @@ LWIP_SRC_DIR            = ../../../Application/src
 # Application Comm directory
 APP_COMM_DIR            = $(APP_DIR)/comm
 
-# Application Coupler directory
-APP_CPLR_DIR            = $(APP_DIR)/cplr
-
 # Application Debug directory
 APP_DBG_DIR             = $(APP_DIR)/debug
-
-# Application Menu and submenu directories
-APP_MENU_DIR                      = $(APP_DIR)/menu
-APP_MENU_DBG_DIR                  = $(APP_MENU_DIR)/dbgMenu
-APP_MENU_DBG_OUT_CNTRL_DIR        = $(APP_MENU_DBG_DIR)/dbgOutCntrlMenu
-APP_MENU_DBG_MOD_CNTRL_DIR        = $(APP_MENU_DBG_DIR)/dbgModCntrlMenu
-APP_MENU_SYSTEST_DIR              = $(APP_MENU_DIR)/sysTestMenu
-APP_MENU_SYSTEST_I2C              = $(APP_MENU_SYSTEST_DIR)/sysI2CTests
-
-# Collect all the menu directories and subdirectories here so we don't have to
-# keep modifying the VPATH and INCLUDE paths.
-APP_MENU_DIRS           = $(APP_MENU_DIR) \
-                          $(APP_MENU_DBG_DIR) \
-                          $(APP_MENU_DBG_OUT_CNTRL_DIR) \
-                          $(APP_MENU_DBG_MOD_CNTRL_DIR) \
-                          $(APP_MENU_SYSTEST_DIR) \
-                          $(APP_MENU_SYSTEST_I2C)
-                          
-APP_MENU_INCLUDES       = -I$(APP_MENU_DIR) \
-                          -I$(APP_MENU_DBG_DIR) \
-                          -I$(APP_MENU_DBG_OUT_CNTRL_DIR) \
-                          -I$(APP_MENU_DBG_MOD_CNTRL_DIR) \
-                          -I$(APP_MENU_SYSTEST_DIR) \
-                          -I$(APP_MENU_SYSTEST_I2C)
-                                                 
-# Collect all the menu c source files here so we don't have to the list of sources
-MENU_CSRCS              = ktree.c \
-                          menu.c \
-                          menu_top.c \
-                          debug_menu.c \
-                          dbg_out_cntrl.c \
-                          dbg_mod_cntrl.c \
-                          systest_menu.c \
-                          systest_i2c.c						  
 
 # Console output directory
 CON_OUT_DIR             = $(COMMON_SYS_DIR)/con_out
@@ -225,23 +182,16 @@ DBG_CNTRL_DIR           = $(COMMON_SYS_DIR)/dbg_cntrl
 # Settings Database directory 
 DB_SETTINGS_DIR	        = $(COMMON_SYS_DIR)/settings
 
-# K-ary tree directory
-KTREE_DIR               = $(SYS_DIR)/ktree
-
-	
 # Source virtual directories
 VPATH                   = $(APP_DIR) \
                           $(APP_COMM_DIR) \
-                          $(APP_CPLR_DIR) \
                           $(APP_DBG_DIR) \
-                          $(APP_MENU_DIRS) \
                           \
                           $(BSP_DIR) \
                           $(COMMON_BSP_DIR) \
                           $(ETH_DRV_DIR)/src \
                           $(SERIAL_DIR) \
                           $(I2C_DIR) \
-                          $(NOR_DIR) \
                           $(SDRAM_DIR) \
                           \
                           $(QP_LWIP_PORT_DIR) \
@@ -253,7 +203,6 @@ VPATH                   = $(APP_DIR) \
                           $(STM32F4XX_STD_PERIPH_DIR)/src \
                           \
                           $(CON_OUT_DIR) \
-                          $(KTREE_DIR) \
                           $(DBG_CNTRL_DIR) \
                           $(DB_SETTINGS_DIR)
 
@@ -263,10 +212,7 @@ INCLUDES                = -I$(SRC_DIR) \
                           -I$(APP_DIR) \
                           \
                           -I$(APP_COMM_DIR) \
-                          -I$(APP_CPLR_DIR) \
                           -I$(APP_DBG_DIR) \
-                          \
-                          $(APP_MENU_INCLUDES) \
                           \
                           -I$(QPC_DIR)/include \
                           -I$(QPC_DIR)/qf/source \
@@ -279,7 +225,6 @@ INCLUDES                = -I$(SRC_DIR) \
                           -I$(COMMON_BSP_DIR)/runtime \
                           -I$(SERIAL_DIR) \
                           -I$(I2C_DIR) \
-                          -I$(NOR_DIR) \
                           -I$(SDRAM_DIR) \
                           \
                           -I$(LWIP_DIR)/src/include \
@@ -297,13 +242,8 @@ INCLUDES                = -I$(SRC_DIR) \
                           -I$(STM32F4XX_STD_PERIPH_DIR)/inc \
                           \
                           -I$(CON_OUT_DIR) \
-                          -I$(KTREE_DIR) \
                           -I$(DBG_CNTRL_DIR) \
-                          -I$(DB_SETTINGS_DIR) \
-                          \
-                          -I$(FR_INC_DIR) \
-                          -I$(QP_FR_CONF_DIR) \
-                          -I$(FR_PORT_DIR)
+                          -I$(DB_SETTINGS_DIR)
 
 #-----------------------------------------------------------------------------
 # defines
@@ -337,9 +277,6 @@ C_SRCS                  = \
                           main.c \
                           no_heap.c \
                           comm.c \
-                          cplr.c \
-                          \
-                          $(MENU_CSRCS) \
                           \
                           bsp.c \
                           system_stm32f4xx.c \
@@ -357,7 +294,6 @@ C_SRCS                  = \
                           time.c \
                           i2c.c \
                           i2c_dev.c \
-                          nor.c \
                           sdram.c \
                           dbg_cntrl.c \
                           db.c \

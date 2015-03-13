@@ -925,15 +925,15 @@ inline void I2C1_DMAWriteCallback( void )
 /******************************************************************************/
 inline void I2C1_EventCallback( void )
 {
-   QF_CRIT_STAT_TYPE intStat;
-   BaseType_t lHigherPriorityTaskWoken = pdFALSE;
-
-   QF_ISR_ENTRY(intStat);                        /* inform QF about ISR entry */
-
-   QF_ISR_EXIT(intStat, lHigherPriorityTaskWoken);/* inform QF about ISR exit */
-
-   /* the usual end of FreeRTOS ISR... */
-   portEND_SWITCHING_ISR(lHigherPriorityTaskWoken);
+//   QF_CRIT_STAT_TYPE intStat;
+//   BaseType_t lHigherPriorityTaskWoken = pdFALSE;
+//
+//   QF_ISR_ENTRY(intStat);                        /* inform QF about ISR entry */
+//
+//   QF_ISR_EXIT(intStat, lHigherPriorityTaskWoken);/* inform QF about ISR exit */
+//
+//   /* the usual end of FreeRTOS ISR... */
+//   portEND_SWITCHING_ISR(lHigherPriorityTaskWoken);
 }
 
 /******************************************************************************/

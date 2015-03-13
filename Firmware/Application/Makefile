@@ -142,12 +142,13 @@ SERIAL_DIR              = $(COMMON_BSP_DIR)/serial
 
 # I2C Driver and AO
 I2C_DIR                 = $(COMMON_BSP_DIR)/i2c
+I2C_FRT_DIR             = $(BSP_DIR)/i2c
 
 # NOR Driver and AO
 NOR_DIR                 = $(BSP_DIR)/nor
 
 # SDRAM Driver and AO
-SDRAM_DIR               = $(BSP_DIR)/sdram
+SDRAM_DIR               = $(COMMON_BSP_DIR)/sdram
 
 # QPC directories
 QPC_DIR                 = $(COMMON_SYS_DIR)/qpc_5.3.1
@@ -241,6 +242,7 @@ VPATH                   = $(APP_DIR) \
                           $(ETH_DRV_DIR)/src \
                           $(SERIAL_DIR) \
                           $(I2C_DIR) \
+                          $(I2C_FRT_DIR) \
                           $(NOR_DIR) \
                           $(SDRAM_DIR) \
                           \
@@ -279,6 +281,7 @@ INCLUDES                = -I$(SRC_DIR) \
                           -I$(COMMON_BSP_DIR)/runtime \
                           -I$(SERIAL_DIR) \
                           -I$(I2C_DIR) \
+                          -I$(I2C_FRT_DIR) \
                           -I$(NOR_DIR) \
                           -I$(SDRAM_DIR) \
                           \
@@ -357,6 +360,7 @@ C_SRCS                  = \
                           time.c \
                           i2c.c \
                           i2c_dev.c \
+                          i2c_frt.c \
                           nor.c \
                           sdram.c \
                           dbg_cntrl.c \
@@ -373,7 +377,6 @@ C_SRCS                  = \
                           stm32f4xx_crc.c \
                           stm32f4xx_dma.c \
                           stm32f4xx_exti.c \
-                          stm32f4xx_flash.c \
                           stm32f4xx_fmc.c \
                           stm32f4xx_i2c.c \
                           stm32f4xx_gpio.c \
@@ -400,6 +403,7 @@ C_SRCS                  = \
 #			      		stm32f4xx_dbgmcu.c \
 #			      		stm32f4xx_dcmi.c \
 #			      		stm32f4xx_dma2d.c \
+#                       stm32f4xx_flash.c \
 #			      		stm32f4xx_hash.c \
 #			      		stm32f4xx_hash_md5.c \
 #			      		stm32f4xx_hash_sha1.c \
@@ -484,9 +488,9 @@ C_DEPS_EXT   = $(patsubst %.o, %.d, $(C_OBJS_EXT))
 CPP_OBJS_EXT = $(addprefix $(BIN_DIR)/, $(CPP_OBJS))
 CPP_DEPS_EXT = $(patsubst %.o, %.d, $(CPP_OBJS_EXT))
 
-REAL_VER     = BOOT_$(BOARD)$(SERIES)_$(PRODUCT)_$(MAINT)_$(DEVIATION)
-SPECIAL_VER  = BOOT_$(BOARD)$(SERIES)_$(PRODUCT)_$(MAINT)_$(SPECIAL)
-DEBUG_VER    = BOOT_$(BOARD)$(SERIES)_0_$(MAINT)_65535
+REAL_VER     = APP_$(BOARD)$(SERIES)_$(PRODUCT)_$(MAINT)_$(DEVIATION)
+SPECIAL_VER  = APP_$(BOARD)$(SERIES)_$(PRODUCT)_$(MAINT)_$(SPECIAL)
+DEBUG_VER    = APP_$(BOARD)$(SERIES)_0_$(MAINT)_65535
 
 #-----------------------------------------------------------------------------
 # rules
@@ -645,3 +649,7 @@ show:
 	@echo MCU = $(MCU)
 	@echo MFLAGS = $(MFLAGS)
 	@echo CFLAGS = $(CFLAGS)
+	@echo COMMON_BSP_DIR = $(COMMON_BSP_DIR)
+	@echo COMMON_SYS_DIR = $(COMMON_SYS_DIR)
+	@echo I2C_FRT_DIR = $(I2C_FRT_DIR)
+	@echo BSP_DIR = $(BSP_DIR)

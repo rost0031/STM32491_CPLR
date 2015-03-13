@@ -136,92 +136,61 @@ void DebugMon_Handler(void)
 /******************************************************************************/
 void DMA1_Stream0_IRQHandler( void )
 {
-   QF_CRIT_STAT_TYPE intStat;
-   BaseType_t lHigherPriorityTaskWoken = pdFALSE;
-
-   QF_ISR_ENTRY(intStat);                        /* inform QF about ISR entry */
+   QK_ISR_ENTRY();                         /* inform QK about entering an ISR */
 
    I2C1_DMAReadCallback(); /* Issue the callback function which does the actual work. */
 
-   QF_ISR_EXIT(intStat, lHigherPriorityTaskWoken);/* inform QF about ISR exit */
-
-   portEND_SWITCHING_ISR(lHigherPriorityTaskWoken);/* the end of FreeRTOS ISR */
+   QK_ISR_EXIT();                           /* inform QK about exiting an ISR */
 }
 
 /******************************************************************************/
 void DMA1_Stream6_IRQHandler( void )
 {
-   QF_CRIT_STAT_TYPE intStat;
-   BaseType_t lHigherPriorityTaskWoken = pdFALSE;
-
-   QF_ISR_ENTRY(intStat);                        /* inform QF about ISR entry */
+   QK_ISR_ENTRY();                         /* inform QK about entering an ISR */
 
    I2C1_DMAWriteCallback(); /* Issue the callback function which does the actual work. */
 
-   QF_ISR_EXIT(intStat, lHigherPriorityTaskWoken);/* inform QF about ISR exit */
-
-   portEND_SWITCHING_ISR(lHigherPriorityTaskWoken);/* the end of FreeRTOS ISR */
+   QK_ISR_EXIT();                           /* inform QK about exiting an ISR */
 }
 
 /******************************************************************************/
 void DMA2_Stream7_IRQHandler( void )
 {
-   QF_CRIT_STAT_TYPE intStat;
-   BaseType_t lHigherPriorityTaskWoken = pdFALSE;
-
-   QF_ISR_ENTRY(intStat);                        /* inform QF about ISR entry */
+   QK_ISR_ENTRY();                         /* inform QK about entering an ISR */
 
    Serial_DMASendCallback(); /* Issue the callback function which does the actual work. */
 
-   QF_ISR_EXIT(intStat, lHigherPriorityTaskWoken);/* inform QF about ISR exit */
-
-   /* the usual end of FreeRTOS ISR... */
-   portEND_SWITCHING_ISR(lHigherPriorityTaskWoken);/* the end of FreeRTOS ISR */
+   QK_ISR_EXIT();                           /* inform QK about exiting an ISR */
 }
 
 /******************************************************************************/
 void ETH_IRQHandler( void )
 {
-   QF_CRIT_STAT_TYPE intStat;
-   BaseType_t lHigherPriorityTaskWoken = pdFALSE;
-
-   QF_ISR_ENTRY(intStat);                        /* inform QF about ISR entry */
+   QK_ISR_ENTRY();                         /* inform QK about entering an ISR */
 
    ETH_EventCallback();      /* Issue the callback function which does the actual work. */
 
-   QF_ISR_EXIT(intStat, lHigherPriorityTaskWoken);/* inform QF about ISR exit */
-
-   portEND_SWITCHING_ISR(lHigherPriorityTaskWoken);/* the end of FreeRTOS ISR */
+   QK_ISR_EXIT();                           /* inform QK about exiting an ISR */
 }
 
 /******************************************************************************/
 void I2C1_ER_IRQHandler( void )
 {
-   QF_CRIT_STAT_TYPE intStat;
-   BaseType_t lHigherPriorityTaskWoken = pdFALSE;
-
-   QF_ISR_ENTRY(intStat);                        /* inform QF about ISR entry */
+   QK_ISR_ENTRY();                         /* inform QK about entering an ISR */
 
    I2C1_ErrorEventCallback();/* Issue the callback function which does the actual work. */
 
-   QF_ISR_EXIT(intStat, lHigherPriorityTaskWoken);/* inform QF about ISR exit */
-
-   portEND_SWITCHING_ISR(lHigherPriorityTaskWoken);/* the end of FreeRTOS ISR */
+   QK_ISR_EXIT();                           /* inform QK about exiting an ISR */
 }
 
 /******************************************************************************/
 void I2C1_EV_IRQHandler( void )
 {
-   QF_CRIT_STAT_TYPE intStat;
-   BaseType_t lHigherPriorityTaskWoken = pdFALSE;
-
-   QF_ISR_ENTRY(intStat);                        /* inform QF about ISR entry */
+   QK_ISR_ENTRY();                         /* inform QK about entering an ISR */
 
    I2C1_EventCallback();     /* Issue the callback function which does the actual work. */
 
-   QF_ISR_EXIT(intStat, lHigherPriorityTaskWoken);/* inform QF about ISR exit */
-
-   portEND_SWITCHING_ISR(lHigherPriorityTaskWoken);/* the end of FreeRTOS ISR */
+   QK_ISR_EXIT();                           /* inform QK about exiting an ISR */
 }
 
 /******************************************************************************/
@@ -270,16 +239,11 @@ void TIM5_IRQHandler( void )
 /******************************************************************************/
 void USART1_IRQHandler(void)
 {
-   QF_CRIT_STAT_TYPE intStat;
-   BaseType_t lHigherPriorityTaskWoken = pdFALSE;
-
-   QF_ISR_ENTRY(intStat);                        /* inform QF about ISR entry */
+   QK_ISR_ENTRY();                         /* inform QK about entering an ISR */
 
    Serial_UART1Callback(); /* Issue the callback function which does the actual work. */
 
-   QF_ISR_EXIT(intStat, lHigherPriorityTaskWoken);/* inform QF about ISR exit */
-
-   portEND_SWITCHING_ISR(lHigherPriorityTaskWoken);/* the end of FreeRTOS ISR */
+   QK_ISR_EXIT();                           /* inform QK about exiting an ISR */
 }
 /**
  * @} end addtogroup groupISR
