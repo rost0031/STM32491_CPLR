@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<model version="3.1.3">
+<model version="3.2.2">
  <documentation>/**
  * CommStackMgr Active Object which.  This AO handles all communications work.
  */</documentation>
@@ -249,8 +249,7 @@ QTimeEvt_ctor(&amp;me-&gt;timeTestTimerEvt, TIME_TEST_SIG);</code>
 #include &quot;I2C1DevMgr.h&quot;                                  /* For I2C Evt types */
 #include &quot;time.h&quot;
 #include &quot;stm32f4x7_eth.h&quot;
-#include &quot;nor.h&quot;
-#include &quot;menu.h&quot;
+
 /* Compile-time called macros ------------------------------------------------*/
 Q_DEFINE_THIS_FILE;                 /* For QSPY to know the name of this file */
 DBG_DEFINE_THIS_MODULE( DBG_MODL_COMM );/* For debug system to ID this module */

@@ -14,7 +14,7 @@
 * or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
 * for more details.
 *****************************************************************************/
-/*${.::CommStackMgr_gen.h} .................................................*/
+/*${.::CommStackMgr_gen~} ..................................................*/
 /**
  * @file    CommStackMgr.h
  * Declarations for functions for the CommStackMgr AO.  This state
@@ -55,7 +55,7 @@
  * @param  None
  * @retval None
  */
-/*${AOs::CommStackMgr_ctor} ................................................*/
+/*${AOs::CommStackMgr_cto~} ................................................*/
 void CommStackMgr_ctor(void);
 
 

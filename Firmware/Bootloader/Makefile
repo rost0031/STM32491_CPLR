@@ -60,9 +60,10 @@ TRACE_FLAG=$(TRACEON:1=)
 # Output file basename (should be the same as the directory name)
 PROJECT_NAME            = CBBootLdr
 
-# Leave this blank here.  This gets appended with needed defines as the options
-# are parsed 
-DEFINES                 =
+# This define specifies that the code that's being built is the application code
+# as opposed to the bootloader code.  This is used by some shared code to leave/
+# include some functionality. 
+DEFINES                 = -DCPLR_BOOT
 
 #------------------------------------------------------------------------------
 #  MCU SETUP - This specifies which core to pass down to all the other makefiles

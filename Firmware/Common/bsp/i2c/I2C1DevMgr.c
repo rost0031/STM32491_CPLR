@@ -47,7 +47,13 @@
 #include "i2c.h"                                  /* For I2C bus declarations */
 #include "i2c_dev.h"                           /* For I2C device declarations */
 #include "I2CBusMgr.h"
+#if CPLR_APP
 #include "cplr.h"
+#elif CPLR_BOOT
+
+#else
+    #error "Invalid build.  CPLR_APP or CPLR_BOOT must be specified"
+#endif
 
 /* Compile-time called macros ------------------------------------------------*/
 Q_DEFINE_THIS_FILE                  /* For QSPY to know the name of this file */
@@ -352,9 +358,16 @@ static QState I2C1DevMgr_Busy(I2C1DevMgr * const me, QEvt const * const e) {
                     i2cReadDoneEvt->bytes = 0;
                     i2cReadDoneEvt->i2cDev = me->iDev;
                     if ( ACCESS_FREERTOS == me->accessType ) {
+            #if CPLR_APP
                         /* Post directly to the "raw" queue for FreeRTOS task to read */
                         QEQueue_postFIFO(&CPLR_evtQueue, (QEvt *)i2cReadDoneEvt);
-                        // vTaskResume( xHandle_CPLR );
+                        vTaskResume( xHandle_CPLR );
+            #elif CPLR_BOOT
+                        /* Publish the event so other AOs can get it if they want */
+                        QF_PUBLISH((QEvt *)i2cReadDoneEvt, AO_I2C1DevMgr);
+            #else
+                #error "Invalid build.  CPLR_APP or CPLR_BOOT must be specified"
+            #endif
                     } else {
                         /* Publish the event so other AOs can get it if they want */
                         QF_PUBLISH((QEvt *)i2cReadDoneEvt, AO_I2C1DevMgr);
@@ -365,8 +378,16 @@ static QState I2C1DevMgr_Busy(I2C1DevMgr * const me, QEvt const * const e) {
                     i2cWriteDoneEvt->bytes = 0;
                     i2cWriteDoneEvt->i2cDev = me->iDev;
                     if ( ACCESS_FREERTOS == me->accessType ) {
+            #if CPLR_APP
                         /* Post directly to the "raw" queue for FreeRTOS task to read */
                         QEQueue_postFIFO(&CPLR_evtQueue, (QEvt *)i2cWriteDoneEvt);
+                        vTaskResume( xHandle_CPLR );
+            #elif CPLR_BOOT
+                        /* Publish the event so other AOs can get it if they want */
+                        QF_PUBLISH((QEvt *)i2cWriteDoneEvt, AO_I2C1DevMgr);
+            #else
+                #error "Invalid build.  CPLR_APP or CPLR_BOOT must be specified"
+            #endif
                     } else {
                         /* Publish the event so other AOs can get it if they want */
                         QF_PUBLISH((QEvt *)i2cWriteDoneEvt, AO_I2C1DevMgr);
@@ -384,7 +405,7 @@ static QState I2C1DevMgr_Busy(I2C1DevMgr * const me, QEvt const * const e) {
             status_ = Q_TRAN(&I2C1DevMgr_Idle);
             break;
         }
-        /* ${AOs::I2C1DevMgr::SM::Active::Busy::I2C1_DEV_RAW_MEM_READ, I2C1_DEV_RAW_MEM_WRITE} */
+        /* ${AOs::I2C1DevMgr::SM::Active::Busy::I2C1_DEV_RAW_MEM~} */
         case I2C1_DEV_RAW_MEM_READ_SIG: /* intentionally fall through */
         case I2C1_DEV_RAW_MEM_WRITE_SIG: {
             if (QEQueue_getNFree(&me->deferredEvtQueue) > 0) {
@@ -399,7 +420,7 @@ static QState I2C1DevMgr_Busy(I2C1DevMgr * const me, QEvt const * const e) {
             status_ = Q_HANDLED();
             break;
         }
-        /* ${AOs::I2C1DevMgr::SM::Active::Busy::I2C1_DEV_OP_TIMEOUT} */
+        /* ${AOs::I2C1DevMgr::SM::Active::Busy::I2C1_DEV_OP_TIME~} */
         case I2C1_DEV_OP_TIMEOUT_SIG: {
             ERR_printf("I2C1Dev Op timeout occurred with error: 0x%08x\n", me->errorCode);
             status_ = Q_TRAN(&I2C1DevMgr_Idle);
@@ -462,11 +483,11 @@ static QState I2C1DevMgr_GenerateStart(I2C1DevMgr * const me, QEvt const * const
     }
     return status_;
 }
-/*${AOs::I2C1DevMgr::SM::Active::Busy::Send7BitAddrTxMode} .................*/
+/*${AOs::I2C1DevMgr::SM::Active::Busy::Send7BitAddrTxMo~} ..................*/
 static QState I2C1DevMgr_Send7BitAddrTxMode(I2C1DevMgr * const me, QEvt const * const e) {
     QState status_;
     switch (e->sig) {
-        /* ${AOs::I2C1DevMgr::SM::Active::Busy::Send7BitAddrTxMode} */
+        /* ${AOs::I2C1DevMgr::SM::Active::Busy::Send7BitAddrTxMo~} */
         case Q_ENTRY_SIG: {
             /* Set error code */
             me->errorCode = ERR_I2C1DEV_EV6_TIMEOUT;
@@ -487,21 +508,21 @@ static QState I2C1DevMgr_Send7BitAddrTxMode(I2C1DevMgr * const me, QEvt const * 
             status_ = Q_HANDLED();
             break;
         }
-        /* ${AOs::I2C1DevMgr::SM::Active::Busy::Send7BitAddrTxMode} */
+        /* ${AOs::I2C1DevMgr::SM::Active::Busy::Send7BitAddrTxMo~} */
         case Q_EXIT_SIG: {
             QTimeEvt_disarm(&me->i2cOpTimerEvt);
             status_ = Q_HANDLED();
             break;
         }
-        /* ${AOs::I2C1DevMgr::SM::Active::Busy::Send7BitAddrTxMode::I2C_BUS_DONE} */
+        /* ${AOs::I2C1DevMgr::SM::Active::Busy::Send7BitAddrTxMo~::I2C_BUS_DONE} */
         case I2C_BUS_DONE_SIG: {
             /* Remember the result of each event coming back from I2CBusMgr AO */
             me->errorCode = ((I2CStatusEvt const *)e)->errorCode;
-            /* ${AOs::I2C1DevMgr::SM::Active::Busy::Send7BitAddrTxMode::I2C_BUS_DONE::[NoErr?]} */
+            /* ${AOs::I2C1DevMgr::SM::Active::Busy::Send7BitAddrTxMo~::I2C_BUS_DONE::[NoErr?]} */
             if (ERR_NONE == ((I2CStatusEvt const *)e)->errorCode) {
                 status_ = Q_TRAN(&I2C1DevMgr_SendInternalAddr);
             }
-            /* ${AOs::I2C1DevMgr::SM::Active::Busy::Send7BitAddrTxMode::I2C_BUS_DONE::[else]} */
+            /* ${AOs::I2C1DevMgr::SM::Active::Busy::Send7BitAddrTxMo~::I2C_BUS_DONE::[else]} */
             else {
                 status_ = Q_TRAN(&I2C1DevMgr_Idle);
             }
@@ -624,11 +645,11 @@ static QState I2C1DevMgr_GenerateStart1(I2C1DevMgr * const me, QEvt const * cons
     }
     return status_;
 }
-/*${AOs::I2C1DevMgr::SM::Active::Busy::Send7BitAddrRxMode} .................*/
+/*${AOs::I2C1DevMgr::SM::Active::Busy::Send7BitAddrRxMo~} ..................*/
 static QState I2C1DevMgr_Send7BitAddrRxMode(I2C1DevMgr * const me, QEvt const * const e) {
     QState status_;
     switch (e->sig) {
-        /* ${AOs::I2C1DevMgr::SM::Active::Busy::Send7BitAddrRxMode} */
+        /* ${AOs::I2C1DevMgr::SM::Active::Busy::Send7BitAddrRxMo~} */
         case Q_ENTRY_SIG: {
             /* Set error code */
             me->errorCode = ERR_I2C1DEV_EV6_TIMEOUT;
@@ -649,21 +670,21 @@ static QState I2C1DevMgr_Send7BitAddrRxMode(I2C1DevMgr * const me, QEvt const * 
             status_ = Q_HANDLED();
             break;
         }
-        /* ${AOs::I2C1DevMgr::SM::Active::Busy::Send7BitAddrRxMode} */
+        /* ${AOs::I2C1DevMgr::SM::Active::Busy::Send7BitAddrRxMo~} */
         case Q_EXIT_SIG: {
             QTimeEvt_disarm(&me->i2cOpTimerEvt);
             status_ = Q_HANDLED();
             break;
         }
-        /* ${AOs::I2C1DevMgr::SM::Active::Busy::Send7BitAddrRxMode::I2C_BUS_DONE} */
+        /* ${AOs::I2C1DevMgr::SM::Active::Busy::Send7BitAddrRxMo~::I2C_BUS_DONE} */
         case I2C_BUS_DONE_SIG: {
             /* Remember the result of each event coming back from I2CBusMgr AO */
             me->errorCode = ((I2CStatusEvt const *)e)->errorCode;
-            /* ${AOs::I2C1DevMgr::SM::Active::Busy::Send7BitAddrRxMode::I2C_BUS_DONE::[NoErr?]} */
+            /* ${AOs::I2C1DevMgr::SM::Active::Busy::Send7BitAddrRxMo~::I2C_BUS_DONE::[NoErr?]} */
             if (ERR_NONE == ((I2CStatusEvt const *)e)->errorCode) {
                 status_ = Q_TRAN(&I2C1DevMgr_ReadMem);
             }
-            /* ${AOs::I2C1DevMgr::SM::Active::Busy::Send7BitAddrRxMode::I2C_BUS_DONE::[else]} */
+            /* ${AOs::I2C1DevMgr::SM::Active::Busy::Send7BitAddrRxMo~::I2C_BUS_DONE::[else]} */
             else {
                 status_ = Q_TRAN(&I2C1DevMgr_Idle);
             }
@@ -729,9 +750,17 @@ static QState I2C1DevMgr_ReadMem(I2C1DevMgr * const me, QEvt const * const e) {
                 );
 
                 if ( ACCESS_FREERTOS == me->accessType ) {
+                #if CPLR_APP
                     /* Post directly to the "raw" queue for FreeRTOS task to read */
                     QEQueue_postFIFO(&CPLR_evtQueue, (QEvt *)i2cReadDoneEvt);
                     vTaskResume( xHandle_CPLR );
+                #elif CPLR_BOOT
+                    /* Publish the event so other AOs can get it if they want */
+                    QF_PUBLISH((QEvt *)i2cReadDoneEvt, AO_I2C1DevMgr);
+                #else
+                    #error "Invalid build.  CPLR_APP or CPLR_BOOT must be specified"
+                #endif
+
                 } else {
                     /* Publish the event so other AOs can get it if they want */
                     QF_PUBLISH((QEvt *)i2cReadDoneEvt, AO_I2C1DevMgr);
@@ -831,7 +860,7 @@ static QState I2C1DevMgr_PostWriteWait(I2C1DevMgr * const me, QEvt const * const
             status_ = Q_HANDLED();
             break;
         }
-        /* ${AOs::I2C1DevMgr::SM::Active::Busy::PostWriteWait::I2C1_DEV_POST_WRITE_TIMER} */
+        /* ${AOs::I2C1DevMgr::SM::Active::Busy::PostWriteWait::I2C1_DEV_POST_WR~} */
         case I2C1_DEV_POST_WRITE_TIMER_SIG: {
             LOG_printf("Write to EEPROM finished with error: 0x%08x\n", me->errorCode);
 
@@ -839,7 +868,7 @@ static QState I2C1DevMgr_PostWriteWait(I2C1DevMgr * const me, QEvt const * const
             me->writeMemAddrCurr += me->writeSizeCurr;
             me->writeBufferIndex += me->writeSizeCurr;
             me->writeCurrPage    += 1;
-            /* ${AOs::I2C1DevMgr::SM::Active::Busy::PostWriteWait::I2C1_DEV_POST_WRITE_TIMER::[MorePages?]} */
+            /* ${AOs::I2C1DevMgr::SM::Active::Busy::PostWriteWait::I2C1_DEV_POST_WR~::[MorePages?]} */
             if (me->writeCurrPage < me->writeTotalPages) {
                 if ( me->writeCurrPage == me->writeTotalPages-1 ) {
                     me->writeSizeCurr = me->writeSizeLastPage;
@@ -848,7 +877,7 @@ static QState I2C1DevMgr_PostWriteWait(I2C1DevMgr * const me, QEvt const * const
                 }
                 status_ = Q_TRAN(&I2C1DevMgr_CheckingBus);
             }
-            /* ${AOs::I2C1DevMgr::SM::Active::Busy::PostWriteWait::I2C1_DEV_POST_WRITE_TIMER::[else]} */
+            /* ${AOs::I2C1DevMgr::SM::Active::Busy::PostWriteWait::I2C1_DEV_POST_WR~::[else]} */
             else {
                 LOG_printf(
                     "Wrote %d pages to %s. Error: 0x%08x\n",
@@ -864,8 +893,17 @@ static QState I2C1DevMgr_PostWriteWait(I2C1DevMgr * const me, QEvt const * const
                 i2cWriteDoneEvt->bytes  = me->bytesTotal;
 
                 if ( ACCESS_FREERTOS == me->accessType ) {
+                #if CPLR_APP
                     /* Post directly to the "raw" queue for FreeRTOS task to read */
                     QEQueue_postFIFO(&CPLR_evtQueue, (QEvt *)i2cWriteDoneEvt);
+                    vTaskResume( xHandle_CPLR );
+                #elif CPLR_BOOT
+                    /* Publish the event so other AOs can get it if they want */
+                    QF_PUBLISH((QEvt *)i2cWriteDoneEvt, AO_I2C1DevMgr);
+                #else
+                    #error "Invalid build.  CPLR_APP or CPLR_BOOT must be specified"
+                #endif
+
                 } else {
                     /* Publish the event so other AOs can get it if they want */
                     QF_PUBLISH((QEvt *)i2cWriteDoneEvt, AO_I2C1DevMgr);
@@ -964,7 +1002,7 @@ static QState I2C1DevMgr_Idle(I2C1DevMgr * const me, QEvt const * const e) {
             status_ = Q_HANDLED();
             break;
         }
-        /* ${AOs::I2C1DevMgr::SM::Active::Idle::I2C1_DEV_RAW_MEM_READ} */
+        /* ${AOs::I2C1DevMgr::SM::Active::Idle::I2C1_DEV_RAW_MEM~} */
         case I2C1_DEV_RAW_MEM_READ_SIG: {
             me->iDev       = ((I2CReadReqEvt const *)e)->i2cDev;
             me->addrStart  = ((I2CReadReqEvt const *)e)->addr;
@@ -975,7 +1013,7 @@ static QState I2C1DevMgr_Idle(I2C1DevMgr * const me, QEvt const * const e) {
             status_ = Q_TRAN(&I2C1DevMgr_CheckingBus);
             break;
         }
-        /* ${AOs::I2C1DevMgr::SM::Active::Idle::I2C1_DEV_RAW_MEM_WRITE} */
+        /* ${AOs::I2C1DevMgr::SM::Active::Idle::I2C1_DEV_RAW_MEM~} */
         case I2C1_DEV_RAW_MEM_WRITE_SIG: {
             /* Store all the data from the event and look up a few things */
             me->iDev       = ((I2CWriteReqEvt const *)e)->i2cDev;
@@ -1009,7 +1047,7 @@ static QState I2C1DevMgr_Idle(I2C1DevMgr * const me, QEvt const * const e) {
                 me->addrStart,
                 me->bytesTotal
             );
-            /* ${AOs::I2C1DevMgr::SM::Active::Idle::I2C1_DEV_RAW_MEM_WRITE::[NoErr?]} */
+            /* ${AOs::I2C1DevMgr::SM::Active::Idle::I2C1_DEV_RAW_MEM~::[NoErr?]} */
             if (ERR_NONE == me->errorCode) {
                 /* This is the first iteration through the "loop" which writes several pages */
                 me->writeCurrPage    = 0;
@@ -1018,7 +1056,7 @@ static QState I2C1DevMgr_Idle(I2C1DevMgr * const me, QEvt const * const e) {
                 me->writeMemAddrCurr = me->addrStart;
                 status_ = Q_TRAN(&I2C1DevMgr_CheckingBus);
             }
-            /* ${AOs::I2C1DevMgr::SM::Active::Idle::I2C1_DEV_RAW_MEM_WRITE::[else]} */
+            /* ${AOs::I2C1DevMgr::SM::Active::Idle::I2C1_DEV_RAW_MEM~::[else]} */
             else {
                 ERR_printf("Unable to calculate page boundaries, aborting write. Error: 0x%08x\n", me->errorCode);
                 I2CWriteDoneEvt *i2cWriteDoneEvt = Q_NEW(I2CWriteDoneEvt, I2C1_DEV_WRITE_DONE_SIG);
@@ -1026,6 +1064,17 @@ static QState I2C1DevMgr_Idle(I2C1DevMgr * const me, QEvt const * const e) {
                 i2cWriteDoneEvt->bytes = 0;
                 i2cWriteDoneEvt->i2cDev = me->iDev;
                 QF_PUBLISH((QEvt *)i2cWriteDoneEvt, AO_I2C1DevMgr);
+
+                #if CPLR_APP
+                    /* Post directly to the "raw" queue for FreeRTOS task to read */
+                    QEQueue_postFIFO(&CPLR_evtQueue, (QEvt *)i2cWriteDoneEvt);
+                    vTaskResume( xHandle_CPLR );
+                #elif CPLR_BOOT
+                    /* Publish the event so other AOs can get it if they want */
+                    QF_PUBLISH((QEvt *)i2cWriteDoneEvt, AO_I2C1DevMgr);
+                #else
+                    #error "Invalid build.  CPLR_APP or CPLR_BOOT must be specified"
+                #endif
                 status_ = Q_TRAN(&I2C1DevMgr_Idle);
             }
             break;

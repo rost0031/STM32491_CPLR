@@ -28,7 +28,7 @@
 		<link>
 			<name>Common</name>
 			<type>2</type>
-			<location>/home/developer/workspace/STM324391_QP_CPLR_DK/Firmware/Common</location>
+			<location>C:/Users/rostovh/workspace/STM324391_QP_CPLR_DK/Firmware/Common</location>
 		</link>
 	</linkedResources>
 </projectDescription>

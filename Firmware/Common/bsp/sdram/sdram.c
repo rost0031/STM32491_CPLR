@@ -447,7 +447,6 @@ void SDRAM_TestDestructive( void )
 
    uint32_t tmpIndex = 0;
    uint32_t uwOffset = 0x250F;
-   CBErrorCode status = ERR_NONE;
 
    /* 1. Fill the buffer to write */
    DBG_printf("Filling buffer...\n");
@@ -495,20 +494,6 @@ void SDRAM_TestDestructive( void )
 /******************************************************************************/
 inline void SDRAM_CallbackExample( void )
 {
-   QF_CRIT_STAT_TYPE intStat;
-   BaseType_t lHigherPriorityTaskWoken = pdFALSE;
-
-   QF_ISR_ENTRY(intStat);                        /* inform QF about ISR entry */
-   /* Code goes below this comment */
-
-
-   /* Code goes above this comment */
-   QF_ISR_EXIT(intStat, lHigherPriorityTaskWoken);/* inform QF about ISR exit */
-
-   /* yield only when needed... */
-   if (lHigherPriorityTaskWoken != pdFALSE) {
-      vTaskMissedYield();
-   }
 }
 
 /**

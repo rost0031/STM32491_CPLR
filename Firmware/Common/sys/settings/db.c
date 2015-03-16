@@ -14,7 +14,7 @@
 /* Includes ------------------------------------------------------------------*/
 #include "qp_port.h"                                        /* for QP support */
 #include "project_includes.h"
-#include "dbg_out_cntrl.h"
+#include "dbg_cntrl.h"
 #include <stddef.h>
 #include "i2c_defs.h"                                /* for I2C functionality */
 #include "i2c_dev.h"                               /* for I2C device mappings */

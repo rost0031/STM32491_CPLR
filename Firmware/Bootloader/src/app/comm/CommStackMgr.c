@@ -14,7 +14,7 @@
 * or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
 * for more details.
 *****************************************************************************/
-/*${.::CommStackMgr_gen.c} .................................................*/
+/*${.::CommStackMgr_gen~} ..................................................*/
 /**
  * @file    CommStackMgr.c
  * Declarations for functions for the CommStackMgr AO.  This state
@@ -41,8 +41,7 @@
 #include "I2C1DevMgr.h"                                  /* For I2C Evt types */
 #include "time.h"
 #include "stm32f4x7_eth.h"
-#include "nor.h"
-#include "menu.h"
+
 /* Compile-time called macros ------------------------------------------------*/
 Q_DEFINE_THIS_FILE;                 /* For QSPY to know the name of this file */
 DBG_DEFINE_THIS_MODULE( DBG_MODL_COMM );/* For debug system to ID this module */
@@ -105,7 +104,7 @@ QActive * const AO_CommStackMgr = (QActive *)&l_CommStackMgr;  /* "opaque" AO po
  * @param  None
  * @retval None
  */
-/*${AOs::CommStackMgr_ctor} ................................................*/
+/*${AOs::CommStackMgr_cto~} ................................................*/
 void CommStackMgr_ctor(void) {
     CommStackMgr *me = &l_CommStackMgr;
     QActive_ctor(&me->super, (QStateHandler)&CommStackMgr_initial);

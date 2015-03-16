@@ -45,8 +45,15 @@
 #include "LWIPMgr.h"
 #include "lwip.h"                                               /* lwIP stack */
 #include "bsp_defs.h"
-#include "DbgMgr.h"                                           /* For MenuEvt */
-#include "cplr.h"  /* for access to the raw queue used to talk to CPLR tastk */
+#include "DbgMgr.h"                                            /* For MenuEvt */
+#include "project_includes.h"                     /* Projec specific includes */
+#if CPLR_APP
+#include "cplr.h"
+#elif CPLR_BOOT
+
+#else
+    #error "Invalid build.  CPLR_APP or CPLR_BOOT must be specified"
+#endif
 
 /* Compile-time called macros ------------------------------------------------*/
 Q_DEFINE_THIS_FILE                  /* For QSPY to know the name of this file */
@@ -733,7 +740,7 @@ static QState LWIPMgr_Idle(LWIPMgr * const me, QEvt const * const e) {
             }
             break;
         }
-        /* ${AOs::LWIPMgr::SM::Active::Idle::DBG_LOG, ETH_LOG_TCP_SEND} */
+        /* ${AOs::LWIPMgr::SM::Active::Idle::DBG_LOG, ETH_LOG~} */
         case DBG_LOG_SIG: /* intentionally fall through */
         case ETH_LOG_TCP_SEND_SIG: {
             /************************************************************/
@@ -741,15 +748,15 @@ static QState LWIPMgr_Idle(LWIPMgr * const me, QEvt const * const e) {
              * fact, avoid using ANY logging here since it could cause an
              * infinite loop. */
             /************************************************************/
-            /* ${AOs::LWIPMgr::SM::Active::Idle::DBG_LOG, ETH_LOG_TCP_SEND::[EthDbgEnabled?]} */
+            /* ${AOs::LWIPMgr::SM::Active::Idle::DBG_LOG, ETH_LOG~::[EthDbgEnabled?]} */
             if (true == me->isEthDbgEnabled) {
-                /* ${AOs::LWIPMgr::SM::Active::Idle::DBG_LOG, ETH_LOG_TCP_SEND::[EthDbgEnabled?]::[ConnExists?]} */
+                /* ${AOs::LWIPMgr::SM::Active::Idle::DBG_LOG, ETH_LOG~::[EthDbgEnabled?]::[ConnExists?]} */
                 if (NULL != LWIPMgr_es_log) {
                     struct pbuf *p = pbuf_new(
                         (u8_t *)((LrgDataEvt const *)e)->dataBuf,
                         ((LrgDataEvt const *)e)->dataLen
                     );
-                    /* ${AOs::LWIPMgr::SM::Active::Idle::DBG_LOG, ETH_LOG_TCP_SEND::[EthDbgEnabled?]::[ConnExists?]::[MemAvail?]} */
+                    /* ${AOs::LWIPMgr::SM::Active::Idle::DBG_LOG, ETH_LOG~::[EthDbgEnabled?]::[ConnExists?]::[MemAvail?]} */
                     if (p != (struct pbuf *)0) {
                         LWIPMgr_es_log->p = p;                         // Attach pbuf to the socket state
                         //dbg_slow_printf("c tcpSend, me->tpcb: %x, LWIPMgr_es_log->pcb: %x\n", (uint32_t) me->tpcb_log, (uint32_t) LWIPMgr_es_log->pcb);
@@ -759,28 +766,28 @@ static QState LWIPMgr_Idle(LWIPMgr * const me, QEvt const * const e) {
                             LWIPMgr_es_log
                         );                                             // Queue data for sending
                         pbuf_free(p);                                  // don't leak the pbuf!
-                        /* ${..LWIPMgr::SM::Active::Idle::DBG_LOG, ETH_LOG_TCP_SEND::[EthDbgEnabled?]::[ConnExists?]::[MemAvail?]::[Datanotsent?]} */
+                        /* ${AOs::LWIPMgr::SM::Active::Idle::DBG_LOG, ETH_LOG~::[EthDbgEnabled?]::[ConnExists?]::[MemAvail?]::[Datanotsent?]} */
                         if (false == dataSent) {
                             pbuf_free(p);                                  // don't leak the pbuf!
                             status_ = Q_TRAN(&LWIPMgr_Sending);
                         }
-                        /* ${..LWIPMgr::SM::Active::Idle::DBG_LOG, ETH_LOG_TCP_SEND::[EthDbgEnabled?]::[ConnExists?]::[MemAvail?]::[else]} */
+                        /* ${AOs::LWIPMgr::SM::Active::Idle::DBG_LOG, ETH_LOG~::[EthDbgEnabled?]::[ConnExists?]::[MemAvail?]::[else]} */
                         else {
                             status_ = Q_HANDLED();
                         }
                     }
-                    /* ${AOs::LWIPMgr::SM::Active::Idle::DBG_LOG, ETH_LOG_TCP_SEND::[EthDbgEnabled?]::[ConnExists?]::[else]} */
+                    /* ${AOs::LWIPMgr::SM::Active::Idle::DBG_LOG, ETH_LOG~::[EthDbgEnabled?]::[ConnExists?]::[else]} */
                     else {
                         WRN_printf("MEM unavailable, trying again in a bit...\n");
                         status_ = Q_TRAN(&LWIPMgr_Sending);
                     }
                 }
-                /* ${AOs::LWIPMgr::SM::Active::Idle::DBG_LOG, ETH_LOG_TCP_SEND::[EthDbgEnabled?]::[else]} */
+                /* ${AOs::LWIPMgr::SM::Active::Idle::DBG_LOG, ETH_LOG~::[EthDbgEnabled?]::[else]} */
                 else {
                     status_ = Q_HANDLED();
                 }
             }
-            /* ${AOs::LWIPMgr::SM::Active::Idle::DBG_LOG, ETH_LOG_TCP_SEND::[else]} */
+            /* ${AOs::LWIPMgr::SM::Active::Idle::DBG_LOG, ETH_LOG~::[else]} */
             else {
                 status_ = Q_HANDLED();
             }
@@ -888,7 +895,7 @@ static QState LWIPMgr_Sending(LWIPMgr * const me, QEvt const * const e) {
             status_ = Q_TRAN(&LWIPMgr_Idle);
             break;
         }
-        /* ${AOs::LWIPMgr::SM::Active::Sending::DBG_LOG, DBG_MENU, ETH_LOG_TCP_SEND} */
+        /* ${AOs::LWIPMgr::SM::Active::Sending::DBG_LOG, DBG_MEN~} */
         case DBG_LOG_SIG: /* intentionally fall through */
         case DBG_MENU_SIG: /* intentionally fall through */
         case ETH_LOG_TCP_SEND_SIG: {
@@ -1079,6 +1086,8 @@ static err_t LWIP_tcpRecv(
                 "Received data on SYS port %d.\n",
                 tpcb->local_port
             );
+
+    #if CPLR_APP
             EthEvt *ethEvt = Q_NEW(EthEvt, CPLR_ETH_SYS_TEST_SIG);
 
             /* Fill the msg payload with payload (the actual received msg)*/
@@ -1092,6 +1101,11 @@ static err_t LWIP_tcpRecv(
 
             /* Post directly to the "raw" queue for FreeRTOS task to read */
             QEQueue_postFIFO(&CPLR_evtQueue, (QEvt *)ethEvt);
+    #elif CPLR_BOOT
+        LOG_printf("Ignoring.\n");
+    #else
+        #error "Invalid build.  CPLR_APP or CPLR_BOOT must be specified"
+    #endif
         } else {
             LOG_printf(
                 "Received data on unknown port %d.  Discarding.\n",
@@ -1130,6 +1144,7 @@ static err_t LWIP_tcpRecv(
                     "Received data on SYS port %d.\n",
                     tpcb->local_port
                 );
+    #if CPLR_APP
                 EthEvt *ethEvt = Q_NEW(EthEvt, CPLR_ETH_SYS_TEST_SIG);
 
                 /* Fill the msg payload with payload (the actual received msg)*/
@@ -1143,6 +1158,11 @@ static err_t LWIP_tcpRecv(
 
                 /* Post directly to the "raw" queue for FreeRTOS task to read */
                 QEQueue_postFIFO(&CPLR_evtQueue, (QEvt *)ethEvt);
+    #elif CPLR_BOOT
+                LOG_printf("Ignoring.\n");
+    #else
+        #error "Invalid build.  CPLR_APP or CPLR_BOOT must be specified"
+    #endif
             } else {
                 LOG_printf(
                     "Received data on unknown port %d.  Discarding.\n",
