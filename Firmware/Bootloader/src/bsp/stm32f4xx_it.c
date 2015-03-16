@@ -206,12 +206,16 @@ void RTC_WKUP_IRQHandler( void )
    /* No need to tell RTOSes about this ISR since it doesn't interface with them */
 }
 
-///******************************************************************************/
-//void SysTick_Handler( void )
-//{
-//   /* Issue the callback function which does the actual work. */
-//   BSP_SysTickCallback();
-//}
+/******************************************************************************/
+void SysTick_Handler( void )
+{
+   QK_ISR_ENTRY();                         /* inform QK about entering an ISR */
+
+   /* Issue the callback function which does the actual work. */
+   BSP_SysTickCallback();
+
+   QK_ISR_EXIT();                           /* inform QK about exiting an ISR */
+}
 
 /******************************************************************************/
 extern __IO unsigned long uwPeriodValue;     /**< external reference to period value used by TIME_getLSIFrequency() */

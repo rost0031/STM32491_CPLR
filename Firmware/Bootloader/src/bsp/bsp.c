@@ -386,15 +386,12 @@ void QS_onFlush(void) {
 /******************************************************************************/
 inline void BSP_SysTickCallback( void )
 {
-   QK_ISR_ENTRY();                          /* inform QK-nano about ISR entry */
 #ifdef Q_SPY
    uint32_t dummy = SysTick->CTRL;           /* clear NVIC_ST_CTRL_COUNT flag */
    QS_tickTime_ += QS_tickPeriod_;          /* account for the clock rollover */
 #endif
 
    QF_TICK(&l_SysTick_Handler);              /* process all armed time events */
-
-   QK_ISR_EXIT();                            /* inform QK-nano about ISR exit */
 }
 
 /**

@@ -53,6 +53,8 @@ static union SmallEvents {
     uint8_t e1[sizeof(QEvt)];
     uint8_t e2[sizeof(I2CStatusEvt)];
     uint8_t e3[sizeof(I2CReadReqEvt)];
+    uint8_t e4[sizeof(I2CAddrEvt)];
+    uint8_t e5[sizeof(I2CReadMemReqEvt)];
 } l_smlPoolSto[50];                     /* storage for the small event pool */
 
 /**
@@ -61,9 +63,8 @@ static union SmallEvents {
  */
 static union MediumEvents {
     void   *e0;                                       /* minimum event size */
-    uint8_t e1[sizeof(I2CAddrEvt)];
-    uint8_t e2[sizeof(I2CReadMemReqEvt)];
-} l_medPoolSto[50];                    /* storage for the medium event pool */
+    uint8_t e1[sizeof(I2CWriteReqEvt)];
+} l_medPoolSto[10];                    /* storage for the medium event pool */
 
 /**
  * \union Large Events.
@@ -74,7 +75,6 @@ static union LargeEvents {
     uint8_t e1[sizeof(MsgEvt)];
     uint8_t e2[sizeof(EthEvt)];
     uint8_t e3[sizeof(LrgDataEvt)];
-    uint8_t e4[sizeof(I2CWriteReqEvt)];
 } l_lrgPoolSto[100];                    /* storage for the large event pool */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -206,9 +206,11 @@ int main(void)
     QF_psInit(l_subscrSto, Q_DIM(l_subscrSto));     /* init publish-subscribe */
 
     /* initialize event pools... */
-    dbg_slow_printf("Initializing event storage pools\n");
+    dbg_slow_printf("Initializing small event storage pools\n");
     QF_poolInit(l_smlPoolSto, sizeof(l_smlPoolSto), sizeof(l_smlPoolSto[0]));
+    dbg_slow_printf("Initializing medium event storage pools\n");
     QF_poolInit(l_medPoolSto, sizeof(l_medPoolSto), sizeof(l_medPoolSto[0]));
+    dbg_slow_printf("Initializing large event storage pools\n");
     QF_poolInit(l_lrgPoolSto, sizeof(l_lrgPoolSto), sizeof(l_lrgPoolSto[0]));
 
     /* Start Active objects */

@@ -43,7 +43,7 @@
 						</toolChain>
 					</folderInfo>
 					<sourceEntries>
-						<entry excluding="Common/sys/qpc_5.3.1/ports/arm-cm/vanilla|Common/sys/qpc_5.3.1/ports/arm-cm/cmsis|Common/sys/qpc_5.3.1/ports/win32|Common/sys/qpc_5.3.1/ports/ucos2|Common/sys/qpc_5.3.1/ports/posix|Common/sys/qpc_5.3.1/ports/lint|Common/sys/qpc_5.3.1/ports/freertos|Common/sys/qpc_5.3.1/ports/80x86|Common/sys/qpc_5.3.1/examples" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
+						<entry excluding="Common/sys/qpc_5.3.1/ports/arm-cm/qk/iar|Common/sys/qpc_5.3.1/ports/arm-cm/qk/arm_keil|Common/sys/qpc_5.3.1/ports/arm-cm/vanilla|Common/sys/qpc_5.3.1/ports/arm-cm/cmsis|Common/sys/qpc_5.3.1/ports/win32|Common/sys/qpc_5.3.1/ports/ucos2|Common/sys/qpc_5.3.1/ports/posix|Common/sys/qpc_5.3.1/ports/lint|Common/sys/qpc_5.3.1/ports/freertos|Common/sys/qpc_5.3.1/ports/80x86|Common/sys/qpc_5.3.1/examples" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
 					</sourceEntries>
 				</configuration>
 			</storageModule>
