@@ -1,0 +1,1000 @@
+// File: rfid_board_api.proto
+// 
+// This file is a proto file that is used to define binary msgs and automatically
+// generating C code to be used by either intel, arm, and powerpc processors. See
+// http://code.google.com/p/protobuf-embedded-c/ for detail of how this is done 
+//
+// See https://developers.google.com/protocol-buffers/docs/proto#simple for 
+// how to specify messages in the proto language of Protocol Buffers but keep
+// in mind that the "Protobuf-Embedded-C" is more limited than the Google version.
+//
+// 1). General message layout:
+// Communication between the RFID board and a client is done via serialized msgs
+// that reside in a buffer (no longer than 256 bytes after base64 encoding).  
+// These messages should be base64 encoded (use libb64 for guaranteed 
+// compatibility but any std base64 encoding/decoding library should work as 
+// long as there are no newlines placed every 72/73 characters since newlines 
+// denote the end of the message).
+// 
+// Messages MUST start with an Basic message, followed by 1 or 0 optional
+// Payload messages.  The RFIDBasicMsg contains a field called "msgPayload" which 
+// specifies the next attached Payload message.  If the field is set to 
+// "_RFIDNoMsg", there is no payload msg.
+// 
+// This approach allows a flexible use of minimally sized messages and allows
+// the sender to group them in any way necessary while telling the receiver how
+// to correctly decode them.
+//
+// 2).  Detailed Message Description
+// There are 2 types of messages: RFIDBasicMsg and RFIDPayloadMsg.  They are 
+// described in detail below:
+// 
+// RFIDBasicMsg - This message MUST be sent in the front of the buffer.  It 
+// lets the receiver have a known starting point from which to start decoding 
+// the message.  The basic message is used to:
+//   A. request an action or data (RFID_Req), 
+//   B. acknowledge reception (RFID_Ack), 
+//   C. send progress (RFID_Prog),  
+//   D. indicate completion (RFID_Done).
+// 
+// Required Fields - all the common fields which always have to be sent:
+// 
+// msgName -  RFIDMsgName type that uniquely identifies the message.  This should
+//            not be a payload message.
+// msgID   -  Some number that allows the sender to specify how it will find
+//            the responses to this request msg.
+// msgType -  RFIDMsgType that if the RFIDDescMsg is in front of a:
+//   A. RFID_Req - Request message - used to request data or actions from the 
+//                 RFID API.
+//   B. RFID_Ack - Acknowledgement message - used by the RFID API to let the 
+//                 sender know that the Req message was successfully received.
+//   C. RFID_Prog- Specifies whether the message is a Progress message.
+//   D. RFID_Done- Specifies whether the message is a Done message.
+//
+// msgPayload - RFIDMsgName type that specifies what payload message is appended
+//            to the back of this message.  This allows you to send any payload
+//            that is needed for this action or data request.  For example, if 
+//            requesting a CommTest, you can specify a payload that will be sent
+//            over that the RFID board should receive, decode, and send back to 
+//            you so you can verify its integrity.  In some cases, such as simple
+//            Req msgs and RFID_Ack msgs, this field can be set to RFIDNoMsg to avoid
+//            sending along any unnecessary extra data.  In general, this field 
+//            can be any of the RFIDMsgName.  In most cases, it will be _RFIDNoMsg, 
+//            which means there's no payload and consequently, no extra data is 
+//            being sent or if the msgType is RFID_Done, there's no error to report.
+//            Some more complicated messages will use custom payload msgs which 
+//            need to be defined in this file.
+//
+// RFIDPayloadMsg - This is a Payload message and is optional.  Most common use
+// cases for payload msgs are:
+//   
+//   A. Non-standard RFID_Req msgs: most requests can be issued without a 
+//   payload msg. For example, if you want to issue an RFIDCmdLLResetBoardMsg, 
+//   there are no extra arguments to send with.  The RFID_Req and RFID_Ack type  
+//   msgs do not need any extra data.  However, if you're sending a more  
+//   complicated msg like RFIDCmdLLCommTestMsg which tests the communication between  
+//   the RFID Board and the client, you have to send the along data which has to
+//   be sent back to verify the integrity of the transmission.  This extra data 
+//   has to travel in a RFIDPayloadMsg called RFIDCommTestPayloadMsg.  This 
+//   RFIDPayloadMsg is tailored for the RFIDCmdLLCommTestMsg and would be sent with 
+//   the RFID_Req type RFIDCmdLLCommTestMsg.
+//
+//   B. Some RFID_Prog msgs: Some progress messages will want to send back 
+//   updated state data or other progress data.  These will require 
+//   RFIDPayloadMsg customized for the task.
+//
+//   C. Most RFID_Done msgs: Almost all RFID_Done msgs will send back at least
+//   a status/error code to indicate the success or failure of a command.  If
+//   only a simple status/error code is enough, RFIDStatusPayloadMsg can be used.
+//   Many commands will be more complicated and will require sending of more
+//   data back.  One example is a RFIDCmdHLReadRawPagesMsg which has to send
+//   back many bytes of data.  Hence, it has a custom RFIDPayloadMsg called
+//   RFIDRawMultiPageDataPayloadMsg which has the needed fields and capacity to
+//   send back all the data.
+// 
+// Below is a very simple example which illustrates the most 
+// common usage: 
+// (ResetRFIDChip is a fictional message)
+//
+// Client                                                             RFID Board
+//   |
+// *Send* [[********RFIDBasicMsg************]\n]>>>>>>>>>>>>>>>>>>>>>>>*Receive*
+//          < msgName = RFIDResetRFIDChipMsg            
+//          < msgID   = 456                          
+//          < msgType = RFID_Req                        
+//          < msgPayload = RFIDNoMsg
+// *Rec*  [[********RFIDBasicMsg************]\n]<<<<<<<<<<<<<<<<<<<<<<<<<<*Send*
+//          < msgName = RFIDResetRFIDChipMsg
+//          < msgID   = 456              
+//          < msgType = RFID_Ack                        
+//          < msgPayload = RFIDNoMsg
+//
+// (If something went wrong and the result is an error/status to report)
+// *Rec*  [[**********RFIDBasicMsg************][RFIDPayloadMsg****]\n]<<<<*Send*
+//          < msgName = RFIDResetRFIDChipMsg    
+//          < msgID   = 456                     < errorCode = RFID_ERR_RESETTING      
+//          < msgType = RFID_Done               < msgPayload = RFIDNoMsg         
+//          < msgPayload = RFIDBasicPayloadMsg
+//
+//////////////////////// OR ////////////////////////////////////////////////////
+//
+// (If everything went ok and there's no error or no need to report one )
+// *Rec*  [[**********RFIDBasicMsg*********][RFIDPayloadMsg****]\n]<<<<<<<*Send*
+//          < msgName = RFIDResetRFIDChipMsg    
+//          < msgID   = 456                     < errorCode = RFID_ERR_NONE      
+//          < msgType = RFID_Done               < msgPayload = RFIDNoMsg         
+//          < msgPayload = RFIDBasicPayloadMsg
+//
+// 
+// 3). Message naming convention - Message names should follow the following format:
+// RFIDReadTagDataMsg
+// [ 0][----1----][2]
+// where 
+// field 0: This should always be "RFID".  It acts as a namespace and prevents
+//          the possibility that another project is using this name for its msgs.
+// field 1: Who/what is being referenced/requested/ordered
+// field 2: Should always be "Msg".  This is primarily to differentiate them in 
+//          the code from other similarly named things like events and the 
+//    structures used to extract the info from the messages.
+//
+// Example msg exchange with custom payload msgs (with field fill examples):
+//
+// Client                                                             RFID Board
+//   |
+// *Send* [[*********RFIDBasicMsg**********][RFIDPayloadMsg****]\n]>>>>>Receive*
+//          < msgName = RFIDCmdLLCommTestMsg            
+//          < msgID   = 0                          < payload = 0xA5A5A5A5
+//          < msgType = RFID_Req                   < msgPayload = RFIDNoMsg
+//          < msgPayload = RFIDCommTestPayloadMsg
+// *Rec*  [[RFIDBasicMsg]\n]<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<*Send*
+//          < msgName = RFIDCmdLLCommTestMsg
+//          < msgID   = 0              
+//          < msgType = RFID_Ack                        
+//          < msgPayload = RFIDNoMsg
+// *Rec*  [[**********RFIDBasicMsg************][RFIDPayloadMsg*****]\n]<<<*Send*
+//          < msgName = RFIDCmdLLCommTestMsg             
+//          < msgID   = 0                           < payload = 0xA5A5A5A5
+//          < msgType = RFID_Done                   < msgPayload = RFIDNoMsg
+//          < msgPayload = RFIDCommTestPayloadMsg
+//
+// Author: Harry Rostovtsev 
+// Email : harry_rostovtsev@datacard.com
+//
+//Optional Embedded C internal options:
+//@max_repeated_length=127
+//@max_string_length=32
+//@max_bytes_length=112
+
+//------------------------------------------------------------------------------
+// See rules for RFIDBasicMsg at the top of file.
+// 
+// This MUST CONTAIN ALL THE MESSAGE TYPES DESCRIBED IN THIS PROTO FILE.  
+// 
+// Each msg must be either a RFIDBasicMsg or a RFIDPayloadMsg type.  The 
+// RFIDBasicMsgs do not need full message definitions since they all use the 
+// same msg type (RFIDBasicMsg) but the RFIDPayloadMsgs should be defined to 
+// enumerate their custom fields.
+// 
+// Msgs that start with RFIDCmd are commands that are sent to the RFID reader
+// that have a direct control over reading/writing tags and field manipulations.
+//
+// LL commands - The "LL" means a "low level" command which allows you to do 
+// pretty much anything without a guarantee that things will be ok afterwards.  
+// They also don't allow you to specify what state to put the RFID reader in  
+// after a command is completed.
+//
+// HL commands - the "HL" means a "high level" command.  These commands eliminate
+// some of the power and flexibility but will do all the low level work for you
+// and things are pretty much guaranteed to be OK upon command completion.  They
+// also allow you to specify what state to leave the RFID reader in after 
+// completing the command.
+//
+// Common operations such as checking if a tag is present, reading UID, and 
+// reading and writing tags can be accomplished with a single HL command.
+enum RFIDMsgName 
+{
+    RFIDNoMsg                           = 0;  // Used to indicate the end of a message sequence.
+    
+    RFIDStatusPayloadMsg                = 1;  // RFIDPayloadMsg - Used to report a status/error
+    
+    RFIDCmdLLCommTestMsg                = 2;  // RFIDBasicMsg   - Used to initiate a serial communications test
+    RFIDCommTestPayloadMsg              = 3;  // RFIDPayloadMsg - Used with RFIDCmdLLCommTestMsg to send the test data back and forth.
+                                              // This payload msg is used for both RFID_Req and RFID_Done msgs. 
+        
+    RFIDCmdLLGetVersionMsg              = 4; // RFIDBasicMsg   - Used to get various version numbers from the RFID board and return RFIDVersionPayloadMsg.
+    RFIDVersionPayloadMsg               = 5; // RFIDPayloadMsg - Used to send back various version numbers from the RFID board.
+    
+    RFIDCmdLLResetBoardMsg              = 6;  // RFIDBasicMsg   - Used to turn the soft reset the entire RFID reader board
+    RFIDCmdLLResetICMsg                 = 7;  // RFIDBasicMsg   - Used to turn the soft reset the NXP IC
+    
+    RFIDCmdLLFieldOnMsg                 = 8;  // RFIDBasicMsg   - Used to turn the RFID field on and apply the ISO15693 protocols.
+    RFIDCmdLLFieldOffMsg                = 9;  // RFIDBasicMsg   - Used to turn the RFID field off.
+    RFIDCmdLLFieldResetMsg              = 10;  // RFIDBasicMsg   - Used to reset the RFID field and re-apply the ISO15693 protocols.
+    
+    RFIDCmdLLActivateTagMsg             = 11;  // RFIDBasicMsg   - Used to activate the tag in the field and read its UID
+    RFIDCmdLLDeActivateTagMsg           = 12; // RFIDBasicMsg   - Used to de-activate the tag in the field and drop its UID from memory
+    RFIDUidPayloadMsg                   = 13; // RFIDPayloadMsg - Used to send tag/UID information, used with RFIDCmdLLActivateTagMsg and RFIDCmdLLDeActivateTagMsg msgs.
+    
+    RFIDCmdLLAuthenticateTagMsg         = 14; // RFIDBasicMsg   - Used to authenticate the tag in the field given the UID and open Sector 3 for reading and writing
+    RFIDCmdLLUnAuthenticateTagMsg       = 15; // RFIDBasicMsg   - Used to log out of sector 3 on the tag in the field and open non-encrypted sectors for reading and writing
+    
+    RFIDRawPageDataPayloadMsg           = 16; // RFIDPayloadMsg - Used to send back raw values from a page in the tag.
+    RFIDRawPageReqPayloadMsg            = 17; // RFIDPayloadMsg - Used to send send requests for reading data for all the HL read tag msgs. Allows users
+                                              // to specify the UID of the tag they expect to read, request a state for the rfid reader to go to upon 
+                                              // completion, and startPage and how many pages to read if doing a raw read.
+    
+    RFIDCmdHLReadRawPagesMsg            = 18; // RFIDBasicMsg   - Used to read the raw values (continuous) from a multiple tag pages (of sector 3)
+    RFIDCmdHLWriteRawPagesMsg           = 19; // RFIDBasicMsg   - Used to write the raw values (continuous) to multiple tag pages (in sector 3)
+    RFIDCmdHLWriteReReadRawPagesMsg     = 20; // RFIDBasicMsg   - Used to write and re-read the raw values (continuous) to multiple tag pages (in sector 3)
+       
+    RFIDCmdLLGetRunModeMsg              = 21; // RFIDBasicMsg   - Used to find if the RFID board is in flashboot or application run mode
+    RFIDCmdLLSetRunModeMsg              = 22; // RFIDBasicMsg   - Used to tell the RFID board to boot to flashboot or application run mode
+    RFIDRunModePayloadMsg               = 23; // RFIDPayloadMsg - Used to send RunMode information with GetRunMode and SetRunMode msgs.
+
+}
+
+//------------------------------------------------------------------------------
+// This enum defines all the different response types that can identify a msg
+// type.
+// RFID_Req  - This is to mark the field when used in a Request message.
+// RFID_Ack  - This is to mark the field when used in a Acknowledge message.
+// RFID_Prog - This is used to mark a response message as "Progress" message.  It can
+//             be used to send back status updates for long commands to prevent 
+//             timeouts or as a very simplistic logging.
+// RFID_Done - This marks the message as a "Done" message which signifies that the 
+//             action that was requested has been completed and all work related to
+//             it is done.
+enum RFIDMsgType 
+{
+    RFID_NoMsgType                      = 0;
+    RFID_Req                            = 1;
+    RFID_Ack                            = 2;
+    RFID_Prog                           = 3;
+    RFID_Done                           = 4;
+}
+
+//------------------------------------------------------------------------------
+// This enum defines the source of the message going to and from RFID board. This
+// is to allow forwarding of the messages through another device that the RFID
+// board is attached to.  It also allows the RFID board to know where to send the
+// response to.  It is expected that the sender of the message will set the source
+// if a reply is expected.
+// RFID_HostDevice  - The message is source/destination is the directly attached
+//                    host device.
+// RFID_Console     - The message is source/destination is the serial debug console
+// RFID_ExtClient   - The message is source/destination is a client that is 
+//                    communicating the host device to which the RFID board is 
+//                    attached to.  Let that host device figure out how to route
+//                    the message from there.
+enum RFIDMsgRoute 
+{
+	RFID_NoRoute                        = 0;
+    RFID_HostDevice                     = 1;
+    RFID_Console                        = 2;
+    RFID_ExtClient                      = 3;
+}
+
+//------------------------------------------------------------------------------
+// This enum defines the state of the field on the RFID board and its 
+// authentication status
+enum RFIDFieldState
+{
+	RFID_NoState                        = 0;  // Setting not used
+    RFID_FieldOff                       = 1;  // Field is off
+    RFID_FieldOn                        = 2;  // Field is on and protocol applied
+    RFID_TagActivated                   = 3;  // Field is on, protocol applied, 
+                                              // and tag Activated (UID read)				
+    RFID_TagAuthenticated               = 4;  // Field is on, protocol applied, 
+                                              // and tag Activated (UID read), 
+                                              // and authenticated to read 
+                                              // encrypted sectors
+}
+
+//------------------------------------------------------------------------------
+// This enum defines the boot mode of the RFID board.  It can be booted to 
+// system mode or flash mode.  System mode is used to flash FW over serial
+// using the DFU protocol, which is the system boot mode provided by ST Micro.
+// The Flash mode is used for regular operation and the system boots from Flash
+// RFID_SystemBoot    - Regular operation mode
+// RFID_FlashBoot     - Firmware update operation mode
+enum RFIDBootMode
+{
+    RFID_SystemBoot                     = 0;  // System boot mode
+    RFID_FlashBoot                      = 1;  // Flash boot mode
+    RFID_ApplicationMode                = 2;  // Application boot mode
+    RFID_MaxBootModes                   = 3;  // Max boot modes
+}
+
+//------------------------------------------------------------------------------
+// START RFIDBasicMsg
+// Msg Tag  - None. This is the format that all request messages will take.  The
+//            message will be identified by its msgName field.
+// Msg Type - Synchronous.  Special.
+// Msg Desc - This is the Basic message that must be used to send all the common 
+//            request/ack/progress/done portions of messages.   
+// Standard Field Description:
+// msgName -  RFIDMsgName that uniquely identifies the message.
+// msgID   -  Some number that allows the sender to specify how it will find
+//            the responses to this request msg.
+//
+// msgType - RFIDMsgType that if the RFIDDescMsg is in front of a:
+//   A. RFID_Req - Request message - used to request data or actions from the RFID API.
+//   B. RFID_Ack - Acknowledgement message - used by the RFID API to let the sender 
+//                 know that the Req message was successfully received.
+//   C. RFID_Prog- Specifies whether the message is a Progress message.
+//   D. RFID_Done- Specifies whether the message is a Done message.
+//
+// msgRoute - See RFIDMsgRoute enum for a full description.  This allows msg 
+//            forwarding on the host device.
+//   A. RFID_HostDevice  - The message is source/destination is the directly 
+//            attached host device.
+//   B. RFID_Console     - The message is source/destination is the serial debug 
+//            console
+//   C. RFID_ExtClient   - The message is source/destination is a client that is 
+//            communicating the host device to which the RFID board is attached 
+//            to.  Let that host device figure out how to route the message.
+//
+// msgReqProg - Request progress messages to be sent back to the sender.
+//   0 - Don't send progress msgs
+//   1 - Send progress msgs
+//      
+// msgPayload - RFIDMsgName type that specifies what payload message is appended
+//            to the back of this message.  This allows you to send any payload
+//            that is needed for this action or data request.  For example, if 
+//            requesting a CommTest, you can specify a payload that will be sent
+//            over that the RFID board should receive, decode, and send back to 
+//            you so you can verify its integrity.  In some cases, such as simple
+//            Req msgs and Ack msgs, this field can be set to RFIDNoMsg to avoid
+//            sending along any unnecessary extra data.  In general, this field 
+//            can be any of the RFIDMsgName.  In most cases, it will be empty, 
+//            which means there's no payload and consequently, no extra data is 
+//            being sent or if the msgType is RFID_Done, there's no error to report.
+//            Some more complicated messages will use custom payload msgs which 
+//            need to be defined in this file.  See RFIDCommTestPayloadMsg for 
+//            an example.
+//
+message RFIDBasicMsg 
+{
+    required RFIDMsgName  msgName       = 1;
+    required uint32       msgID         = 2;
+    required RFIDMsgType  msgType       = 3;
+    required RFIDMsgRoute msgRoute      = 4;
+    required uint32       msgReqProg    = 5;
+    required RFIDMsgName  msgPayload    = 6;
+}
+// END RFIDBasicMsg
+//------------------------------------------------------------------------------
+
+//------------------------------------------------------------------------------
+// START RFIDStatusPayloadMsg
+// Msg Tag  - 1
+// Msg Type - Synchronous.  Payload (optional)
+// Msg Desc - This is a Status Payload message and is optional.  It's a generic
+//            status payload message that only has 1 uint32_t field.  It should 
+//            be used to report errors (if any occurred) or just status as part 
+//            of a Resp msg. If you plan on appending this payload msg, make 
+//            sure to set the field "msgPayload" in the main msg to the enum  
+//            name of this payload msg:   RFIDStatusPayloadMsg
+// Field Description:
+// errorCode - Error code to return when appended to the "Done" version of the 
+//            main message.
+message RFIDStatusPayloadMsg 
+{
+    required uint32       errorCode     = 1;
+}
+// END RFIDStatusPayloadMsg
+//------------------------------------------------------------------------------
+
+//------------------------------------------------------------------------------
+// START RFIDCmdLLCommTestMsg
+// Msg Tag  - 2
+// Msg Type - RFIDBasicMsg.  Uses RFIDBasicMsg structure. No definition needed
+// Msg Desc - This message is handles communications needed for CommTest.
+//
+// No message definition needed.  Uses RFIDBasicMsg with RFIDCommTestPayloadMsg
+// as a payload for RFID_Done.
+// Example:
+// Client                                                             RFID Board
+//   |                                                                      |
+// *Send* [[**************RFIDBasicMsg***********][RFIDPayloadMsg]\n]>>>>>>*Rec*
+//          < msgName = RFIDCmdLLCommTestMsg       < payload = 0xA5A5A5A5
+//          < msgID   = 0                          < errorCode = N/A
+//          < msgType = RFID_Req                       
+//          < msgPayload = RFIDCommTestPayloadMsg  
+// *Rec*  [[RFIDBasicMsg]\n]<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<*Send*
+//          < msgName = RFIDCmdLLCommTestMsg
+//          < msgID   = 0              
+//          < msgType = RFID_Ack                        
+//          < msgPayload = RFIDNoMsg
+// *Rec*  [[**************RFIDBasicMsg**********][**RFIDPayloadMsg**]\n]<<*Send*
+//          < msgName = RFIDCmdLLCommTestMsg        < errorCode = RFID_ERR_NONE  
+//          < msgID   = 0                           < payload = 0xA5A5A5A5              
+//          < msgType = RFID_Done                   < msgPayload = RFIDNoMsg
+//          < msgPayload = RFIDCommTestPayloadMsg   
+// END RFIDCmdLLCommTestMsg
+//------------------------------------------------------------------------------
+
+//------------------------------------------------------------------------------
+// START RFIDCommTestPayloadMsg 
+// Msg Tag  - 3
+// Msg Type - RFIDPayloadMsg.  Sent appended to the RFIDCmdLLCommTestMsg RFID_Done msg and
+//            uses RFIDCommTestPayloadMsg structure.
+// Msg Desc - This message is carries the payload for RFIDCmdLLCommTestMsg RFID_Done msg.
+//
+// Non-standard Field Description:
+// errorCode- a uint32 number that specifies the error encountered, if any.
+// payload -  uint32 number that was received in the Req msg and is being sent 
+//            back to verify that communication is functioning properly.
+message RFIDCommTestPayloadMsg 
+{
+	required uint32       errorCode     = 1;
+    required uint32       payload       = 2;
+}
+// END RFIDCommTestPayloadMsg.
+//------------------------------------------------------------------------------
+
+//------------------------------------------------------------------------------
+// START RFIDCmdLLGetVersionMsg
+// Msg Tag  - 4
+// Msg Type - RFIDBasicMsg.  Uses RFIDBasicMsg structure. No definition needed
+// Msg Desc - This gets various version numbers of things on the RFID board
+//
+// No message definition needed.  Uses RFIDBasicMsg with 
+// RFIDVersionPayloadMsg as a payload for RFID_Done 
+// Example:
+// Client                                                             RFID Board
+//   |                                                                      |
+// *Send* [[**************RFIDBasicMsg*********]\n]>>>>>>>>>>>>>>>>>>>>>>>>*Rec*
+//          < msgName = RFIDCmdLLGetVersionMsg     
+//          < msgID   = 0                         
+//          < msgType = RFID_Req                
+//          < msgPayload = RFIDVersionPayloadMsg
+//                                                   
+// *Rec*  [[RFIDBasicMsg]\n]<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<*Send*
+//          < msgName = RFIDCmdLLGetVersionMsg
+//          < msgID   = 0              
+//          < msgType = RFID_Ack                        
+//          < msgPayload = RFIDNoMsg
+// *Rec*  [[**************RFIDBasicMsg*********][**RFIDPayloadMsg**]\n]<<<*Send*
+//          < msgName = RFIDCmdLLGetVersionMsg   < errorCode = RFID_ERR_CODE  
+//          < msgID   = 0                        < fwVersionString = string of data with FW version
+//          < msgType = RFID_Done                < fwDateString = string of data with FW date
+//          < msgPayload = RFIDVersionPayloadMsg < icVersion = How many pages were read
+//                                               < fwVersionStringLen = Number of characters in FW version string.
+//                                               < fwDateStringLen = Number of characters in FW date string.
+//
+// END RFIDCmdLLGetVersionMsg
+//------------------------------------------------------------------------------
+
+//------------------------------------------------------------------------------
+// START RFIDVersionPayloadMsg 
+// Msg Tag  - 5
+// Msg Type - RFIDPayloadMsg.  Sent appended to the RFIDCmdLLGetVersionMsg 
+//            RFID_Done type msg and uses RFIDVersionPayloadMsg structure.
+// Msg Desc - Sent as a response to a RFIDCmdLLGetVersionMsg attached to the
+//            RFIDCmdLLGetVersionMsg RFID_Done type msg.
+// 
+// See RFIDCmdLLGetVersionMsg for example usage.
+message RFIDVersionPayloadMsg 
+{
+    required uint32         errorCode            = 1;
+    required bytes          fwVersionString      = 2;  // RFID FW version string
+    required bytes          fwDateString         = 3;  // RFID FW date string
+    required uint32         icVersion            = 4;  // Version of the IC
+}
+// END RFIDVersionPayloadMsg.
+//------------------------------------------------------------------------------
+
+//------------------------------------------------------------------------------
+// START RFIDCmdLLResetBoardMsg
+// Msg Tag  - 6
+// Msg Type - RFIDBasicMsg.  Uses RFIDBasicMsg structure. No definition needed
+// Msg Desc - This message soft resets the RFID Reader Board. 
+//
+// No message definition needed.  Uses RFIDBasicMsg with RFIDStatusPayloadMsg
+// as a payload for RFID_Done.
+// Example:
+// Client                                                             RFID Board
+//   |                                                                      |
+// *Send* [[**************RFIDBasicMsg***********]>>>>>>>>>>>>>>>>>>>>>>>>>*Rec*
+//          < msgName = RFIDCmdLLResetBoardMsg    
+//          < msgID   = 0                         
+//          < msgType = RFID_Req                        
+//          < msgPayload = RFIDNoMsg  
+// *Rec*  [[RFIDBasicMsg]\n]<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<*Send*
+//          < msgName = RFIDCmdLLResetBoardMsg
+//          < msgID   = 0              
+//          < msgType = RFID_Ack                        
+//          < msgPayload = RFIDNoMsg
+// *Rec*  [[**************RFIDBasicMsg*******][**RFIDPayloadMsg**]\n]<<<<<*Send*
+//          < msgName = RFIDCmdLLResetBoardMsg  < errorCode = RFID_ERR_CODE  
+//          < msgID   = 0                           
+//          < msgType = RFID_Done                        
+//          < msgPayload = RFIDStatusPayloadMsg   
+// END RFIDCmdLLResetBoardMsg
+//------------------------------------------------------------------------------
+
+//------------------------------------------------------------------------------
+// START RFIDCmdLLResetICMsg
+// Msg Tag  - 7
+// Msg Type - RFIDBasicMsg.  Uses RFIDBasicMsg structure. No definition needed
+// Msg Desc - This message soft resets the RFID IC. 
+//
+// No message definition needed.  Uses RFIDBasicMsg with RFIDStatusPayloadMsg
+// as a payload for RFID_Done.
+// Example:
+// Client                                                             RFID Board
+//   |                                                                      |
+// *Send* [[**************RFIDBasicMsg***********]>>>>>>>>>>>>>>>>>>>>>>>>>*Rec*
+//          < msgName = RFIDCmdLLResetICMsg    
+//          < msgID   = 0                         
+//          < msgType = RFID_Req                        
+//          < msgPayload = RFIDNoMsg  
+// *Rec*  [[RFIDBasicMsg]\n] <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<*Send*
+//          < msgName = RFIDCmdLLResetICMsg
+//          < msgID   = 0              
+//          < msgType = RFID_Ack                        
+//          < msgPayload = RFIDNoMsg
+// *Rec*  [[**************RFIDBasicMsg*******][**RFIDPayloadMsg**]\n]<<<<<*Send*
+//          < msgName = RFIDCmdLLResetICMsg      < errorCode = RFID_ERR_CODE  
+//          < msgID   = 0                           
+//          < msgType = RFID_Done                        
+//          < msgPayload = RFIDStatusPayloadMsg   
+// END RFIDCmdLLResetICMsg
+//------------------------------------------------------------------------------
+
+//------------------------------------------------------------------------------
+// START RFIDCmdLLFieldOnMsg
+// Msg Tag  - 8
+// Msg Type - RFIDBasicMsg.  Uses RFIDBasicMsg structure. No definition needed
+// Msg Desc - This message enables the RFID Field
+//
+// No message definition needed.  Uses RFIDBasicMsg with RFIDStatusPayloadMsg
+// as a payload for RFID_Done.
+// Example:
+// Client                                                             RFID Board
+//   |                                                                      |
+// *Send* [[**************RFIDBasicMsg***********]>>>>>>>>>>>>>>>>>>>>>>>>>*Rec*
+//          < msgName = RFIDCmdLLFieldOnMsg    
+//          < msgID   = 0                         
+//          < msgType = RFID_Req                        
+//          < msgPayload = RFIDNoMsg  
+// *Rec*  [[RFIDBasicMsg]\n] <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<*Send*
+//          < msgName = RFIDCmdLLFieldOnMsg
+//          < msgID   = 0              
+//          < msgType = RFID_Ack                        
+//          < msgPayload = RFIDNoMsg
+// *Rec*  [[**************RFIDBasicMsg*******][**RFIDPayloadMsg**]\n]<<<<<*Send*
+//          < msgName = RFIDCmdLLFieldOnMsg      < errorCode = RFID_ERR_CODE  
+//          < msgID   = 0                           
+//          < msgType = RFID_Done                        
+//          < msgPayload = RFIDStatusPayloadMsg   
+// END RFIDCmdLLFieldOnMsg
+//------------------------------------------------------------------------------
+
+//------------------------------------------------------------------------------
+// START RFIDCmdLLFieldOffMsg
+// Msg Tag  - 9
+// Msg Type - RFIDBasicMsg.  Uses RFIDBasicMsg structure. No definition needed
+// Msg Desc - This message disables the RFID Field
+//
+// No message definition needed.  Uses RFIDBasicMsg with RFIDStatusPayloadMsg
+// as a payload for RFID_Done.
+// Example:
+// Client                                                             RFID Board
+//   |                                                                      |
+// *Send* [[**************RFIDBasicMsg********]>>>>>>>>>>>>>>>>>>>>>>>>>>>>*Rec*
+//          < msgName = RFIDCmdLLFieldOffMsg    
+//          < msgID   = 0                         
+//          < msgType = RFID_Req                        
+//          < msgPayload = RFIDNoMsg  
+// *Rec*  [[RFIDBasicMsg]\n] <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<*Send*
+//          < msgName = RFIDCmdLLFieldOffMsg
+//          < msgID   = 0              
+//          < msgType = RFID_Ack                        
+//          < msgPayload = RFIDNoMsg
+// *Rec*  [[**************RFIDBasicMsg*******][**RFIDPayloadMsg**]\n]<<<<<*Send*
+//          < msgName = RFIDCmdLLFieldOffMsg    < errorCode = RFID_ERR_CODE  
+//          < msgID   = 0                           
+//          < msgType = RFID_Done                        
+//          < msgPayload = RFIDStatusPayloadMsg   
+// END RFIDCmdLLFieldOffMsg
+//------------------------------------------------------------------------------
+
+//------------------------------------------------------------------------------
+// START RFIDCmdLLFieldResetMsg
+// Msg Tag  - 10
+// Msg Type - RFIDBasicMsg.  Uses RFIDBasicMsg structure. No definition needed
+// Msg Desc - This message resets the RFID Field
+//
+// No message definition needed.  Uses RFIDBasicMsg with RFIDStatusPayloadMsg
+// as a payload for RFID_Done.
+// Example:
+// Client                                                             RFID Board
+//   |                                                                      |
+// *Send* [[**************RFIDBasicMsg***********]>>>>>>>>>>>>>>>>>>>>>>>>>*Rec*
+//          < msgName = RFIDCmdLLFieldResetMsg    
+//          < msgID   = 0                         
+//          < msgType = RFID_Req                        
+//          < msgPayload = RFIDNoMsg  
+// *Rec*  [[RFIDBasicMsg]\n] <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<*Send*
+//          < msgName = RFIDCmdLLFieldResetMsg
+//          < msgID   = 0              
+//          < msgType = RFID_Ack                        
+//          < msgPayload = RFIDNoMsg
+// *Rec*  [[**************RFIDBasicMsg*******][**RFIDPayloadMsg**]\n]<<<<<*Send*
+//          < msgName = RFIDCmdLLFieldResetMsg  < errorCode = RFID_ERR_CODE  
+//          < msgID   = 0                           
+//          < msgType = RFID_Done                        
+//          < msgPayload = RFIDStatusPayloadMsg   
+// END RFIDCmdLLFieldResetMsg
+//------------------------------------------------------------------------------
+
+//------------------------------------------------------------------------------
+// START RFIDCmdLLActivateTagMsg
+// Msg Tag  - 11
+// Msg Type - RFIDBasicMsg.  Uses RFIDBasicMsg structure. No definition needed
+// Msg Desc - This message activates tag and reads the tag UID
+//
+// No message definition needed.  Uses RFIDBasicMsg with RFIDUidPayloadMsg
+// as a payload for RFID_Done.
+// Example:
+// Client                                                             RFID Board
+//   |                                                                      |
+// *Send* [[**************RFIDBasicMsg***********]>>>>>>>>>>>>>>>>>>>>>>>>>*Rec*
+//          < msgName = RFIDCmdLLActivateTagMsg    
+//          < msgID   = 0                         
+//          < msgType = RFID_Req                        
+//          < msgPayload = RFIDNoMsg  
+// *Rec*  [[RFIDBasicMsg]\n] <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<*Send*
+//          < msgName = RFIDCmdLLActivateTagMsg
+//          < msgID   = 0              
+//          < msgType = RFID_Ack                        
+//          < msgPayload = RFIDNoMsg
+// *Rec*  [[**************RFIDBasicMsg*******][**RFIDPayloadMsg**]\n]<<<<<*Send*
+//          < msgName = RFIDCmdLLActivateTagMsg      < errorCode = RFID_ERR_CODE  
+//          < msgID   = 0                            < uid = 8 byte uid
+//          < msgType = RFID_Done                        
+//          < msgPayload = RFIDUidPayloadMsg   
+// END RFIDCmdLLActivateTagMsg
+//------------------------------------------------------------------------------
+
+//------------------------------------------------------------------------------
+// START RFIDCmdLLDeActivateTagMsg
+// Msg Tag  - 12
+// Msg Type - RFIDBasicMsg.  Uses RFIDBasicMsg structure. No definition needed
+// Msg Desc - This message drops the last read UID and deactivates tag
+//
+// No message definition needed.  Uses RFIDBasicMsg with RFIDUidPayloadMsg
+// as a payload for RFID_Done.
+// Example:
+// Client                                                             RFID Board
+//   |                                                                      |
+// *Send* [[**************RFIDBasicMsg***********]>>>>>>>>>>>>>>>>>>>>>>>>>*Rec*
+//          < msgName = RFIDCmdLLDeActivateTagMsg    
+//          < msgID   = 0                         
+//          < msgType = RFID_Req                        
+//          < msgPayload = RFIDNoMsg  
+// *Rec*  [[RFIDBasicMsg]\n] <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<*Send*
+//          < msgName = RFIDCmdLLDeActivateTagMsg
+//          < msgID   = 0              
+//          < msgType = RFID_Ack                        
+//          < msgPayload = RFIDNoMsg
+// *Rec*  [[**************RFIDBasicMsg*******][**RFIDPayloadMsg**]\n]<<<<<*Send*
+//          < msgName = RFIDCmdLLDeActivateTagMsg    < errorCode = RFID_ERR_CODE  
+//          < msgID   = 0                            < uid = zeroes
+//          < msgType = RFID_Done                        
+//          < msgPayload = RFIDUidPayloadMsg   
+// END RFIDCmdLLActivateTagMsg
+//------------------------------------------------------------------------------
+
+//------------------------------------------------------------------------------
+// START RFIDUidPayloadMsg 
+// Msg Tag  - 13
+// Msg Type - RFIDPayloadMsg.  Sent appended to the RFIDCmdLLDeActivateTagMsg 
+//            and RFIDCmdLLActivateTagMsg RFID_Done type msg and uses 
+//            RFIDUidPayloadMsg structure.
+// Msg Desc - Sent as a response to a RFIDCmdRawReadMultPageMsg attached to the
+//            RFIDCmdRawReadMultPageMsg RFID_Done type msg.
+// 
+// See RFIDCmdLLDeActivateTagMsg and RFIDCmdLLActivateTagMsg for example usage.
+message RFIDUidPayloadMsg 
+{
+    required uint32       errorCode     = 1;
+    required bytes        uid           = 2;  // UID read from the tag
+}
+// END RFIDUidPayloadMsg.
+//------------------------------------------------------------------------------
+
+//------------------------------------------------------------------------------
+// START RFIDCmdLLAuthenticateTagMsg
+// Msg Tag  - 14
+// Msg Type - RFIDBasicMsg.  Uses RFIDBasicMsg structure. No definition needed
+// Msg Desc - This message authenticates the tag
+//
+// No message definition needed.  Uses RFIDBasicMsg with RFIDUidPayloadMsg
+// as a payload for RFID_Done.
+// Example:
+// Client                                                             RFID Board
+//   |                                                                      |
+// *Send* [[**************RFIDBasicMsg***********]>>>>>>>>>>>>>>>>>>>>>>>>>*Rec*
+//          < msgName = RFIDCmdLLAuthenticateTagMsg    
+//          < msgID   = 0                         
+//          < msgType = Req                        
+//          < msgPayload = RFIDNoMsg  
+// *Rec*  [[RFIDBasicMsg]\n] <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<*Send*
+//          < msgName = RFIDCmdLLAuthenticateTagMsg
+//          < msgID   = 0              
+//          < msgType = RFID_Ack                        
+//          < msgPayload = RFIDNoMsg
+// *Rec*  [[**************RFIDBasicMsg*************][RFIDPayloadMsg]\n]<<<*Send*
+//          < msgName = RFIDCmdLLAuthenticateTagMsg  < errorCode = RFID_ERR_CODE  
+//          < msgID   = 0                            < uid = uid of the auth tag
+//          < msgType = RFID_Done                        
+//          < msgPayload = RFIDUidPayloadMsg   
+// END RFIDCmdLLAuthenticateTagMsg
+//------------------------------------------------------------------------------
+
+//------------------------------------------------------------------------------
+// START RFIDCmdLLUnAuthenticateTagMsg
+// Msg Tag  - 15
+// Msg Type - RFIDBasicMsg.  Uses RFIDBasicMsg structure. No definition needed
+// Msg Desc - This message un-authenticates the tag (logs out of sector 3)
+//
+// No message definition needed.  Uses RFIDBasicMsg with RFIDUidPayloadMsg
+// as a payload for RFID_Done.
+// Example:
+// Client                                                             RFID Board
+//   |                                                                      |
+// *Send* [[**************RFIDBasicMsg***********]>>>>>>>>>>>>>>>>>>>>>>>>>*Rec*
+//          < msgName = RFIDCmdLLUnAuthenticateTagMsg    
+//          < msgID   = 0                         
+//          < msgType = RFID_Req                        
+//          < msgPayload = RFIDNoMsg  
+// *Rec*  [[RFIDBasicMsg]\n]<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<*Send*
+//          < msgName = RFIDCmdLLUnAuthenticateTagMsg
+//          < msgID   = 0              
+//          < msgType = RFID_Ack                        
+//          < msgPayload = RFIDNoMsg
+// *Rec*  [[**************RFIDBasicMsg***************][RFIDPayloadMsg]\n]<*Send*
+//          < msgName = RFIDCmdLLUnAuthenticateTagMsg  < errorCode = RFID_ERR_CODE  
+//          < msgID   = 0                              < uid = uid of the auth tag
+//          < msgType = RFID_Done                        
+//          < msgPayload = RFIDUidPayloadMsg   
+// END RFIDCmdLLUnAuthenticateTagMsg
+//------------------------------------------------------------------------------
+
+//------------------------------------------------------------------------------
+// START RFIDRawPageDataPayloadMsg 
+// Msg Tag  - 16
+// Msg Type - RFIDPayloadMsg.  Sent appended to the RFIDCmdHLRawReadPageMsg 
+//            RFID_Done type msg and uses RFIDRawPageDataPayloadMsg structure.
+// Msg Desc - Sent as a response to a RFIDCmdRawReadMultPageMsg attached to the
+//            RFIDCmdRawReadMultPageMsg RFID_Done type msg.
+//            This message is also used with RFIDCmdRawWriteMultPageMsg RFID_Req
+//            to specify the data to write, where to start and finish writing it.
+// 
+// See RFIDCmdHLReadRawPagesMsg for example usage.
+message RFIDRawPageDataPayloadMsg 
+{
+    required uint32         errorCode            = 1;
+    required bytes          uid                  = 2;  // UID of the tag being read
+    required uint32         startPage            = 3;  // Page number to start from
+    required uint32         pages                = 4;  // How many pages to read/write
+    required bytes          data                 = 5;  // raw bytes read from the tag
+    required RFIDFieldState stateAfterCompletion = 6;  // state to leave the reader in after finishing command
+}
+// END RFIDRawPageDataPayloadMsg.
+//------------------------------------------------------------------------------
+
+//------------------------------------------------------------------------------
+// START RFIDRawPageReqPayloadMsg 
+// Msg Tag  - 17
+// Msg Type - RFIDPayloadMsg.  Sent appended to any HL read tag RFID_Req   
+//            messages.
+// Msg Desc - Sent with RFID_Req Used to send send requests for reading data for 
+//            all the HL read tag msgs. Allows users to specify the UID of the 
+//            tag they expect to read, request a state for the rfid reader to go
+//            to upon completion, and startPage and how many pages to read if 
+//            doing a raw read.
+//
+// See RFIDCmdHLReadRawPagesMsg for example usage.
+message RFIDRawPageReqPayloadMsg 
+{
+    required bytes          uid                  = 1;  // UID of the tag being read
+    required uint32         startPage            = 2;  // Page number to read from (for raw reads)
+    required uint32         pagesToRead          = 3;  // How many pages to read (for raw reads)
+    required RFIDFieldState stateAfterCompletion = 4;  // state to leave the reader in after finishing command
+}
+// END RFIDRawPageReqPayloadMsg.
+//------------------------------------------------------------------------------
+
+//------------------------------------------------------------------------------
+// START RFIDCmdHLReadRawPagesMsg
+// Msg Tag  - 18
+// Msg Type - RFIDBasicMsg.  Uses RFIDBasicMsg structure. No definition needed
+// Msg Desc - This reads one page of a tag
+//
+// No message definition needed.  Uses RFIDBasicMsg with 
+// RFIDRawPageDataPayloadMsg as a payload for RFID_Done AND RFID_Req (to tell 
+// which page to read and specify UID of the tag if desired).
+// Example:
+// Client                                                             RFID Board
+//   |                                                                      |
+// *Send* [[**************RFIDBasicMsg***********][RFIDPayloadMsg]\n]>>*Receive*
+//          < msgName = RFIDCmdHLReadRawPagesMsg    < uid = uid of the tag to read, if zero, read tag that's there   
+//          < msgID   = 0                           < startPage = Page to read from  
+//          < msgType = RFID_Req                    < pageToRead = How many pages to read
+//          < msgPayload = RFIDRawPageReqPayloadMsg < stateAfterCompletion = requested state after completion of job
+//                                                   
+// *Rec*  [[RFIDBasicMsg]\n] <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<*Send*
+//          < msgName = RFIDCmdHLReadRawPagesMsg
+//          < msgID   = 0              
+//          < msgType = RFID_Ack                        
+//          < msgPayload = RFIDNoMsg
+// *Rec*  [[**************RFIDBasicMsg*******************][**RFIDPayloadMsg**]\n]<<<*Send*
+//          < msgName = RFIDCmdHLReadRawPagesMsg           < errorCode = RFID_ERR_CODE  
+//          < msgID   = 0                                  < uid = uid of the tag read
+//          < msgType = RFID_Done                          < startPage = Page to reading started  
+//          < msgPayload = RFIDRawPageDataPayloadMsg       < pageToRead = How many pages were read
+//                                                         < data = raw bytes read
+//                                                         < stateAfterCompletion = state after completion of job 
+// END RFIDCmdHLReadRawPagesMsg
+//------------------------------------------------------------------------------
+
+//------------------------------------------------------------------------------
+// START RFIDCmdHLWriteRawPagesMsg
+// Msg Tag  - 19
+// Msg Type - RFIDBasicMsg.  Uses RFIDBasicMsg structure. No definition needed
+// Msg Desc - This writes multiple raw pages (intel byte order) to sector 3 of 
+//            the tag.
+//
+// No message definition needed.  Uses RFIDBasicMsg with 
+// RFIDRawPageDataPayloadMsg as a payload for RFID_Req (to tell 
+// which page to read and specify UID of the tag if desired).  Uses a simple
+// RFIDStatusPayloadMsg for RFID_Done msg.
+// Example:
+// Client                                                             RFID Board
+//   |                                                                      |
+// *Send* [[**************RFIDBasicMsg***********][RFIDPayloadMsg]\n]>>>>>>*Rec*
+//          < msgName = RFIDCmdHLWriteRawPagesMsg    < errorCode = N/A  
+//          < msgID   = 0                            < uid = uid of the tag (can be left zeroed out to use current tag)
+//          < msgType = RFID_Req                     < startPage = Page to start at
+//          < msgPayload = RFIDRawPageDataPayloadMsg < pages = How many pages to write
+//                                                   < data = raw bytes to write to sector 3
+//                                                   < stateAfterCompletion = state after completion of job 
+//                                                   
+// *Rec*  [[RFIDBasicMsg]\n] <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<*Send*
+//          < msgName = RFIDCmdHLWriteRawPagesMsg
+//          < msgID   = 0              
+//          < msgType = RFID_Ack                        
+//          < msgPayload = RFIDNoMsg
+// *Rec*  [[**************RFIDBasicMsg***********][**RFIDPayloadMsg**]\n]<*Send*
+//          < msgName = RFIDCmdHLWriteRawPagesMsg    < errorCode = RFID_ERR_CODE
+//          < msgID   = 0                                  
+//          < msgType = RFID_Done                         
+//          < msgPayload = RFIDStatusPayloadMsg           
+//                                                         
+// END RFIDCmdHLWriteRawPagesMsg
+//------------------------------------------------------------------------------
+
+//------------------------------------------------------------------------------
+// START RFIDCmdHLWriteReReadRawPagesMsg
+// Msg Tag  - 20
+// Msg Type - RFIDBasicMsg.  Uses RFIDBasicMsg structure. No definition needed
+// Msg Desc - This writes and rereads multiple raw pages (intel byte order) to 
+//            sector 3 of the tag.
+//
+// No message definition needed.  Uses RFIDBasicMsg with 
+// RFIDRawPageDataPayloadMsg as a payload for RFID_Done AND RFID_Req (to tell 
+// which page to read and specify UID of the tag if desired).
+// Example:
+// Client                                                             RFID Board
+//   |                                                                      |
+// *Send* [[**************RFIDBasicMsg*****************][RFIDPayloadMsg]\n]>>*Rec*
+//          < msgName = RFIDCmdHLWriteReReadRawPagesMsg < errorCode = N/A  
+//          < msgID   = 0                               < uid = uid of the tag (can be left zeroed out to use current tag)
+//          < msgType = RFID_Req                        < startPage = Page to start at
+//          < msgPayload = RFIDRawPageDataPayloadMsg    < pages = How many pages to write
+//                                                      < data = raw bytes to write to sector 3
+//                                                      < stateAfterCompletion = state after completion of job 
+//                                                   
+// *Rec*  [[RFIDBasicMsg]\n] <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<*Send*
+//          < msgName = RFIDCmdHLWriteReReadRawPagesMsg
+//          < msgID   = 0              
+//          < msgType = RFID_Ack                        
+//          < msgPayload = RFIDNoMsg
+// *Rec*  [[**************RFIDBasicMsg*****************][**RFIDPayloadMsg**]\n]<*Send*
+//          < msgName = RFIDCmdHLWriteReReadRawPagesMsg  < errorCode = RFID_ERR_CODE
+//          < msgID   = 0                                < uid = uid of the tag of tag written
+//          < msgType = RFID_Done                        < startPage = Page started at
+//          < msgPayload = RFIDRawPageDataPayloadMsg     < pages = How many pages were written and reread 
+//                                                       < data = raw bytes that were written and read back from sector 3
+//                                                       < stateAfterCompletion = state after completion of job 
+// END RFIDCmdHLWriteRawPagesMsg
+//------------------------------------------------------------------------------
+
+//------------------------------------------------------------------------------
+// START RFIDCmdLLGetRunModeMsg
+// Msg Tag  - 21
+// Msg Type - RFIDBasicMsg.  Uses RFIDBasicMsg structure. No definition needed
+// Msg Desc - This message is handles communications needed for getting the 
+//            current run mode of the RFID board.
+//
+// No message definition needed.  Uses RFIDBasicMsg with RFIDRunModePayloadMsg
+// as a payload for RFID_Done.
+// Example:
+// Client                                                             RFID Board
+//   |                                                                      |
+// *Send* [[**************RFIDBasicMsg***********]\n]>>>>>>>>>>>>>>>>>>*Receive*
+//          < msgName = RFIDCmdLLGetRunModeTagMsg
+//          < msgID   = 0                         
+//          < msgType = RFID_Req                       
+//          < msgPayload = RFIDNoMsg  
+// *Rec*  [[**************RFIDBasicMsg***********]\n]<<<<<<<<<<<<<<<<<<<<<*Send*
+//          < msgName = RFIDCmdLLGetRunModeMsg
+//          < msgID   = 0                   
+//          < msgType = RFID_Ack                        
+//          < msgPayload = RFIDNoMsg
+// *Rec*  [[************RFIDBasicMsg**********][**RFIDPayloadMsg**]\n]<<<<*Send*
+//          < msgName = RFIDCmdLLGetRunModeMsg   < errorCode = RFID_ERR_CODE  
+//          < msgID   = 0                        < runmode = [RFID_FlashBoot|RFID_ApplicationMode]         
+//          < msgType = RFID_Done                  
+//          < msgPayload = RFIDRunModePayloadMsg   
+// END RFIDCmdLLGetRunModeMsg
+//------------------------------------------------------------------------------
+
+//------------------------------------------------------------------------------
+// START RFIDCmdLLSetRunModeMsg
+// Msg Tag  - 22
+// Msg Type - RFIDBasicMsg.  Uses RFIDBasicMsg structure. No definition needed
+// Msg Desc - This message is handles communications needed for setting the 
+//            current run mode of the RFID board.
+//
+// No message definition needed.  Uses RFIDBasicMsg with RFIDRunModePayloadMsg
+// as a payload for RFID_Done.
+// Example:
+// Client                                                             RFID Board
+//   |                                                                      |
+// *Send*  [[************RFIDBasicMsg**********][**RFIDPayloadMsg**]\n]>>>>*Rec*
+//          < msgName = RFIDCmdLLSetRunModeMsg   < errorCode = RFID_ERR_CODE  
+//          < msgID   = 0                        < runmode = [RFID_FlashBoot|RFID_ApplicationMode]         
+//          < msgType = RFID_Done                  
+//          < msgPayload = RFIDPayloadMsg  
+// *Rec*  [[**************RFIDBasicMsg***********]\n]<<<<<<<<<<<<<<<<<<<<<*Send*
+//          < msgName = RFIDCmdLLSetRunModeMsg
+//          < msgID   = 0                   
+//          < msgType = RFID_Ack                        
+//          < msgPayload = RFIDRunModePayloadMsg
+// *Rec*  [[************RFIDBasicMsg**********][**RFIDPayloadMsg**]\n]<<<<*Send*
+//          < msgName = RFIDCmdLLSetRunModeMsg   < errorCode = RFID_ERR_CODE  
+//          < msgID   = 0                        < runmode = [RFID_FlashBoot|RFID_ApplicationMode]         
+//          < msgType = RFID_Done                  
+//          < msgPayload = RFIDRunModePayloadMsg   
+// END RFIDCmdLLSetRunModeMsg
+//------------------------------------------------------------------------------
+
+//------------------------------------------------------------------------------
+// START RFIDRunModePayloadMsg 
+// Msg Tag  - 23
+// Msg Type - RFIDPayloadMsg.  
+// Msg Desc - Sent appended to the RFIDCmdLLGetRunModeTagMsg RFID_Done msg and
+//            RFIDCmdLLSetRunModeTagMsg RFID_Req msg. Uses RFIDRunModePayloadMsg
+//            structure.
+//
+// Non-standard Field Description:
+// errorCode- a uint32 number that specifies the error encountered, if any.
+// runmode  - RFIDBootMode enum that specifies the boot mode being requested.
+//            Can be one of the following: 
+//                  RFID_FlashBoot       - bootloader mode 
+//                  RFID_ApplicationMode - application mode
+//                  The system boot mode will not respond to messages so the 
+//                  above are the only possible values. 
+//
+message RFIDRunModePayloadMsg 
+{
+	required uint32       errorCode     = 1;
+    required RFIDBootMode runmode       = 2;
+}
+// END RFIDRunModePayloadMsg.
+//------------------------------------------------------------------------------

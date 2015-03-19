@@ -27,7 +27,8 @@ ifeq ($(IP),)
 endif
 
 # config.mk also must contains the version number components
-# config.mk and env.mk must be separate since env.mk is NOT version controlled: config.mk is
+# config.mk and env.mk must be separate since env.mk is NOT version 
+# controlled; config.mk is.
 -include config.mk
 
 # If DCC_IP is defined, but not the MAC, complain
@@ -106,9 +107,9 @@ else
     $(error Must specify the MCU, like MCU=cortex-m0 )
 endif
 
-#------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
 #  TOOLCHAIN SETUP
-#------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
 CROSS                   = arm-none-eabi-
 CC                      = $(CROSS)gcc
 CPP                     = $(CROSS)g++
@@ -120,40 +121,60 @@ RM                      = rm -rf
 ECHO                    = echo
 MKDIR                   = mkdir
 
-#-----------------------------------------------------------------------------
-# Directories
-#
-#-----------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
+# General Directories
+#-------------------------------------------------------------------------------
 SRC_DIR                 = ./src
 COMMON_FW_SRC_DIR       = ../Common
 COMMON_CLI_SRC_DIR      = ../../Common
 
+# Local app, bsp, and sys directories
 APP_DIR                 = $(SRC_DIR)/app
 BSP_DIR                 = $(SRC_DIR)/bsp
 SYS_DIR                 = $(SRC_DIR)/sys
 
-COMMON_BSP_DIR          = $(COMMON_FW_SRC_DIR)/bsp
-COMMON_SYS_DIR          = $(COMMON_FW_SRC_DIR)/sys
+# app, bsp, and sys directories common between Bootloader and Application
+COMMON_FW_BSP_DIR       = $(COMMON_FW_SRC_DIR)/bsp
+COMMON_FW_SYS_DIR       = $(COMMON_FW_SRC_DIR)/sys
 
+# app, bsp, and sys directories common between firmware and client
+COMMON_CLI_BSP_DIR       = $(COMMON_CLI_SRC_DIR)/bsp
+COMMON_CLI_SYS_DIR       = $(COMMON_CLI_SRC_DIR)/sys
+
+#-------------------------------------------------------------------------------
+# BSP and Driver Directories
+#-------------------------------------------------------------------------------
 # Ethernet Driver
-ETH_DRV_DIR             = $(COMMON_BSP_DIR)/STM32F4x7_ETH_Driver
-QP_LWIP_PORT_DIR        = $(COMMON_BSP_DIR)/qpc_lwip_port
+ETH_DRV_DIR             = $(COMMON_FW_BSP_DIR)/STM32F4x7_ETH_Driver
+QP_LWIP_PORT_DIR        = $(COMMON_FW_BSP_DIR)/qpc_lwip_port
 
 # Serial Driver and AO
-SERIAL_DIR              = $(COMMON_BSP_DIR)/serial
+SERIAL_DIR              = $(COMMON_FW_BSP_DIR)/serial
 
 # I2C Driver and AO
-I2C_DIR                 = $(COMMON_BSP_DIR)/i2c
+I2C_DIR                 = $(COMMON_FW_BSP_DIR)/i2c
 I2C_FRT_DIR             = $(BSP_DIR)/i2c
 
 # NOR Driver and AO
 NOR_DIR                 = $(BSP_DIR)/nor
 
 # SDRAM Driver and AO
-SDRAM_DIR               = $(COMMON_BSP_DIR)/sdram
+SDRAM_DIR               = $(COMMON_FW_BSP_DIR)/sdram
 
+# STM32 Drivers
+STM32F4XX_STD_PERIPH_DIR= $(COMMON_FW_BSP_DIR)/STM32F4xx_StdPeriph_Driver
+
+# Directories that need to be passed down to LWIP.  Don't use $(VAR) here since
+# these get passed down to LWIP as a string and $(VAR)s won't be evaluated.
+LWIP_PORT_FOR_LWIP      = ../../bsp/qpc_lwip_port
+BSP_DIR_FOR_LWIP        = ../../bsp/runtime
+LWIP_SRC_DIR            = ../../../Application/src
+
+#-------------------------------------------------------------------------------
+# SYS and RTOS Directories
+#-------------------------------------------------------------------------------
 # QPC directories
-QPC_DIR                 = $(COMMON_CLI_SRC_DIR)/sys/qpc_5.3.1
+QPC_DIR                 = $(COMMON_CLI_SYS_DIR)/qpc_5.3.1
 QP_PORT_DIR             = $(QPC_DIR)/ports/freertos/gnu
 QP_FR_CONF_DIR          = $(QPC_DIR)/ports/freertos/conf
 
@@ -162,20 +183,31 @@ FR_DIR                  = $(SYS_DIR)/FreeRTOSV8.1.2/FreeRTOS/Source
 FR_PORT_DIR             = $(FR_DIR)/portable/GCC/ARM_CM4F
 FR_INC_DIR              = $(FR_DIR)/include
 
-# STM32 Drivers
-STM32F4XX_STD_PERIPH_DIR= $(COMMON_BSP_DIR)/STM32F4xx_StdPeriph_Driver
-
 # LWIP
-LWIP_DIR                = $(COMMON_SYS_DIR)/lwip
+LWIP_DIR                = $(COMMON_FW_SYS_DIR)/lwip
 
 # Base64 encoding module
-BASE64_DIR              = $(COMMON_CLI_SRC_DIR)/sys/libb64
+BASE64_DIR              = $(COMMON_CLI_SYS_DIR)/libb64
 
-# Directories that need to be passed down to LWIP
-LWIP_PORT_FOR_LWIP      = ../../bsp/qpc_lwip_port
-BSP_DIR_FOR_LWIP        = ../../bsp/runtime
-LWIP_SRC_DIR            = ../../../Application/src
+# Console output directory
+CON_OUT_DIR             = $(COMMON_FW_SYS_DIR)/con_out
 
+# Debug control directory
+DBG_CNTRL_DIR           = $(COMMON_FW_SYS_DIR)/dbg_cntrl
+
+# Settings Database directory 
+DB_SETTINGS_DIR	        = $(COMMON_FW_SYS_DIR)/settings
+
+# K-ary tree directory
+KTREE_DIR               = $(SYS_DIR)/ktree
+
+# Communications api for the coupler board
+CB_API_DIR              = $(COMMON_CLI_SYS_DIR)/CB_Api
+CB_API_INC_DIR          = $(CB_API_DIR)/inc
+
+#-------------------------------------------------------------------------------
+# APP Directories
+#-------------------------------------------------------------------------------
 # Application Comm directory
 APP_COMM_DIR            = $(APP_DIR)/comm
 
@@ -219,20 +251,10 @@ MENU_CSRCS              = ktree.c \
                           systest_menu.c \
                           systest_i2c.c						  
 
-# Console output directory
-CON_OUT_DIR             = $(COMMON_SYS_DIR)/con_out
-
-# Debug control directory
-DBG_CNTRL_DIR           = $(COMMON_SYS_DIR)/dbg_cntrl
-
-# Settings Database directory 
-DB_SETTINGS_DIR	        = $(COMMON_SYS_DIR)/settings
-
-# K-ary tree directory
-KTREE_DIR               = $(SYS_DIR)/ktree
-
-	
-# Source virtual directories
+#-------------------------------------------------------------------------------
+# Source virtual directories - this is where make will look for all files that
+# it needs to compile.
+#-------------------------------------------------------------------------------
 VPATH                   = $(APP_DIR) \
                           $(APP_COMM_DIR) \
                           $(APP_CPLR_DIR) \
@@ -240,7 +262,7 @@ VPATH                   = $(APP_DIR) \
                           $(APP_MENU_DIRS) \
                           \
                           $(BSP_DIR) \
-                          $(COMMON_BSP_DIR) \
+                          $(COMMON_FW_BSP_DIR) \
                           $(ETH_DRV_DIR)/src \
                           $(SERIAL_DIR) \
                           $(I2C_DIR) \
@@ -252,7 +274,7 @@ VPATH                   = $(APP_DIR) \
                           $(QP_LWIP_PORT_DIR)/netif \
                           \
                           $(BASE64_DIR) \
-                          $(COMMON_BSP_DIR)/runtime \
+                          $(COMMON_FW_BSP_DIR)/runtime \
                           \
                           $(STM32F4XX_STD_PERIPH_DIR)/src \
                           \
@@ -261,7 +283,10 @@ VPATH                   = $(APP_DIR) \
                           $(DBG_CNTRL_DIR) \
                           $(DB_SETTINGS_DIR)
 
-# include directories
+#-------------------------------------------------------------------------------
+# Include directories - this is where make will look for all header files that
+# the source files need to compile.
+#-------------------------------------------------------------------------------
 INCLUDES                = -I$(SRC_DIR) \
                           -I$(COMMON_FW_SRC_DIR) \
                           -I$(APP_DIR) \
@@ -277,10 +302,10 @@ INCLUDES                = -I$(SRC_DIR) \
                           -I$(QP_PORT_DIR) \
                           \
                           -I$(BSP_DIR)  \
-                          -I$(COMMON_BSP_DIR) \
+                          -I$(COMMON_FW_BSP_DIR) \
                           -I$(ETH_DRV_DIR)/inc \
                           -I$(BASE64_DIR) \
-                          -I$(COMMON_BSP_DIR)/runtime \
+                          -I$(COMMON_FW_BSP_DIR)/runtime \
                           -I$(SERIAL_DIR) \
                           -I$(I2C_DIR) \
                           -I$(I2C_FRT_DIR) \
@@ -292,8 +317,8 @@ INCLUDES                = -I$(SRC_DIR) \
                           -I$(LWIP_DIR)/src/include/lwip \
                           -I$(LWIP_DIR)/src/include/ipv4 \
                           \
-                          -I$(COMMON_BSP_DIR)/CMSIS/Include \
-                          -I$(COMMON_BSP_DIR)/CMSIS/Device/ST/STM32F4xx/Include \
+                          -I$(COMMON_FW_BSP_DIR)/CMSIS/Include \
+                          -I$(COMMON_FW_BSP_DIR)/CMSIS/Device/ST/STM32F4xx/Include \
                           \
                           -I$(QP_LWIP_PORT_DIR) \
                           -I$(QP_LWIP_PORT_DIR)/arch \
@@ -308,13 +333,15 @@ INCLUDES                = -I$(SRC_DIR) \
                           \
                           -I$(FR_INC_DIR) \
                           -I$(QP_FR_CONF_DIR) \
-                          -I$(FR_PORT_DIR)
+                          -I$(FR_PORT_DIR) \
+                          \
+                          -I$(CB_API_INC_DIR)
 
-#-----------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
 # defines
 # HSE_VALUE=8000000 overrides the External Clock setting for the 
 # board since the development kit runs at a 25MHz external clock
-#-----------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
 #DEFINES   			   += -DSTM32F439xx \
 #						  -DUSE_STDPERIPH_DRIVER \
 #						  -DHSE_VALUE=8000000 \
@@ -327,9 +354,9 @@ DEFINES                += -DSTM32F429_439xx \
                           -DLWIP_TCP=1 \
                           -DFLASH_BASE=0x08000000
 						  
-#-----------------------------------------------------------------------------
-# files
-#
+#-------------------------------------------------------------------------------
+# All source files that need to be compiled
+#-------------------------------------------------------------------------------
 
 # assembler source files
 ASM_SRCS               := \
@@ -424,9 +451,9 @@ CPP_SRCS 				:=	$(wildcard *.cpp)
 LD_SCRIPT 				:= $(BSP_DIR)/linkerscript/stm32f439flash.ld
 LDFLAGS  				:= -T$(LDSCRIPT)
 
-#-----------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
 # build options for various configurations
-#
+#-------------------------------------------------------------------------------
 
 # Common options for all configurations. 
 LIBS    	= -lqp_$(ARM_CORE)_cs -llwip_$(ARM_CORE)_cs 
@@ -445,7 +472,8 @@ CPPFLAGS    = $(MFLAGS) \
 			  -Wall -fno-rtti -fno-exceptions \
 			  -Os $(INCLUDES) $(DEFINES)
 
-LINKFLAGS   = -nodefaultlibs -Xlinker --gc-sections -Wl,--strip-all -Wl,-Map,$(BIN_DIR)/$(PROJECT_NAME).map $(MFLAGS)
+LINKFLAGS   = -nodefaultlibs -Xlinker --gc-sections -Wl,--strip-all \
+              -Wl,-Map,$(BIN_DIR)/$(PROJECT_NAME).map $(MFLAGS)
 
 else ifeq (spy, $(CONF))  # Spy configuration ................................
 
@@ -459,7 +487,8 @@ CPPFLAGS 	= $(MFLAGS) \
 			  -Wall -fno-rtti -fno-exceptions \
 			  -O $(INCLUDES) $(DEFINES)
 
-LINKFLAGS 	= -nodefaultlibs -Xlinker --gc-sections -Wl,--strip-all -Wl,-Map,$(BIN_DIR)/$(PROJECT_NAME).map $(MFLAGS)
+LINKFLAGS 	= -nodefaultlibs -Xlinker --gc-sections -Wl,--strip-all \
+              -Wl,-Map,$(BIN_DIR)/$(PROJECT_NAME).map $(MFLAGS)
 
 else                     # default Debug configuration .......................
 
@@ -473,7 +502,8 @@ CPPFLAGS 	= $(MFLAGS) \
 			  -Wall -fno-rtti -fno-exceptions \
 			  -g3 -ggdb -O0 $(INCLUDES) $(DEFINES)
 	
-LINKFLAGS 	= -nodefaultlibs -Xlinker --gc-sections -Wl,-Map,$(BIN_DIR)/$(PROJECT_NAME).map $(MFLAGS)
+LINKFLAGS 	= -nodefaultlibs -Xlinker --gc-sections \
+              -Wl,-Map,$(BIN_DIR)/$(PROJECT_NAME).map $(MFLAGS)
 
 endif
 
@@ -651,7 +681,7 @@ show:
 	@echo MCU = $(MCU)
 	@echo MFLAGS = $(MFLAGS)
 	@echo CFLAGS = $(CFLAGS)
-	@echo COMMON_BSP_DIR = $(COMMON_BSP_DIR)
-	@echo COMMON_SYS_DIR = $(COMMON_SYS_DIR)
+	@echo COMMON_FW_BSP_DIR = $(COMMON_FW_BSP_DIR)
+	@echo COMMON_FW_SYS_DIR = $(COMMON_FW_SYS_DIR)
 	@echo I2C_FRT_DIR = $(I2C_FRT_DIR)
 	@echo BSP_DIR = $(BSP_DIR)

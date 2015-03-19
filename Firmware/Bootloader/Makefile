@@ -120,54 +120,84 @@ RM                      = rm -rf
 ECHO                    = echo
 MKDIR                   = mkdir
 
-#-----------------------------------------------------------------------------
-# Directories
-#
-#-----------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
+# General Directories
+#-------------------------------------------------------------------------------
 SRC_DIR                 = ./src
 COMMON_FW_SRC_DIR       = ../Common
 COMMON_CLI_SRC_DIR      = ../../Common
 
+# Local app, bsp, and sys directories
 APP_DIR                 = $(SRC_DIR)/app
 BSP_DIR                 = $(SRC_DIR)/bsp
 SYS_DIR                 = $(SRC_DIR)/sys
 
-COMMON_BSP_DIR          = $(COMMON_FW_SRC_DIR)/bsp
-COMMON_SYS_DIR          = $(COMMON_FW_SRC_DIR)/sys
+# app, bsp, and sys directories common between Bootloader and Application
+COMMON_FW_BSP_DIR       = $(COMMON_FW_SRC_DIR)/bsp
+COMMON_FW_SYS_DIR       = $(COMMON_FW_SRC_DIR)/sys
+
+# app, bsp, and sys directories common between firmware and client
+COMMON_CLI_BSP_DIR       = $(COMMON_CLI_SRC_DIR)/bsp
+COMMON_CLI_SYS_DIR       = $(COMMON_CLI_SRC_DIR)/sys
+
+#-------------------------------------------------------------------------------
+# BSP and Driver Directories
+#-------------------------------------------------------------------------------
 
 # Ethernet Driver
-ETH_DRV_DIR             = $(COMMON_BSP_DIR)/STM32F4x7_ETH_Driver
-QP_LWIP_PORT_DIR        = $(COMMON_BSP_DIR)/qpc_lwip_port
+ETH_DRV_DIR             = $(COMMON_FW_BSP_DIR)/STM32F4x7_ETH_Driver
+QP_LWIP_PORT_DIR        = $(COMMON_FW_BSP_DIR)/qpc_lwip_port
 
 # Serial Driver and AO
-SERIAL_DIR              = $(COMMON_BSP_DIR)/serial
+SERIAL_DIR              = $(COMMON_FW_BSP_DIR)/serial
 
 # I2C Driver and AO
-I2C_DIR                 = $(COMMON_BSP_DIR)/i2c
+I2C_DIR                 = $(COMMON_FW_BSP_DIR)/i2c
 
 # NOR Driver and AO
 NOR_DIR                 = $(BSP_DIR)/nor
 
 # SDRAM Driver and AO
-SDRAM_DIR               = $(COMMON_BSP_DIR)/sdram
-
-# QPC directories
-QPC_DIR                 = $(COMMON_CLI_SRC_DIR)/sys/qpc_5.3.1
-QP_PORT_DIR             = $(QPC_DIR)/ports/arm-cm/qk/gnu
+SDRAM_DIR               = $(COMMON_FW_BSP_DIR)/sdram
 
 # STM32 Drivers
-STM32F4XX_STD_PERIPH_DIR= $(COMMON_BSP_DIR)/STM32F4xx_StdPeriph_Driver
+STM32F4XX_STD_PERIPH_DIR= $(COMMON_FW_BSP_DIR)/STM32F4xx_StdPeriph_Driver
+
+#-------------------------------------------------------------------------------
+# SYS and RTOS Directories
+#-------------------------------------------------------------------------------
+# QPC directories
+QPC_DIR                 = $(COMMON_CLI_SYS_DIR)/qpc_5.3.1
+QP_PORT_DIR             = $(QPC_DIR)/ports/arm-cm/qk/gnu
 
 # LWIP
-LWIP_DIR                = $(COMMON_SYS_DIR)/lwip
+LWIP_DIR                = $(COMMON_FW_SYS_DIR)/lwip
+
+# Console output directory
+CON_OUT_DIR             = $(COMMON_FW_SYS_DIR)/con_out
+
+# Debug control directory
+DBG_CNTRL_DIR           = $(COMMON_FW_SYS_DIR)/dbg_cntrl
+
+# Settings Database directory 
+DB_SETTINGS_DIR	        = $(COMMON_FW_SYS_DIR)/settings
 
 # Base64 encoding module
-BASE64_DIR              = $(COMMON_CLI_SRC_DIR)/sys/libb64
+BASE64_DIR              = $(COMMON_CLI_SYS_DIR)/libb64
 
-# Directories that need to be passed down to LWIP
+# Communications api for the coupler board
+CB_API_DIR              = $(COMMON_CLI_SYS_DIR)/CB_Api
+CB_API_INC_DIR          = $(CB_API_DIR)/inc
+
+# Directories that need to be passed down to LWIP.  Don't use $(VAR) here since
+# these get passed down to LWIP as a string and $(VAR)s won't be evaluated.
 LWIP_PORT_FOR_LWIP      = ../../bsp/qpc_lwip_port
 BSP_DIR_FOR_LWIP        = ../../bsp/runtime
 LWIP_SRC_DIR            = ../../../Application/src
+
+#-------------------------------------------------------------------------------
+# APP Directories
+#-------------------------------------------------------------------------------
 
 # Application Comm directory
 APP_COMM_DIR            = $(APP_DIR)/comm
@@ -175,22 +205,15 @@ APP_COMM_DIR            = $(APP_DIR)/comm
 # Application Debug directory
 APP_DBG_DIR             = $(APP_DIR)/debug
 
-# Console output directory
-CON_OUT_DIR             = $(COMMON_SYS_DIR)/con_out
-
-# Debug control directory
-DBG_CNTRL_DIR           = $(COMMON_SYS_DIR)/dbg_cntrl
-
-# Settings Database directory 
-DB_SETTINGS_DIR	        = $(COMMON_SYS_DIR)/settings
-
-# Source virtual directories
+#-------------------------------------------------------------------------------
+# Source virtual directories - this is where make will look for all files that
+# it needs to compile.
+#-------------------------------------------------------------------------------
 VPATH                   = $(APP_DIR) \
                           $(APP_COMM_DIR) \
                           $(APP_DBG_DIR) \
                           \
                           $(BSP_DIR) \
-                          $(COMMON_BSP_DIR) \
                           $(ETH_DRV_DIR)/src \
                           $(SERIAL_DIR) \
                           $(I2C_DIR) \
@@ -200,7 +223,8 @@ VPATH                   = $(APP_DIR) \
                           $(QP_LWIP_PORT_DIR)/netif \
                           \
                           $(BASE64_DIR) \
-                          $(COMMON_BSP_DIR)/runtime \
+                          $(COMMON_FW_BSP_DIR) \
+                          $(COMMON_FW_BSP_DIR)/runtime \
                           \
                           $(STM32F4XX_STD_PERIPH_DIR)/src \
                           \
@@ -208,7 +232,10 @@ VPATH                   = $(APP_DIR) \
                           $(DBG_CNTRL_DIR) \
                           $(DB_SETTINGS_DIR)
 
-# include directories
+#-------------------------------------------------------------------------------
+# Include directories - this is where make will look for all header files that
+# the source files need to compile.
+#-------------------------------------------------------------------------------
 INCLUDES                = -I$(SRC_DIR) \
                           -I$(COMMON_FW_SRC_DIR) \
                           -I$(APP_DIR) \
@@ -221,10 +248,10 @@ INCLUDES                = -I$(SRC_DIR) \
                           -I$(QP_PORT_DIR) \
                           \
                           -I$(BSP_DIR)  \
-                          -I$(COMMON_BSP_DIR) \
+                          -I$(COMMON_FW_BSP_DIR) \
                           -I$(ETH_DRV_DIR)/inc \
                           -I$(BASE64_DIR) \
-                          -I$(COMMON_BSP_DIR)/runtime \
+                          -I$(COMMON_FW_BSP_DIR)/runtime \
                           -I$(SERIAL_DIR) \
                           -I$(I2C_DIR) \
                           -I$(SDRAM_DIR) \
@@ -234,8 +261,8 @@ INCLUDES                = -I$(SRC_DIR) \
                           -I$(LWIP_DIR)/src/include/lwip \
                           -I$(LWIP_DIR)/src/include/ipv4 \
                           \
-                          -I$(COMMON_BSP_DIR)/CMSIS/Include \
-                          -I$(COMMON_BSP_DIR)/CMSIS/Device/ST/STM32F4xx/Include \
+                          -I$(COMMON_FW_BSP_DIR)/CMSIS/Include \
+                          -I$(COMMON_FW_BSP_DIR)/CMSIS/Device/ST/STM32F4xx/Include \
                           \
                           -I$(QP_LWIP_PORT_DIR) \
                           -I$(QP_LWIP_PORT_DIR)/arch \
@@ -245,7 +272,9 @@ INCLUDES                = -I$(SRC_DIR) \
                           \
                           -I$(CON_OUT_DIR) \
                           -I$(DBG_CNTRL_DIR) \
-                          -I$(DB_SETTINGS_DIR)
+                          -I$(DB_SETTINGS_DIR)\
+                          \
+                          -I$(CB_API_INC_DIR)
 
 #-----------------------------------------------------------------------------
 # defines
