@@ -26,7 +26,12 @@
 	</natures>
 	<linkedResources>
 		<link>
-			<name>Common</name>
+			<name>CliCommon</name>
+			<type>2</type>
+			<location>C:/Users/rostovh/workspace/STM324391_QP_CPLR_DK/Common</location>
+		</link>
+		<link>
+			<name>FWCommon</name>
 			<type>2</type>
 			<location>C:/Users/rostovh/workspace/STM324391_QP_CPLR_DK/Firmware/Common</location>
 		</link>

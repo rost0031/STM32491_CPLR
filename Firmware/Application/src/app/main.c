@@ -115,7 +115,7 @@ int main(void)
     BSP_init();
 
     dbg_slow_printf("Initialized BSP\n");
-    log_slow_printf("Starting Bootloader version %s built on %s\n", FW_VER, BUILD_DATE);
+    log_slow_printf("Starting Application version %s built on %s\n", FW_VER, BUILD_DATE);
 
     log_slow_printf("Checking settings DB validity...\n");
     CBErrorCode status = DB_isValid( ACCESS_BARE_METAL );

@@ -125,14 +125,15 @@ MKDIR                   = mkdir
 #
 #-----------------------------------------------------------------------------
 SRC_DIR                 = ./src
-COMMON_SRC_DIR          = ../Common
+COMMON_FW_SRC_DIR       = ../Common
+COMMON_CLI_SRC_DIR      = ../../Common
 
 APP_DIR                 = $(SRC_DIR)/app
 BSP_DIR                 = $(SRC_DIR)/bsp
 SYS_DIR                 = $(SRC_DIR)/sys
 
-COMMON_BSP_DIR          = $(COMMON_SRC_DIR)/bsp
-COMMON_SYS_DIR          = $(COMMON_SRC_DIR)/sys
+COMMON_BSP_DIR          = $(COMMON_FW_SRC_DIR)/bsp
+COMMON_SYS_DIR          = $(COMMON_FW_SRC_DIR)/sys
 
 # Ethernet Driver
 ETH_DRV_DIR             = $(COMMON_BSP_DIR)/STM32F4x7_ETH_Driver
@@ -151,7 +152,7 @@ NOR_DIR                 = $(BSP_DIR)/nor
 SDRAM_DIR               = $(COMMON_BSP_DIR)/sdram
 
 # QPC directories
-QPC_DIR                 = $(COMMON_SYS_DIR)/qpc_5.3.1
+QPC_DIR                 = $(COMMON_CLI_SRC_DIR)/sys/qpc_5.3.1
 QP_PORT_DIR             = $(QPC_DIR)/ports/arm-cm/qk/gnu
 
 # STM32 Drivers
@@ -161,7 +162,7 @@ STM32F4XX_STD_PERIPH_DIR= $(COMMON_BSP_DIR)/STM32F4xx_StdPeriph_Driver
 LWIP_DIR                = $(COMMON_SYS_DIR)/lwip
 
 # Base64 encoding module
-BASE64_DIR              = $(COMMON_SYS_DIR)/libb64
+BASE64_DIR              = $(COMMON_CLI_SRC_DIR)/sys/libb64
 
 # Directories that need to be passed down to LWIP
 LWIP_PORT_FOR_LWIP      = ../../bsp/qpc_lwip_port
@@ -209,7 +210,7 @@ VPATH                   = $(APP_DIR) \
 
 # include directories
 INCLUDES                = -I$(SRC_DIR) \
-                          -I$(COMMON_SRC_DIR) \
+                          -I$(COMMON_FW_SRC_DIR) \
                           -I$(APP_DIR) \
                           \
                           -I$(APP_COMM_DIR) \
