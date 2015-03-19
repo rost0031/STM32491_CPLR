@@ -173,7 +173,7 @@ all: $(LIBDIR)/liblwip_$(ARM_CORE)_cs.a
 # LWIP Specific targets
 #
 $(LIBDIR)/liblwip_$(ARM_CORE)_cs.a: $(LWIP_AOBJS) $(LWIP_COBJS) $(LIBDIR)
-	@echo "--- Compiling libLWIP library"
+	@echo "--- Creating libLWIP library"
 	$(TRACE_FLAG)$(AR) $(LIBFLAGS) $(LIBDIR)/liblwip_$(ARM_CORE)_cs.a $(LWIP_AOBJS) $(LWIP_COBJS)
 
 $(LWIP_SRC)/%.o: $(LWIP_SRC)/%.c

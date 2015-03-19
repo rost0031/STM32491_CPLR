@@ -1,11 +1,10 @@
 ##############################################################################
 # Product: Makefile for Project
-# Date of the Last Update:  Aug 7, 2014
 #
 #                             Datacard 
 #                    ---------------------------
 #
-# Copyright (C) 2014 Datacard. All rights reserved.
+# Copyright (C) 2015 Datacard. All rights reserved.
 #
 ##############################################################################
 # examples of invoking this Makefile:
@@ -18,7 +17,15 @@
 # make clean
 # make CONF=rel clean
 # make CONF=spy clean
-#
+# 
+# To control output from compiler/linker, use the following flag 
+# If TRACE=0 -->TRACE_FLAG=
+# If TRACE=1 -->TRACE_FLAG=@
+# If TRACE=something -->TRACE_FLAG=something
+TRACE=0
+TRACEON=$(TRACE:0=@)
+TRACE_FLAG=$(TRACEON:1=)
+
 # env.mk contains an optional CONF define (as above) and IP define
 # if IP=slave the default IP address built into the code will be 169.254.2.3
 # if not, then the user's printer IP will be built in.
@@ -50,12 +57,6 @@ IPADDR2 = 0
 IPADDR3 = $(IP)
 endif
 
-# If TRACE=0 -->TRACE_FLAG=
-# If TRACE=1 -->TRACE_FLAG=@
-# If TRACE=something -->TRACE_FLAG=something
-TRACE=0
-TRACEON=$(TRACE:0=@)
-TRACE_FLAG=$(TRACEON:1=)
 
 # Output file basename (should be the same as the directory name)
 PROJECT_NAME            = CBBootLdr
@@ -532,33 +533,36 @@ $(TARGET_ELF) : $(ASM_OBJS_EXT) $(C_OBJS_EXT) $(CPP_OBJS_EXT)
 build_libs: build_qpc build_lwip
 
 build_qpc:
-	@echo ---------------------------
-	@echo --- Building QPC libraries ---
-	@echo ---------------------------
-	$(TRACE_FLAG)cd $(QP_PORT_DIR); make MCU=$(MCU) CONF=$(BIN_DIR)
+	@echo -----------------------------------
+	@echo --- Building QPC libraries in $(QP_PORT_DIR) ---
+	@echo -----------------------------------
+	$(TRACE_FLAG)cd $(QP_PORT_DIR); make TRACE=$(TRACE) MCU=$(MCU) CONF=$(BIN_DIR)
 
 build_lwip:
-	@echo ---------------------------
-	@echo --- Building LWIP libraries ---
-	@echo ----Passing in current proj directory
-	#TODO: The passed in directories must be relative to the LWIP library, not this project
+	@echo -----------------------------------
+	@echo --- Building LWIP libraries     ---
+	@echo ----Passing in current proj dir ---
+	@echo -----------------------------------
 	$(TRACE_FLAG)cd $(LWIP_DIR); make MCU=$(MCU) CONF=$(BIN_DIR) LWIP_PORT_DIR=$(LWIP_PORT_FOR_LWIP) PROJ_BSP=$(BSP_DIR_FOR_LWIP) LWIP_SRC_DIR=$(LWIP_SRC_DIR) TRACE=$(TRACE)
 
 $(BIN_DIR)/%.d : %.c
+	@echo --- Checking dependency for $(<F)
 	$(TRACE_FLAG)$(CC) -MM -MT $(@:.d=.o) $(CFLAGS) $< > $@
 
 $(BIN_DIR)/%.d : %.cpp
+	@echo --- Compiling $(<F)
 	$(TRACE_FLAG)$(CPP) -MM -MT $(@:.d=.o) $(CPPFLAGS) $< > $@
 
 $(BIN_DIR)/%.o : %.S
-	@echo --- Compiling $< ---
+	@echo --- Compiling $(<F)
 	$(TRACE_FLAG)$(AS) $(ASFLAGS) $< -o $@
 
 $(BIN_DIR)/%.o : %.c
-	@echo --- Compiling $< ---
+	@echo --- Compiling $(<F)
 	$(TRACE_FLAG)$(CC) $(CFLAGS) -c $< -o $@
 
 $(BIN_DIR)/%.o : %.cpp
+	@echo --- Compiling $(<F)
 	$(TRACE_FLAG)$(CPP) $(CPPFLAGS) -c $< -o $@
 
 # Make sure not to generate dependencies when doing cleans

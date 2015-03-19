@@ -36,13 +36,21 @@
 # make clean
 # make CONF=rel clean
 # make CONF=spy clean
+# 
+# To control output from compiler/linker, use the following flag 
+# If TRACE=0 -->TRACE_FLAG=
+# If TRACE=1 -->TRACE_FLAG=@
+# If TRACE=something -->TRACE_FLAG=something
+TRACEON=$(TRACE:0=@)
+TRACE_FLAG=$(TRACEON:1=)
 
 # Leave this blank here.  This gets appended with needed defines as the options
 # are parsed 
 DEFINES                     =
 
 #------------------------------------------------------------------------------
-#  MCU SETUP - these defaults can be overridden by passing in MCU=
+# MCU SETUP - these defaults can be overridden by passing in MCU=
+# If MCU is not passed in, compilation stops with error. 
 #------------------------------------------------------------------------------
 ARM_CORE                    = cortex-m3
 MFLAGS                      = -mcpu=$(ARM_CORE) -mthumb -mfloat-abi=soft
@@ -237,20 +245,21 @@ ALL_SRCS = $(QEP_CSRC) $(QF_CSRC) $(QK_CSRC) $(QS_CSRC) $(QK_ASRC)
 all: $(BINDIR) $(BINDIR)/libqp_$(ARM_CORE)_cs.a
 
 $(BINDIR)/libqp_$(ARM_CORE)_cs.a: 	$(BINDIR) $(ALL_OBJS)
-	-$(RM) $(BINDIR)/libqp.a
-	$(AR) $(LIBFLAGS) $(BINDIR)/libqp_$(ARM_CORE)_cs.a $(ALL_OBJS)
+	-$(RM) $(BINDIR)/*.a
+	@echo --- Creating library $(BINDIR)/libqp_$(ARM_CORE)_cs.a
+	$(TRACE_FLAG)$(AR) $(LIBFLAGS) $(BINDIR)/libqp_$(ARM_CORE)_cs.a $(ALL_OBJS)
 
 $(BINDIR)/%.o: %.c
-	@echo Compiling C object
-	$(CC) $(CCFLAGS) $(CCINC) $(INCLUDES) -c $< -o $@
+	@echo --- Compiling $(<F)
+	$(TRACE_FLAG)$(CC) $(CCFLAGS) $(CCINC) $(INCLUDES) -c $< -o $@
 	
 $(BINDIR)/%.o: %.s
-	@echo Compiling ASM object
-	$(AS) $(ASMFLAGS) $< -o $@
+	@echo --- Compiling $(<F)
+	$(TRACE_FLAG)$(AS) $(ASMFLAGS) $< -o $@
 
 $(BINDIR):
 	@echo Creating output directory
-	mkdir $@
+	$(TRACE_FLAG)mkdir $@
 
 # clean ======================================================================
 .PHONY : clean

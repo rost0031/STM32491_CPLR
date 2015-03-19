@@ -1,8 +1,76 @@
+##############################################################################
+# Product: Makefile for Project
+# 
+#                             Datacard 
+#                    ---------------------------
+#
+# Copyright (C) 2015 Datacard. All rights reserved.
+#
+##############################################################################
+# examples of invoking this Makefile:
+# building configurations: Debug (default), Release, and Spy
+# make MCU=cortex-m4-fpv4-sp-d16
+# make MCU=cortex-m4-fpv4-sp-d16 CONF=rel
+# make MCU=cortex-m4-fpv4-sp-d16 CONF=spy
+#
+# cleaning configurations: Debug (default), Release, and Spy
+# make MCU=cortex-m4-fpv4-sp-d16 clean
+# make MCU=cortex-m4-fpv4-sp-d16 CONF=rel clean
+# make MCU=cortex-m4-fpv4-sp-d16 CONF=spy clean
+# 
+# To control output from compiler/linker, use the following flag 
 # If TRACE=0 -->TRACE_FLAG=
 # If TRACE=1 -->TRACE_FLAG=@
 # If TRACE=something -->TRACE_FLAG=something
+TRACE=0
 TRACEON=$(TRACE:0=@)
 TRACE_FLAG=$(TRACEON:1=)
+
+# Output file basename (should be the same as the library name)
+PROJECT_NAME            = libCBCommApi
+
+# Set up variable for appending later
+DEFINES                 = 
+
+#------------------------------------------------------------------------------
+#  MCU SETUP - This specifies which core to pass down to all the other makefiles
+#  and to compile options for different ARM cortex-m processors.
+#------------------------------------------------------------------------------
+
+# defaults
+ARM_CORE                = cortex-m3
+MFLAGS                  = -mcpu=$(ARM_CORE) -mthumb -mfloat-abi=soft
+AFLAGS                  = -mcpu=$(ARM_CORE)
+
+ifeq (cortex-m0, $(MCU))
+    ARM_CORE            = cortex-m0
+    MFLAGS              = -mcpu=$(ARM_CORE) -mthumb -mfloat-abi=soft
+    AFLAGS              = -mcpu=$(ARM_CORE)
+else ifeq (cortex-m0plus, $(MCU))
+    ARM_CORE            = cortex-m0plus
+    MFLAGS              = -mcpu=$(ARM_CORE) -mthumb -mfloat-abi=soft
+    AFLAGS              = -mcpu=$(ARM_CORE)
+else ifeq (cortex-m3, $(MCU))
+    ARM_CORE            = cortex-m3
+    MFLAGS              = -mcpu=$(ARM_CORE) -mthumb -mfloat-abi=soft
+    AFLAGS              = -mcpu=$(ARM_CORE)
+else ifeq (cortex-m4-vfp, $(MCU))
+    ARM_CORE            = cortex-m4
+    ARM_FPU             = fpv4-sp-d16
+    MFLAGS              = -mcpu=$(ARM_CORE) -mfpu=$(ARM_FPU) -mfloat-abi=softfp \
+						  -mlittle-endian -mthumb
+    AFLAGS              = -mcpu=$(ARM_CORE) -defsym=FPU_VFP_V4_SP_D16=1
+    DEFINES            += -D__VFP_FP__
+else ifeq (cortex-m4-fpv4-sp-d16, $(MCU))
+    ARM_CORE            = cortex-m4
+    ARM_FPU             = fpv4-sp-d16
+    MFLAGS              = -mcpu=$(ARM_CORE) -mfpu=$(ARM_FPU) -mfloat-abi=hard \
+	                      -mlittle-endian -mthumb
+    AFLAGS              = -mcpu=$(ARM_CORE) -defsym=FPU_VFP_V4_SP_D16=1
+    DEFINES            += -D__VFP_FP__	
+else
+    $(error Must specify the MCU, like MCU=cortex-m0 )
+endif
 
 RM              = rm -rf
 ECHO            = echo
