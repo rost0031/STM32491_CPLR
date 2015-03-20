@@ -22,9 +22,9 @@
 # If TRACE=0 -->TRACE_FLAG=
 # If TRACE=1 -->TRACE_FLAG=@
 # If TRACE=something -->TRACE_FLAG=something
-TRACE=0
-TRACEON=$(TRACE:0=@)
-TRACE_FLAG=$(TRACEON:1=)
+TRACE                   = 0
+TRACEON                 = $(TRACE:0=@)
+TRACE_FLAG              = $(TRACEON:1=)
 
 # env.mk contains an optional CONF define (as above) and IP define
 # if IP=slave the default IP address built into the code will be 169.254.2.3
@@ -46,16 +46,16 @@ ifneq ($(IP),)
 endif
 
 ifeq ($(IP),)       # Slave IP address............................
-IPADDR0 = 172  
-IPADDR1 = 27
-IPADDR2 = 0
-IPADDR3 = 3
-MAC = 0x3b
+IPADDR0                 = 172  
+IPADDR1                 = 27
+IPADDR2                 = 0
+IPADDR3                 = 3
+MAC                     = 0x3b
 else
-IPADDR0 = 172
-IPADDR1 = 27
-IPADDR2 = 0
-IPADDR3 = $(IP)
+IPADDR0                 = 172
+IPADDR1                 = 27
+IPADDR2                 = 0
+IPADDR3                 = $(IP)
 endif
 
 # Output file basename (should be the same as the directory name)
@@ -578,20 +578,18 @@ build_IP:
 	@-rm -f $(SRC_DIR)/ipAndMac.diff $(SRC_DIR)/ipAndMac.new.h
 
 $(BIN_DIR):
-	@echo ---------------------------
-	@echo --- Creating directory ---
-	@echo ---------------------------
+	@echo --- Creating directory $@
 	$(TRACE_FLAG)mkdir -p $@
 
 $(TARGET_BIN): $(TARGET_ELF)
-	@echo --- Creating binaries ---
+	@echo --- Creating binary $@
 	$(TRACE_FLAG)$(OBJCPY) -O binary $< $@
 	$(TRACE_FLAG)mv $(TARGET_BIN) $(TARGET_FLSH)
 	$(TRACE_FLAG)$(OBJCPY) -O ihex $< $@
 	
 
 $(TARGET_ELF) : $(ASM_OBJS_EXT) $(C_OBJS_EXT) $(CPP_OBJS_EXT)
-	@echo --- Linking libraries   ---
+	@echo --- Linking libraries
 	$(TRACE_FLAG)$(LINK) -T$(LD_SCRIPT) $(LINKFLAGS) $(LIB_PATHS) -o $@ $^ $(LIBS)
 	$(SIZE) $(TARGET_ELF)
 	
@@ -627,6 +625,7 @@ $(BIN_DIR)/%.o : %.c
 	$(TRACE_FLAG)$(CC) $(CFLAGS) -c $< -o $@
 
 $(BIN_DIR)/%.o : %.cpp
+	@echo --- Compiling $(<F)
 	$(TRACE_FLAG)$(CPP) $(CPPFLAGS) -c $< -o $@
 
 # Make sure not to generate dependencies when doing cleans
