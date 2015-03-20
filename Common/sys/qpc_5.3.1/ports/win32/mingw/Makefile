@@ -77,7 +77,6 @@ QF_SRCDIR                   = $(QPC)/qf/source
 QS_SRCDIR                   = $(QPC)/qs/source
 QP_PRTDIR                   = ../
 LIBFLAGS                    = rs
-QS_OBJS                     =
 
 CCINC                       = -I$(QP_PRTDIR) -I$(QP_INCDIR) -I$(QF_SRCDIR)
 
@@ -86,26 +85,33 @@ CCINC                       = -I$(QP_PRTDIR) -I$(QP_INCDIR) -I$(QF_SRCDIR)
 #
 
 # Common build options for all configs
-CFLAGS                      = -c -Wall -std=gnu99
+#CCFLAGS                     = -c -Wall -std=gnu99
+
+# Common build options for all configs
+# -c         : compile only
+# -Wall      : all warnings enabled
+# -std=gnu99 : enable C99 rules for gnu compilers
+# -ffunction-sections/fdata-sections : enable compiler optimizations that allow
+#              easy use of -gc-sections when linking to this library                     
+CCFLAGS                      = -c -Wall -std=gnu99 \
+                               -ffunction-sections -fdata-sections
 
 ifeq (rel, $(CONF))       # Release configuration ............................
 
 BINDIR                      = rel
 
 # gcc options
-# -c    : compile only
 # -O    : optimize
-CCFLAGS                    += -O2 -o$@
+CCFLAGS                    += -O2
 
 else ifeq (spy, $(CONF))  # Spy configuration ................................
 
 BINDIR                      = spy
 
 # gcc options
-# -c    : compile only
 # -g    : source level debugging
 # -D    : define preprocessor macro
-CCFLAGS                     = -g -O -DQ_SPY -o$@
+CCFLAGS                    += -g -O -DQ_SPY
 
 QS_CSRC                     = qs.c \
 	                          qs_.c \
@@ -126,9 +132,9 @@ BINDIR                      = dbg
 QP_DEP                      = $(QP_INCDIR)/qassert.h
 
 # gcc options
-# -c    : compile only
-# -g    : source level debugging
-CCFLAGS                     = -g3 -ggdb -O -o$@
+# -g3   : source level debugging
+# -ggdb : include gdb symbols for debugging
+CCFLAGS                    += -g3 -ggdb -O 
 
 endif
 

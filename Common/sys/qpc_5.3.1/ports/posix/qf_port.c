@@ -112,7 +112,7 @@ static void *thread_routine(void *arg) { /* the expected POSIX signature */
 void QActive_start_(QActive * const me, uint_fast8_t prio,
                     QEvt const *qSto[], uint_fast16_t qLen,
                     void *stkSto, uint_fast16_t stkSize,
-                    QEvt const *ie)
+                    QEvt const *ie, const char* taskName)
 {
     pthread_t thread;
     pthread_attr_t attr;
