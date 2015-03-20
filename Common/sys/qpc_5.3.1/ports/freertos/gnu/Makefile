@@ -41,8 +41,8 @@
 # If TRACE=0 -->TRACE_FLAG=
 # If TRACE=1 -->TRACE_FLAG=@
 # If TRACE=something -->TRACE_FLAG=something
-TRACEON=$(TRACE:0=@)
-TRACE_FLAG=$(TRACEON:1=)
+TRACEON                     = $(TRACE:0=@)
+TRACE_FLAG                  = $(TRACEON:1=)
 
 # Leave this blank here.  This gets appended with needed defines as the options
 # are parsed 

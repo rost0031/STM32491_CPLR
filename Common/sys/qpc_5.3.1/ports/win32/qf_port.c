@@ -120,7 +120,7 @@ void QF_setTickRate(uint32_t ticksPerSec) {
 void QActive_start_(QActive * const me, uint_fast8_t prio,
                     QEvt const *qSto[], uint_fast16_t qLen,
                     void *stkSto, uint_fast16_t stkSize,
-                    QEvt const *ie)
+                    QEvt const *ie, const char* taskName)
 {
     DWORD threadId;
     int p;
