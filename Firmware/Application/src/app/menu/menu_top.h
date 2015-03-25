@@ -55,7 +55,7 @@ treeNode_t* MENU_init( void );
  * @param [in] pBuffer: const char*  pointer to the storage of the buffer where the
  * command data resides
  * @param [in] bufferLen: uint16_t length of the data in the command buffer.
- * @param [in] msgSrc: MsgSrc var that indicates where the command came from.
+ * @param [in] msgSrc: CBMsgRoute var that indicates where the command came from.
  * @return  treeNode_t*: pointer to the submenu where the system is currently
  * pointing to.
  * @note: this can be different than the passed in node.
@@ -64,7 +64,7 @@ treeNode_t* MENU_parse(
       treeNode_t *node,
       const char* pBuffer,
       uint16_t bufferLen,
-      volatile MsgSrc msgSrc
+      volatile CBMsgRoute msgSrc
 );
 
 /**

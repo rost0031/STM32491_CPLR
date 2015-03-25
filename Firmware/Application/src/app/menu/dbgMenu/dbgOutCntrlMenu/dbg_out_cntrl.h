@@ -47,14 +47,14 @@ extern char *const menuDbgOutCntrlItem_toggleEthDebugSelectKey;
  * @param [in] dataBuf: const char* pointer to the data passed in by the user at
  * cmd line
  * @param [in] dataLen: uint16_t length of data in the dataBuf.
- * @param [in] dst: MsgSrc destination so MENU_printf() knows were to direct the
+ * @param [in] dst: CBMsgRoute destination so MENU_printf() knows were to direct the
  * output.
  * @return: None
  */
 void MENU_toggleSerialDebugAction(
       const char* dataBuf,
       uint16_t dataLen,
-      MsgSrc dst
+      CBMsgRoute dst
 );
 
 /**
@@ -62,14 +62,14 @@ void MENU_toggleSerialDebugAction(
  * @param [in] dataBuf: const char* pointer to the data passed in by the user at
  * cmd line
  * @param [in] dataLen: uint16_t length of data in the dataBuf.
- * @param [in] dst: MsgSrc destination so MENU_printf() knows were to direct the
+ * @param [in] dst: CBMsgRoute destination so MENU_printf() knows were to direct the
  * output.
  * @return: None
  */
 void MENU_toggleEthDebugAction(
       const char* dataBuf,
       uint16_t dataLen,
-      MsgSrc dst
+      CBMsgRoute dst
 );
 
 /**

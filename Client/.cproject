@@ -42,6 +42,10 @@
 							</tool>
 						</toolChain>
 					</folderInfo>
+					<fileInfo id="cdt.managedbuild.toolchain.gnu.cross.base.251674152.1812309521" name="MainMgr_gen.h" rcbsApplicability="disable" resourcePath="src/dll/MainMgr_gen.h" toolsToInvoke=""/>
+					<sourceEntries>
+						<entry excluding="src/dll/MainMgr_gen.h|src/dll/MainMgr_gen.cpp" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
+					</sourceEntries>
 				</configuration>
 			</storageModule>
 			<storageModule moduleId="org.eclipse.cdt.core.externalSettings"/>
@@ -54,5 +58,9 @@
 		<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
 	</storageModule>
 	<storageModule moduleId="org.eclipse.cdt.core.LanguageSettingsProviders"/>
-	<storageModule moduleId="refreshScope"/>
+	<storageModule moduleId="refreshScope" versionNumber="2">
+		<configuration configurationName="Default">
+			<resource resourceType="PROJECT" workspacePath="/CPLR_Client"/>
+		</configuration>
+	</storageModule>
 </cproject>

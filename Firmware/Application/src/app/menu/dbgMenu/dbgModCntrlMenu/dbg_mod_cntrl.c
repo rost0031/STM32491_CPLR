@@ -82,7 +82,7 @@ char *const menuDbgModCntrlItem_toggleModCOMMSelectKey = "COM";
 void MENU_toggleDbgModGeneralAction(
       const char* dataBuf,
       uint16_t dataLen,
-      MsgSrc dst
+      CBMsgRoute dst
 )
 {
    CB_UNUSED_ARG(dataBuf);
@@ -96,7 +96,7 @@ void MENU_toggleDbgModGeneralAction(
 void MENU_toggleDbgModSerialAction(
       const char* dataBuf,
       uint16_t dataLen,
-      MsgSrc dst
+      CBMsgRoute dst
 )
 {
    CB_UNUSED_ARG(dataBuf);
@@ -110,7 +110,7 @@ void MENU_toggleDbgModSerialAction(
 void MENU_toggleDbgModTimeAction(
       const char* dataBuf,
       uint16_t dataLen,
-      MsgSrc dst
+      CBMsgRoute dst
 )
 {
    CB_UNUSED_ARG(dataBuf);
@@ -124,7 +124,7 @@ void MENU_toggleDbgModTimeAction(
 void MENU_toggleDbgModEthAction(
       const char* dataBuf,
       uint16_t dataLen,
-      MsgSrc dst
+      CBMsgRoute dst
 )
 {
    CB_UNUSED_ARG(dataBuf);
@@ -138,7 +138,7 @@ void MENU_toggleDbgModEthAction(
 void MENU_toggleDbgModI2CAction(
       const char* dataBuf,
       uint16_t dataLen,
-      MsgSrc dst
+      CBMsgRoute dst
 )
 {
    CB_UNUSED_ARG(dataBuf);
@@ -152,7 +152,7 @@ void MENU_toggleDbgModI2CAction(
 void MENU_toggleDbgModNORAction(
       const char* dataBuf,
       uint16_t dataLen,
-      MsgSrc dst
+      CBMsgRoute dst
 )
 {
    CB_UNUSED_ARG(dataBuf);
@@ -166,7 +166,7 @@ void MENU_toggleDbgModNORAction(
 void MENU_toggleDbgModSDRAMAction(
       const char* dataBuf,
       uint16_t dataLen,
-      MsgSrc dst
+      CBMsgRoute dst
 )
 {
    CB_UNUSED_ARG(dataBuf);
@@ -180,7 +180,7 @@ void MENU_toggleDbgModSDRAMAction(
 void MENU_toggleDbgModDBGAction(
       const char* dataBuf,
       uint16_t dataLen,
-      MsgSrc dst
+      CBMsgRoute dst
 )
 {
    CB_UNUSED_ARG(dataBuf);
@@ -194,7 +194,7 @@ void MENU_toggleDbgModDBGAction(
 void MENU_toggleDbgModCOMMAction(
       const char* dataBuf,
       uint16_t dataLen,
-      MsgSrc dst
+      CBMsgRoute dst
 )
 {
    CB_UNUSED_ARG(dataBuf);

@@ -201,9 +201,12 @@ DB_SETTINGS_DIR	        = $(COMMON_FW_SYS_DIR)/settings
 # K-ary tree directory
 KTREE_DIR               = $(SYS_DIR)/ktree
 
-# Communications api for the coupler board
-CB_API_DIR              = $(COMMON_CLI_SYS_DIR)/CB_Api
-CB_API_INC_DIR          = $(CB_API_DIR)/inc
+# Coupler Board API directory
+CB_API_DIR                  = $(COMMON_CLI_SYS_DIR)/cb_api
+CB_API_GEN_SRC_DIR          = $(CB_API_DIR)/gen_src
+CB_API_SRC_DIR              = $(CB_API_DIR)/src
+CB_API_INC_DIR              = $(CB_API_DIR)/inc
+CB_API_LIB_DIR              = $(CB_API_DIR)/arm_lib
 
 #-------------------------------------------------------------------------------
 # APP Directories
@@ -289,6 +292,7 @@ VPATH                   = $(APP_DIR) \
 #-------------------------------------------------------------------------------
 INCLUDES                = -I$(SRC_DIR) \
                           -I$(COMMON_FW_SRC_DIR) \
+                          -I$(COMMON_CLI_SYS_DIR) \
                           -I$(APP_DIR) \
                           \
                           -I$(APP_COMM_DIR) \
@@ -335,7 +339,9 @@ INCLUDES                = -I$(SRC_DIR) \
                           -I$(QP_FR_CONF_DIR) \
                           -I$(FR_PORT_DIR) \
                           \
-                          -I$(CB_API_INC_DIR)
+                          -I$(CB_API_SRC_DIR) \
+                          -I$(CB_API_INC_DIR) \
+                          -I$(CB_API_GEN_SRC_DIR)
 
 #-------------------------------------------------------------------------------
 # defines
@@ -456,8 +462,8 @@ LDFLAGS  				:= -T$(LDSCRIPT)
 #-------------------------------------------------------------------------------
 
 # Common options for all configurations. 
-LIBS    	= -lqp_$(ARM_CORE)_cs -llwip_$(ARM_CORE)_cs 
-LIB_PATHS   = -L$(QP_PORT_DIR)/$(BIN_DIR) -L$(LWIP_DIR)/$(BIN_DIR)
+LIBS    	= -lqp_$(ARM_CORE)_cs -llwip_$(ARM_CORE)_cs -lCBCommApi_arm -lprotobuf_core_arm
+LIB_PATHS   = -L$(QP_PORT_DIR)/$(BIN_DIR) -L$(LWIP_DIR)/$(BIN_DIR) -L$(CB_API_LIB_DIR)
 
 # Specific options depending on the build configuration
 ifeq (rel, $(CONF))       # Release configuration ............................
@@ -592,20 +598,29 @@ $(TARGET_ELF) : $(ASM_OBJS_EXT) $(C_OBJS_EXT) $(CPP_OBJS_EXT)
 	@echo --- Linking libraries
 	$(TRACE_FLAG)$(LINK) -T$(LD_SCRIPT) $(LINKFLAGS) $(LIB_PATHS) -o $@ $^ $(LIBS)
 	$(SIZE) $(TARGET_ELF)
-	
-build_libs: build_qpc build_lwip
+
+build_libs: build_qpc build_lwip build_cb_api
+	@echo -----------------------------------
+	@echo --- Building libraries complete ---
+	@echo -----------------------------------
 
 build_qpc:
-	@echo -----------------------------------
+	@echo ------------------------------------------------
 	@echo --- Building QPC libraries in $(QP_PORT_DIR) ---
-	@echo -----------------------------------
+	@echo ------------------------------------------------
 	$(TRACE_FLAG)cd $(QP_PORT_DIR); make TRACE=$(TRACE) MCU=$(MCU) CONF=$(BIN_DIR)
 
+build_cb_api:
+	@echo ------------------------------------------------
+	@echo --- Building CB API library in $(CB_API_DIR) ---
+	@echo ------------------------------------------------
+	cd $(CB_API_DIR); make TARGET=arm  MCU=$(MCU) TRACE=$(TRACE) clean
+	$(TRACE_FLAG)cd $(CB_API_DIR); make TARGET=arm  MCU=$(MCU) TRACE=$(TRACE) all
+
 build_lwip:
-	@echo -----------------------------------
-	@echo --- Building LWIP libraries     ---
-	@echo ----Passing in current proj dir ---
-	@echo -----------------------------------
+	@echo ------------------------------------------------
+	@echo --- Building LWIP library in $(LWIP_DIR)     ---
+	@echo ------------------------------------------------
 	$(TRACE_FLAG)cd $(LWIP_DIR); make MCU=$(MCU) CONF=$(BIN_DIR) LWIP_PORT_DIR=$(LWIP_PORT_FOR_LWIP) PROJ_BSP=$(BSP_DIR_FOR_LWIP) LWIP_SRC_DIR=$(LWIP_SRC_DIR) TRACE=$(TRACE)
 
 $(BIN_DIR)/%.d : %.c

@@ -1,0 +1,504 @@
+// File: CBMsgs.proto
+// 
+// This file is a proto file that is used to define binary msgs and automatically
+// generating C code to be used by either intel (win32 and linux), arm, and 
+// powerpc processors. See
+// http://code.google.com/p/protobuf-embedded-c/ for detail of how this is done 
+//
+// See https://developers.google.com/protocol-buffers/docs/proto#simple for 
+// how to specify messages in the proto language of Protocol Buffers but keep
+// in mind that the "Protobuf-Embedded-C" is more limited than the Google version.
+//
+// 1). General message layout:
+// Communication between the Coupler board and a client is done via serialized 
+// msgs that reside in a buffer (no longer than 256 bytes after base64 encoding).  
+// These messages should be base64 encoded (use libb64 for guaranteed 
+// compatibility but any std base64 encoding/decoding library should work as 
+// long as there are no newlines placed every 72/73 characters since newlines 
+// denote the end of the message).
+// 
+// Messages MUST start with an Basic message, followed by 1 or 0 optional
+// Payload messages.  The CBBasicMsg contains a field called "msgPayload" which 
+// specifies the next attached Payload message.  If the field is set to 
+// "_CBNoMsg", there is no payload msg.
+// 
+// This approach allows a flexible use of minimally sized messages and allows
+// the sender to group them in any way necessary while telling the receiver how
+// to correctly decode them.
+//
+// 2).  Detailed Message Description
+// There are 2 types of messages: CBBasicMsg and CBPayloadMsg.  They are 
+// described in detail below:
+// 
+// CBBasicMsg - This message MUST be sent in the front of the buffer.  It 
+// lets the receiver have a known starting point from which to start decoding 
+// the message.  The basic message is used to:
+//   A. request an action or data (CB_Req), 
+//   B. acknowledge reception (CB_Ack), 
+//   C. send progress (CB_Prog),  
+//   D. indicate completion (CB_Done).
+// 
+// Required Fields - all the common fields which always have to be sent:
+// 
+// msgName -  CBMsgName type that uniquely identifies the message.  This should
+//            not be a payload message.
+// msgID   -  Some number that allows the sender to specify how it will find
+//            the responses to this request msg.
+// msgType -  CBMsgType that if the CBDescMsg is in front of a:
+//   A. CB_Req - Request message - used to request data or actions from the 
+//                 CB API.
+//   B. CB_Ack - Acknowledgement message - used by the CB API to let the 
+//                 sender know that the Req message was successfully received.
+//   C. CB_Prog- Specifies whether the message is a Progress message.
+//   D. CB_Done- Specifies whether the message is a Done message.
+//
+// msgPayload - CBMsgName type that specifies what payload message is appended
+//            to the back of this message.  This allows you to send any payload
+//            that is needed for this action or data request.  For example, if 
+//            requesting a CommTest, you can specify a payload that will be sent
+//            over that the CB board should receive, decode, and send back to 
+//            you so you can verify its integrity.  In some cases, such as simple
+//            Req msgs and CB_Ack msgs, this field can be set to CBNoMsg to avoid
+//            sending along any unnecessary extra data.  In general, this field 
+//            can be any of the CBMsgName.  In most cases, it will be _CBNoMsg, 
+//            which means there's no payload and consequently, no extra data is 
+//            being sent or if the msgType is CB_Done, there's no error to report.
+//            Some more complicated messages will use custom payload msgs which 
+//            need to be defined in this file.
+//
+// CBPayloadMsg - This is a Payload message and is optional.  Most common use
+// cases for payload msgs are:
+//   
+//   A. Non-standard CB_Req msgs: most requests can be issued without a 
+//   payload msg. For example, if you want to issue an CBCmdLLResetBoardMsg, 
+//   there are no extra arguments to send with.  The CB_Req and CB_Ack type  
+//   msgs do not need any extra data.  However, if you're sending a more  
+//   complicated msg like CBCmdLLCommTestMsg which tests the communication between  
+//   the CB Board and the client, you have to send the along data which has to
+//   be sent back to verify the integrity of the transmission.  This extra data 
+//   has to travel in a CBPayloadMsg called CBCommTestPayloadMsg.  This 
+//   CBPayloadMsg is tailored for the CBCmdLLCommTestMsg and would be sent with 
+//   the CB_Req type CBCmdLLCommTestMsg.
+//
+//   B. Some CB_Prog msgs: Some progress messages will want to send back 
+//   updated state data or other progress data.  These will require 
+//   CBPayloadMsg customized for the task.
+//
+//   C. Most CB_Done msgs: Almost all CB_Done msgs will send back at least
+//   a status/error code to indicate the success or failure of a command.  If
+//   only a simple status/error code is enough, CBStatusPayloadMsg can be used.
+//   Many commands will be more complicated and will require sending of more
+//   data back.  One example is a CBCmdHLReadRawPagesMsg which has to send
+//   back many bytes of data.  Hence, it has a custom CBPayloadMsg called
+//   CBRawMultiPageDataPayloadMsg which has the needed fields and capacity to
+//   send back all the data.
+// 
+// Below is a very simple example which illustrates the most 
+// common usage: 
+// (ResetCBChip is a fictional message)
+//
+// Client                                                             CB Board
+//   |
+// *Send* [[********CBBasicMsg************]\n]>>>>>>>>>>>>>>>>>>>>>>>*Receive*
+//          < msgName = CBResetCBChipMsg            
+//          < msgID   = 456                          
+//          < msgType = CB_Req                        
+//          < msgPayload = CBNoMsg
+// *Rec*  [[********CBBasicMsg************]\n]<<<<<<<<<<<<<<<<<<<<<<<<<<*Send*
+//          < msgName = CBResetCBChipMsg
+//          < msgID   = 456              
+//          < msgType = CB_Ack                        
+//          < msgPayload = CBNoMsg
+//
+// (If something went wrong and the result is an error/status to report)
+// *Rec*  [[**********CBBasicMsg************][CBPayloadMsg****]\n]<<<<*Send*
+//          < msgName = CBResetCBChipMsg    
+//          < msgID   = 456                     < errorCode = CB_ERR_RESETTING      
+//          < msgType = CB_Done               < msgPayload = CBNoMsg         
+//          < msgPayload = CBBasicPayloadMsg
+//
+//////////////////////// OR ////////////////////////////////////////////////////
+//
+// (If everything went ok and there's no error or no need to report one )
+// *Rec*  [[**********CBBasicMsg*********][CBPayloadMsg****]\n]<<<<<<<*Send*
+//          < msgName = CBResetCBChipMsg    
+//          < msgID   = 456                     < errorCode = CB_ERR_NONE      
+//          < msgType = CB_Done               < msgPayload = CBNoMsg         
+//          < msgPayload = CBBasicPayloadMsg
+//
+// 
+// 3). Message naming convention - Message names should follow the following format:
+// CBGetStatusMsg
+// [0][--1---][2]
+// where 
+// field 0: This should always be "CB".  It acts as a namespace and prevents
+//          the possibility that another project is using this name for its msgs.
+// field 1: Who/what is being referenced/requested/ordered
+// field 2: Should always be "Msg".  This is primarily to differentiate them in 
+//          the code from other similarly named things like events and the 
+//    structures used to extract the info from the messages.
+//
+// Example msg exchange with custom payload msgs (with field fill examples):
+//
+// Client                                                             CB Board
+//   |
+// *Send* [[*********CBBasicMsg**********][CBPayloadMsg****]\n]>>>>>Receive*
+//          < msgName = CBCmdLLCommTestMsg            
+//          < msgID   = 0                          < payload = 0xA5A5A5A5
+//          < msgType = CB_Req                   < msgPayload = CBNoMsg
+//          < msgPayload = CBCommTestPayloadMsg
+// *Rec*  [[CBBasicMsg]\n]<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<*Send*
+//          < msgName = CBCmdLLCommTestMsg
+//          < msgID   = 0              
+//          < msgType = CB_Ack                        
+//          < msgPayload = CBNoMsg
+// *Rec*  [[**********CBBasicMsg************][CBPayloadMsg*****]\n]<<<*Send*
+//          < msgName = CBCmdLLCommTestMsg             
+//          < msgID   = 0                           < payload = 0xA5A5A5A5
+//          < msgType = CB_Done                   < msgPayload = CBNoMsg
+//          < msgPayload = CBCommTestPayloadMsg
+//
+// Author: Harry Rostovtsev 
+// Email : harry_rostovtsev@datacard.com
+//
+//Optional Embedded C internal options:
+//@max_repeated_length=127
+//@max_string_length=32
+//@max_bytes_length=112
+
+//------------------------------------------------------------------------------
+// See rules for CBBasicMsg at the top of file.
+// 
+// This MUST CONTAIN ALL THE MESSAGE TYPES DESCRIBED IN THIS PROTO FILE.  
+// 
+// Each msg must be either a CBBasicMsg or a CBPayloadMsg type.  The 
+// CBBasicMsgs do not need full message definitions since they all use the 
+// same msg type (CBBasicMsg) but the CBPayloadMsgs should be defined to 
+// enumerate their custom fields.
+// 
+enum CBMsgName 
+{
+    CBNoMsg              = 0; // Used to indicate the end of a message sequence.
+                              // Usually used in the CBPayload field of a 
+                              // CBBasicMsg
+                              
+    CBStatusPayloadMsg   = 1; // CBPayloadMsg - Used to report a status/error
+    
+    CBGetVersionMsg      = 2; // CBBasicMsg   - Used to get versions and build
+                              // dates from the CB board and return 
+                              // CBVersionPayloadMsg.
+    CBVersionPayloadMsg  = 3; // CBPayloadMsg - Used to send back versions and 
+                              // build dates from the CB board.
+    CBGetBootModeMsg     = 4; // CBBasicMsg   - Used to find which boot mode the
+                              // CB board in.  Note, system Rom mode will not 
+                              // respond to this (or any msgs other than DFU) 
+                              // msg.
+    CBSetBootModeMsg     = 5; // CBBasicMsg   - Used to tell the CB board to 
+                              // boot to: 
+                              // Bootloader  - Used to flash new Application FW.
+                              // Application - Main run mode 
+                              // System ROM mode - used to flash Bootloader (not
+                              //               currently implemented).
+    CBBootModePayloadMsg = 6; // CBPayloadMsg - Used to send the current 
+                              // BootMode information with GetBootMode and 
+                              // SetBootMode msgs.
+
+}
+
+//------------------------------------------------------------------------------
+// This enum defines all the different response types that can identify a msg
+// type.
+enum CBMsgType 
+{
+    CB_NoMsgType   = 0; // For error checking. This shouldn't be used by users.
+    CB_Req         = 1; // This is to mark the field when used in a Request 
+                        // message.
+    CB_Ack         = 2; // This is to mark the field when used in a Acknowledge
+                        // message.
+    CB_Prog        = 3; // This is used to mark a response message as "Progress"
+                        // message. It can be used to send back status updates 
+                        // for long commands to prevent timeouts or as a very 
+                        // simplistic logging.
+    CB_Done        = 4; // This marks the message as a "Done" message which 
+                        // signifies that the action that was requested has been
+                        // completed and all work related to it is done.
+    CB_MaxMsgType  = 5; // For error checking. This shouldn't be used by users.
+}
+
+//------------------------------------------------------------------------------
+// This enum defines the source of the message going to and from CB board. This
+// is to enable the responses to go back to the proper port. It is expected that
+// the sender of the message will set the source if a reply is expected.
+//
+enum CBMsgRoute 
+{
+	CB_NoRoute     = 0; // For error checking. This shouldn't be used by users.
+    CB_Serial      = 1; // The message is source/destination is the serial debug
+                        // port
+    CB_EthSys      = 2; // The message is source/destination is a client that is 
+                        // communicating the host device to which the CB board 
+                        // via the ethernet sys port (currently 1500).  This 
+                        // really shouldn't be used since it's reserved for 
+                        // communicating with the controller. The only reason 
+                        // this exists is if at some time in the future, the 
+                        // controller decides to use this port.
+    CB_EthLog      = 4; // The message is source/destination is a client that is 
+                        // communicating the host device to which the CB board 
+                        // via the ethernet log port (currently 1501).
+
+    CB_EthCli      = 8; // The message is source/destination is a client that is
+                        // communicating the host device to which the CB board 
+                        // via the ethernet cli port (currently 1502). This is 
+                        // the preferred port for the client to connect to.
+    CB_MaxRoutes   = 10; // For error checking. This shouldn't be used by users.
+}
+
+//------------------------------------------------------------------------------
+// This enum defines the boot mode of the CB board.  It can be booted to 
+// system mode or flash mode.  System mode is used to flash FW over serial
+// using the DFU protocol, which is the system boot mode provided by ST Micro.
+// The Flash mode is used for regular operation and the system boots from Flash
+// 
+enum CBBootMode
+{
+    CB_NoBootMode   = 0; // For error checking. This shouldn't be used by users.
+    CB_SysRomBoot   = 1; // STM32 System ROM boot mode which allows DFU commands
+                         // to be used to program the bootloader.  This is 
+                         // currently not implemented. 
+    CB_Bootloader   = 2; // Firmware update operation mode.  This tells the CB 
+                         // board to boot into the Bootloader Mode. 
+    CB_Application  = 3; // Main Application mode.  This tells the CB board to 
+                         // boot into its primary mode of operation: 
+                         // Application Boot mode. 
+    CB_MaxBootModes = 4; // For error checking. This shouldn't be used by users.
+}
+
+//------------------------------------------------------------------------------
+// START CBBasicMsg
+// This is a type of message that encompasses all basic msgs which start all
+// communications.  Hence, it doesn't have a tag.
+// Msg Type - Synchronous.  Special.
+// Msg Desc - This is the Basic message that must be used to send all the common 
+//            request/ack/progress/done portions of messages.   
+// Standard Field Description:
+// msgName -  CBMsgName that uniquely identifies the message.
+// msgID   -  Some number that allows the sender to specify how it will find
+//            the responses to this request msg.
+//
+// msgType - CBMsgType that if the CBDescMsg is in front of a:
+//   A. CB_Req - Request message - used to request data or actions from the CB API.
+//   B. CB_Ack - Acknowledgement message - used by the CB API to let the sender 
+//                 know that the Req message was successfully received.
+//   C. CB_Prog- Specifies whether the message is a Progress message.
+//   D. CB_Done- Specifies whether the message is a Done message.
+//
+// msgRoute - See CBMsgRoute enum for a full description.  This allows msg 
+//            forwarding on the host device.
+//   A. CB_HostDevice  - The message is source/destination is the directly 
+//            attached host device.
+//   B. CB_Console     - The message is source/destination is the serial debug 
+//            console
+//   C. CB_ExtClient   - The message is source/destination is a client that is 
+//            communicating the host device to which the CB board is attached 
+//            to.  Let that host device figure out how to route the message.
+//
+// msgReqProg - Request progress messages to be sent back to the sender.
+//   0 - Don't send progress msgs
+//   1 - Send progress msgs
+//      
+// msgPayload - CBMsgName type that specifies what payload message is appended
+//            to the back of this message.  This allows you to send any payload
+//            that is needed for this action or data request.  For example, if 
+//            requesting a CommTest, you can specify a payload that will be sent
+//            over that the CB board should receive, decode, and send back to 
+//            you so you can verify its integrity.  In some cases, such as simple
+//            Req msgs and Ack msgs, this field can be set to CBNoMsg to avoid
+//            sending along any unnecessary extra data.  In general, this field 
+//            can be any of the CBMsgName.  In most cases, it will be empty, 
+//            which means there's no payload and consequently, no extra data is 
+//            being sent or if the msgType is CB_Done, there's no error to report.
+//            Some more complicated messages will use custom payload msgs which 
+//            need to be defined in this file.  See CBCommTestPayloadMsg for 
+//            an example.
+//
+message CBBasicMsg 
+{
+    required CBMsgName  msgName       = 1;
+    required CBMsgType  msgType       = 2;
+    required CBMsgRoute msgRoute      = 3;
+    required uint32     msgID         = 4;
+    required uint32     msgReqProg    = 5;
+    required CBMsgName  msgPayload    = 6;
+}
+// END CBBasicMsg
+//------------------------------------------------------------------------------
+
+//------------------------------------------------------------------------------
+// START CBStatusPayloadMsg
+// Msg Tag  - 1 
+// Msg Type - Synchronous.  Payload (optional)
+// Msg Desc - This is a Status Payload message and is optional.  It's a generic
+//            status payload message that only has 1 uint32_t field.  It should 
+//            be used to report errors (if any occurred) or just status as part 
+//            of a Resp msg. If you plan on appending this payload msg, make 
+//            sure to set the field "msgPayload" in the main msg to the enum  
+//            name of this payload msg:   CBStatusPayloadMsg
+// Field Description:
+// errorCode - Error code to return when appended to the "Done" version of the 
+//            main message.
+message CBStatusPayloadMsg 
+{
+    required uint32     errorCode     = 1;
+}
+// END CBStatusPayloadMsg
+//------------------------------------------------------------------------------
+
+//------------------------------------------------------------------------------
+// START CBGetVersionMsg
+// Msg Tag  - 2
+// Msg Type - CBBasicMsg.  Uses CBBasicMsg structure. No definition needed
+// Msg Desc - This gets various version numbers of things on the CB board
+//
+// No message definition needed.  Uses CBBasicMsg with 
+// CBVersionPayloadMsg as a payload for CB_Done 
+// Example:
+// Client                                                             CB Board
+//   |                                                                      |
+// *Send* [[**************CBBasicMsg*********]\n]>>>>>>>>>>>>>>>>>>>>>>>>*Rec*
+//          < msgName = CBGetVersionMsg     
+//          < msgID   = [uint32]                         
+//          < msgType = CB_Req                
+//          < msgPayload = CBVersionPayloadMsg
+//                                                   
+// *Rec*  [[CBBasicMsg]\n]<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<*Send*
+//          < msgName = CBGetVersionMsg
+//          < msgID   = [uint32]             
+//          < msgType = CB_Ack                        
+//          < msgPayload = CBNoMsg
+// *Rec*  [[**************CBBasicMsg*********][**CBPayloadMsg**]\n]<<<*Send*
+//          < msgName = CBGetVersionMsg          < errorCode = CB_ERR_CODE  
+//          < msgID   = [uint32]                 < fwVersionString = string of data with FW version
+//          < msgType = CB_Done                  < fwDateString = string of data with FW date
+//          < msgPayload = CBVersionPayloadMsg   < dbVersion = version of the settings database
+//                                               < fwVersionStringLen = Number of characters in FW version string.
+//                                               < fwDateStringLen = Number of characters in FW date string.
+//
+// END CBGetVersionMsg
+//------------------------------------------------------------------------------
+
+//------------------------------------------------------------------------------
+// START CBVersionPayloadMsg 
+// Msg Tag  - 3
+// Msg Type - CBPayloadMsg.  Sent appended to the CBGetVersionMsg 
+//            CB_Done type msg and uses CBVersionPayloadMsg structure.
+// Msg Desc - Sent as a response to a CBGetVersionMsg attached to the
+//            CBGetVersionMsg CB_Done type msg.
+// 
+// See CBGetVersionMsg for example usage.
+message CBVersionPayloadMsg 
+{
+    required uint32 errorCode    = 1; // error code indicating status of the req.
+    required bytes  fwVerString  = 2; // CB FW version string
+    required uint32 fwVerStrLen  = 3; // CB FW version string length
+    required bytes  fwDateString = 4; // CB FW date string
+    required uint32 fwDateStrLen = 5; // CB FW date string length
+    required uint32 dbVersion    = 6; // Version of the settings database
+}
+// END CBVersionPayloadMsg.
+//------------------------------------------------------------------------------
+
+//------------------------------------------------------------------------------
+// START CBGetBootModeMsg
+// Msg Tag  - 4
+// Msg Type - CBBasicMsg.  Uses CBBasicMsg structure. No definition needed
+// Msg Desc - This message is handles communications needed for getting the 
+//            current run mode of the CB board.
+//
+// No message definition needed.  Uses CBBasicMsg with CBRunModePayloadMsg
+// as a payload for CB_Done.
+// Example:
+// Client                                                             CB Board
+//   |                                                                      |
+// *Send* [[**************CBBasicMsg***********]\n]>>>>>>>>>>>>>>>>>>>>*Receive*
+//          < msgName = CBCmdLLGetRunModeTagMsg
+//          < msgID   = [uint32]                         
+//          < msgType = CB_Req                       
+//          < msgPayload = CBNoMsg  
+// *Rec*  [[**************CBBasicMsg***********]\n]<<<<<<<<<<<<<<<<<<<<<<<*Send*
+//          < msgName = CBGetBootModeMsg
+//          < msgID   = [uint32]                   
+//          < msgType = CB_Ack                        
+//          < msgPayload = CBNoMsg
+// *Rec*  [[************CBBasicMsg**********][**CBPayloadMsg**]\n]<<<<<<<<*Send*
+//          < msgName = CBGetBootModeMsg      < errorCode = CB_ERR_CODE  
+//          < msgID   = [uint32]              < runmode = [CB_SysRomBoot|CB_Bootloader|CB_Application]         
+//          < msgType = CB_Done                  
+//          < msgPayload = CBRunModePayloadMsg   
+// END CBGetBootModeMsg
+//------------------------------------------------------------------------------
+
+//------------------------------------------------------------------------------
+// START CBSetBootModeMsg
+// Msg Tag  - 5
+// Msg Type - CBBasicMsg.  Uses CBBasicMsg structure. No definition needed
+// Msg Desc - This message is handles communications needed for setting the 
+//            current run mode of the CB board.
+//
+// No message definition needed.  Uses CBBasicMsg with CBRunModePayloadMsg
+// as a payload for CB_Done.
+// Example:
+// Client                                                             CB Board
+//   |                                                                      |
+// *Send*  [[************CBBasicMsg**********][**CBPayloadMsg**]\n]>>>>>>>>*Rec*
+//          < msgName = CBSetBootModeMsg         < errorCode = N/A  
+//          < msgID   = [uint32]                 < runmode = [CB_SysRomBoot|CB_Bootloader|CB_Application]       
+//          < msgType = CB_Done                  
+//          < msgPayload = CBPayloadMsg  
+// *Rec*  [[**************CBBasicMsg***********]\n]<<<<<<<<<<<<<<<<<<<<<<<*Send*
+//          < msgName = CBSetBootModeMsg
+//          < msgID   = [uint32]                   
+//          < msgType = CB_Ack                        
+//          < msgPayload = CBRunModePayloadMsg
+// *Rec*  [[************CBBasicMsg**********][**CBPayloadMsg**]\n]<<<<<<<<*Send*
+//          < msgName = CBSetBootModeMsg       < errorCode = CB_ERR_CODE  
+//          < msgID   = [uint32]               < runmode = [CB_SysRomBoot|CB_Bootloader|CB_Application]  
+//          < msgType = CB_Done                  
+//          < msgPayload = CBRunModePayloadMsg   
+// END CBSetBootModeMsg
+//------------------------------------------------------------------------------
+
+//------------------------------------------------------------------------------
+// START CBRunModePayloadMsg 
+// Msg Tag  - 6
+// Msg Type - CBPayloadMsg.  
+// Msg Desc - Sent appended to the CBCmdLLGetRunModeTagMsg CB_Done msg and
+//            CBCmdLLSetRunModeTagMsg CB_Req msg. Uses CBRunModePayloadMsg
+//            structure.
+//
+// Non-standard Field Description:
+// errorCode- a uint32 number that specifies the error encountered, if any.
+// runmode  - CBBootMode enum that specifies the boot mode being requested.
+//            Can be one of the following: 
+//                  CB_SysRomBoot  - STM32 system ROM bootmode (not currently 
+//                                   implemented)
+//                  CB_Bootloader  - bootloader mode 
+//                  CB_Application - application mode
+//                  The system boot mode will not respond to messages so the 
+//                  above are the only possible values. 
+//
+message CBRunModePayloadMsg 
+{
+	required uint32     errorCode = 1; // a uint32 number that specifies the
+	                                   // error encountered, if any.
+    required CBBootMode bootMode  = 2; // CBBootMode enum that specifies the 
+                                       // boot mode being requested.
+                                       // Can be one of the following: 
+                    // CB_SysRomBoot  - STM32 system ROM bootmode (not currently 
+                    //                  implemented)
+                    // CB_Bootloader  - bootloader mode
+                    // CB_Application - application mode
+                    // The system boot mode will not respond to messages so the 
+                    // above are the only possible values. 
+}
+// END CBRunModePayloadMsg.
+//------------------------------------------------------------------------------

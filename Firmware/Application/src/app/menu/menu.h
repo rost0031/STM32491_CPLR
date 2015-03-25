@@ -95,10 +95,10 @@ typedef struct menuNavigationTag {
  *       Menu 1.3
  *    Menu 2
  *
- * @param [in] msgSrc: MsgSrc var that specifies where to print out to.
+ * @param [in] msgSrc: CBMsgRoute var that specifies where to print out to.
  * @return  None
  */
-void MENU_printMenuExpandedAtCurrNode( treeNode_t* node, MsgSrc msgSrc );
+void MENU_printMenuExpandedAtCurrNode( treeNode_t* node, CBMsgRoute msgSrc );
 
 /**
  * @brief   Initializes the top level of the menu.
@@ -132,7 +132,7 @@ treeNode_t* MENU_initTopLevel(
  * @param [in] pBuffer: const char*  pointer to the storage of the buffer where the
  * command data resides
  * @param [in] bufferLen: uint16_t length of the data in the command buffer.
- * @param [in] msgSrc: MsgSrc var that indicates where the command came from.
+ * @param [in] msgSrc: CBMsgRoute var that indicates where the command came from.
  * @return  treeNode_t*: pointer to the submenu where the system is currently
  * pointing to.
  * @note: this can be different than the passed in node.
@@ -141,7 +141,7 @@ treeNode_t* MENU_parseCurrLevelMenuItems(
       treeNode_t* node,
       const char* pBuffer,
       uint16_t bufferLen,
-      MsgSrc msgSrc
+      CBMsgRoute msgSrc
 );
 
 /**
@@ -219,11 +219,11 @@ treeNode_t* MENU_addMenuItem(
  *
  * @param [in] node: a treeNode_t* pointer to the node from which to start the
  * printing from.
- * @param [in] msgSrc: MsgSrc var that specifies where to print to.
+ * @param [in] msgSrc: CBMsgRoute var that specifies where to print to.
  *
  * @return: None
  */
-void MENU_printMenuTree( treeNode_t* node, MsgSrc msgSrc );
+void MENU_printMenuTree( treeNode_t* node, CBMsgRoute msgSrc );
 
 /**
  * @}

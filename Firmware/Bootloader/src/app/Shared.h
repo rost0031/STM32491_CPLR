@@ -19,13 +19,10 @@
 #include "qp_port.h"                                        /* for QP support */
 #include "CBErrors.h"                               /* for system error codes */
 #include "CBSignals.h"                                  /* for system signals */
+#include "CBCommApi.h"                                  /* for CB API support */
+#include "CBSharedMsgTypes.h"      /* for msg types that are used by everyone */
 
 /* Exported defines ----------------------------------------------------------*/
-/**
- * @brief Global maximum length of message buffers (serial and ethernet).
- */
-#define MAX_MSG_LEN                                                        300
-
 /* Exported macros -----------------------------------------------------------*/
 /**
  * @brief STM32 optimized MEMCPY.
@@ -112,44 +109,6 @@ typedef enum AccessType {
                                 thread.  All returns are done via a QEQueue that
                                 the requesting thread should wait on */
 } AccessType_t;
-
-/* These need to be visible to LWIPMgr AO, which is part of a shared port. Most
- * event types should be defined within their respective AOs. */
-
-/**
- * \enum Source of the message.
- */
-typedef enum MsgSrcTag {
-   NA_SRC_DST     = 0x00000000,  /**< No src/dst info */
-   SERIAL_CON     = 0x00000001,  /**< Message to/from the console serial port */
-   ETH_PORT_SYS   = 0x00000002,  /**< Message to/from the the sys tcp port */
-   ETH_PORT_LOG   = 0x00000004,  /**< Message to/from the the log tcp port */
-} MsgSrc;
-
-/**
- * \struct Struct for messages.
- * Uses CommStackSignals for signal names.  These events are responsible
- * for getting data from Eth/Serial to CommStackMgr
- */
-typedef struct MsgEvtTag {
-/* protected: */
-    QEvt super;
-    MsgSrc msg_src;                                /**< Source of the message */
-    uint16_t msg_len;                           /**< Length of the msg buffer */
-    char msg[MAX_MSG_LEN];        /**< Buffer that holds the data of the msg. */
-} MsgEvt;
-
-/**
- * @brief Event type for transferring large data.
- */
-typedef struct LrgDataEvtTag {
-/* protected: */
-    QEvt       super;
-    MsgSrc     src;                                   /**< Source of the data */
-    MsgSrc     dst;                              /**< Destination of the data */
-    uint16_t   dataLen;                    /**< Length of the data in dataBuf */
-    uint8_t    dataBuf[MAX_MSG_LEN];          /**< Buffer that holds the data */
-} LrgDataEvt;
 
 /* Exported constants --------------------------------------------------------*/
 /* Exported functions --------------------------------------------------------*/

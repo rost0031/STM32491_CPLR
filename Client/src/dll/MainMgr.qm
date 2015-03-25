@@ -1,0 +1,207 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<model version="3.2.2">
+ <documentation>/**
+ * Main processor that runs the entire client
+ */</documentation>
+ <framework name="qpc"/>
+ <package name="Events" stereotype="0x01"/>
+ <package name="AOs" stereotype="0x02">
+  <class name="MainMgr" superclass="qpc::QActive">
+   <documentation>/**
+ * @brief Active Object (AO) &quot;class&quot; that manages the all the processing.
+ *
+ * This AO manages the all the communications and message transactions between the
+ * client and the Coupler Board. See MainMgr.qm for diagram and model.
+ */</documentation>
+   <attribute name="exitTimerEvt" type="QTimeEvt" visibility="0x01" properties="0x00">
+    <documentation>Used for timing out the actual exit for cleanup</documentation>
+   </attribute>
+   <attribute name="exit_code" type="uint8_t" visibility="0x01" properties="0x00">
+    <documentation>Exit code with which to exit</documentation>
+   </attribute>
+   <attribute name="errorCode" type="ErrorCode" visibility="0x01" properties="0x00">
+    <documentation>This variable holds the error code that was last set and that will 
+be returned.</documentation>
+   </attribute>
+   <statechart>
+    <initial target="../1">
+     <action>QS_OBJ_DICTIONARY(&amp;l_MainMgr);
+QS_FUN_DICTIONARY(&amp;QHsm_top);
+QS_FUN_DICTIONARY(&amp;l_MainMgr_initial);
+QS_FUN_DICTIONARY(&amp;l_MainMgr_Active);
+cout &lt;&lt; &quot;Started MainMgr AO&quot; &lt;&lt; endl;</action>
+     <initial_glyph conn="1,2,4,3,11,2">
+      <action box="0,-2,6,2"/>
+     </initial_glyph>
+    </initial>
+    <state name="Active">
+     <documentation>/**
+ * @brief This state is a catch-all Active state.
+ * If any signals need to be handled that do not cause state transitions and 
+ * are common to the entire AO, they should be handled here.
+ *
+ * @param  [in,out] me: Pointer to the state machine
+ * @param  [in,out] e:  Pointer to the event being processed.
+ * @return status_: QState type that specifies where the state
+ * machine is going next.
+ */</documentation>
+     <entry>cout &lt;&lt; &quot;Entered Active state in MainMgr AO&quot; &lt;&lt; endl;</entry>
+     <tran trig="MSG_TIMEOUT_EXIT">
+      <action>cout &lt;&lt; &quot;Timed out while waiting for a response for a sent message.  Exiting.&quot; &lt;&lt; endl;
+EXIT(1);</action>
+      <tran_glyph conn="111,69,1,-1,-12">
+       <action box="-14,-2,14,2"/>
+      </tran_glyph>
+     </tran>
+     <tran trig="EXIT" target="../2">
+      <action>me-&gt;exit_code = (uint8_t)(((ExitEvt *)e)-&gt;my_error_code);</action>
+      <tran_glyph conn="3,70,3,3,17">
+       <action box="0,-2,6,2"/>
+      </tran_glyph>
+     </tran>
+     <state name="CleanupBeforeExit">
+      <entry>/* Arm the first time for a long time.  */
+QTimeEvt_postIn(
+    &amp;me-&gt;exitTimerEvt,
+    (QActive *)me,
+    SECONDS_TO_BSP_TICKS( CLIENT_MAX_TIMEOUT_SEC_EXIT )
+);</entry>
+      <tran trig="EXIT">
+       <action>//exit( me-&gt;exit_code );
+QActive_stop(AO_CommStackMgr);
+QF_stop();</action>
+       <tran_glyph conn="20,74,3,-1,16">
+        <action box="0,-2,6,2"/>
+       </tran_glyph>
+      </tran>
+      <state_glyph node="20,68,23,8">
+       <entry box="1,2,5,2"/>
+      </state_glyph>
+     </state>
+     <state_glyph node="3,2,108,76">
+      <entry box="1,2,6,2"/>
+     </state_glyph>
+    </state>
+    <state_diagram size="115,80"/>
+   </statechart>
+  </class>
+  <attribute name="AO_MainMgr" type="QActive * const" visibility="0x00" properties="0x00">
+   <documentation>/**&lt; &quot;opaque&quot; pointer to the Active Object */</documentation>
+  </attribute>
+  <operation name="MainMgr_ctor" type="void" visibility="0x00" properties="0x00">
+   <documentation>/**
+ * @brief C &quot;constructor&quot; for MainMgr &quot;class&quot;.
+ * Initializes all the timers and queues used by the AO, sets up a deferral
+ * queue, and sets of the first state.
+ * @param [in]: none.
+ * @retval: none
+ */</documentation>
+   <code>MainMgr *me = &amp;l_MainMgr;
+QActive_ctor(&amp;me-&gt;super, (QStateHandler)&amp;MainMgr_initial);
+QTimeEvt_ctor(&amp;me-&gt;exitTimerEvt, EXIT_SIG);</code>
+  </operation>
+ </package>
+ <directory name=".">
+  <file name="MainMgr_gen.h">
+   <text>/**
+ * @file    MainMgr.h
+ * Definitions for functions for the MainMgr AO.  This file is heavily
+ * based on the code auto-generated using MainMgr.qm model.  Please update
+ * the model to reflect any manual changes to the code.
+ *
+ * Note: If editing this file, please make sure to update the MainMgr.qm
+ * model.  The generated code from that model should be very similar to the code
+ * in this file.
+ *
+ * @date    03/20/2015
+ * @author  Harry Rostovtsev
+ * @email   harry_rostovtsev@datacard.com
+ * Copyright (C) 2015 Datacard. All rights reserved.
+ *
+ * @addtogroup groupClient
+ * @{
+ */
+#ifndef MAINMGR_H_
+#define MAINMGR_H_
+
+using namespace std;
+
+/* Includes ------------------------------------------------------------------*/
+#include &lt;cstring&gt;
+
+/* Exported defines ----------------------------------------------------------*/
+/* Exported macros -----------------------------------------------------------*/
+/* Exported types ------------------------------------------------------------*/
+$declare(Events)
+
+/* Exported constants --------------------------------------------------------*/
+/* Exported functions --------------------------------------------------------*/
+$declare(AOs::MainMgr_ctor)
+$declare(AOs::AO_MainMgr)
+
+/**
+ * @} end addtogroup groupClient
+ */
+#endif                                                          /* MAINMGR_H_ */
+/******** Copyright (C) 2015 Datacard. All rights reserved *****END OF FILE****/
+</text>
+  </file>
+  <file name="MainMgr_gen.cpp">
+   <text>/**
+ * @file    MainMgr.cpp
+ * Definitions for functions for the MainMgr AO.  This file is heavily
+ * based on the code auto-generated using MainMgr.qm model.  Please update
+ * the model to reflect any manual changes to the code.
+ *
+ * Note: If editing this file, please make sure to update the MainMgr.qm
+ * model.  The generated code from that model should be very similar to the code
+ * in this file.
+ *
+ * @date    03/20/2015
+ * @author  Harry Rostovtsev
+ * @email   harry_rostovtsev@datacard.com
+ * Copyright (C) 2015 Datacard. All rights reserved.
+ *
+ * @addtogroup groupClient
+ * @{
+ */
+
+/* Includes ------------------------------------------------------------------*/
+#include &quot;MainMgr.h&quot;
+
+/* Compile-time called macros ------------------------------------------------*/
+Q_DEFINE_THIS_FILE;
+
+/* All timeouts should be defined in CBTimeouts.h as part of the
+ * CBCommAPI that should be visible to the client/coupler */
+#define EXIT(error_code)                              \
+do {                                                  \
+        ExitEvt *exEv = Q_NEW(ExitEvt, EXIT_SIG);     \
+        exEv-&gt;my_error_code = error_code;             \
+        QF_PUBLISH((QEvent *)exEv, AO_MainMgr);  \
+   } while (0)
+
+/* Private typedefs ----------------------------------------------------------*/
+/**&lt; Active object class */
+$declare(AOs::MainMgr)
+
+/* Private defines -----------------------------------------------------------*/
+/* Private macros ------------------------------------------------------------*/
+/* Private variables and Local objects ---------------------------------------*/
+static MainMgr l_MainMgr;            /* the single instance of the MainMgr AO */
+
+/* Global-scope objects ------------------------------------------------------*/
+QActive * const AO_MainMgr = (QActive *)&amp;l_MainMgr;    /* &quot;opaque&quot; AO pointer */
+
+/* Private function prototypes -----------------------------------------------*/
+/* Private functions ---------------------------------------------------------*/
+$define(AOs::MainMgr_ctor)
+$define(AOs::MainMgr)
+
+/**
+ * @} end addtogroup groupClient
+ */
+/******** Copyright (C) 2015 Datacard. All rights reserved *****END OF FILE****/</text>
+  </file>
+ </directory>
+</model>

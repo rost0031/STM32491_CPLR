@@ -132,7 +132,7 @@ extern "C" {
 typedef void (*pMenuFunction) (
       const char* dataBuf,
       uint16_t dataLen,
-      MsgSrc dst
+      CBMsgRoute dst
 );
 
 typedef struct treeNode {

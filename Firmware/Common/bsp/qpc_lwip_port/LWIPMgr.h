@@ -75,13 +75,13 @@ typedef struct {
     QEvt super;
 
     /**< Where the msg came from so it can be routed back to the sender. */
-    MsgSrc msg_src;
+    CBMsgRoute msg_src;
 
     /**< Length of the msg buffer. */
     uint16_t msg_len;
 
     /**< Buffer that holds the data of the msg. */
-    char msg[MAX_MSG_LEN];
+    char msg[CB_MAX_MSG_LEN];
 } EthEvt;
 
 

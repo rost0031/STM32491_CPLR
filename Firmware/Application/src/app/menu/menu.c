@@ -94,11 +94,11 @@ static void MENU_clearAncestryPaths( void );
  *
  * @param [in] node: a treeNode_t* pointer to the node from which to start the
  * printing from.
- * @param [in] msgSrc: MsgSrc var that specifies where to print to.
+ * @param [in] msgSrc: CBMsgRoute var that specifies where to print to.
  *
  * @return: None
  */
-static void MENU_printRevAncestry( treeNode_t* node, MsgSrc msgSrc );
+static void MENU_printRevAncestry( treeNode_t* node, CBMsgRoute msgSrc );
 
 /**
  * @brief   Prints the currently selected menu and all the items immediately
@@ -106,26 +106,26 @@ static void MENU_printRevAncestry( treeNode_t* node, MsgSrc msgSrc );
  *
  * @param [in] node: a treeNode_t* pointer to the node from which to start the
  * printing from.
- * @param [in] msgSrc: MsgSrc var that specifies where to print to.
+ * @param [in] msgSrc: CBMsgRoute var that specifies where to print to.
  *
  * @return: None
  */
-static void MENU_printMenuCurrLevel( treeNode_t* node, MsgSrc msgSrc );
+static void MENU_printMenuCurrLevel( treeNode_t* node, CBMsgRoute msgSrc );
 
 /**
  * @brief   Prints the passed in node.
  *
  * @param [in] node: a treeNode_t* pointer to the node to print.
- * @param [in] msgSrc: MsgSrc var that specifies where to print to.
+ * @param [in] msgSrc: CBMsgRoute var that specifies where to print to.
  *
  * @return: None
  */
-static void MENU_printNode( treeNode_t* node, MsgSrc msgSrc );
+static void MENU_printNode( treeNode_t* node, CBMsgRoute msgSrc );
 
 /* Private functions ---------------------------------------------------------*/
 
 /******************************************************************************/
-void MENU_printMenuExpandedAtCurrNode( treeNode_t* node, MsgSrc msgSrc )
+void MENU_printMenuExpandedAtCurrNode( treeNode_t* node, CBMsgRoute msgSrc )
 {
 
    if ( NULL == node ) {
@@ -160,7 +160,7 @@ treeNode_t* MENU_parseCurrLevelMenuItems(
       treeNode_t* node,
       const char* pBuffer,
       uint16_t bufferLen,
-      MsgSrc msgSrc
+      CBMsgRoute msgSrc
 )
 {
    treeNode_t *menuNode = node;
@@ -297,7 +297,7 @@ static void MENU_clearAncestryPaths( void )
 
 
 /******************************************************************************/
-static void MENU_printRevAncestry( treeNode_t* node, MsgSrc msgSrc )
+static void MENU_printRevAncestry( treeNode_t* node, CBMsgRoute msgSrc )
 {
    /* Underflow check. */
    if ( menuNav.pathToTopIndex > MENU_MAX_DEPTH ) {
@@ -364,7 +364,7 @@ static void MENU_printRevAncestry( treeNode_t* node, MsgSrc msgSrc )
 }
 
 /******************************************************************************/
-void MENU_printMenuTree( treeNode_t* node, MsgSrc msgSrc )
+void MENU_printMenuTree( treeNode_t* node, CBMsgRoute msgSrc )
 {
    if ( NULL == node ) {
       return;
@@ -382,7 +382,7 @@ void MENU_printMenuTree( treeNode_t* node, MsgSrc msgSrc )
 }
 
 /******************************************************************************/
-static void MENU_printMenuCurrLevel( treeNode_t* node, MsgSrc msgSrc )
+static void MENU_printMenuCurrLevel( treeNode_t* node, CBMsgRoute msgSrc )
 {
    if ( NULL == node ) {
       return;
@@ -397,7 +397,7 @@ static void MENU_printMenuCurrLevel( treeNode_t* node, MsgSrc msgSrc )
 
 
 /******************************************************************************/
-static void MENU_printNode( treeNode_t* node, MsgSrc msgSrc )
+static void MENU_printNode( treeNode_t* node, CBMsgRoute msgSrc )
 {
    uint8_t level = KTREE_findDepth( node, 0);
    for ( uint8_t i = 0; i < level; i++ ) {

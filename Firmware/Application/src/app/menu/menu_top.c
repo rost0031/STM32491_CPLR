@@ -54,10 +54,10 @@ char *const menu_SelectKey = "T";
 
 /**
  * @brief   Prints out the help text for the entire menu system.
- * @param [in] msgSrc: MsgSrc var that specifies where to print out to.
+ * @param [in] msgSrc: CBMsgRoute var that specifies where to print out to.
  * @return  None
  */
-static void MENU_printHelp( volatile MsgSrc msgSrc );
+static void MENU_printHelp( volatile CBMsgRoute msgSrc );
 
 /**
  * @brief   Prints out the entire expanded menu tree
@@ -66,10 +66,10 @@ static void MENU_printHelp( volatile MsgSrc msgSrc );
  * previous menu was printed and where the new one was.
  *
  * @param [in] node: treeNode_t* pointer to the root of the menu.
- * @param [in] msgSrc: MsgSrc var that specifies where to print out to.
+ * @param [in] msgSrc: CBMsgRoute var that specifies where to print out to.
  * @return  None
  */
-static void MENU_printEntireExpandedMenu( volatile treeNode_t* node, volatile MsgSrc msgSrc );
+static void MENU_printEntireExpandedMenu( volatile treeNode_t* node, volatile CBMsgRoute msgSrc );
 
 /* Private functions ---------------------------------------------------------*/
 
@@ -274,7 +274,7 @@ treeNode_t* MENU_parse(
       treeNode_t* node,
       const char* pBuffer,
       uint16_t bufferLen,
-      volatile MsgSrc msgSrc
+      volatile CBMsgRoute msgSrc
 )
 {
    treeNode_t *newNode = node;
@@ -319,7 +319,7 @@ treeNode_t* MENU_parse(
 }
 
 /******************************************************************************/
-static void MENU_printHelp( volatile MsgSrc msgSrc )
+static void MENU_printHelp( volatile CBMsgRoute msgSrc )
 {
    MENU_printf(msgSrc, "******************************************************************************\n");
    MENU_printf(msgSrc, "*****                           Menu Help                                *****\n");
@@ -334,7 +334,7 @@ static void MENU_printHelp( volatile MsgSrc msgSrc )
 }
 
 /******************************************************************************/
-static void MENU_printEntireExpandedMenu( volatile treeNode_t* node, volatile MsgSrc msgSrc )
+static void MENU_printEntireExpandedMenu( volatile treeNode_t* node, volatile CBMsgRoute msgSrc )
 {
    MENU_printf(msgSrc, "******************************************************************************\n");
    MENU_printMenuTree(&menu, msgSrc );

@@ -28,11 +28,11 @@ DBG_DEFINE_THIS_MODULE( DBG_MODL_COMM );/* For debug system to ID this module */
 /* Private functions ---------------------------------------------------------*/
 
 /******************************************************************************/
-CBErrorCode COMM_parseMsg( uint8_t *pBuffer, uint16_t bufferLen, MsgSrc msgSource )
+CBErrorCode COMM_parseMsg( uint8_t *pBuffer, uint16_t bufferLen, CBMsgRoute msgSource )
 {
    CBErrorCode status = ERR_NONE; /* Clear initial error and set it if it happens */
 
-   if ( SERIAL_CON == msgSource ) {
+   if ( _CB_Serial == msgSource ) {
       /* The message originated from the serial console.  Based on that
        * information we can assume:
        * A. It's plain text
@@ -83,7 +83,7 @@ CBErrorCode COMM_parseMsg( uint8_t *pBuffer, uint16_t bufferLen, MsgSrc msgSourc
 CBErrorCode COMM_parseMsgOfLen1(
       uint8_t *pBuffer,
       uint16_t bufferLen,
-      MsgSrc msgSource
+      CBMsgRoute msgSource
 )
 {
    CBErrorCode status = ERR_NONE; /* Clear initial error and set it if it happens */

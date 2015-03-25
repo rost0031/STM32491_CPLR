@@ -47,7 +47,7 @@ char *const menuDbgOutCntrlItem_toggleEthDebugSelectKey = "E";
 void MENU_toggleSerialDebugAction(
       const char* dataBuf,
       uint16_t dataLen,
-      MsgSrc dst
+      CBMsgRoute dst
 )
 {
    MENU_printf(dst, "Toggling debugging output over Serial:\n");
@@ -60,7 +60,7 @@ void MENU_toggleSerialDebugAction(
 void MENU_toggleEthDebugAction(
       const char* dataBuf,
       uint16_t dataLen,
-      MsgSrc dst
+      CBMsgRoute dst
 )
 {
    MENU_printf(dst, "Toggling debugging output over Ethernet:\n");

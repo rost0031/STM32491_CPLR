@@ -1076,7 +1076,7 @@ static err_t LWIP_tcpRecv(
                   (p->tot_len)-1
             );
             menuEvt->bufferLen = (p->tot_len)-1;
-            menuEvt->msgSrc = ETH_PORT_LOG;
+            menuEvt->msgSrc = _CB_EthLog;
 
             /* 3. Publish the newly created event to current AO */
             QF_PUBLISH( (QEvent *)menuEvt, AO_LWIPMgr );
@@ -1097,7 +1097,7 @@ static err_t LWIP_tcpRecv(
                   p->payload,
                   ethEvt->msg_len
             );
-            ethEvt->msg_src = ETH_PORT_SYS;
+            ethEvt->msg_src = _CB_EthSys;
 
             /* Post directly to the "raw" queue for FreeRTOS task to read */
             QEQueue_postFIFO(&CPLR_evtQueue, (QEvt *)ethEvt);
@@ -1134,7 +1134,7 @@ static err_t LWIP_tcpRecv(
                       (p->tot_len)-1
                 );
                 menuEvt->bufferLen = (p->tot_len)-1;
-                menuEvt->msgSrc = ETH_PORT_LOG;
+                menuEvt->msgSrc = _CB_EthLog;
 
                 /* 3. Publish the newly created event to current AO */
                 QF_PUBLISH( (QEvent *)menuEvt, AO_LWIPMgr );
@@ -1154,7 +1154,7 @@ static err_t LWIP_tcpRecv(
                       p->payload,
                       ethEvt->msg_len
                 );
-                ethEvt->msg_src = ETH_PORT_SYS;
+                ethEvt->msg_src = _CB_EthSys;
 
                 /* Post directly to the "raw" queue for FreeRTOS task to read */
                 QEQueue_postFIFO(&CPLR_evtQueue, (QEvt *)ethEvt);

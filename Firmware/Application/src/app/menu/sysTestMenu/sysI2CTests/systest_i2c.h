@@ -53,14 +53,14 @@ extern char *const menuSysTest_runI2CEEPROMWriteTest_SelectKey;
  * @param [in] dataBuf: const char* pointer to the data passed in by the user at
  * cmd line
  * @param [in] dataLen: uint16_t length of data in the dataBuf.
- * @param [in] dst: MsgSrc destination so MENU_printf() knows were to direct the
+ * @param [in] dst: CBMsgRoute destination so MENU_printf() knows were to direct the
  * output.
  * @return: None
  */
 void MENU_i2cEEPROMReadTestAction(
       const char* dataBuf,
       uint16_t dataLen,
-      MsgSrc dst
+      CBMsgRoute dst
 );
 
 /**
@@ -68,14 +68,14 @@ void MENU_i2cEEPROMReadTestAction(
  * @param [in] dataBuf: const char* pointer to the data passed in by the user at
  * cmd line
  * @param [in] dataLen: uint16_t length of data in the dataBuf.
- * @param [in] dst: MsgSrc destination so MENU_printf() knows were to direct the
+ * @param [in] dst: CBMsgRoute destination so MENU_printf() knows were to direct the
  * output.
  * @return: None
  */
 void MENU_i2cSNReadTestAction(
       const char* dataBuf,
       uint16_t dataLen,
-      MsgSrc dst
+      CBMsgRoute dst
 );
 
 /**
@@ -83,14 +83,14 @@ void MENU_i2cSNReadTestAction(
  * @param [in] dataBuf: const char* pointer to the data passed in by the user at
  * cmd line
  * @param [in] dataLen: uint16_t length of data in the dataBuf.
- * @param [in] dst: MsgSrc destination so MENU_printf() knows were to direct the
+ * @param [in] dst: CBMsgRoute destination so MENU_printf() knows were to direct the
  * output.
  * @return: None
  */
 void MENU_i2cEUI64ReadTestAction(
       const char* dataBuf,
       uint16_t dataLen,
-      MsgSrc dst
+      CBMsgRoute dst
 );
 
 /**
@@ -98,14 +98,14 @@ void MENU_i2cEUI64ReadTestAction(
  * @param [in] dataBuf: const char* pointer to the data passed in by the user at
  * cmd line
  * @param [in] dataLen: uint16_t length of data in the dataBuf.
- * @param [in] dst: MsgSrc destination so MENU_printf() knows were to direct the
+ * @param [in] dst: CBMsgRoute destination so MENU_printf() knows were to direct the
  * output.
  * @return: None
  */
 void MENU_i2cEEPROMWriteTestAction(
       const char* dataBuf,
       uint16_t dataLen,
-      MsgSrc dst
+      CBMsgRoute dst
 );
 
 /**

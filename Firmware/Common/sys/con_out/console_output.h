@@ -57,9 +57,11 @@
  * @note 4: don't manually set dst variable.  Instead, it should be set by the
  * requester of the menu (serial port or ethernet port).
  *
- * @param [in] dst: MsgSrc var that determines where the output will go
- *    @arg SERIAL_CON: output to serial port.
- *    @arg ETH_LOG_PORT: output to the ethernet port.
+ * @param [in] dst: CBMsgRoute var that determines where the output will go
+ *    @arg _CB_Serial: output to serial port.
+ *    @arg _CB_EthSys: output to the ethernet system port.
+ *    @arg _CB_EthLog: output to the ethernet logging port.
+ *    @arg _CB_EthCli: output to the ethernet client port.
  *
  * @param [in] *fmt: const char pointer to the data to be printed using the
  * va_args type argument list.
@@ -70,7 +72,7 @@
  * @return None
  */
 void MENU_printf(
-      volatile MsgSrc dst,
+      volatile CBMsgRoute dst,
       char *fmt,
       ...
 );
@@ -125,17 +127,19 @@ void MENU_printf(
  *   Enabled in all builds. Just the "User message here" will be printed.  This
  *   is meant to output serial menu items.
  *
- * @param [in] src: MsgSrc var specifying the source of the data.
- *    @arg NA_SRC_DST: no src/dst
- *    @arg SERIAL_CON: data is to or from the serial console
- *    @arg ETH_PORT_SYS: data is to or from the system TCP port
- *    @arg ETH_PORT_LOG: data is to or from the logging TCP port
+ * @param [in] src: CBMsgRoute var specifying the source of the data.
+ *    @arg _CB_NoRoute: no source needed
+ *    @arg _CB_Serial: data is from serial port.
+ *    @arg _CB_EthSys: data is from the ethernet system port.
+ *    @arg _CB_EthLog: data is from the ethernet logging port.
+ *    @arg _CB_EthCli: data is from the ethernet client port.
  *
- * @param [in] dst: MsgSrc var specifying the destination of the data.
- *    @arg NA_SRC_DST: no src/dst
- *    @arg SERIAL_CON: data is to or from the serial console
- *    @arg ETH_PORT_SYS: data is to or from the system TCP port
- *    @arg ETH_PORT_LOG: data is to or from the logging TCP port
+ * @param [in] dst: CBMsgRoute var specifying the destination of the data.
+ *    @arg _CB_NoRoute: no source needed
+ *    @arg _CB_Serial: data is to serial port.
+ *    @arg _CB_EthSys: data is to the ethernet system port.
+ *    @arg _CB_EthLog: data is to the ethernet logging port.
+ *    @arg _CB_EthCli: data is to the ethernet client port.
  *
  * @param [in] pFuncName: const char* pointer to the function name where the
  * macro was called from.
@@ -151,8 +155,8 @@ void MENU_printf(
  */
 void CON_output(
       DBG_LEVEL_T dbgLvl,
-      volatile MsgSrc src,
-      volatile MsgSrc dst,
+      volatile CBMsgRoute src,
+      volatile CBMsgRoute dst,
       const char *pFuncName,
       uint16_t wLineNumber,
       char *fmt,

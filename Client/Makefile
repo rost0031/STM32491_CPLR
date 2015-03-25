@@ -31,46 +31,40 @@ PROJECT_DLL                 = CPLR_Client
 #------------------------------------------------------------------------------
 ifeq (win32, $(TARGET)) # Cross compile for windows from Ubuntu-12.04
 
-    # Append a .exe to the target name
-    EXT                    := .exe
-	
-    # This will detect whether the linux system is 64 or 32 bit since the mingw 
+   # This will detect whether the linux system is 64 or 32 bit since the mingw 
     # compiler's name is dependent on it
-    LBITS                  := $(shell getconf LONG_BIT)
+    LBITS                   = $(shell getconf LONG_BIT)
     ifeq ($(LBITS),64)
-        CROSS_PATH         := x86_64-w64-mingw32
-        CROSS              := $(CROSS_PATH)-
+        CROSS_PATH          = x86_64-w64-mingw32
+        CROSS               = $(CROSS_PATH)-
     else
-        CROSS_PATH         := i686-w64-mingw32
-        CROSS              := $(CROSS_PATH)-
+        CROSS_PATH          = i686-w64-mingw32
+        CROSS               = $(CROSS_PATH)-
     endif
-
-    CC                      = $(CROSS)g++
-    CPP                     = $(CROSS)g++
-    AS                      = $(CROSS)as
-    LINK                    = $(CROSS)g++
-    OBJCPY                  = $(CROSS)objcopy
-    RANLIB					= $(CROSS)ranlib
-    QPLIBMOD                = WIN32
-    BOOSTLIBMOD             = -s
+ 
+    EXT                     = .exe                 # Appended to the target name
+    QPLIBMOD                = $(TARGET)
+    BOOSTLIBMOD             = -mt-s
     BOOST_TH_LIBMOD         = _$(TARGET)
 
 else                    # Compile natively on Linux and/or Cygwin
-    EXT                     = 
-    CC                      = g++
-    CPP                     = g++
-    AS                      = as
-    LINK                    = g++
-    OBJCPY                  = objcopy
-    QPLIBMOD                = POSIX
+    CROSS                   = 
+    EXT                     =                      # Appended to the target name
+    QPLIBMOD                = posix
     BOOSTLIBMOD             =
     BOOST_TH_LIBMOD         = 
-    TARGET                  = ia32
+    TARGET                  = posix
 endif
 
 #------------------------------------------------------------------------------
 #  TOOLCHAIN SETUP - Common for all targets
 #------------------------------------------------------------------------------
+CC                          = $(CROSS)g++
+CPP                         = $(CROSS)g++
+AS                          = $(CROSS)as
+LINK                        = $(CROSS)g++
+OBJCPY                      = $(CROSS)objcopy
+RANLIB					    = $(CROSS)ranlib
 RM                          = rm -rf
 ECHO                        = echo
 MKDIR                       = mkdir
@@ -78,7 +72,19 @@ MKDIR                       = mkdir
 #-----------------------------------------------------------------------------
 # DIRECTORIES
 #-----------------------------------------------------------------------------
+# Top level directories
 SRC_DIR                     = ./src
+COMMON_CLI_SRC_DIR          = ../Common
+
+# External library includes
+EXT_LIB_DIR                 = ./lib/$(TARGET)
+EXT_LIB_INC_DIR             = $(EXT_LIB_DIR)/inc
+
+# app, bsp, and sys directories common between firmware and client
+COMMON_CLI_BSP_DIR          = $(COMMON_CLI_SRC_DIR)/bsp
+COMMON_CLI_SYS_DIR          = $(COMMON_CLI_SRC_DIR)/sys
+
+# app, bsp, sys, dll, and api directories 
 CMD_DIR                     = $(SRC_DIR)/app/cmd
 GUI_DIR                     = $(SRC_DIR)/app/gui
 API_DIR                     = $(SRC_DIR)/api
@@ -87,33 +93,30 @@ BSP_DIR                     = $(SRC_DIR)/bsp
 SYS_DIR                     = $(SRC_DIR)/sys
 
 # QPC directories
-QPC                         = $(SYS_DIR)/qpc_shared
-
-ifeq (win32, $(TARGET)) 
-    QP_PORT_DIR             = $(QPC)/ports/80x86/win32/mingw
+QPC                         = $(COMMON_CLI_SYS_DIR)/qpc_5.3.1
+QP_PORT_INC_DIR             = $(QPC)/ports/$(TARGET)    
+ifeq (win32, $(TARGET))      
+    QP_PORT_DIR             = $(QPC)/ports/$(TARGET)/mingw   
 else
-    QP_PORT_DIR             = $(QPC)/ports/80x86/posix/gnu
+    QP_PORT_DIR             = $(QPC)/ports/$(TARGET)/gnu
 endif
 
-# RFID API directory
-RFID_API_DIR                = $(SYS_DIR)/rfid_api_shared
-RFID_API_GEN_SRC            = $(RFID_API_DIR)/gen_src
-RFID_API_SRC                = $(RFID_API_DIR)/src
-RFID_API_INC                = $(RFID_API_DIR)/inc
-RFID_API_LIB                = $(RFID_API_DIR)/ia32_lib
+# Coupler Board API directory
+CB_API_DIR                  = $(COMMON_CLI_SYS_DIR)/cb_api
+CB_API_GEN_SRC_DIR          = $(CB_API_DIR)/gen_src
+CB_API_SRC_DIR              = $(CB_API_DIR)/src
+CB_API_INC_DIR              = $(CB_API_DIR)/inc
+CB_API_LIB_DIR              = $(CB_API_DIR)/$(TARGET)_lib
 
-# CommStack directories
-COMM_DIR                    = $(SYS_DIR)/msgs_shared
-COMM_INC_DIR                = $(COMM_DIR)/gen_src
-COMM_ERR_DIR                = $(COMM_DIR)/include
-COMM_LIB_DIR                = $(COMM_DIR)/ia32_lib
+# Boost library
+BOOST_INC_DIR               = $(EXT_LIB_INC_DIR)
+BOOST_LIB_DIR               = $(EXT_LIB_DIR)/boost
 
 # Base64 encoding module
-BASE64_DIR                  = $(SYS_DIR)/libb64_shared
+BASE64_DIR                  = $(COMMON_CLI_SYS_DIR)/libb64
 
 # Shared Client Utils
-UTILS_SHARED_DIR            = $(SYS_DIR)/utils_shared
-FWLDR_DIR                   = $(UTILS_SHARED_DIR)/fwLdr
+FWLDR_DIR                   = $(SYS_DIR)/fwLdr
 
 #-----------------------------------------------------------------------------
 # SOURCE VIRTUAL DIRECTORIES
@@ -123,13 +126,9 @@ VPATH                       = $(API_DIR) \
                               $(GUI_DIR) \
                               $(DLL_DIR) \
                               $(BSP_DIR) \
-                              $(COMM_SM) \
-                              $(BASE64_DIR) \
-                              $(FWLDR_DIR) \
-                              $(RFID_API_SRC) \
                               $(SYS_DIR) \
-                              $(SYS_DIR)/rfid_msgs \
-                              $(SYS_DIR)/utils_shared/cmd
+                              $(BASE64_DIR) \
+                              $(FWLDR_DIR)
 
 #-----------------------------------------------------------------------------
 # INCLUDE DIRECTORIES
@@ -142,32 +141,29 @@ INCLUDES                    = -I$(SRC_DIR) \
                               -I$(BSP_DIR) \
                               -I$(SYS_DIR) \
                               \
-                              -I$(COMM_INC_DIR) \
-                              -I$(COMM_ERR_DIR) \
-                              \
-                              -I$(RFID_API_SRC) \
-                              -I$(RFID_API_INC) \
-                              -I$(RFID_API_GEN_SRC) \
+                              -I$(CB_API_SRC_DIR) \
+                              -I$(CB_API_INC_DIR) \
+                              -I$(CB_API_GEN_SRC_DIR) \
                               \
                               -I$(BASE64_DIR) \
                               -I$(FWLDR_DIR) \
                               \
                               -I$(QPC)/include \
                               -I$(QP_PORT_DIR) \
+                              -I$(QP_PORT_INC_DIR) \
                               \
-                              -I$(SYS_DIR) \
-                              -I$(SYS_DIR)/rfid_msgs \
-                              -I$(SYS_DIR)/utils_shared/cmd
+                              -I$(BOOST_INC_DIR) \
+                              \
+                              -I$(SYS_DIR)
 
 #-----------------------------------------------------------------------------
 # DEFINES
 #-----------------------------------------------------------------------------
-DEFINES                     = -DDFUSE
+DEFINES                     = -DDFUSE -DBUILDING_CLIENT_DLL
 
 # Modify the INCLUDES to point to the boost includes compiled for windows
 ifeq (win32, $(TARGET)) 
-    INCLUDES               += -I/opt/boost_1.54_mingw/include
-    DEFINES                += -DBUILDING_CLIENT_DLL
+    
 endif
 
 #-----------------------------------------------------------------------------
@@ -175,34 +171,24 @@ endif
 #-----------------------------------------------------------------------------
 
 # assembler source files
-ASM_SRCS                   := 
+ASM_SRCS                    = 
 
 # C source files
-C_SRCS                     := cdecode.c \
+C_SRCS                      = cdecode.c \
                               cencode.c \
-                              dfuse.c \
-                              base64_wrapper.c \
-                              dfuse_err_convert.c \
-                              rfid_msg_iface.c
+                              base64_wrapper.c
 
 # C++ source files
-CPP_SRCS                   := bsp.cpp \
-                              \
-                              CommStackMgr.cpp \
-                              \
-                              MsgUtils.cpp \
-                              CmdlineParser.cpp \
-                              SettingsFiles.cpp \
+CPP_SRCS                    = main.cpp \
+                              bsp.cpp \
                               serial.cpp \
                               eth.cpp \
                               fwLdr.cpp
                            
-API_CPP_SRCS               := ClientApi.cpp \
-                              ParamMaps.cpp \
-                              RedwoodMsg.cpp
+API_CPP_SRCS                = ClientApi.cpp 
 
-APP_CLI_CPP_SRCS           := Callbacks.cpp main.cpp 
-APP_GUI_CPP_SRCS           := main_test_api.cpp
+APP_CLI_CPP_SRCS            = Callbacks.cpp main.cpp 
+APP_GUI_CPP_SRCS            = main_test_api.cpp
 
 #-----------------------------------------------------------------------------
 # BUILD OPTIONS FOR VARIOUS CONFIGURATIONS
@@ -214,8 +200,8 @@ ifeq (rel, $(CONF))       # Release configuration ............................
     ASFLAGS                 = 
     CFLAGS                  = -c -std=gnu99 -Wall $(INCLUDES) $(DEFINES)
 
-    CPPFLAGS                = -O2 -Wall -std=gnu++0x -c -Wall -Wno-write-strings \
-                              $(INCLUDES) $(DEFINES)
+    CPPFLAGS                = -O2 -Wall -std=gnu++0x -c -Wall \
+                              -Wno-write-strings $(INCLUDES) $(DEFINES)
 
 else ifeq (spy, $(CONF))  # Spy configuration ................................
 
@@ -225,8 +211,8 @@ else ifeq (spy, $(CONF))  # Spy configuration ................................
     CFLAGS                  = -c -std=gnu99 -Wall \
                               -g $(INCLUDES) $(DEFINES)
 
-    CPPFLAGS                = -O0 -g3 -Wall -std=gnu++0x -c -Wall -Wno-write-strings \
-                              -g $(INCLUDES) $(DEFINES)
+    CPPFLAGS                = -O0 -g3 -Wall -std=gnu++0x -c -Wall \
+                              -Wno-write-strings -g $(INCLUDES) $(DEFINES)
 
 else                     # default Debug configuration .......................
 
@@ -234,16 +220,16 @@ else                     # default Debug configuration .......................
 
 
     ASFLAGS                 = 
-    CFLAGS                  = -c -std=gnu99 -Wall -g $(INCLUDES) $(DEFINES)
+    CFLAGS                  = -c -g3 -ggdb -std=gnu99 -Wall \
+                               $(INCLUDES) $(DEFINES)
 
-    CPPFLAGS                = -O0 -g3 -Wall -std=gnu++0x -c -Wall -Wno-write-strings \
-                              -g $(INCLUDES) $(DEFINES)
+    CPPFLAGS                = -O0 -g3 -ggdb  -std=gnu++0x -c -Wall \
+                              -Wno-write-strings $(INCLUDES) $(DEFINES)
 endif
 
 
 # Modify the INCLUDES to point to the boost libraries compiled for windows
 ifeq (win32, $(TARGET))
-    LIB_BOOST_LOC           = /opt/boost_1.54_mingw/lib
     LINKFLAGS               =  -Wl,--out-implib=$(TARGET_DLL).a \
                                -Wl,--export-all-symbols \
                                -Wl,--enable-auto-import \
@@ -261,7 +247,6 @@ ifeq (win32, $(TARGET))
     DEP_STDC_DLL_CP_CMD     = cp /usr/lib/gcc/$(CROSS_PATH)/4.6/libstdc++-6.dll $(BIN_DIR)/.
   
 else
-    LIB_BOOST_LOC           = /usr/lib/
     LINKFLAGS               = -Wl,-soname,$(LIB_PREFIX)$(PROJECT_DLL).$(DLL_EXT) \
                               -Wl,--export-all-symbols \
                               -Wl,--whole-archive $(API_STATIC_LIBS) \
@@ -282,12 +267,11 @@ TARGET_EXE                  = $(BIN_DIR)/$(PROJECT_NAME)
 TARGET_API_TEST             = $(BIN_DIR)/ApiTest$(EXT)
 TARGET_DLL                  = $(BIN_DIR)/$(LIB_PREFIX)$(PROJECT_DLL).$(DLL_EXT)
 
-API_STATIC_LIBS				= $(RFID_API_LIB)/librfid_api_$(TARGET).a \
-                              $(COMM_LIB_DIR)/libredwood_api_$(TARGET).a \
-                              $(COMM_LIB_DIR)/libprotobuf_core_$(TARGET).a \
-                              $(LIB_BOOST_LOC)/libboost_program_options-mt$(BOOSTLIBMOD).a \
-                              $(LIB_BOOST_LOC)/libboost_system-mt$(BOOSTLIBMOD).a \
-                              $(LIB_BOOST_LOC)/libboost_thread$(BOOST_TH_LIBMOD)-mt$(BOOSTLIBMOD).a \
+API_STATIC_LIBS				= $(CB_API_LIB_DIR)/libCBCommApi_$(TARGET).a \
+                              $(CB_API_LIB_DIR)/libprotobuf_core_$(TARGET).a \
+                              $(BOOST_LIB_DIR)/libboost_program_options$(BOOSTLIBMOD).a \
+                              $(BOOST_LIB_DIR)/libboost_system$(BOOSTLIBMOD).a \
+                              $(BOOST_LIB_DIR)/libboost_thread$(BOOST_TH_LIBMOD)$(BOOSTLIBMOD).a \
                               
                               
 STATIC_LIBS                 = $(QP_PORT_DIR)/$(BIN_DIR)/libqp_$(QPLIBMOD)_cs.a
@@ -317,7 +301,7 @@ APP_GUI_CPP_DEPS_EXT        = $(patsubst %.o, %.d, $(APP_GUI_CPP_OBJS_EXT))
 # BUILD TARGETS
 #-----------------------------------------------------------------------------
 
-.PHONY: build_libs build_dll all api_test clean clean_with_libs build_comm build_qpc build_rfid_api $(BIN_DIR)
+.PHONY: build_libs build_dll all api_test clean clean_with_libs build_comm build_qpc build_cb_comm_api $(BIN_DIR)
 
 all:  $(TARGET_EXE)
 
@@ -368,7 +352,7 @@ $(TARGET_DLL):  $(C_OBJS_EXT) $(CPP_OBJS_EXT) $(API_CPP_OBJS_EXT)
 	cp $(RFID_API_GEN_SRC)/rfid_board_api.h $(BIN_DIR)/.
 	cp $(RFID_API_INC)/RFID_Error.h $(BIN_DIR)/.
 
-build_libs: build_comm build_qpc build_rfid_api
+build_libs: build_qpc build_cb_api
 	@echo -----------------------------------
 	@echo --- Building libraries complete ---
 	@echo -----------------------------------
@@ -379,17 +363,11 @@ build_qpc:
 	@echo ------------------------------
 	cd $(QP_PORT_DIR); make CONF=$(BIN_DIR)
 
-build_comm:
-	@echo --------------------------------
-	@echo --- Building COMM libraries  ---
-	@echo --------------------------------
-	cd $(COMM_DIR); make TARGET=$(TARGET) all
-
-build_rfid_api:
-	@echo ---------------------------------
-	@echo --- Building RFID API library ---
-	@echo ---------------------------------
-	$(TRACE_FLAG)cd $(RFID_API_DIR); make TARGET=$(TARGET) TRACE=$(TRACE) all
+build_cb_api:
+	@echo ------------------------------------
+	@echo --- Building CB Comm API library ---
+	@echo ------------------------------------
+	$(TRACE_FLAG)cd $(CB_API_DIR); make TARGET=$(TARGET) TRACE=$(TRACE) all
 	
 $(BIN_DIR)/%.d : %.c
 	$(CPP) -MM -MT $(@:.d=.o) $(CPPFLAGS) $< > $@
@@ -471,3 +449,5 @@ show:
 	@echo API_CPP_DEPS_EXT = $(API_CPP_DEPS_EXT)
 	@echo APP_CPP_OBJS_EXT = $(APP_CPP_OBJS_EXT)
 	@echo APP_CPP_DEPS_EXT = $(APP_CPP_DEPS_EXT)
+	@echo EXT_LIB_DIR      = $(EXT_LIB_DIR)
+	@echo BOOST_LIB_DIR    = $(BOOST_LIB_DIR)

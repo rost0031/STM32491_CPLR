@@ -52,7 +52,7 @@ DBG_DEFINE_THIS_MODULE( DBG_MODL_SERIAL ); /* For debug system to ID this module
 /**
  * @brief Buffers for Serial interfaces
  */
-static char          Uart1TxBuffer[MAX_MSG_LEN];
+static char          Uart1TxBuffer[CB_MAX_MSG_LEN];
 static char          Uart1RxBuffer[MENU_MAX_CMD_LEN];
 /**
  * @brief An internal array of structures that holds almost all the settings for
@@ -202,7 +202,7 @@ void Serial_DMAConfig(
       uint16_t wBufferLen
 )
 {
-   assert(wBufferLen <= MAX_MSG_LEN);
+   assert(wBufferLen <= CB_MAX_MSG_LEN);
 
    /* Enable the DMA clock */
    RCC_AHB1PeriphClockCmd( a_UARTDMASettings[serial_port].dma_clk, ENABLE );
@@ -261,8 +261,8 @@ uint32_t Serial_send_base64_enc_msg(
       uint16_t len
 )
 {
-   char encoded_serial_buf[MAX_MSG_LEN];
-   int encoded_sz = base64_encode( message, len, encoded_serial_buf, MAX_MSG_LEN );
+   char encoded_serial_buf[CB_MAX_MSG_LEN];
+   int encoded_sz = base64_encode( message, len, encoded_serial_buf, CB_MAX_MSG_LEN );
 
    if(encoded_sz < 1)
    {
@@ -281,7 +281,7 @@ uint32_t Serial_send_raw_msg(
       uint16_t len
 )
 {
-   if ( len >= MAX_MSG_LEN ) {
+   if ( len >= CB_MAX_MSG_LEN ) {
       return ERR_SERIAL_MSG_TOO_LONG;
    }
 
@@ -363,7 +363,7 @@ inline void Serial_UART1Callback(void)
                a_UARTSettings[SERIAL_UART1].indexRX
          );
          menuEvt->bufferLen = a_UARTSettings[SERIAL_UART1].indexRX;
-         menuEvt->msgSrc = SERIAL_CON;
+         menuEvt->msgSrc = _CB_Serial;
 
          /* 3. Publish the newly created event to current AO */
          QF_PUBLISH( (QEvent *)menuEvt, AO_SerialMgr );

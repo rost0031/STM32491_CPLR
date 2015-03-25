@@ -76,14 +76,14 @@ extern char *const menuDbgModCntrlItem_toggleModCOMMSelectKey;
  * @param [in] dataBuf: const char* pointer to the data passed in by the user at
  * cmd line
  * @param [in] dataLen: uint16_t length of data in the dataBuf.
- * @param [in] dst: MsgSrc destination so MENU_printf() knows were to direct the
+ * @param [in] dst: CBMsgRoute destination so MENU_printf() knows were to direct the
  * output.
  * @return: None
  */
 void MENU_toggleDbgModGeneralAction(
       const char* dataBuf,
       uint16_t dataLen,
-      MsgSrc dst
+      CBMsgRoute dst
 );
 
 /**
@@ -91,14 +91,14 @@ void MENU_toggleDbgModGeneralAction(
  * @param [in] dataBuf: const char* pointer to the data passed in by the user at
  * cmd line
  * @param [in] dataLen: uint16_t length of data in the dataBuf.
- * @param [in] dst: MsgSrc destination so MENU_printf() knows were to direct the
+ * @param [in] dst: CBMsgRoute destination so MENU_printf() knows were to direct the
  * output.
  * @return: None
  */
 void MENU_toggleDbgModSerialAction(
       const char* dataBuf,
       uint16_t dataLen,
-      MsgSrc dst
+      CBMsgRoute dst
 );
 
 /**
@@ -106,14 +106,14 @@ void MENU_toggleDbgModSerialAction(
  * @param [in] dataBuf: const char* pointer to the data passed in by the user at
  * cmd line
  * @param [in] dataLen: uint16_t length of data in the dataBuf.
- * @param [in] dst: MsgSrc destination so MENU_printf() knows were to direct the
+ * @param [in] dst: CBMsgRoute destination so MENU_printf() knows were to direct the
  * output.
  * @return: None
  */
 void MENU_toggleDbgModTimeAction(
       const char* dataBuf,
       uint16_t dataLen,
-      MsgSrc dst
+      CBMsgRoute dst
 );
 
 /**
@@ -121,14 +121,14 @@ void MENU_toggleDbgModTimeAction(
  * @param [in] dataBuf: const char* pointer to the data passed in by the user at
  * cmd line
  * @param [in] dataLen: uint16_t length of data in the dataBuf.
- * @param [in] dst: MsgSrc destination so MENU_printf() knows were to direct the
+ * @param [in] dst: CBMsgRoute destination so MENU_printf() knows were to direct the
  * output.
  * @return: None
  */
 void MENU_toggleDbgModEthAction(
       const char* dataBuf,
       uint16_t dataLen,
-      MsgSrc dst
+      CBMsgRoute dst
 );
 
 /**
@@ -136,14 +136,14 @@ void MENU_toggleDbgModEthAction(
  * @param [in] dataBuf: const char* pointer to the data passed in by the user at
  * cmd line
  * @param [in] dataLen: uint16_t length of data in the dataBuf.
- * @param [in] dst: MsgSrc destination so MENU_printf() knows were to direct the
+ * @param [in] dst: CBMsgRoute destination so MENU_printf() knows were to direct the
  * output.
  * @return: None
  */
 void MENU_toggleDbgModI2CAction(
       const char* dataBuf,
       uint16_t dataLen,
-      MsgSrc dst
+      CBMsgRoute dst
 );
 
 /**
@@ -151,14 +151,14 @@ void MENU_toggleDbgModI2CAction(
  * @param [in] dataBuf: const char* pointer to the data passed in by the user at
  * cmd line
  * @param [in] dataLen: uint16_t length of data in the dataBuf.
- * @param [in] dst: MsgSrc destination so MENU_printf() knows were to direct the
+ * @param [in] dst: CBMsgRoute destination so MENU_printf() knows were to direct the
  * output.
  * @return: None
  */
 void MENU_toggleDbgModNORAction(
       const char* dataBuf,
       uint16_t dataLen,
-      MsgSrc dst
+      CBMsgRoute dst
 );
 
 /**
@@ -166,14 +166,14 @@ void MENU_toggleDbgModNORAction(
  * @param [in] dataBuf: const char* pointer to the data passed in by the user at
  * cmd line
  * @param [in] dataLen: uint16_t length of data in the dataBuf.
- * @param [in] dst: MsgSrc destination so MENU_printf() knows were to direct the
+ * @param [in] dst: CBMsgRoute destination so MENU_printf() knows were to direct the
  * output.
  * @return: None
  */
 void MENU_toggleDbgModSDRAMAction(
       const char* dataBuf,
       uint16_t dataLen,
-      MsgSrc dst
+      CBMsgRoute dst
 );
 
 /**
@@ -181,14 +181,14 @@ void MENU_toggleDbgModSDRAMAction(
  * @param [in] dataBuf: const char* pointer to the data passed in by the user at
  * cmd line
  * @param [in] dataLen: uint16_t length of data in the dataBuf.
- * @param [in] dst: MsgSrc destination so MENU_printf() knows were to direct the
+ * @param [in] dst: CBMsgRoute destination so MENU_printf() knows were to direct the
  * output.
  * @return: None
  */
 void MENU_toggleDbgModDBGAction(
       const char* dataBuf,
       uint16_t dataLen,
-      MsgSrc dst
+      CBMsgRoute dst
 );
 
 /**
@@ -196,14 +196,14 @@ void MENU_toggleDbgModDBGAction(
  * @param [in] dataBuf: const char* pointer to the data passed in by the user at
  * cmd line
  * @param [in] dataLen: uint16_t length of data in the dataBuf.
- * @param [in] dst: MsgSrc destination so MENU_printf() knows were to direct the
+ * @param [in] dst: CBMsgRoute destination so MENU_printf() knows were to direct the
  * output.
  * @return: None
  */
 void MENU_toggleDbgModCOMMAction(
       const char* dataBuf,
       uint16_t dataLen,
-      MsgSrc dst
+      CBMsgRoute dst
 );
 
 

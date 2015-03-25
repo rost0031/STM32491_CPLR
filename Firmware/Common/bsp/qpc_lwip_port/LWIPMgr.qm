@@ -9,13 +9,13 @@
    <documentation>/**
  * \struct Event struct type for getting data from Eth driver to LWIPMgr.
  */</documentation>
-   <attribute name="msg_src" type="MsgSrc" visibility="0x01" properties="0x00">
+   <attribute name="msg_src" type="CBMsgRoute" visibility="0x01" properties="0x00">
     <documentation>/**&lt; Where the msg came from so it can be routed back to the sender. */</documentation>
    </attribute>
    <attribute name="msg_len" type="uint16_t" visibility="0x01" properties="0x00">
     <documentation>/**&lt; Length of the msg buffer. */</documentation>
    </attribute>
-   <attribute name="msg[MAX_MSG_LEN]" type="char" visibility="0x01" properties="0x00">
+   <attribute name="msg[CB_MAX_MSG_LEN]" type="char" visibility="0x01" properties="0x00">
     <documentation>/**&lt; Buffer that holds the data of the msg. */</documentation>
    </attribute>
   </class>
@@ -896,7 +896,7 @@ if (p == NULL) {
               (p-&gt;tot_len)-1
         );
         menuEvt-&gt;bufferLen = (p-&gt;tot_len)-1;
-        menuEvt-&gt;msgSrc = ETH_PORT_LOG;
+        menuEvt-&gt;msgSrc = _CB_EthLog;
 
         /* 3. Publish the newly created event to current AO */
         QF_PUBLISH( (QEvent *)menuEvt, AO_LWIPMgr );
@@ -917,7 +917,7 @@ if (p == NULL) {
               p-&gt;payload,
               ethEvt-&gt;msg_len
         );
-        ethEvt-&gt;msg_src = ETH_PORT_SYS;
+        ethEvt-&gt;msg_src = _CB_EthSys;
 
         /* Post directly to the &quot;raw&quot; queue for FreeRTOS task to read */
         QEQueue_postFIFO(&amp;CPLR_evtQueue, (QEvt *)ethEvt);
@@ -954,7 +954,7 @@ if (p == NULL) {
                   (p-&gt;tot_len)-1
             );
             menuEvt-&gt;bufferLen = (p-&gt;tot_len)-1;
-            menuEvt-&gt;msgSrc = ETH_PORT_LOG;
+            menuEvt-&gt;msgSrc = _CB_EthLog;
 
             /* 3. Publish the newly created event to current AO */
             QF_PUBLISH( (QEvent *)menuEvt, AO_LWIPMgr );
@@ -974,7 +974,7 @@ if (p == NULL) {
                   p-&gt;payload,
                   ethEvt-&gt;msg_len
             );
-            ethEvt-&gt;msg_src = ETH_PORT_SYS;
+            ethEvt-&gt;msg_src = _CB_EthSys;
 
             /* Post directly to the &quot;raw&quot; queue for FreeRTOS task to read */
             QEQueue_postFIFO(&amp;CPLR_evtQueue, (QEvt *)ethEvt);

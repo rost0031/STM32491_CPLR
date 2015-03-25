@@ -51,7 +51,7 @@ char *const menuSysTest_runI2CEEPROMWriteTest_SelectKey = "EEW";
 void MENU_i2cEEPROMReadTestAction(
       const char* dataBuf,
       uint16_t dataLen,
-      MsgSrc dst
+      CBMsgRoute dst
 )
 {
    CB_UNUSED_ARG(dataBuf);
@@ -94,7 +94,7 @@ void MENU_i2cEEPROMReadTestAction(
 void MENU_i2cSNReadTestAction(
       const char* dataBuf,
       uint16_t dataLen,
-      MsgSrc dst
+      CBMsgRoute dst
 )
 {
    CB_UNUSED_ARG(dataBuf);
@@ -136,7 +136,7 @@ void MENU_i2cSNReadTestAction(
 void MENU_i2cEUI64ReadTestAction(
       const char* dataBuf,
       uint16_t dataLen,
-      MsgSrc dst
+      CBMsgRoute dst
 )
 {
    CB_UNUSED_ARG(dataBuf);
@@ -180,7 +180,7 @@ void MENU_i2cEUI64ReadTestAction(
 void MENU_i2cEEPROMWriteTestAction(
       const char* dataBuf,
       uint16_t dataLen,
-      MsgSrc dst
+      CBMsgRoute dst
 )
 {
    CB_UNUSED_ARG(dataBuf);

@@ -321,7 +321,7 @@ extern uint32_t  glbDbgConfig; /**< Allow global access to debug info */
       do { \
          if (DEBUG) { \
             if ( glbDbgConfig & DBG_this_module_ ) { \
-               CON_output(DBG, NA_SRC_DST, NA_SRC_DST, __func__, __LINE__, fmt, \
+               CON_output(DBG, _CB_NoRoute, _CB_NoRoute, __func__, __LINE__, fmt, \
                   ##__VA_ARGS__); \
             } \
          } \
@@ -367,7 +367,7 @@ extern uint32_t  glbDbgConfig; /**< Allow global access to debug info */
  */
 #ifndef SLOW_PRINTF
 #define LOG_printf(fmt, ...) \
-      do { CON_output(LOG, NA_SRC_DST, NA_SRC_DST, __func__, __LINE__, fmt, \
+      do { CON_output(LOG, _CB_NoRoute, _CB_NoRoute, __func__, __LINE__, fmt, \
             ##__VA_ARGS__); \
       } while (0)
 #else
@@ -405,7 +405,7 @@ extern uint32_t  glbDbgConfig; /**< Allow global access to debug info */
  */
 #ifndef SLOW_PRINTF
 #define WRN_printf(fmt, ...) \
-      do { CON_output(WRN, NA_SRC_DST, NA_SRC_DST, __func__, __LINE__, fmt, \
+      do { CON_output(WRN, _CB_NoRoute, _CB_NoRoute, __func__, __LINE__, fmt, \
             ##__VA_ARGS__); \
       } while (0)
 #else
@@ -443,7 +443,7 @@ extern uint32_t  glbDbgConfig; /**< Allow global access to debug info */
  */
 #ifndef SLOW_PRINTF
 #define ERR_printf(fmt, ...) \
-      do { CON_output(ERR, NA_SRC_DST, NA_SRC_DST, __func__, __LINE__, fmt, \
+      do { CON_output(ERR, _CB_NoRoute, _CB_NoRoute, __func__, __LINE__, fmt, \
             ##__VA_ARGS__); \
       } while (0)
 #else

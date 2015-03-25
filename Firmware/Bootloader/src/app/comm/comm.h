@@ -31,16 +31,18 @@ extern "C" {
 /* Exported functions --------------------------------------------------------*/
 
 /**
- * @brief   Initialize specified I2C bus
+ * @brief   Parse msg.
  *
- * This function initializes GPIO, clocks, and all the associated hardware for
- * a specified I2C bus interface.
- *
- * @param [in]  iBus: I2C_Bus_t identifier for I2C bus to initialize
- *    @arg
+ * @param [in] *pBuffer: uint8_t pointer to the buffer containing the msg.
+ * @param [in] bufferLen: uint16_t length of data in buffer.
+ * @param [in] msgSource: CBMsgRoute indicating where the msg originated.
  * @return: None
  */
-CBErrorCode COMM_parseMsg( uint8_t *pBuffer, uint16_t bufferLen, MsgSrc msgSource );
+CBErrorCode COMM_parseMsg(
+      uint8_t *pBuffer,
+      uint16_t bufferLen,
+      CBMsgRoute msgSource
+);
 
 /**
  * @}
