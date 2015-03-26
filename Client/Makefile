@@ -43,15 +43,16 @@ ifeq (win32, $(TARGET)) # Cross compile for windows from Ubuntu-12.04
     endif
  
     EXT                     = .exe                 # Appended to the target name
-    QPLIBMOD                = $(TARGET)
-    BOOSTLIBMOD             = -mt-s
+    QPLIBMOD                = WIN32
+#    BOOSTLIBMOD             = -mt-s
+    BOOSTLIBMOD             = -mt.dll
     BOOST_TH_LIBMOD         = _$(TARGET)
 
 else                    # Compile natively on Linux and/or Cygwin
     CROSS                   = 
     EXT                     =                      # Appended to the target name
     QPLIBMOD                = posix
-    BOOSTLIBMOD             =
+    BOOSTLIBMOD             = -mt
     BOOST_TH_LIBMOD         = 
     TARGET                  = posix
 endif
@@ -78,6 +79,7 @@ COMMON_CLI_SRC_DIR          = ../Common
 
 # External library includes
 EXT_LIB_DIR                 = ./lib/$(TARGET)
+EXT_LIB_BIN_DIR             = $(EXT_LIB_DIR)/lib
 EXT_LIB_INC_DIR             = $(EXT_LIB_DIR)/inc
 
 # app, bsp, and sys directories common between firmware and client
@@ -96,7 +98,7 @@ SYS_DIR                     = $(SRC_DIR)/sys
 QPC                         = $(COMMON_CLI_SYS_DIR)/qpc_5.3.1
 QP_PORT_INC_DIR             = $(QPC)/ports/$(TARGET)    
 ifeq (win32, $(TARGET))      
-    QP_PORT_DIR             = $(QPC)/ports/$(TARGET)/mingw   
+    QP_PORT_DIR             = $(QPC)/ports/$(TARGET)/mingw
 else
     QP_PORT_DIR             = $(QPC)/ports/$(TARGET)/gnu
 endif
@@ -110,7 +112,7 @@ CB_API_LIB_DIR              = $(CB_API_DIR)/$(TARGET)_lib
 
 # Boost library
 BOOST_INC_DIR               = $(EXT_LIB_INC_DIR)
-BOOST_LIB_DIR               = $(EXT_LIB_DIR)/boost
+BOOST_LIB_DIR               = $(EXT_LIB_BIN_DIR)/boost
 
 # Base64 encoding module
 BASE64_DIR                  = $(COMMON_CLI_SYS_DIR)/libb64
@@ -154,7 +156,8 @@ INCLUDES                    = -I$(SRC_DIR) \
                               \
                               -I$(BOOST_INC_DIR) \
                               \
-                              -I$(SYS_DIR)
+                              -I$(SYS_DIR) \
+                              -I$(COMMON_CLI_SYS_DIR)
 
 #-----------------------------------------------------------------------------
 # DEFINES
@@ -179,15 +182,20 @@ C_SRCS                      = cdecode.c \
                               base64_wrapper.c
 
 # C++ source files
-CPP_SRCS                    = main.cpp \
-                              bsp.cpp \
+CPP_SRCS                    = bsp.cpp \
                               serial.cpp \
                               eth.cpp \
                               fwLdr.cpp
                            
-API_CPP_SRCS                = ClientApi.cpp 
+API_CPP_SRCS                = ClientApi.cpp \
+                              Job.cpp \
+                              MainMgr.cpp
 
-APP_CLI_CPP_SRCS            = Callbacks.cpp main.cpp 
+APP_CLI_CPP_SRCS            = main.cpp \
+                              Callbacks.cpp
+                              
+                              
+ 
 APP_GUI_CPP_SRCS            = main_test_api.cpp
 
 #-----------------------------------------------------------------------------
@@ -238,28 +246,42 @@ ifeq (win32, $(TARGET))
 	    		
     LIBS                   += -lws2_32
     DEFINES                += -DBOOST_THREAD_USE_LIB -DWIN32COMPILE -DBOOST_ALL_NO_LIB -D_SECURE_SCL=0
+
   
     DLL_EXT                 = dll
     LIB_PREFIX              = lib
     DLL_LIBS                = -L$(BIN_DIR) -l$(LIB_PREFIX)$(PROJECT_DLL)
   
-    DEP_GCC_DLL_CP_CMD      = cp /usr/lib/gcc/$(CROSS_PATH)/4.6/libgcc_s_sjlj-1.dll $(BIN_DIR)/.
-    DEP_STDC_DLL_CP_CMD     = cp /usr/lib/gcc/$(CROSS_PATH)/4.6/libstdc++-6.dll $(BIN_DIR)/.
+    DEP_GCC_DLL_CP_CMD      = cp /usr/$(CROSS_PATH)/sys-root/mingw/bin/libgcc_s_seh-1.dll $(BIN_DIR)/.
+    DEP_STDC_DLL_CP_CMD     = cp /usr/$(CROSS_PATH)/sys-root/mingw/bin/libstdc++-6.dll $(BIN_DIR)/.
+    
+    API_STATIC_LIBS         = $(CB_API_LIB_DIR)/libCBCommApi_$(TARGET).a \
+                              $(CB_API_LIB_DIR)/libprotobuf_core_$(TARGET).a \
+                              $(BOOST_LIB_DIR)/libboost_program_options$(BOOSTLIBMOD).a \
+                              $(BOOST_LIB_DIR)/libboost_system$(BOOSTLIBMOD).a \
+                              $(BOOST_LIB_DIR)/libboost_thread$(BOOST_TH_LIBMOD)$(BOOSTLIBMOD).a
   
 else
     LINKFLAGS               = -Wl,-soname,$(LIB_PREFIX)$(PROJECT_DLL).$(DLL_EXT) \
-                              -Wl,--export-all-symbols \
                               -Wl,--whole-archive $(API_STATIC_LIBS) \
                               -Wl,--no-whole-archive $(STATIC_LIBS)
-                             
+                          
+    API_STATIC_LIBS         = $(CB_API_LIB_DIR)/libCBCommApi_$(TARGET).a \
+                              $(CB_API_LIB_DIR)/libprotobuf_core_$(TARGET).a
+                            
     LIBS                   += -lpthread  # This is needed on newer Ubuntu systems but doesn't hurt older ones or Cygwin
   
     DLL_EXT                 = so
     LIB_PREFIX              = lib
     DLL_LIBS                = -L$(BIN_DIR) -l$(PROJECT_DLL)
   
-    DEP_GCC_DLL_CP_CMD      =
+    DEP_GCC_DLL_CP_CMD      = cp $(BOOST_LIB_DIR)/libboost_program_options$(BOOSTLIBMOD).$(DLL_EXT) $(BIN_DIR)/.; \
+                              cp $(BOOST_LIB_DIR)/libboost_system$(BOOSTLIBMOD).$(DLL_EXT) $(BIN_DIR)/.; \
+                              cp $(BOOST_LIB_DIR)/libboost_thread$(BOOST_TH_LIBMOD)$(BOOSTLIBMOD).$(DLL_EXT) $(BIN_DIR)/. 
     DEP_STDC_DLL_CP_CMD     =
+
+    CFLAGS                 += -pthread -fPIC
+    CPPFLAGS               += -pthread -fPIC
 endif
 
 
@@ -267,12 +289,7 @@ TARGET_EXE                  = $(BIN_DIR)/$(PROJECT_NAME)
 TARGET_API_TEST             = $(BIN_DIR)/ApiTest$(EXT)
 TARGET_DLL                  = $(BIN_DIR)/$(LIB_PREFIX)$(PROJECT_DLL).$(DLL_EXT)
 
-API_STATIC_LIBS				= $(CB_API_LIB_DIR)/libCBCommApi_$(TARGET).a \
-                              $(CB_API_LIB_DIR)/libprotobuf_core_$(TARGET).a \
-                              $(BOOST_LIB_DIR)/libboost_program_options$(BOOSTLIBMOD).a \
-                              $(BOOST_LIB_DIR)/libboost_system$(BOOSTLIBMOD).a \
-                              $(BOOST_LIB_DIR)/libboost_thread$(BOOST_TH_LIBMOD)$(BOOSTLIBMOD).a \
-                              
+
                               
 STATIC_LIBS                 = $(QP_PORT_DIR)/$(BIN_DIR)/libqp_$(QPLIBMOD)_cs.a
                               
@@ -345,12 +362,6 @@ $(TARGET_DLL):  $(C_OBJS_EXT) $(CPP_OBJS_EXT) $(API_CPP_OBJS_EXT)
 	$(DEP_STDC_DLL_CP_CMD)
 	@echo --- ClientApi headers   ---
 	cp $(API_DIR)/*.h $(BIN_DIR)/.
-	@echo --- Redwood API headers ---
-	cp $(COMM_INC_DIR)/redwood_msgs.h $(BIN_DIR)/.
-	cp $(COMM_ERR_DIR)/*.h $(BIN_DIR)/.
-	@echo --- RFID board API headers ---
-	cp $(RFID_API_GEN_SRC)/rfid_board_api.h $(BIN_DIR)/.
-	cp $(RFID_API_INC)/RFID_Error.h $(BIN_DIR)/.
 
 build_libs: build_qpc build_cb_api
 	@echo -----------------------------------
@@ -393,9 +404,9 @@ cleanall: clean_with_libs
 	@echo --- Cleaning EVERYTHING
 	@echo ---------------------------
 
-	$(RM) dbg/*.o dbg/*.d dbg/*.hex dbg/*.elf dbg/*.map dbg
-	$(RM) spy/*.o spy/*.d spy/*.hex spy/*.elf spy/*.map rel
-	$(RM) rel/*.o rel/*.d rel/*.hex rel/*.elf rel/*.map spy
+	$(RM) dbg 
+	$(RM) spy 
+	$(RM) rel 
 	
 clean:
 	$(RM) $(BIN_DIR)/*.o \
@@ -405,7 +416,7 @@ clean:
 	$(BIN_DIR)/*.a \
 	$(BIN_DIR)/*.h
 	
-clean_with_libs: clean clean_qpc_libs clean_redwood_api_libs clean_rfid_api_libs
+clean_with_libs: clean clean_qpc_libs clean_cb_api_libs
 	@echo -------------------------
 	@echo --- Cleaned all libs ----
 	@echo -------------------------
@@ -418,17 +429,11 @@ clean_qpc_libs:
 	cd $(QP_PORT_DIR); make CONF=spy clean
 	cd $(QP_PORT_DIR); make CONF=rel clean
 
-clean_redwood_api_libs:
-	@echo ------------------------------------
-	@echo --- Cleaning Redwood API library ---
-	@echo ------------------------------------
-	$(TRACE_FLAG)make -C $(COMM_DIR) cleanall
-
-clean_rfid_api_libs:
-	@echo ---------------------------------
-	@echo --- Cleaning RFID API library ---
-	@echo ---------------------------------
-	$(TRACE_FLAG)make -C $(RFID_API_DIR) cleanall
+clean_cb_api_libs:
+	@echo -------------------------------
+	@echo --- Cleaning CB API library ---
+	@echo -------------------------------
+	$(TRACE_FLAG)cd $(CB_API_DIR); make TARGET=$(TARGET) TRACE=$(TRACE) cleanall
 
 show:
 	@echo CONF             = $(CONF)

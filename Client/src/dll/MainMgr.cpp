@@ -35,15 +35,7 @@
  */
 
 /* Includes ------------------------------------------------------------------*/
-#include "Shared.h"
 #include "MainMgr.h"
-#include "base64_wrapper.h"
-#include "MsgUtils.h"
-#include <cstring>
-#include "bsp.h"
-#include "dfuse.h"
-#include "dfuse_err_convert.h"
-#include "ClientApi.h"
 
 /* Compile-time called macros ------------------------------------------------*/
 Q_DEFINE_THIS_FILE;
@@ -53,7 +45,7 @@ Q_DEFINE_THIS_FILE;
 #define EXIT(error_code)                              \
 do {                                                  \
         ExitEvt *exEv = Q_NEW(ExitEvt, EXIT_SIG);     \
-        exEv->my_error_code = error_code;             \
+        exEv->errorCode = error_code;             \
         QF_PUBLISH((QEvent *)exEv, AO_MainMgr);  \
    } while (0)
 
@@ -70,9 +62,12 @@ do {                                                  \
 typedef struct {
 /* protected: */
     QActive super;
+
+    /**< Used for timing out the actual exit for cleanup */
     QTimeEvt exitTimerEvt;
-    uint8_t exit_code;
-    ErrorCode errorCode;
+
+    /**< Keep track of last error and that will be returned or sent back to caller */
+    CBErrorCode errorCode;
 } MainMgr;
 
 /* protected: */
@@ -158,13 +153,13 @@ static QState MainMgr_Active(MainMgr * const me, QEvt const * const e) {
         /* ${AOs::MainMgr::SM::Active::MSG_TIMEOUT_EXIT} */
         case MSG_TIMEOUT_EXIT_SIG: {
             cout << "Timed out while waiting for a response for a sent message.  Exiting." << endl;
-            EXIT(1);
+            EXIT(me->errorCode);
             status_ = Q_HANDLED();
             break;
         }
         /* ${AOs::MainMgr::SM::Active::EXIT} */
         case EXIT_SIG: {
-            me->exit_code = (uint8_t)(((ExitEvt *)e)->my_error_code);
+            me->errorCode = ((ExitEvt *)e)->errorCode;
             status_ = Q_TRAN(&MainMgr_CleanupBeforeExit);
             break;
         }
@@ -185,7 +180,7 @@ static QState MainMgr_CleanupBeforeExit(MainMgr * const me, QEvt const * const e
             QTimeEvt_postIn(
                 &me->exitTimerEvt,
                 (QActive *)me,
-                SECONDS_TO_BSP_TICKS( CLIENT_MAX_TIMEOUT_SEC_EXIT )
+                SEC_TO_TICKS( MAINMGR_MAX_TIME_SEC_EXIT_DELAY )
             );
             status_ = Q_HANDLED();
             break;
@@ -193,7 +188,7 @@ static QState MainMgr_CleanupBeforeExit(MainMgr * const me, QEvt const * const e
         /* ${AOs::MainMgr::SM::Active::CleanupBeforeExi~::EXIT} */
         case EXIT_SIG: {
             //exit( me->exit_code );
-            QActive_stop(AO_CommStackMgr);
+            QActive_stop(AO_MainMgr);
             QF_stop();
             status_ = Q_HANDLED();
             break;

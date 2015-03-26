@@ -45,7 +45,7 @@ void Eth::read_handler(
 void Eth::read_some()
 {
    m_socket.async_receive_from(
-         boost::asio::buffer(read_msg_, MAX_MSG_LEN),
+         boost::asio::buffer(read_msg_, CB_MAX_MSG_LEN),
          m_loc_endpoint,
          boost::bind(
                &Eth::read_handler,

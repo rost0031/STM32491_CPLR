@@ -184,11 +184,13 @@ CFLAGS 		 = $(MFLAGS) -std=gnu99 -Wall -ffunction-sections -fdata-sections \
 			   -g -ggdb -O0 $(INCLUDES) $(DEFINES)
 
 CPPFLAGS 	 = $(MFLAGS) \
-			   -Wall -fno-rtti -fno-exceptions \
+			   -Wall -rtti -fno-exceptions \
 			   -g3 -ggdb -O0 $(INCLUDES) $(DEFINES)
 
 endif
 
+CFLAGS                     += -pthread -fPIC
+CPPFLAGS                   += -pthread -fPIC
 #------------------------------------------------------------------------------
 #  Which proto files to use.
 #------------------------------------------------------------------------------

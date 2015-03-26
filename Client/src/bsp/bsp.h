@@ -17,28 +17,11 @@
 #define BSP_H_
 
 /* Includes ------------------------------------------------------------------*/
-#include "CBCliShared.h"
+#include "ClientShared.h"
 
 /* Exported defines ----------------------------------------------------------*/
-#define BSP_TICKS_PER_SEC   1000U
-
-#ifdef WIN32COMPILE
-#define WIN32_TIME_MULT       0.1
-#else
-#define WIN32_TIME_MULT       1
-#endif
 
 /* Exported macros -----------------------------------------------------------*/
-
-/**
- * Convert seconds to BSP ticks used by timers in QP.
- *
- * @param  seconds: number of seconds that is desired
- * @return ticks: number of ticks to actually arm the QP timer on the client.
- */
-#define SECONDS_TO_BSP_TICKS( seconds )   \
-   (uint32_t)( (1.0 * seconds) * BSP_TICKS_PER_SEC * WIN32_TIME_MULT)
-
 /* Exported types ------------------------------------------------------------*/
 /* Exported constants --------------------------------------------------------*/
 /* Exported functions --------------------------------------------------------*/

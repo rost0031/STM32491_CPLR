@@ -2,11 +2,13 @@
  * @file    CallbackTypes.h
  * Definitions of different callback types
  *
- * @date    03/24/2015
+ * @date    03/25/2015
  * @author  Harry Rostovtsev
  * @email   harry_rostovtsev@datacard.com
  * Copyright (C) 2015 Datacard. All rights reserved.
  */
+
+/* Define to prevent recursive inclusion -------------------------------------*/
 #ifndef CALLBACKTYPES_H_
 #define CALLBACKTYPES_H_
 
@@ -25,36 +27,63 @@ extern "C" {
    #define __stdcall
 #endif
 
+/* Includes ------------------------------------------------------------------*/
 /* Generated C headers should be included inside of extern C enclosure */
 #include "CBCommApi.h"
-#ifndef CBMSGS_H_
-#define CBMSGS_H_
-#include "CBMsgs.h"
-#endif
+#include "CBSharedDbgLevels.h"
 
 #ifdef __cplusplus
 }
 #endif
 
-#include "LogLevels.h"
+
+/* Exported defines ----------------------------------------------------------*/
+/* Exported macros -----------------------------------------------------------*/
+/* Exported types ------------------------------------------------------------*/
 
 /**
- * \typedef for a call back function that will handle messages coming back from
- * the laminator.
+ * @brief   Callback type for a message that is coming from the coupler board.
+ *
+ * This is a callback function type definition which should be instantiated to
+ * handle msgs coming from the coupler board.  This allows different handling
+ * depending if the client is commandline, menu driven, or a a gui.
+ *
+ * @param err: CBErrorCode type that specifies what error was sent from coupler
+ *             or occurred.
+ * @param *buffer: char pointer to buffer containing the message to be printed.
  */
-typedef void (*cbRedwoodMsgHandler)(
+typedef void (*CB_MsgHandler_t)(
       char *message,
       int len
 );
 
 /**
- * \typedef for a call back function that will handle messages coming back from
- * the laminator.
+ * @brief   Callback type for a debug/log msg coming from the coupler board.
+ *
+ * This is a callback function type definition which should be instantiated to
+ * handle logging and debugging msgs coming from the coupler board.  This allows
+ * different handling depending if the client is commandline, menu driven, or a
+ * a gui.
+ *
+ * @param [in] dbgLevel: DBG_LEVEL_T that specifies the log priority of the msg
+ *    @arg DBG: Lowest level of debugging.  Everything printed.
+ *    @arg LOG: Basic logging.
+ *    @arg WRN: Warnings.  Non-critical errors that may have occurred that allow
+ *              operations to continue.
+ *    @arg ERR: Critical errors. Operations will stop if these occurred.
+ *    @arg CON: This is reserved for printing to the console as part of regular
+ *              operation and nothing will be prepended.  The client has no use
+ *              for this.
+ *    @arg ISR: This debug msg came from an ISR
+ *
+ * @param err: CBErrorCode type that specifies what error was sent from coupler
+ *             or occurred.
+ * @param *buffer: char pointer to buffer containing the message to be printed.
  */
-typedef void (*cbRedwoodLogHandler)(
-      LogLevel_t logLevel,
-      ErrorCode err,
-      char *message
+typedef void (*CB_LogHandler_t)(
+      DBG_LEVEL_T dbgLevel,
+      CBErrorCode err,
+      char *buffer
 );
 
 #endif                                                    /* CALLBACKTYPES_H_ */

@@ -123,6 +123,7 @@
 #include <stdarg.h>
 #include <stdio.h>
 #include <string.h>
+#include "CBSharedDbgLevels.h"                   /* For the shared dbg levels */
 
 /* Exported defines ----------------------------------------------------------*/
 /**
@@ -144,20 +145,6 @@
 //#define SLOW_PRINTF
 
 /* Exported types ------------------------------------------------------------*/
-/*! \enum DBG_LEVEL_T
- * These are the various levels of debug that are available on the system.
- */
-typedef enum DBG_LEVEL {
-   DBG = 0, /**< Lowest level of debugging.  Everything printed. */
-   LOG,     /**< Basic logging. */
-   WRN,     /**< Warnings. Always printed. */
-   ERR,     /**< Critical errors.  Always printed. */
-   CON,     /**< This is reserved for printing to the console as part of
-                 regular operation and nothing will be prepended.  Also, the
-                 DBG_LEVEL will be checked to issue a MENU signal instead of a
-                 LOG signal */
-   ISR,     /**< Use this with isr_debug_slow_printf to get smaller printout */
-} DBG_LEVEL_T;
 
 /*! \enum DEBUG_MOD_T
  * These are the various system modules for which debugging can be

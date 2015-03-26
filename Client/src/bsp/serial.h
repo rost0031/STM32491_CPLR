@@ -15,7 +15,8 @@
 #ifndef SERIAL_H
 #define SERIAL_H
 
-
+/* Includes ------------------------------------------------------------------*/
+#include "ClientShared.h"
 #include <unistd.h>
 #include <iostream>
 #include "boost/asio.hpp"
@@ -24,7 +25,6 @@
 #include "boost/system/system_error.hpp"
 #include "boost/bind.hpp"
 #include "boost/thread.hpp"
-#include "CBCliShared.h"
 #include "dfuse.h"
 
 /**
@@ -35,8 +35,8 @@
  */
 class Serial {
 
-    char read_msg_[MAX_MSG_LEN];/**< buffer to hold incoming msgs */
-    char write_msg_[MAX_MSG_LEN];/**< buffer to hold msgs being sent */
+    char read_msg_[CB_MAX_MSG_LEN];/**< buffer to hold incoming msgs */
+    char write_msg_[CB_MAX_MSG_LEN];/**< buffer to hold msgs being sent */
     uint8_t bReadNDFUSEBytes; /**< This variable will hold how many bytes to
     read on the DFUSE serial bus because ST is inconsistent about when they send
     and don't send ACKs/NACKs.  Pretty much every command sends an ACK when it's

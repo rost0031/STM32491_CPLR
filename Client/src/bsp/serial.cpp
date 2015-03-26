@@ -50,7 +50,7 @@ void Serial::read_handler(
 //        MsgEvt *msgEvt = Q_NEW(MsgEvt, MSG_RECEIVED_SIG);
 //
 //        /* Decode the message from base64 and write it directly to the event. */
-//        int decoded_sz = base64_decode(read_msg_, bytes_transferred, msgEvt->msg, MAX_MSG_LEN);
+//        int decoded_sz = base64_decode(read_msg_, bytes_transferred, msgEvt->msg, CB_MAX_MSG_LEN);
 //
 //        /* Set the size and source */
 //        msgEvt->msg_len = decoded_sz;

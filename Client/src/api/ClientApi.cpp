@@ -2,52 +2,80 @@
  * @file    ClientApi.cpp
  * Definitions for class and functions used by the Client API.
  *
- * @date    02/04/2014
+ * @date    03/25/2015
  * @author  Harry Rostovtsev
  * @email   harry_rostovtsev@datacard.com
- * Copyright (C) 2014 Datacard. All rights reserved.
+ * Copyright (C) 2015 Datacard. All rights reserved.
  */
 
+/* Includes ------------------------------------------------------------------*/
 #include "ClientApi.h"
-#include "CmdlineParser.h"
+#include "Job.h"
 #include "serial.h"
 #include "eth.h"
-#include "Shared.h"
-#include "CommStackMgr.h"
+#include "ClientShared.h"
+#include "MainMgr.h"
 #include "cencode.h"
 #include "cdecode.h"
 #include "base64_wrapper.h"
+#include "CBCommApi.h"
 
-#include "MsgUtils.h"
+/* Namespaces ----------------------------------------------------------------*/
+using namespace std;
 
-#ifndef RFID_BOARD_API_H_
-#define RFID_BOARD_API_H_
-#include "rfid_board_api.h"
-#endif
+/* Compile-time called macros ------------------------------------------------*/
 
-#include "Redwood_API.h"
-
-/* Global pointers to device objects and cmdline parser */
-Serial          *serial;
-Eth             *ethernet;
-CmdlineParser   *cmdline_parser;
-
-/* Local-scope objects -----------------------------------------------------*/
-static QEvent const *l_MainMgrQueueSto[10];
-static QSubscrList l_subscrSto[MAX_PUB_SIG];
-
+/* Private typedefs ----------------------------------------------------------*/
 /* storage for event pools... */
 static union SmallEvents {
     void   *e0;                                       /* minimum event size */
     uint8_t e1[sizeof(QEvent)];
-    uint8_t e2[sizeof(ExitEvt)];
+//    uint8_t e2[sizeof(ExitEvt)];
 } l_smlPoolSto[10];                     /* storage for the small event pool */
 
 static union MediumEvents {
     void   *e0;                                       /* minimum event size */
-    uint8_t *e1[sizeof(MsgEvt)];
-    uint8_t *e2[sizeof(DfuseMsgEvt)];
+//    uint8_t *e1[sizeof(MsgEvt)];
+//    uint8_t *e2[sizeof(DfuseMsgEvt)];
 } l_medPoolSto[15];                    /* storage for the medium event pool */
+
+/* Private defines -----------------------------------------------------------*/
+/* Private macros ------------------------------------------------------------*/
+
+/* Global pointers to device objects and cmdline parser */
+Serial          *serial;
+Eth             *ethernet;
+
+/* Private variables and Local objects ---------------------------------------*/
+static QEvent const *l_MainMgrQueueSto[10];
+static QSubscrList l_subscrSto[MAX_PUB_SIG];
+
+/* Private function prototypes -----------------------------------------------*/
+/* Private functions ---------------------------------------------------------*/
+
+/******************************************************************************/
+const void ClientApi::setMsgCallBack(
+      CB_MsgHandler_t pCallbackFunction
+)
+{
+   this->setMsgCallBack( pCallbackFunction );
+}
+
+/******************************************************************************/
+const void ClientApi::setAckCallBack(
+      CB_MsgHandler_t pCallbackFunction
+)
+{
+   this->setAckCallBack( pCallbackFunction );
+}
+
+/******************************************************************************/
+const void ClientApi::setInternalLogCallBack(
+      CB_LogHandler_t pCallbackFunction
+)
+{
+   this->setInternalLogCallBack( pCallbackFunction );
+}
 
 
 /******************************************************************************/
@@ -61,7 +89,7 @@ void ClientApi::run( void )
 
    QS_OBJ_DICTIONARY(l_smlPoolSto);
    QS_OBJ_DICTIONARY(l_medPoolSto);
-   QS_OBJ_DICTIONARY(l_CommStackMgrQueueSto);
+   QS_OBJ_DICTIONARY(l_MainMgrQueueSto);
 
    /* init publish-subscribe */
    QF_psInit(l_subscrSto, Q_DIM(l_subscrSto));
@@ -71,9 +99,16 @@ void ClientApi::run( void )
    QF_poolInit(l_medPoolSto, sizeof(l_medPoolSto), sizeof(l_medPoolSto[0]));
 
    /* start the active objects... */
-   QActive_start(  AO_MainMgr, COMM_STACK_PRIORITY,
-         l_MainMgrQueueSto, Q_DIM(l_MainMgrQueueSto),
-         (void *)0, 0, (QEvent *)0);
+   QActive_start(
+         AO_MainMgr,
+         MAIN_MGR_PRIORITY,
+         l_MainMgrQueueSto,
+         Q_DIM(l_MainMgrQueueSto),
+         (void *)0,
+         0,
+         (QEvent *)0,
+         "MainMgr"
+   );
 
    printf("Started QF Framework.  Client Running...\n");
    QF_run();                              /* run the QF application */
@@ -81,40 +116,13 @@ void ClientApi::run( void )
 }
 
 /******************************************************************************/
-ClientApi::ClientApi( int argc, char** argv )
+ClientApi::ClientApi( )
 {
-   /* Parse command line arguments and make them globally accessible */
-   cmdline_parser = new CmdlineParser(argc, argv);
-
 }
 
 /******************************************************************************/
 ClientApi::~ClientApi(  )
 {
-   delete[] cmdline_parser;
    delete[] serial;
 }
 
-/******************************************************************************/
-const void ClientApi::setRedwoodMsgCallBack(
-      cbRedwoodMsgHandler pCallbackFunction
-)
-{
-   cmdline_parser->setRedwoodMsgCallBack( pCallbackFunction );
-}
-
-/******************************************************************************/
-const void ClientApi::setRedwoodAckCallBack(
-      cbRedwoodMsgHandler pCallbackFunction
-)
-{
-   cmdline_parser->setRedwoodAckCallBack( pCallbackFunction );
-}
-
-/******************************************************************************/
-const void ClientApi::setInternalLogCallBack(
-      cbRedwoodLogHandler pCallbackFunction
-)
-{
-   cmdline_parser->setInternalLogCallBack( pCallbackFunction );
-}

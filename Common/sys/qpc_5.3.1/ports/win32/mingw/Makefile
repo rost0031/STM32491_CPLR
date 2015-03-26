@@ -188,8 +188,11 @@ QF_CSRC  					= qa_ctor.c \
                               qte_darm.c \
                               qte_rarm.c \
                               qte_ctr.c \
-                              qf_port.c \
-                              win32_gui.c
+                              qf_port.c
+                              
+# This file is not needed unless you plan on using QPC with win32 GUI components                              
+#                               \
+#                              win32_gui.c
 
 QF_OBJS                     = $(patsubst %.c, $(BINDIR)/%.o, $(QF_CSRC))
 

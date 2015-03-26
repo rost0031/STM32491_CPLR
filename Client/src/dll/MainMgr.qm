@@ -4,7 +4,16 @@
  * Main processor that runs the entire client
  */</documentation>
  <framework name="qpc"/>
- <package name="Events" stereotype="0x01"/>
+ <package name="Events" stereotype="0x01">
+  <class name="ExitEvt" superclass="qpc::QEvt">
+   <documentation>/**
+ * @brief Event type for exiting from MainMgr with an error code.
+ */</documentation>
+   <attribute name="errorCode" type="CBErrorCode" visibility="0x01" properties="0x00">
+    <documentation>/**&lt; Error code that indicates the status of exit. */</documentation>
+   </attribute>
+  </class>
+ </package>
  <package name="AOs" stereotype="0x02">
   <class name="MainMgr" superclass="qpc::QActive">
    <documentation>/**
@@ -14,14 +23,10 @@
  * client and the Coupler Board. See MainMgr.qm for diagram and model.
  */</documentation>
    <attribute name="exitTimerEvt" type="QTimeEvt" visibility="0x01" properties="0x00">
-    <documentation>Used for timing out the actual exit for cleanup</documentation>
+    <documentation>/**&lt; Used for timing out the actual exit for cleanup */</documentation>
    </attribute>
-   <attribute name="exit_code" type="uint8_t" visibility="0x01" properties="0x00">
-    <documentation>Exit code with which to exit</documentation>
-   </attribute>
-   <attribute name="errorCode" type="ErrorCode" visibility="0x01" properties="0x00">
-    <documentation>This variable holds the error code that was last set and that will 
-be returned.</documentation>
+   <attribute name="errorCode" type="CBErrorCode" visibility="0x01" properties="0x00">
+    <documentation>/**&lt; Keep track of last error and that will be returned or sent back to caller */</documentation>
    </attribute>
    <statechart>
     <initial target="../1">
@@ -48,13 +53,13 @@ cout &lt;&lt; &quot;Started MainMgr AO&quot; &lt;&lt; endl;</action>
      <entry>cout &lt;&lt; &quot;Entered Active state in MainMgr AO&quot; &lt;&lt; endl;</entry>
      <tran trig="MSG_TIMEOUT_EXIT">
       <action>cout &lt;&lt; &quot;Timed out while waiting for a response for a sent message.  Exiting.&quot; &lt;&lt; endl;
-EXIT(1);</action>
+EXIT(me-&gt;errorCode);</action>
       <tran_glyph conn="111,69,1,-1,-12">
        <action box="-14,-2,14,2"/>
       </tran_glyph>
      </tran>
      <tran trig="EXIT" target="../2">
-      <action>me-&gt;exit_code = (uint8_t)(((ExitEvt *)e)-&gt;my_error_code);</action>
+      <action>me-&gt;errorCode = ((ExitEvt *)e)-&gt;errorCode;</action>
       <tran_glyph conn="3,70,3,3,17">
        <action box="0,-2,6,2"/>
       </tran_glyph>
@@ -64,11 +69,11 @@ EXIT(1);</action>
 QTimeEvt_postIn(
     &amp;me-&gt;exitTimerEvt,
     (QActive *)me,
-    SECONDS_TO_BSP_TICKS( CLIENT_MAX_TIMEOUT_SEC_EXIT )
+    SEC_TO_TICKS( MAINMGR_MAX_TIME_SEC_EXIT_DELAY )
 );</entry>
       <tran trig="EXIT">
        <action>//exit( me-&gt;exit_code );
-QActive_stop(AO_CommStackMgr);
+QActive_stop(AO_MainMgr);
 QF_stop();</action>
        <tran_glyph conn="20,74,3,-1,16">
         <action box="0,-2,6,2"/>
@@ -127,7 +132,8 @@ QTimeEvt_ctor(&amp;me-&gt;exitTimerEvt, EXIT_SIG);</code>
 using namespace std;
 
 /* Includes ------------------------------------------------------------------*/
-#include &lt;cstring&gt;
+#include &quot;qp_port.h&quot;                                        /* for QP support */
+#include &quot;ClientShared.h&quot;
 
 /* Exported defines ----------------------------------------------------------*/
 /* Exported macros -----------------------------------------------------------*/
@@ -177,7 +183,7 @@ Q_DEFINE_THIS_FILE;
 #define EXIT(error_code)                              \
 do {                                                  \
         ExitEvt *exEv = Q_NEW(ExitEvt, EXIT_SIG);     \
-        exEv-&gt;my_error_code = error_code;             \
+        exEv-&gt;errorCode = error_code;             \
         QF_PUBLISH((QEvent *)exEv, AO_MainMgr);  \
    } while (0)
 

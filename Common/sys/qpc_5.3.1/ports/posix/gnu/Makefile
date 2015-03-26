@@ -130,6 +130,8 @@ QP_DEP                      = $(QP_INCDIR)/qassert.h
 CCFLAGS                    += -g3 -ggdb -O
 endif
 
+CCFLAGS                     += -pthread -fPIC
+
 VPATH = $(QEP_SRCDIR) $(QF_SRCDIR) $(QS_SRCDIR) ..
 #-----------------------------------------------------------------------------
 # QEP src and objects 

@@ -39,11 +39,24 @@
 using namespace std;
 
 /* Includes ------------------------------------------------------------------*/
-#include <cstring>
+#include "qp_port.h"                                        /* for QP support */
+#include "ClientShared.h"
 
 /* Exported defines ----------------------------------------------------------*/
 /* Exported macros -----------------------------------------------------------*/
 /* Exported types ------------------------------------------------------------*/
+
+/**
+ * @brief Event type for exiting from MainMgr with an error code.
+ */
+/*${Events::ExitEvt} .......................................................*/
+typedef struct {
+/* protected: */
+    QEvt super;
+
+    /**< Error code that indicates the status of exit. */
+    CBErrorCode errorCode;
+} ExitEvt;
 
 
 /* Exported constants --------------------------------------------------------*/
