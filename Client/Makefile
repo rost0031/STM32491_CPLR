@@ -78,8 +78,8 @@ SRC_DIR                     = ./src
 COMMON_CLI_SRC_DIR          = ../Common
 
 # External library includes
-EXT_LIB_DIR                 = ./lib/$(TARGET)
-EXT_LIB_BIN_DIR             = $(EXT_LIB_DIR)/lib
+EXT_LIB_DIR                 = ./lib
+EXT_LIB_BIN_DIR             = $(EXT_LIB_DIR)/$(TARGET)
 EXT_LIB_INC_DIR             = $(EXT_LIB_DIR)/inc
 
 # app, bsp, and sys directories common between firmware and client
@@ -112,7 +112,7 @@ CB_API_LIB_DIR              = $(CB_API_DIR)/$(TARGET)_lib
 
 # Boost library
 BOOST_INC_DIR               = $(EXT_LIB_INC_DIR)
-BOOST_LIB_DIR               = $(EXT_LIB_BIN_DIR)/boost
+BOOST_LIB_DIR               = $(EXT_LIB_BIN_DIR)
 
 # Base64 encoding module
 BASE64_DIR                  = $(COMMON_CLI_SYS_DIR)/libb64
@@ -236,6 +236,12 @@ else                     # default Debug configuration .......................
 endif
 
 
+
+STATIC_LIBS                 = $(QP_PORT_DIR)/$(BIN_DIR)/libqp_$(QPLIBMOD)_cs.a
+
+API_STATIC_LIBS             = $(CB_API_LIB_DIR)/libCBCommApi_$(TARGET).a \
+                              $(CB_API_LIB_DIR)/libprotobuf_core_$(TARGET).a
+                              
 # Modify the INCLUDES to point to the boost libraries compiled for windows
 ifeq (win32, $(TARGET))
     LINKFLAGS               =  -Wl,--out-implib=$(TARGET_DLL).a \
@@ -243,7 +249,7 @@ ifeq (win32, $(TARGET))
                                -Wl,--enable-auto-import \
                                -Wl,--whole-archive $(API_STATIC_LIBS) \
                                -Wl,--no-whole-archive $(STATIC_LIBS)
-	    		
+
     LIBS                   += -lws2_32
     DEFINES                += -DBOOST_THREAD_USE_LIB -DWIN32COMPILE -DBOOST_ALL_NO_LIB -D_SECURE_SCL=0
 
@@ -252,22 +258,21 @@ ifeq (win32, $(TARGET))
     LIB_PREFIX              = lib
     DLL_LIBS                = -L$(BIN_DIR) -l$(LIB_PREFIX)$(PROJECT_DLL)
   
-    DEP_GCC_DLL_CP_CMD      = cp /usr/$(CROSS_PATH)/sys-root/mingw/bin/libgcc_s_seh-1.dll $(BIN_DIR)/.
-    DEP_STDC_DLL_CP_CMD     = cp /usr/$(CROSS_PATH)/sys-root/mingw/bin/libstdc++-6.dll $(BIN_DIR)/.
+    CP_BOOST_SH_LIBS_CMD    =  # No copying of boost dlls for windows targets.
     
-    API_STATIC_LIBS         = $(CB_API_LIB_DIR)/libCBCommApi_$(TARGET).a \
-                              $(CB_API_LIB_DIR)/libprotobuf_core_$(TARGET).a \
-                              $(BOOST_LIB_DIR)/libboost_program_options$(BOOSTLIBMOD).a \
-                              $(BOOST_LIB_DIR)/libboost_system$(BOOSTLIBMOD).a \
-                              $(BOOST_LIB_DIR)/libboost_thread$(BOOST_TH_LIBMOD)$(BOOSTLIBMOD).a
+    CP_CSTD_SH_LIBS_CMD     = cp /usr/$(CROSS_PATH)/sys-root/mingw/bin/libgcc_s_seh-1.dll $(BIN_DIR)/.; \
+                              cp /usr/$(CROSS_PATH)/sys-root/mingw/bin/libstdc++-6.dll $(BIN_DIR)/.
+    
+    API_STATIC_LIBS        += $(BOOST_LIB_DIR)/libboost_program_options$(BOOSTLIBMOD) \
+                              $(BOOST_LIB_DIR)/libboost_system$(BOOSTLIBMOD) \
+                              $(BOOST_LIB_DIR)/libboost_thread$(BOOST_TH_LIBMOD)$(BOOSTLIBMOD)
   
 else
     LINKFLAGS               = -Wl,-soname,$(LIB_PREFIX)$(PROJECT_DLL).$(DLL_EXT) \
                               -Wl,--whole-archive $(API_STATIC_LIBS) \
                               -Wl,--no-whole-archive $(STATIC_LIBS)
                           
-    API_STATIC_LIBS         = $(CB_API_LIB_DIR)/libCBCommApi_$(TARGET).a \
-                              $(CB_API_LIB_DIR)/libprotobuf_core_$(TARGET).a
+    API_STATIC_LIBS        += # No more static libs to append.  
                             
     LIBS                   += -lpthread  # This is needed on newer Ubuntu systems but doesn't hurt older ones or Cygwin
   
@@ -275,10 +280,11 @@ else
     LIB_PREFIX              = lib
     DLL_LIBS                = -L$(BIN_DIR) -l$(PROJECT_DLL)
   
-    DEP_GCC_DLL_CP_CMD      = cp $(BOOST_LIB_DIR)/libboost_program_options$(BOOSTLIBMOD).$(DLL_EXT) $(BIN_DIR)/.; \
+    CP_BOOST_SH_LIBS_CMD    = cp $(BOOST_LIB_DIR)/libboost_program_options$(BOOSTLIBMOD).$(DLL_EXT) $(BIN_DIR)/.; \
                               cp $(BOOST_LIB_DIR)/libboost_system$(BOOSTLIBMOD).$(DLL_EXT) $(BIN_DIR)/.; \
                               cp $(BOOST_LIB_DIR)/libboost_thread$(BOOST_TH_LIBMOD)$(BOOSTLIBMOD).$(DLL_EXT) $(BIN_DIR)/. 
-    DEP_STDC_DLL_CP_CMD     =
+                              
+    CP_CSTD_SH_LIBS_CMD     =
 
     CFLAGS                 += -pthread -fPIC
     CPPFLAGS               += -pthread -fPIC
@@ -289,10 +295,7 @@ TARGET_EXE                  = $(BIN_DIR)/$(PROJECT_NAME)
 TARGET_API_TEST             = $(BIN_DIR)/ApiTest$(EXT)
 TARGET_DLL                  = $(BIN_DIR)/$(LIB_PREFIX)$(PROJECT_DLL).$(DLL_EXT)
 
-
-                              
-STATIC_LIBS                 = $(QP_PORT_DIR)/$(BIN_DIR)/libqp_$(QPLIBMOD)_cs.a
-                              
+                             
 
 ASM_OBJS                    = $(patsubst %.S,%.o,$(ASM_SRCS))
 C_OBJS                      = $(patsubst %.c,%.o,$(C_SRCS))
@@ -358,8 +361,8 @@ $(TARGET_DLL):  $(C_OBJS_EXT) $(CPP_OBJS_EXT) $(API_CPP_OBJS_EXT)
 	@echo ---------------------------
 	@echo --- Copy libs/headers   ---
 	@echo ---------------------------
-	$(DEP_GCC_DLL_CP_CMD)
-	$(DEP_STDC_DLL_CP_CMD)
+	$(CP_CSTD_SH_LIBS_CMD)
+	$(CP_BOOST_SH_LIBS_CMD)
 	@echo --- ClientApi headers   ---
 	cp $(API_DIR)/*.h $(BIN_DIR)/.
 

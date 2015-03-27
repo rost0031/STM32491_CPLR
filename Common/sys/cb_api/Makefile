@@ -125,6 +125,9 @@ MFLAGS                  =
 LIBDIR                  = posix_lib
 LIBFLAGS                = rcs
 
+CFLAGS                  = -pthread -fPIC
+CPPFLAGS                = -pthread -fPIC
+
 endif
 
 #-------------------------------------------------------------------------------
@@ -156,10 +159,10 @@ ifeq (rel, $(CONF))       # Release configuration ............................
 BIN_DIR 	:= rel
 DEFINES		+= -DNDEBUG
 ASFLAGS      = $(MFLAGS)
-CFLAGS       = $(MFLAGS) -std=gnu99 -Wall -ffunction-sections -fdata-sections \
+CFLAGS      += $(MFLAGS) -std=gnu99 -Wall -ffunction-sections -fdata-sections \
 			   -Os $(INCLUDES) $(DEFINES)
 
-CPPFLAGS     = $(MFLAGS) \
+CPPFLAGS    += $(MFLAGS) \
 			   -Wall -fno-rtti -fno-exceptions \
 			   -Os $(INCLUDES) $(DEFINES)
 
@@ -168,10 +171,10 @@ else ifeq (spy, $(CONF))  # Spy configuration ................................
 BIN_DIR 	:= spy
 DEFINES		+= -DQ_SPY
 ASFLAGS 	 = $(MFLAGS)
-CFLAGS 		 = $(MFLAGS) -std=gnu99 -Wall -ffunction-sections -fdata-sections \
+CFLAGS 		+= $(MFLAGS) -std=gnu99 -Wall -ffunction-sections -fdata-sections \
 			   -Os -O $(INCLUDES) $(DEFINES)
 
-CPPFLAGS 	 = $(MFLAGS) \
+CPPFLAGS 	+= $(MFLAGS) \
 			   -Wall -fno-rtti -fno-exceptions \
 			   -O $(INCLUDES) $(DEFINES)
 
@@ -179,18 +182,17 @@ else                     # default Debug configuration .......................
 
 BIN_DIR 	:= dbg
 ASFLAGS      = -g3 -ggdb $(MFLAGS)
-CFLAGS 		 = $(MFLAGS) -std=gnu99 -Wall -ffunction-sections -fdata-sections \
+CFLAGS 		+= $(MFLAGS) -std=gnu99 -Wall -ffunction-sections -fdata-sections \
                -Wl,--gc-sections \
 			   -g -ggdb -O0 $(INCLUDES) $(DEFINES)
 
-CPPFLAGS 	 = $(MFLAGS) \
+CPPFLAGS 	+= $(MFLAGS) \
 			   -Wall -rtti -fno-exceptions \
 			   -g3 -ggdb -O0 $(INCLUDES) $(DEFINES)
 
 endif
 
-CFLAGS                     += -pthread -fPIC
-CPPFLAGS                   += -pthread -fPIC
+
 #------------------------------------------------------------------------------
 #  Which proto files to use.
 #------------------------------------------------------------------------------
