@@ -192,7 +192,8 @@ API_CPP_SRCS                = ClientApi.cpp \
                               MainMgr.cpp
 
 APP_CLI_CPP_SRCS            = main.cpp \
-                              Callbacks.cpp
+                              Callbacks.cpp \
+                              CmdlineParser.cpp
                               
                               
  

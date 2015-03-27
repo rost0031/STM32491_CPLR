@@ -14,6 +14,7 @@
 /* Includes ------------------------------------------------------------------*/
 #include <iostream>
 #include <stdio.h>
+#include "CmdlineParser.h"
 
 /* Namespaces ----------------------------------------------------------------*/
 using namespace std;
@@ -34,6 +35,8 @@ using namespace std;
 int main(int argc, char *argv[])
 {
    cout << "Testing Client " << endl;
+
+   CmdlineParser *cmdline = new CmdlineParser(argc, argv);
 
    return (0);
 }
