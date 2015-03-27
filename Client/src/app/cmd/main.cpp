@@ -20,9 +20,6 @@
 using namespace std;
 
 /* Compile-time called macros ------------------------------------------------*/
-//Q_DEFINE_THIS_FILE                  /* For QSPY to know the name of this file */
-//DBG_DEFINE_THIS_MODULE( DBG_MODL_GENERAL ); /* For debug system to ID this module */
-
 /* Private typedefs ----------------------------------------------------------*/
 /* Private defines -----------------------------------------------------------*/
 /* Private macros ------------------------------------------------------------*/

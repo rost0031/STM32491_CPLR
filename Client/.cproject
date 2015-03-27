@@ -27,6 +27,13 @@
 								<inputType id="cdt.managedbuild.tool.gnu.c.compiler.input.295411500" superClass="cdt.managedbuild.tool.gnu.c.compiler.input"/>
 							</tool>
 							<tool id="cdt.managedbuild.tool.gnu.cross.cpp.compiler.1743245797" name="Cross G++ Compiler" superClass="cdt.managedbuild.tool.gnu.cross.cpp.compiler">
+								<option id="gnu.cpp.compiler.option.include.paths.1662900790" name="Include paths (-I)" superClass="gnu.cpp.compiler.option.include.paths" useByScannerDiscovery="false" valueType="includePath">
+									<listOptionValue builtIn="false" value="&quot;C:\cygwin64\usr\include&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;C:\cygwin64\usr\i686-w64-mingw32\sys-root\mingw\include&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CPLR_Client/lib/inc}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CPLR_Client/lib/inc/boost}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CPLR_Client/lib/inc/boost/program_options}&quot;"/>
+								</option>
 								<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.1892312468" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
 							</tool>
 							<tool id="cdt.managedbuild.tool.gnu.cross.c.linker.408790401" name="Cross GCC Linker" superClass="cdt.managedbuild.tool.gnu.cross.c.linker"/>
@@ -54,13 +61,19 @@
 	<storageModule moduleId="cdtBuildSystem" version="4.0.0">
 		<project id="CPLR_Client.null.469313107" name="CPLR_Client"/>
 	</storageModule>
-	<storageModule moduleId="scannerConfiguration">
-		<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
-	</storageModule>
 	<storageModule moduleId="org.eclipse.cdt.core.LanguageSettingsProviders"/>
 	<storageModule moduleId="refreshScope" versionNumber="2">
 		<configuration configurationName="Default">
 			<resource resourceType="PROJECT" workspacePath="/CPLR_Client"/>
 		</configuration>
+	</storageModule>
+	<storageModule moduleId="scannerConfiguration">
+		<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
+		<scannerConfigBuildInfo instanceId="cdt.managedbuild.toolchain.gnu.cross.base.251674152;cdt.managedbuild.toolchain.gnu.cross.base.251674152.1058270545;cdt.managedbuild.tool.gnu.cross.cpp.compiler.1743245797;cdt.managedbuild.tool.gnu.cpp.compiler.input.1892312468">
+			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
+		</scannerConfigBuildInfo>
+		<scannerConfigBuildInfo instanceId="cdt.managedbuild.toolchain.gnu.cross.base.251674152;cdt.managedbuild.toolchain.gnu.cross.base.251674152.1058270545;cdt.managedbuild.tool.gnu.cross.c.compiler.927927320;cdt.managedbuild.tool.gnu.c.compiler.input.295411500">
+			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
+		</scannerConfigBuildInfo>
 	</storageModule>
 </cproject>

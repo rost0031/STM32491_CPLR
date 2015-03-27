@@ -22,6 +22,11 @@
 #include <sstream>
 #include <string>
 
+/* Namespaces ----------------------------------------------------------------*/
+using namespace std;
+namespace po = boost::program_options;
+using namespace po;
+
 /* Exported defines ----------------------------------------------------------*/
 /* Exported macros -----------------------------------------------------------*/
 /* Exported types ------------------------------------------------------------*/
@@ -39,6 +44,17 @@ class CmdlineParser {
 private:
     int     argc;/**< Standard C style number of args argument */
     char**  argv;/**< Standard C style pointer to a pointer of array of args */
+
+    bool bInteractiveRunMode; /**< User can specify if the client will run
+                                   interactively (menu/gui, so the AO doesn't
+                                   stop after finishing one command) or 1 cmd at
+                                   a time and quit.  The default is interactive */
+
+    vector<string> command;  /**< Vector that will hold the command along with
+                                  optional (ordered) arguments in the rest of
+                                  the indexes. */
+    string  parsed_cmd;             /**< String containing the parsed command */
+    map<string, string> parsed_args;     /**< Map containing parsed arguments */
 public:
 
 

@@ -26,6 +26,8 @@
 PROJECT_NAME                = CPLR_CLI_Client$(EXT)
 PROJECT_DLL                 = CPLR_Client
 
+BOOST_LIB_VERSION           = 1.57.0
+
 #------------------------------------------------------------------------------
 #  TOOLCHAIN SETUP - Depends on TARGET
 #------------------------------------------------------------------------------
@@ -271,19 +273,22 @@ ifeq (win32, $(TARGET))
 else
     LINKFLAGS               = -Wl,-soname,$(LIB_PREFIX)$(PROJECT_DLL).$(DLL_EXT) \
                               -Wl,--whole-archive $(API_STATIC_LIBS) \
-                              -Wl,--no-whole-archive $(STATIC_LIBS)
+                              -Wl,--no-whole-archive $(STATIC_LIBS) \
+                              -Wl,-rpath -Wl,\$$ORIGIN
                           
     API_STATIC_LIBS        += # No more static libs to append.  
                             
     LIBS                   += -lpthread  # This is needed on newer Ubuntu systems but doesn't hurt older ones or Cygwin
+    DEFINES                += -DBOOST_DYN_LINK
   
-    DLL_EXT                 = so
+    DLL_EXT                 = so  
+    BOOST_DLL_EXT           = so.$(BOOST_LIB_VERSION)
     LIB_PREFIX              = lib
-    DLL_LIBS                = -L$(BIN_DIR) -l$(PROJECT_DLL)
+    DLL_LIBS                = -L$(BIN_DIR) -l$(PROJECT_DLL) -L$(BOOST_LIB_DIR) -lboost_program_options$(BOOSTLIBMOD)
   
-    CP_BOOST_SH_LIBS_CMD    = cp $(BOOST_LIB_DIR)/libboost_program_options$(BOOSTLIBMOD).$(DLL_EXT) $(BIN_DIR)/.; \
-                              cp $(BOOST_LIB_DIR)/libboost_system$(BOOSTLIBMOD).$(DLL_EXT) $(BIN_DIR)/.; \
-                              cp $(BOOST_LIB_DIR)/libboost_thread$(BOOST_TH_LIBMOD)$(BOOSTLIBMOD).$(DLL_EXT) $(BIN_DIR)/. 
+    CP_BOOST_SH_LIBS_CMD    = cp $(BOOST_LIB_DIR)/libboost_program_options$(BOOSTLIBMOD).$(BOOST_DLL_EXT) $(BIN_DIR)/.; \
+                              cp $(BOOST_LIB_DIR)/libboost_system$(BOOSTLIBMOD).$(BOOST_DLL_EXT) $(BIN_DIR)/.; \
+                              cp $(BOOST_LIB_DIR)/libboost_thread$(BOOST_TH_LIBMOD)$(BOOSTLIBMOD).$(BOOST_DLL_EXT) $(BIN_DIR)/. 
                               
     CP_CSTD_SH_LIBS_CMD     =
 
