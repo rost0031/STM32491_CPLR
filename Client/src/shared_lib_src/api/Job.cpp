@@ -10,7 +10,8 @@
 
 /* Includes ------------------------------------------------------------------*/
 #include "Job.h"
-
+#include "serial.h"
+#include "eth.h"
 /* Namespaces ----------------------------------------------------------------*/
 using namespace std;
 
@@ -32,6 +33,8 @@ using namespace std;
 /******************************************************************************/
 Job::Job( void )
 {
+//   Serial *serial = new Serial("/dev/ttyS1", 115200, false );
+   Eth *eth = new Eth( "127.0.0.1", "1502", "7777" );
 
 }
 

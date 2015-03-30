@@ -15,6 +15,7 @@
 #include <iostream>
 #include <stdio.h>
 #include "CmdlineParser.h"
+#include "Job.h"
 
 /* Namespaces ----------------------------------------------------------------*/
 using namespace std;
@@ -34,6 +35,8 @@ int main(int argc, char *argv[])
    cout << "Testing Client " << endl;
 
    CmdlineParser *cmdline = new CmdlineParser(argc, argv);
+
+   Job *job = new Job();
 
    return (0);
 }

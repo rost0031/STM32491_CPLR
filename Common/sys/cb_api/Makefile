@@ -93,7 +93,7 @@ else
 endif
 
 CROSS                   = arm-none-eabi-
-LIBDIR                  = arm_lib
+LIBDIR                  = $(TARGET)_lib
 
 else ifeq (win32, $(TARGET)) 
 #------------------------------------------------------------------------------
@@ -109,20 +109,20 @@ else
 endif
 
 # Build options
-ARM_CORE                = win32
+ARM_CORE                = $(TARGET)
 MFLAGS                  = 
-LIBDIR                  = win32_lib
+LIBDIR                  = $(TARGET)_lib
 
 else #ia32 or none specified
 #------------------------------------------------------------------------------
 #  C/C++ TOOLCHAIN SETUP ia32 and ia64 (default)
 #------------------------------------------------------------------------------
 CROSS                   = 
-
+TARGET                  = posix
 # Build options
-ARM_CORE                = posix
+ARM_CORE                = $(TARGET)
 MFLAGS                  =
-LIBDIR                  = posix_lib
+LIBDIR                  = $(TARGET)_lib
 LIBFLAGS                = rcs
 
 CFLAGS                  = -pthread -fPIC
@@ -224,7 +224,7 @@ C_CORE_DEPS_EXT = $(patsubst %.o, %.d, $(C_CORE_OBJS_EXT))
 #------------------------------------------------------------------------------
 PROTO_FILES_DIR	= proto
 GEN_SOURCES_DIR	= gen_src
-CMPLED_OBJS_DIR	= obj
+CMPLED_OBJS_DIR	= obj_$(TARGET)
 
 SOURCES_DIR		= src
 
