@@ -182,9 +182,9 @@ else
     STATIC_LIBS             = -lboost_program_options$(BOOSTLIBMOD)
 
     LIB_LOCATIONS           = -L$(BOOST_LIB_DIR) -L$(BIN_DIR)
-    LIBS                   += # Nothing needed for posix builds                         
+    LIBS                   += # Nothing needed for posix builds
+                     
     DLL_EXT                 = so  
-    BOOST_DLL_EXT           = so.$(BOOST_LIB_VER)
     LIB_PREFIX              = lib
 
 endif
@@ -230,7 +230,6 @@ build_dll: $(BIN_DIR)
 	@echo --- Copying client dll and headers ---
 	@echo --------------------------------------
 	cp $(SHARED_LIB_BIN_DIR)/*.* $(BIN_DIR)/.
-	$(CP_BOOST_SH_LIBS_CMD)
 		
 $(BIN_DIR)/%.d : %.c
 	$(CPP) -MM -MT $(@:.d=.o) $(CPPFLAGS) $< > $@
