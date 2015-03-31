@@ -14,8 +14,8 @@
 /* Includes ------------------------------------------------------------------*/
 #include <iostream>
 #include <stdio.h>
-//#include "CmdlineParser.h"
-//#include "Job.h"
+#include "CmdlineParser.h"
+#include "Job.h"
 
 /* Namespaces ----------------------------------------------------------------*/
 using namespace std;
@@ -36,7 +36,7 @@ int main(int argc, char *argv[])
 
 //   CmdlineParser *cmdline = new CmdlineParser(argc, argv);
 
-//   Job *job = new Job();
+   Job *job = new Job();
 
 
    cout << "Testing Client some more " << endl;

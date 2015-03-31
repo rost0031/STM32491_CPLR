@@ -50,8 +50,8 @@ ifeq (win32, $(TARGET)) # Cross compile for windows from Ubuntu-12.04
     endif
  
     QPLIBMOD                = WIN32
-#    BOOSTLIBMOD             = -mt-s
-    BOOSTLIBMOD             = -mt.dll
+    BOOSTLIBMOD             = -mt-s
+#    BOOSTLIBMOD             = -mt.dll
     BOOST_TH_LIBMOD         = _$(TARGET)
 
 else                    # Compile natively on Linux and/or Cygwin
@@ -234,7 +234,9 @@ ifeq (win32, $(TARGET))
                                -Wl,--whole-archive $(API_STATIC_LIBS) \
                                -Wl,--no-whole-archive
 
-    LIBS                   += -lws2_32 -L$(BOOST_LIB_DIR) -lboost_system-mt -lboost_thread$(BOOST_TH_LIBMOD)-mt 
+#    LIBS                   += -lws2_32 -L$(BOOST_LIB_DIR) -lboost_system-mt -lboost_thread$(BOOST_TH_LIBMOD)-mt
+    LIBS                   += -lws2_32
+     
 #    DEFINES                += -DBOOST_THREAD_USE_LIB -DWIN32COMPILE -DBOOST_ALL_NO_LIB -D_SECURE_SCL=0
     DEFINES                += -DBOOST_THREAD_USE_LIB -DWIN32COMPILE -DBOOST_ALL_NO_LIB -D_SECURE_SCL=0
   
@@ -242,21 +244,21 @@ ifeq (win32, $(TARGET))
     LIB_PREFIX              = lib
     DLL_LIBS                = -L$(BIN_DIR) -l$(LIB_PREFIX)$(PROJECT_DLL)
   
-    CP_BOOST_SH_LIBS_CMD    = cp $(BOOST_LIB_DIR)/libboost_system$(BOOSTLIBMOD) $(BIN_DIR)/.; \
-                              cp $(BOOST_LIB_DIR)/libboost_thread$(BOOST_TH_LIBMOD)$(BOOSTLIBMOD) $(BIN_DIR)/.    
+#    CP_BOOST_SH_LIBS_CMD    = cp $(BOOST_LIB_DIR)/libboost_system$(BOOSTLIBMOD) $(BIN_DIR)/.; \
+#                              cp $(BOOST_LIB_DIR)/libboost_thread$(BOOST_TH_LIBMOD)$(BOOSTLIBMOD) $(BIN_DIR)/.    
        
-    CP_CSTD_SH_LIBS_CMD     = cp $(EXT_LIB_BIN_DIR)/libgcc_s_seh-1.dll $(BIN_DIR)/.; \
-                              cp $(EXT_LIB_BIN_DIR)/libstdc++-6.dll $(BIN_DIR)/.
+#    CP_CSTD_SH_LIBS_CMD     = cp $(EXT_LIB_BIN_DIR)/libgcc_s_seh-1.dll $(BIN_DIR)/.; \
+#                              cp $(EXT_LIB_BIN_DIR)/libstdc++-6.dll $(BIN_DIR)/.
     
-#    API_STATIC_LIBS         = $(CB_API_LIB_DIR)/libCBCommApi_$(TARGET).a \
-#                              $(CB_API_LIB_DIR)/libprotobuf_core_$(TARGET).a \
-#                              $(QP_PORT_DIR)/$(CONF)/libqp_$(QPLIBMOD)_cs.a \
-#                              $(BOOST_LIB_DIR)/libboost_system$(BOOSTLIBMOD).a \
-#                              $(BOOST_LIB_DIR)/libboost_thread$(BOOST_TH_LIBMOD)$(BOOSTLIBMOD).a
-
     API_STATIC_LIBS         = $(CB_API_LIB_DIR)/libCBCommApi_$(TARGET).a \
                               $(CB_API_LIB_DIR)/libprotobuf_core_$(TARGET).a \
-                              $(QP_PORT_DIR)/$(CONF)/libqp_$(QPLIBMOD)_cs.a
+                              $(QP_PORT_DIR)/$(CONF)/libqp_$(QPLIBMOD)_cs.a \
+                              $(BOOST_LIB_DIR)/libboost_thread$(BOOST_TH_LIBMOD)$(BOOSTLIBMOD).a \
+                              $(BOOST_LIB_DIR)/libboost_system$(BOOSTLIBMOD).a
+
+#    API_STATIC_LIBS         = $(CB_API_LIB_DIR)/libCBCommApi_$(TARGET).a \
+#                              $(CB_API_LIB_DIR)/libprotobuf_core_$(TARGET).a \
+#                              $(QP_PORT_DIR)/$(CONF)/libqp_$(QPLIBMOD)_cs.a
   
 else
 #    LINKFLAGS               = -Wl,-soname,$(LIB_PREFIX)$(PROJECT_DLL).$(DLL_EXT) \

@@ -61,7 +61,7 @@ else          # Cross compile for win32 from Linux (or from Cygwin64 with Mingw)
  
     EXT                     = .exe                 # Appended to the target name
     QPLIBMOD                = WIN32
-    BOOSTLIBMOD             = -mt
+    BOOSTLIBMOD             = -mt-s
     BOOST_TH_LIBMOD         = _$(TARGET)
 endif
 
@@ -161,10 +161,10 @@ endif
 ifeq (win32, $(TARGET))
 
     DYNAMIC_LINKFLAGS       = -Wl,-Bdynamic 
-    DYNAMIC_LIBS            = -l$(PROJECT_DLL) -lws2_32 -lboost_program_options$(BOOSTLIBMOD)
+    DYNAMIC_LIBS            = -l$(PROJECT_DLL) -lws2_32
     
     STATIC_LINKFLAGS        = -Wl,-Bstatic 
-    STATIC_LIBS             = -lstdc++
+    STATIC_LIBS             = -lstdc++ -lboost_program_options$(BOOSTLIBMOD)
     
     LIB_LOCATIONS           = -L$(BOOST_LIB_DIR) -L$(BIN_DIR)
 
@@ -173,9 +173,9 @@ ifeq (win32, $(TARGET))
 
     DLL_EXT                 = dll
     LIB_PREFIX              = lib
-    DLL_LIBS                = -L$(BIN_DIR) -l$(PROJECT_DLL) -lboost_program_options$(BOOSTLIBMOD).$(BOOST_DLL_EXT)
+#    DLL_LIBS                = -L$(BIN_DIR) -l$(PROJECT_DLL) -lboost_program_options$(BOOSTLIBMOD).$(BOOST_DLL_EXT)
   
-    CP_BOOST_SH_LIBS_CMD    = cp $(BOOST_LIB_DIR)/libboost_program_options$(BOOSTLIBMOD).$(DLL_EXT) $(BIN_DIR)/.
+#    CP_BOOST_SH_LIBS_CMD    = cp $(BOOST_LIB_DIR)/libboost_program_options$(BOOSTLIBMOD).a $(BIN_DIR)/.
   
 else
     DYNAMIC_LINKFLAGS       = -fPIC -Wl,-rpath -Wl,\$$ORIGIN -Wl,-Bdynamic 
