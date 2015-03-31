@@ -168,15 +168,12 @@ ifeq (win32, $(TARGET))
     
     LIB_LOCATIONS           = -L$(BOOST_LIB_DIR) -L$(BIN_DIR)
 
-    LIBS                   += -static-libgcc 
+    LIBS                   += -static-libgcc -static-libstdc++
     DEFINES                += -DBOOST_THREAD_USE_LIB -DWIN32COMPILE -DBOOST_ALL_NO_LIB -D_SECURE_SCL=0
 
     DLL_EXT                 = dll
     LIB_PREFIX              = lib
-#    DLL_LIBS                = -L$(BIN_DIR) -l$(PROJECT_DLL) -lboost_program_options$(BOOSTLIBMOD).$(BOOST_DLL_EXT)
-  
-#    CP_BOOST_SH_LIBS_CMD    = cp $(BOOST_LIB_DIR)/libboost_program_options$(BOOSTLIBMOD).a $(BIN_DIR)/.
-  
+ 
 else
     DYNAMIC_LINKFLAGS       = -fPIC -Wl,-rpath -Wl,\$$ORIGIN -Wl,-Bdynamic 
     DYNAMIC_LIBS            = -l$(PROJECT_DLL) 
@@ -184,20 +181,12 @@ else
     STATIC_LINKFLAGS        = -Wl,-Bstatic 
     STATIC_LIBS             = -lboost_program_options$(BOOSTLIBMOD)
 
-    LIB_LOCATIONS           = -L$(BOOST_LIB_DIR) -L$(BIN_DIR)                            
-#    LIBS                   += -lpthread  # This is needed on newer Ubuntu systems but doesn't hurt older ones or Cygwin
-#    DEFINES                += -DBOOST_DYN_LINK
-  
+    LIB_LOCATIONS           = -L$(BOOST_LIB_DIR) -L$(BIN_DIR)
+    LIBS                   += # Nothing needed for posix builds                         
     DLL_EXT                 = so  
     BOOST_DLL_EXT           = so.$(BOOST_LIB_VER)
     LIB_PREFIX              = lib
-#    DLL_LIBS                = -L$(BIN_DIR) -l$(PROJECT_DLL) -L$(BOOST_LIB_DIR) -lboost_program_options$(BOOSTLIBMOD)
-  
-#    CP_BOOST_SH_LIBS_CMD    = cp $(BOOST_LIB_DIR)/libboost_program_options$(BOOSTLIBMOD).$(BOOST_DLL_EXT) $(BIN_DIR)/.
-    CP_CSTD_SH_LIBS_CMD     =
 
-#    CFLAGS                 += -pthread -fPIC
-#    CPPFLAGS               += -pthread -fPIC
 endif
 
 TARGET_EXE                  = $(BIN_DIR)/$(PROJECT_NAME)
@@ -229,7 +218,7 @@ $(TARGET_EXE): build_dll $(CPP_OBJS_EXT) $(C_OBJS_EXT)
 	@echo ---------------------------
 	@echo --- Building CMD Client ---
 	@echo ---------------------------
-	$(LINK) -o $(TARGET_EXE) $(CPP_OBJS_EXT) $(LIB_LOCATIONS) $(STATIC_LINKFLAGS) $(STATIC_LIBS) $(DYNAMIC_LINKFLAGS) $(DYNAMIC_LIBS)  $(LIBS)
+	$(LINK) $(LIBS) -o $(TARGET_EXE) $(CPP_OBJS_EXT) $(LIB_LOCATIONS) $(STATIC_LINKFLAGS) $(STATIC_LIBS) $(DYNAMIC_LINKFLAGS) $(DYNAMIC_LIBS)  
 	$(RM) $(BIN_DIR)/*.o
     
 build_dll: $(BIN_DIR)

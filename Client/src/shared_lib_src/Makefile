@@ -208,8 +208,6 @@ else                     # default Debug configuration .......................
 
 	CONF                    = dbg
     BIN_DIR                := dbg_$(TARGET)
-
-
     ASFLAGS                 = 
     CFLAGS                  = -c -g3 -ggdb -std=gnu99 -Wall \
                                $(INCLUDES) $(DEFINES)
@@ -218,77 +216,42 @@ else                     # default Debug configuration .......................
                               -Wno-write-strings $(INCLUDES) $(DEFINES)
 endif
 
+# Both builds need these flags for making a shared library
 CFLAGS                     += -shared
 CPPFLAGS                   += -shared
 
-#STATIC_LIBS                 = $(QP_PORT_DIR)/$(CONF)/libqp_$(QPLIBMOD)_cs.a
-#
-#API_STATIC_LIBS             = $(CB_API_LIB_DIR)/libCBCommApi_$(TARGET).a \
-#                              $(CB_API_LIB_DIR)/libprotobuf_core_$(TARGET).a
-                              
-# Modify the INCLUDES to point to the boost libraries compiled for windows
-ifeq (win32, $(TARGET))
-    LINKFLAGS               =  -Wl,--out-implib=$(TARGET_DLL).a \
-                               -Wl,--export-all-symbols \
-                               -Wl,--enable-auto-import \
-                               -Wl,--whole-archive $(API_STATIC_LIBS) \
-                               -Wl,--no-whole-archive
-
-#    LIBS                   += -lws2_32 -L$(BOOST_LIB_DIR) -lboost_system-mt -lboost_thread$(BOOST_TH_LIBMOD)-mt
-    LIBS                   += -lws2_32
-     
-#    DEFINES                += -DBOOST_THREAD_USE_LIB -DWIN32COMPILE -DBOOST_ALL_NO_LIB -D_SECURE_SCL=0
-    DEFINES                += -DBOOST_THREAD_USE_LIB -DWIN32COMPILE -DBOOST_ALL_NO_LIB -D_SECURE_SCL=0
-  
-    DLL_EXT                 = dll
-    LIB_PREFIX              = lib
-    DLL_LIBS                = -L$(BIN_DIR) -l$(LIB_PREFIX)$(PROJECT_DLL)
-  
-#    CP_BOOST_SH_LIBS_CMD    = cp $(BOOST_LIB_DIR)/libboost_system$(BOOSTLIBMOD) $(BIN_DIR)/.; \
-#                              cp $(BOOST_LIB_DIR)/libboost_thread$(BOOST_TH_LIBMOD)$(BOOSTLIBMOD) $(BIN_DIR)/.    
-       
-#    CP_CSTD_SH_LIBS_CMD     = cp $(EXT_LIB_BIN_DIR)/libgcc_s_seh-1.dll $(BIN_DIR)/.; \
-#                              cp $(EXT_LIB_BIN_DIR)/libstdc++-6.dll $(BIN_DIR)/.
-    
-    API_STATIC_LIBS         = $(CB_API_LIB_DIR)/libCBCommApi_$(TARGET).a \
+API_STATIC_LIBS             = $(CB_API_LIB_DIR)/libCBCommApi_$(TARGET).a \
                               $(CB_API_LIB_DIR)/libprotobuf_core_$(TARGET).a \
                               $(QP_PORT_DIR)/$(CONF)/libqp_$(QPLIBMOD)_cs.a \
                               $(BOOST_LIB_DIR)/libboost_thread$(BOOST_TH_LIBMOD)$(BOOSTLIBMOD).a \
                               $(BOOST_LIB_DIR)/libboost_system$(BOOSTLIBMOD).a
-
-#    API_STATIC_LIBS         = $(CB_API_LIB_DIR)/libCBCommApi_$(TARGET).a \
-#                              $(CB_API_LIB_DIR)/libprotobuf_core_$(TARGET).a \
-#                              $(QP_PORT_DIR)/$(CONF)/libqp_$(QPLIBMOD)_cs.a
+                              
+LIB_PREFIX                  = lib
+                              
+# Modify the INCLUDES to point to the boost libraries compiled for windows
+ifeq (win32, $(TARGET))
+    LINKFLAGS               = -static-libgcc -static-libstdc++ \
+                              -Wl,--out-implib=$(TARGET_DLL).a \
+                              -Wl,--export-all-symbols \
+                              -Wl,--enable-auto-import \
+                              -Wl,--whole-archive $(API_STATIC_LIBS) \
+                              -Wl,--no-whole-archive
   
-else
-#    LINKFLAGS               = -Wl,-soname,$(LIB_PREFIX)$(PROJECT_DLL).$(DLL_EXT) \
-#                              -Wl,--whole-archive $(API_STATIC_LIBS) \
-#                              -Wl,--no-whole-archive $(STATIC_LIBS) \
-#                              -Wl,-rpath -Wl,\$$ORIGIN
+    LIBS                   += -lws2_32 # Needed for win32 builds only
+    DEFINES                += -DBOOST_THREAD_USE_LIB -DWIN32COMPILE -DBOOST_ALL_NO_LIB -D_SECURE_SCL=0
+    DLL_EXT                 = dll
 
+else
     LINKFLAGS               = -Wl,-soname,$(LIB_PREFIX)$(PROJECT_DLL).$(DLL_EXT) \
                               -Wl,--whole-archive $(API_STATIC_LIBS) \
                               -Wl,--no-whole-archive
-
-    API_STATIC_LIBS         = $(CB_API_LIB_DIR)/libCBCommApi_$(TARGET).a \
-                              $(CB_API_LIB_DIR)/libprotobuf_core_$(TARGET).a \
-                              $(QP_PORT_DIR)/$(CONF)/libqp_$(QPLIBMOD)_cs.a \
-                              $(BOOST_LIB_DIR)/libboost_system$(BOOSTLIBMOD).a \
-                              $(BOOST_LIB_DIR)/libboost_thread$(BOOST_TH_LIBMOD)$(BOOSTLIBMOD).a
                             
     LIBS                   += -lpthread  # This is needed on newer Ubuntu systems but doesn't hurt older ones or Cygwin
-#    DEFINES                += -DBOOST_DYN_LINK
-  
-    DLL_EXT                 = so  
-    BOOST_DLL_EXT           = so.$(BOOST_LIB_VER)
+    DEFINES                += 
+    DLL_EXT                 = so
     LIB_PREFIX              = lib
-#    DLL_LIBS                = -L$(BIN_DIR) -l$(PROJECT_DLL) -L$(BOOST_LIB_DIR) -lboost_program_options$(BOOSTLIBMOD)
   
-#    CP_BOOST_SH_LIBS_CMD    = cp $(BOOST_LIB_DIR)/libboost_system$(BOOSTLIBMOD).$(BOOST_DLL_EXT) $(BIN_DIR)/.; \
-#                              cp $(BOOST_LIB_DIR)/libboost_thread$(BOOST_TH_LIBMOD)$(BOOSTLIBMOD).$(BOOST_DLL_EXT) $(BIN_DIR)/. 
-                              
-    CP_CSTD_SH_LIBS_CMD     =
-
+    # Linux shared libs need these flags 
     CFLAGS                 += -pthread -fPIC
     CPPFLAGS               += -pthread -fPIC
 endif
@@ -331,9 +294,6 @@ $(TARGET_DLL):  $(C_OBJS_EXT) $(CPP_OBJS_EXT)
 	@echo ---------------------------
 	@echo --- Copy libs/headers   ---
 	@echo ---------------------------
-	$(CP_CSTD_SH_LIBS_CMD)
-	$(CP_BOOST_SH_LIBS_CMD)
-	@echo --- ClientApi headers   ---
 	cp $(API_DIR)/*.h $(BIN_DIR)/.
 	cp $(COMMON_CLI_SYS_DIR)/*.h $(BIN_DIR)/.
 	cp $(CB_API_INC_DIR)/*.h $(BIN_DIR)/.
