@@ -16,6 +16,12 @@
 dbg/
 rel/
 spy/
+dbg_posix/
+dbg_win32/
+rel_posix/
+rel_win32/
+spy_posix/
+spy_win32/
 Debug/
 .svn/
 *_gen.*

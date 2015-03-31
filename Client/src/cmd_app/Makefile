@@ -61,8 +61,7 @@ else          # Cross compile for win32 from Linux (or from Cygwin64 with Mingw)
  
     EXT                     = .exe                 # Appended to the target name
     QPLIBMOD                = WIN32
-#    BOOSTLIBMOD             = -mt-s
-    BOOSTLIBMOD             = -mt.dll
+    BOOSTLIBMOD             = -mt
     BOOST_TH_LIBMOD         = _$(TARGET)
 endif
 
@@ -160,25 +159,23 @@ endif
                               
 # Modify the INCLUDES to point to the boost libraries compiled for windows
 ifeq (win32, $(TARGET))
-    LINKFLAGS               =  -Wl,--out-implib=$(TARGET_DLL).a \
-                               -Wl,--export-all-symbols \
-                               -Wl,--enable-auto-import \
-                               -Wl,--whole-archive $(API_STATIC_LIBS) \
-                               -Wl,--no-whole-archive $(STATIC_LIBS)
 
-    LIBS                   += -lws2_32
+    DYNAMIC_LINKFLAGS       = -Wl,-Bdynamic 
+    DYNAMIC_LIBS            = -l$(PROJECT_DLL) -lws2_32 -lboost_program_options$(BOOSTLIBMOD)
+    
+    STATIC_LINKFLAGS        = -Wl,-Bstatic 
+    STATIC_LIBS             = -lstdc++
+    
+    LIB_LOCATIONS           = -L$(BOOST_LIB_DIR) -L$(BIN_DIR)
+
+    LIBS                   += -static-libgcc 
     DEFINES                += -DBOOST_THREAD_USE_LIB -DWIN32COMPILE -DBOOST_ALL_NO_LIB -D_SECURE_SCL=0
 
-  
     DLL_EXT                 = dll
     LIB_PREFIX              = lib
     DLL_LIBS                = -L$(BIN_DIR) -l$(PROJECT_DLL) -lboost_program_options$(BOOSTLIBMOD).$(BOOST_DLL_EXT)
   
-    CP_BOOST_SH_LIBS_CMD    = cp $(BOOST_LIB_DIR)/libboost_program_options$(BOOSTLIBMOD).$(BOOST_DLL_EXT) $(BIN_DIR)/.
-   
-    API_STATIC_LIBS        += $(BOOST_LIB_DIR)/libboost_program_options$(BOOSTLIBMOD) \
-                              $(BOOST_LIB_DIR)/libboost_system$(BOOSTLIBMOD) \
-                              $(BOOST_LIB_DIR)/libboost_thread$(BOOST_TH_LIBMOD)$(BOOSTLIBMOD)
+    CP_BOOST_SH_LIBS_CMD    = cp $(BOOST_LIB_DIR)/libboost_program_options$(BOOSTLIBMOD).$(DLL_EXT) $(BIN_DIR)/.
   
 else
     DYNAMIC_LINKFLAGS       = -fPIC -Wl,-rpath -Wl,\$$ORIGIN -Wl,-Bdynamic 
@@ -196,7 +193,7 @@ else
     LIB_PREFIX              = lib
 #    DLL_LIBS                = -L$(BIN_DIR) -l$(PROJECT_DLL) -L$(BOOST_LIB_DIR) -lboost_program_options$(BOOSTLIBMOD)
   
-    CP_BOOST_SH_LIBS_CMD    = cp $(BOOST_LIB_DIR)/libboost_program_options$(BOOSTLIBMOD).$(BOOST_DLL_EXT) $(BIN_DIR)/.
+#    CP_BOOST_SH_LIBS_CMD    = cp $(BOOST_LIB_DIR)/libboost_program_options$(BOOSTLIBMOD).$(BOOST_DLL_EXT) $(BIN_DIR)/.
     CP_CSTD_SH_LIBS_CMD     =
 
 #    CFLAGS                 += -pthread -fPIC
@@ -232,7 +229,7 @@ $(TARGET_EXE): build_dll $(CPP_OBJS_EXT) $(C_OBJS_EXT)
 	@echo ---------------------------
 	@echo --- Building CMD Client ---
 	@echo ---------------------------
-	$(LINK) -o $(TARGET_EXE) $(CPP_OBJS_EXT) $(LIB_LOCATIONS) $(STATIC_LINKFLAGS) $(STATIC_LIBS) $(DYNAMIC_LINKFLAGS) $(DYNAMIC_LIBS) 
+	$(LINK) -o $(TARGET_EXE) $(CPP_OBJS_EXT) $(LIB_LOCATIONS) $(STATIC_LINKFLAGS) $(STATIC_LIBS) $(DYNAMIC_LINKFLAGS) $(DYNAMIC_LIBS)  $(LIBS)
 	$(RM) $(BIN_DIR)/*.o
     
 build_dll: $(BIN_DIR)
@@ -243,7 +240,8 @@ build_dll: $(BIN_DIR)
 	@echo --------------------------------------
 	@echo --- Copying client dll and headers ---
 	@echo --------------------------------------
-	cp $(SHARED_LIB_BIN_DIR)/*.* $(BIN_DIR)/.	
+	cp $(SHARED_LIB_BIN_DIR)/*.* $(BIN_DIR)/.
+	$(CP_BOOST_SH_LIBS_CMD)
 		
 $(BIN_DIR)/%.d : %.c
 	$(CPP) -MM -MT $(@:.d=.o) $(CPPFLAGS) $< > $@

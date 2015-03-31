@@ -232,9 +232,9 @@ ifeq (win32, $(TARGET))
                                -Wl,--export-all-symbols \
                                -Wl,--enable-auto-import \
                                -Wl,--whole-archive $(API_STATIC_LIBS) \
-                               -Wl,--no-whole-archive $(STATIC_LIBS)
+                               -Wl,--no-whole-archive
 
-    LIBS                   += -lws2_32
+    LIBS                   += -lws2_32 -L$(BOOST_LIB_DIR) -lboost_system-mt -lboost_thread$(BOOST_TH_LIBMOD)-mt 
 #    DEFINES                += -DBOOST_THREAD_USE_LIB -DWIN32COMPILE -DBOOST_ALL_NO_LIB -D_SECURE_SCL=0
     DEFINES                += -DBOOST_THREAD_USE_LIB -DWIN32COMPILE -DBOOST_ALL_NO_LIB -D_SECURE_SCL=0
   
@@ -242,14 +242,21 @@ ifeq (win32, $(TARGET))
     LIB_PREFIX              = lib
     DLL_LIBS                = -L$(BIN_DIR) -l$(LIB_PREFIX)$(PROJECT_DLL)
   
-    CP_BOOST_SH_LIBS_CMD    =  # No copying of boost dlls for windows targets.
+    CP_BOOST_SH_LIBS_CMD    = cp $(BOOST_LIB_DIR)/libboost_system$(BOOSTLIBMOD) $(BIN_DIR)/.; \
+                              cp $(BOOST_LIB_DIR)/libboost_thread$(BOOST_TH_LIBMOD)$(BOOSTLIBMOD) $(BIN_DIR)/.    
+       
+    CP_CSTD_SH_LIBS_CMD     = cp $(EXT_LIB_BIN_DIR)/libgcc_s_seh-1.dll $(BIN_DIR)/.; \
+                              cp $(EXT_LIB_BIN_DIR)/libstdc++-6.dll $(BIN_DIR)/.
     
-    CP_CSTD_SH_LIBS_CMD     = cp /usr/$(CROSS_PATH)/sys-root/mingw/bin/libgcc_s_seh-1.dll $(BIN_DIR)/.; \
-                              cp /usr/$(CROSS_PATH)/sys-root/mingw/bin/libstdc++-6.dll $(BIN_DIR)/.
-    
-    API_STATIC_LIBS        += $(BOOST_LIB_DIR)/libboost_program_options$(BOOSTLIBMOD) \
-                              $(BOOST_LIB_DIR)/libboost_system$(BOOSTLIBMOD) \
-                              $(BOOST_LIB_DIR)/libboost_thread$(BOOST_TH_LIBMOD)$(BOOSTLIBMOD)
+#    API_STATIC_LIBS         = $(CB_API_LIB_DIR)/libCBCommApi_$(TARGET).a \
+#                              $(CB_API_LIB_DIR)/libprotobuf_core_$(TARGET).a \
+#                              $(QP_PORT_DIR)/$(CONF)/libqp_$(QPLIBMOD)_cs.a \
+#                              $(BOOST_LIB_DIR)/libboost_system$(BOOSTLIBMOD).a \
+#                              $(BOOST_LIB_DIR)/libboost_thread$(BOOST_TH_LIBMOD)$(BOOSTLIBMOD).a
+
+    API_STATIC_LIBS         = $(CB_API_LIB_DIR)/libCBCommApi_$(TARGET).a \
+                              $(CB_API_LIB_DIR)/libprotobuf_core_$(TARGET).a \
+                              $(QP_PORT_DIR)/$(CONF)/libqp_$(QPLIBMOD)_cs.a
   
 else
 #    LINKFLAGS               = -Wl,-soname,$(LIB_PREFIX)$(PROJECT_DLL).$(DLL_EXT) \
@@ -367,12 +374,7 @@ cleanall: clean_with_libs
 	$(RM) dbg_posix rel_posix_spy_posix dbg_win32 rel_win32 spy_win32
 	
 clean:
-	$(RM) $(BIN_DIR)/*.o \
-	$(BIN_DIR)/*.d \
-	$(BIN_DIR)/*.exe \
-	$(BIN_DIR)/*.dll \
-	$(BIN_DIR)/*.a \
-	$(BIN_DIR)/*.h
+	$(RM) $(BIN_DIR)
 	
 clean_with_libs: clean clean_qpc_libs clean_cb_api_libs
 	@echo -------------------------
