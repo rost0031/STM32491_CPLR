@@ -14,6 +14,7 @@
 /* Includes ------------------------------------------------------------------*/
 #include <iostream>
 #include <stdio.h>
+#include <iomanip>
 #include "CmdlineParser.h"
 #include "Job.h"
 #include "Logging.h"
@@ -45,19 +46,35 @@ int main(int argc, char *argv[])
          tmp
    );
 
-//   CmdlineParser *cmdline = new CmdlineParser(argc, argv);
+   Logging *log = new Logging();
+
+   cerr << "Demonstration of invalid logging callback setting. Expecting error: 0x"
+            << setfill('0') << setw(8) << std::hex << CLI_ERR_INVALID_CALLBACK << endl;
+   ClientError_t status = log->setLibLogCallBack( NULL );
+   if ( CLI_ERR_NONE != status ) {
+      cerr << "Failed to set logging callback. Error: 0x"
+            << setfill('0') << setw(8) << std::hex << status << endl;
+   }
+
+   cerr << "Demonstration of valid logging callback setting. Expecting error: 0x"
+            << setfill('0') << setw(8) << std::hex << CLI_ERR_NONE << endl;
+   status = log->setLibLogCallBack( CLI_LibLogCallback );
+   if ( CLI_ERR_NONE != status ) {
+      cerr << "Failed to set logging callback. Error: 0x"
+            << setfill('0') << setw(8) << std::hex << status << endl;
+   } else {
+      cerr << "Successfully set up logging callback. You should have seen a date"
+            " and time with some logging printed before this.  Error: 0x"
+            << setfill('0') << setw(8) << std::hex << status << endl;
+   }
+
+
+
+   //   CmdlineParser *cmdline = new CmdlineParser(argc, argv);
 
    //   Job *job = new Job();
 
-   Logging *log = new Logging();
-//   log->setMsgCallBack( CLI_MsgCallback );
 
-//   log->m_pLog->m_pMsgHandlerCBFunction("Test\n", 5);
-
-   log->setLibLogCallBack( CLI_LibLogCallback );
-
-   cout << "Testing Client some more " << endl;
-   printf("Hello\n");
    return (0);
 }
 

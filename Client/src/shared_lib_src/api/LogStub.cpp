@@ -88,7 +88,18 @@ ClientError_t LogStub::setLibLogCallBack(
     * garbage instead of a valid pointer */
    string tmp = "Testing Library Logging Callback passed in by user";
    try {
-      this->m_pLibLogHandlerCBFunction(LOG, __func__, __LINE__, MODULE_LOGGING, "Testing Msg Callback passed in by user\n");
+      if ( NULL != this->m_pLibLogHandlerCBFunction ) {
+         this->m_pLibLogHandlerCBFunction(
+               LOG,
+               __func__,
+               __LINE__,
+               MODULE_LOGGING,
+               "Testing Msg Callback passed in by user\n"
+         );
+      } else {
+         err = CLI_ERR_INVALID_CALLBACK;
+         cerr << "Invalid Library Logging callback passed in by user" << endl;
+      }
    } catch ( ... ) {
       err = CLI_ERR_INVALID_CALLBACK;
       cerr << "Invalid Library Logging callback passed in by user" << endl;

@@ -149,7 +149,7 @@ ClientError_t Logging::setLibLogCallBack(
    cout << "Setting callback in Logging::setMsgCallBack" << endl;
    ClientError_t err = m_pLog->setLibLogCallBack(pCallbackFunction);
    if (CLI_ERR_NONE != err ) {
-      cerr << "Failed to set logging callback. Error: " << std::hex << err << endl;
+      cerr << "Failed to set logging callback. Error: 0x" << setfill('0') << setw(8) << std::hex << err << endl;
    }
    return( err );
 }
