@@ -59,14 +59,29 @@ public:
 
 
     /**
-     * Default constructor
+     * @brief  Default constructor
+     *
+     * Stores the cmd line arguments in the class.
+     *
+     * @param [in] argc: int number of arguments on cmd line
+     * @param [in] **argv: char** pointer to the cmd line arguments
+     * @return None.
      */
     CmdlineParser( int argc, char** argv );
 
     /**
-     * Default destructor.
+     * @brief  Default destructor.
      */
     ~CmdlineParser( void );
+
+    /**
+     * @brief  Parse the cmd line arguments that were stored by the constructor.
+     * @param  None
+     * @return None
+     */
+    void parseArgs( void );
+
+
 
 };
 

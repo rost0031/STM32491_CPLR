@@ -178,7 +178,8 @@ CPP_SRCS                    = bsp.cpp \
                               fwLdr.cpp \
                               ClientApi.cpp \
                               Job.cpp \
-                              MainMgr.cpp
+                              MainMgr.cpp \
+                              LogStub.cpp
 
 #-----------------------------------------------------------------------------
 # BUILD OPTIONS FOR VARIOUS CONFIGURATIONS

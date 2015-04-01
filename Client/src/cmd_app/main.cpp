@@ -16,7 +16,9 @@
 #include <stdio.h>
 #include "CmdlineParser.h"
 #include "Job.h"
-
+#include "Logging.h"
+#include "CBSharedDbgLevels.h"
+#include "Callbacks.h"
 /* Namespaces ----------------------------------------------------------------*/
 using namespace std;
 
@@ -34,10 +36,21 @@ int main(int argc, char *argv[])
 {
    cout << "Testing Client " << endl;
 
+   CON_output(
+         DBG,
+         __func__,
+         __LINE__,
+         "Testing logging function\n"
+         );
+
 //   CmdlineParser *cmdline = new CmdlineParser(argc, argv);
 
-   Job *job = new Job();
+   //   Job *job = new Job();
 
+   Logging *log = new Logging();
+   log->setMsgCallBack( CLI_MsgCallback );
+
+   log->m_pLog->m_pMsgHandlerCBFunction("Test\n", 5);
 
    cout << "Testing Client some more " << endl;
    printf("Hello\n");

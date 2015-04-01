@@ -40,10 +40,10 @@ CmdlineParser::CmdlineParser( int argc, char** argv ) :
    this->argv = argv;
 
    po::options_description desc("Allowed options");
-
+   printf("Entry\n");
    try
    {
-
+      printf("1\n");
       /* Try and keep these in alphabetical order */
       desc.add_options()
 
@@ -53,20 +53,20 @@ CmdlineParser::CmdlineParser( int argc, char** argv ) :
              "Override the default interactive operation and allow single cmd operation")
 
       ; //End of add_options()
-
+printf("2\n");
       /* parse regular options */
       po::variables_map vm;
       po::parsed_options parsed = po::command_line_parser(argc, argv).options(desc).run();
       po::store( parsed, vm);
       po::notify(vm);
-
+printf("3\n");
       if ( vm.count("cmd_mode") ) {
 
          this->bInteractiveRunMode = false;
 
          cout << "bInteractiveRunMode was set to false" << endl;
       }
-
+printf("4\n");
       /* Clear out the argument map */
       parsed_args.clear();
 

@@ -121,7 +121,8 @@ DEFINES                     =
 # C++ source files
 CPP_SRCS                    = main.cpp \
                               Callbacks.cpp \
-                              CmdlineParser.cpp
+                              CmdlineParser.cpp \
+                              Logging.cpp
 
 #-----------------------------------------------------------------------------
 # BUILD OPTIONS FOR VARIOUS CONFIGURATIONS
@@ -164,7 +165,9 @@ ifeq (win32, $(TARGET))
     DYNAMIC_LIBS            = -l$(PROJECT_DLL) -lws2_32
     
     STATIC_LINKFLAGS        = -Wl,-Bstatic 
-    STATIC_LIBS             = -lstdc++ -lboost_program_options$(BOOSTLIBMOD)
+    STATIC_LIBS             = -lstdc++ \
+                              -lboost_program_options$(BOOSTLIBMOD) \
+                              -lboost_date_time$(BOOSTLIBMOD)
     
     LIB_LOCATIONS           = -L$(BOOST_LIB_DIR) -L$(BIN_DIR)
 
@@ -179,7 +182,8 @@ else
     DYNAMIC_LIBS            = -l$(PROJECT_DLL) 
     
     STATIC_LINKFLAGS        = -Wl,-Bstatic 
-    STATIC_LIBS             = -lboost_program_options$(BOOSTLIBMOD)
+    STATIC_LIBS             = -lboost_program_options$(BOOSTLIBMOD) \
+                              -lboost_date_time$(BOOSTLIBMOD)
 
     LIB_LOCATIONS           = -L$(BOOST_LIB_DIR) -L$(BIN_DIR)
     LIBS                   += # Nothing needed for posix builds
