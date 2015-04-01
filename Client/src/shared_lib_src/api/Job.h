@@ -33,6 +33,7 @@ extern "C" {
 #endif
 
 /* Includes ------------------------------------------------------------------*/
+#include "LogStub.h"
 /* Exported defines ----------------------------------------------------------*/
 /* Exported macros -----------------------------------------------------------*/
 /* Exported types ------------------------------------------------------------*/
@@ -51,16 +52,25 @@ class CLIENT_DLL Job {
 
 private:
 
+   LogStub *m_pLog; /**< Pointer to LogStub instance used for logging */
 public:
 
 
     /**
-     * Default constructor
+     * @brief  Default constructor
      */
     Job( void );
 
     /**
-     * Default destructor.
+     * @brief  Constructor that initializes local logging.
+     * @param [in] *log: LogStub pointer to the class that has the proper
+     *                   callbacks set up for logging.
+     * @return None.
+     */
+    Job( LogStub *log );
+
+    /**
+     * @brief  Default destructor.
      */
     ~Job( void );
 

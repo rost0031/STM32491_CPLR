@@ -18,11 +18,12 @@
 #include <stdio.h>
 #include <stdarg.h>
 #include "LogStub.h"
-
+#include "ClientModules.h"
 /* Namespaces ----------------------------------------------------------------*/
 using namespace std;
 
 /* Compile-time called macros ------------------------------------------------*/
+MODULE_NAME( MODULE_EXT );
 
 /* Private typedefs ----------------------------------------------------------*/
 /* Private defines -----------------------------------------------------------*/
@@ -30,100 +31,18 @@ using namespace std;
 /* Private variables and Local objects ---------------------------------------*/
 /* Private function prototypes -----------------------------------------------*/
 /* Private functions ---------------------------------------------------------*/
-
-/******************************************************************************/
-void CON_output(
-      DBG_LEVEL_T dbgLvl,
-      const char *pFuncName,
-      int wLineNumber,
-      char *fmt,
-      ...
-)
-{
-   /* 1. Get the time first so the printout of the event is as close as possible
-    * to when it actually occurred */
-   boost::posix_time::ptime now = boost::date_time::not_a_date_time;
-   now = boost::posix_time::microsec_clock::local_time();
-   std::string time = boost::posix_time::to_iso_extended_string( now );
-
-   /* Temporary local buffer and index to compose the msg */
-   char tmpBuffer[MAX_LOG_BUFFER_LEN];
-   uint8_t tmpBufferIndex = 0;
-
-   /* 2. Based on the debug level specified by the calling macro, decide what to
-    * prepend (if anything). */
-   switch (dbgLvl) {
-      case DBG:
-         tmpBufferIndex += snprintf(
-               tmpBuffer,
-               MAX_LOG_BUFFER_LEN,
-               "DBG:%s-%s():%d:",
-               time.c_str(),
-               pFuncName,
-               wLineNumber
-         );
-         break;
-      case LOG:
-         tmpBufferIndex += snprintf(
-               tmpBuffer,
-               MAX_LOG_BUFFER_LEN,
-               "LOG:%s-%s():%d:",
-               time.c_str(),
-               pFuncName,
-               wLineNumber
-         );
-         break;
-      case WRN:
-         tmpBufferIndex += snprintf(
-               tmpBuffer,
-               MAX_LOG_BUFFER_LEN,
-               "WRN:%s-%s():%d:",
-               time.c_str(),
-               pFuncName,
-               wLineNumber
-         );
-         break;
-      case ERR:
-         tmpBufferIndex += snprintf(
-               tmpBuffer,
-               MAX_LOG_BUFFER_LEN,
-               "ERR:%s-%s():%d:",
-               time.c_str(),
-               pFuncName,
-               wLineNumber
-         );
-         break;
-      case ISR:
-      case CON: // This is not used so don't prepend anything
-      default:
-         break;
-   }
-
-   /* 3. Pass the va args list to get output to a buffer, making sure to not
-    * overwrite the prepended data. */
-   va_list args;
-   va_start(args, fmt);
-
-   tmpBufferIndex += vsnprintf(
-         &tmpBuffer[tmpBufferIndex],
-         MAX_LOG_BUFFER_LEN - tmpBufferIndex, // Account for the part of the buffer that was already written.
-         fmt,
-         args
-   );
-   va_end(args);
-
-   /* 4. Print directly to the console now. THIS IS A SLOW OPERATION! */
-   fwrite(tmpBuffer, tmpBufferIndex, 1, stderr);
-}
-
 /* Private class prototypes --------------------------------------------------*/
 /* Private classes -----------------------------------------------------------*/
 /******************************************************************************/
 Logging::Logging( void ) :
-   m_pLog(NULL)
+         m_pLog(NULL)
 {
-   cout << "Called Logging constructor" << endl;
+   /* Create a new LogStub instance */
    m_pLog = new LogStub();   /* No exceptions thrown from DLL so this is safe */
+
+   /* Set the callback to use this class' logging function "log".  This can also
+    * be done externally but we'll do it internally so main remains clean */
+   this->setLibLogCallBack( this->log );
 }
 
 /******************************************************************************/
@@ -137,8 +56,8 @@ ClientError_t Logging::setMsgCallBack(
 )
 {
    cout << "Setting callback in Logging::setMsgCallBack" << endl;
-//   ClientError_t err = m_pLog->setMsgCallBack(pCallbackFunction);
-//   return( err );
+   //   ClientError_t err = m_pLog->setMsgCallBack(pCallbackFunction);
+   //   return( err );
 }
 
 /******************************************************************************/
@@ -146,7 +65,7 @@ ClientError_t Logging::setLibLogCallBack(
       CB_LibLogHandler_t pCallbackFunction
 )
 {
-   cout << "Setting callback in Logging::setMsgCallBack" << endl;
+   DBG_printf(this, "Setting a new callback for library logging\n");
    ClientError_t err = m_pLog->setLibLogCallBack(pCallbackFunction);
    if (CLI_ERR_NONE != err ) {
       cerr << "Failed to set logging callback. Error: 0x" << setfill('0') << setw(8) << std::hex << err << endl;
@@ -155,10 +74,18 @@ ClientError_t Logging::setLibLogCallBack(
 }
 
 /******************************************************************************/
-void Logging::output(
+LogStub* Logging::getLogStubPtr( void )
+{
+   return( this->m_pLog );
+}
+
+/******************************************************************************/
+void Logging::log(
       DBG_LEVEL_T dbgLvl,
       const char *pFuncName,
       int wLineNumber,
+      ModuleSrc_t moduleSrc,
+      ModuleId_t moduleId,
       char *fmt,
       ...
 )
@@ -173,57 +100,58 @@ void Logging::output(
    char tmpBuffer[MAX_LOG_BUFFER_LEN];
    uint8_t tmpBufferIndex = 0;
 
-   /* 2. Based on the debug level specified by the calling macro, decide what to
-    * prepend (if anything). */
-   switch (dbgLvl) {
-      case DBG:
-         tmpBufferIndex += snprintf(
-               tmpBuffer,
-               MAX_LOG_BUFFER_LEN,
-               "DBG:%s-%s():%d:",
-               time.c_str(),
-               pFuncName,
-               wLineNumber
-         );
-         break;
-      case LOG:
-         tmpBufferIndex += snprintf(
-               tmpBuffer,
-               MAX_LOG_BUFFER_LEN,
-               "LOG:%s-%s():%d:",
-               time.c_str(),
-               pFuncName,
-               wLineNumber
-         );
-         break;
-      case WRN:
-         tmpBufferIndex += snprintf(
-               tmpBuffer,
-               MAX_LOG_BUFFER_LEN,
-               "WRN:%s-%s():%d:",
-               time.c_str(),
-               pFuncName,
-               wLineNumber
-         );
-         break;
-      case ERR:
-         tmpBufferIndex += snprintf(
-               tmpBuffer,
-               MAX_LOG_BUFFER_LEN,
-               "ERR:%s-%s():%d:",
-               time.c_str(),
-               pFuncName,
-               wLineNumber
-         );
-         break;
-      case ISR:
-      case CON: // This is not used so don't prepend anything
-      default:
-         break;
+
+   /* 2. Get a string version of the calling module name */
+   string moduleName;
+   switch( moduleId ) {
+      case MODULE_GEN: moduleName = "M_GEN"; break;
+      case MODULE_SER: moduleName = "M_SER"; break;
+      case MODULE_ETH: moduleName = "M_ETH"; break;
+      case MODULE_MGR: moduleName = "M_MGR"; break;
+      case MODULE_LOG: moduleName = "M_LOG"; break;
+      case MODULE_EXT: moduleName = "M_EXT"; break;
+      case MODULE_JOB: moduleName = "M_JOB"; break;
+      default:         moduleName = "M_???"; break;
    }
 
-   /* 3. Pass the va args list to get output to a buffer, making sure to not
-    * overwrite the prepended data. */
+   /* 3. Get the string version of debug level */
+   string logLevel;
+   switch (dbgLvl) {
+      case DBG: logLevel = "DBG"; break;
+      case LOG: logLevel = "LOG"; break;
+      case WRN: logLevel = "WRN"; break;
+      case ERR: logLevel = "ERR"; break;
+      case CON: logLevel = "CON"; break;
+      case ISR: logLevel = "ISR"; break;
+      default:  logLevel = "???"; break;
+   }
+
+   /* 4. Get the module source */
+   string moduleSrcName;
+   switch (moduleSrc) {
+      case SRC_CLI_LIB:  moduleSrcName = "S_LIB"; break;
+      case SRC_DC3_APPL: moduleSrcName = "S_DC3_APPL"; break;
+      case SRC_DC3_BOOT: moduleSrcName = "S_DC3_BOOT"; break;
+      case SRC_CLI_EXT:  moduleSrcName = "S_EXT"; break;
+      default:  moduleSrcName = "S_???"; break;
+   }
+   /* 4. Write the origin, module, debug level, time, function, and line number
+    * before the rest of the data gets appended. */
+   tmpBufferIndex += snprintf(
+         tmpBuffer,
+         MAX_LOG_BUFFER_LEN,
+         "%s:%s-%s:%s-%s():%d:",
+         moduleSrcName.c_str(),
+         moduleName.c_str(),
+         logLevel.c_str(),
+         time.c_str(),
+         pFuncName,
+         wLineNumber
+   );
+
+   /* 5. Pass the va args list to get output to a buffer, making sure to not
+    * overwrite the prepended data. Write the actual msg that was sent to the
+    * function via va_args. */
    va_list args;
    va_start(args, fmt);
 
@@ -235,7 +163,7 @@ void Logging::output(
    );
    va_end(args);
 
-   /* 4. Print directly to the console now. THIS IS A SLOW OPERATION! */
+   /* 4. Print directly to the console now. */
    fwrite(tmpBuffer, tmpBufferIndex, 1, stderr);
 }
 

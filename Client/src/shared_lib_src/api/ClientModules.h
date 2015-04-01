@@ -40,6 +40,23 @@ extern "C" {
 /* Includes ------------------------------------------------------------------*/
 /* Exported defines ----------------------------------------------------------*/
 /* Exported macros -----------------------------------------------------------*/
+/**
+ * @brief   Defines a module for grouping debugging functionality.
+ *
+ * @description
+ * Macro to be placed at the top of each C/C++ module to define the single
+ * instance of the module name string to be used in printing of debugging
+ * information.
+ *
+ * @param[in] @c name_: ModuleId_t enum representing the module.
+ *
+ * @note 1: This macro should __not__ be terminated by a semicolon.
+ * @note 2: This macro MUST be present in the file if DBG_printf() or
+ * LOG_printf() functions are called.  The code will not compile without this.
+ */
+#define MODULE_NAME( name_ ) \
+      static ModuleId_t const this_module_ = name_;
+
 /* Exported types ------------------------------------------------------------*/
 
 /**
@@ -50,12 +67,28 @@ extern "C" {
  * debug capabilities have been enabled.
  */
 typedef enum DBG_MODULES {
-   MODULE_GENERAL  = 0x00000001, /**< General module debugging (main, bsp, etc) */
-   MODULE_SERIAL   = 0x00000002, /**< Serial module debugging. */
-   MODULE_ETH      = 0x00000008, /**< Ethernet module debugging. */
-   MODULE_MAINMGR  = 0x00000010, /**< MainMgr AO module debugging. */
-   MODULE_LOGGING  = 0x00000020, /**< LogStub module */
+   MODULE_GEN   = 0x00000001, /**< General module debugging (main, bsp, etc) */
+   MODULE_SER   = 0x00000002, /**< Serial module debugging. */
+   MODULE_ETH   = 0x00000004, /**< Ethernet module debugging. */
+   MODULE_MGR   = 0x00000008, /**< MainMgr AO module debugging. */
+   MODULE_LOG   = 0x00000010, /**< LogStub module */
+   MODULE_JOB   = 0x00000020, /**< Job module */
+
+   MODULE_EXT   = 0x80000000, /**< This should be used by external callers of the library */
 } ModuleId_t;
+
+/**
+ * @brief Sources of modules available in the Client API.
+ *
+ * These are limited to 32 bit and must be maskable.  These enum masks will be
+ * used for identifying the source of various messages and debug statements
+ */
+typedef enum DBG_SOURCES {
+   SRC_CLI_EXT  = 0x00000001, /**< Caller of the client library is the source */
+   SRC_CLI_LIB  = 0x00000002, /**< Client library is the source */
+   SRC_DC3_APPL = 0x00000003, /**< DC3 Application is the source */
+   SRC_DC3_BOOT = 0x00000008, /**< DC3 Bootloader is the source */
+} ModuleSrc_t;
 
 /* Exported functions --------------------------------------------------------*/
 /* Exported classes ----------------------------------------------------------*/

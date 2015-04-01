@@ -39,35 +39,16 @@ extern "C" {
 #define __stdcall
 #endif
 
-
-/* Exported defines ----------------------------------------------------------*/
-#define MAX_LOG_BUFFER_LEN 1024  /**<Max buffer length for formatting messages*/
-/* Exported macros -----------------------------------------------------------*/
-
-/**
- * @brief   Defines a module for grouping debugging functionality.
- *
- * @description
- * Macro to be placed at the top of each C/C++ module to define the single
- * instance of the module name string to be used in printing of debugging
- * information.
- *
- * @param[in] @c name_: ModuleId_t enum representing the module.
- *
- * @note 1: This macro should __not__ be terminated by a semicolon.
- * @note 2: This macro MUST be present in the file if DBG_printf() or
- * LOG_printf() functions are called.  The code will not compile without this.
- */
-#define DBG_DEFINE_THIS_MODULE( name_ ) \
-      static ModuleId_t const Q_ROM DBG_this_module_ = name_;
-
-/* Exported types ------------------------------------------------------------*/
-/* Exported functions --------------------------------------------------------*/
-
 #ifdef __cplusplus
 }
 #endif
 
+/* Exported defines ----------------------------------------------------------*/
+#define MAX_LOG_BUFFER_LEN 1024  /**<Max buffer length for formatting messages*/
+
+/* Exported macros -----------------------------------------------------------*/
+/* Exported types ------------------------------------------------------------*/
+/* Exported functions --------------------------------------------------------*/
 /* Exported classes ----------------------------------------------------------*/
 /**
  * @class LogStub
@@ -143,11 +124,49 @@ public:
     */
    ClientError_t setLibLogCallBack( CB_LibLogHandler_t pCallbackFunction );
 
-   void LOG_printf(
+   /**
+    * @brief   Output logging msg
+    *
+    * Outputs a logging message to the callback passed in by the user.  Should
+    * be used just like printf() in C in addition to providing the log level,
+    * __func__, and __LINE__ macros as inputs.
+    *
+    * @param [in] dbgLvl: DBG_LEVEL_T that specifies the level of logging
+    *    @arg DBG: debug messages
+    *    @arg LOG: log messages
+    *    @arg WRN: warning messages
+    *    @arg ERR: error messages
+    *    @arg CON: console printout only.  Nothing gets prepended.  This really
+    *              shouldn't be used unless you want to have a very difficult
+    *              time finding where and why something got printed.
+    * @param [in] *pFuncName: const char pointer to the function name where this
+    *              was called.
+    * @param [in]  wLineNumber: line number in the file that this was called.
+    * @param [in]  moduleSrc: ModuleSrc_t that specifies where the logging is
+    *              coming from
+    *    @arg SRC_CLI_EXT: from an external caller of the library
+    *    @arg SRC_CLI_LIB: from the library itself
+    *    @arg SRC_DC3_APPL: from DC3 Application
+    *    @arg SRC_DC3_BOOT: from DC3 Bootloader
+    * @param [in]  moduleId: ModuleId_t that specifies which module in the lib
+    *              this is coming from.  This only makes sense if
+    *              moduleSrc == SRC_CLI_LIB.
+    *    @arg MODULE_GEN: General modules.
+    *    @arg MODULE_SER: Serial module
+    *    @arg MODULE_ETH: Ethernet module
+    *    @arg MODULE_MGR: MainMgr AO module
+    *    @arg MODULE_LOG: LogStub module
+    *    @arg MODULE_EXT: External caller. Should be used by external caller.
+    * @param [in] *fmt: va_arg style argument.
+    * @param [in]  ...: va_arg style additional arguments.
+    * @return  None.
+    */
+   void log(
          DBG_LEVEL_T dbgLvl,
          const char *pFuncName,
          int wLineNumber,
-         ModuleId_t module,
+         ModuleSrc_t moduleSrc,
+         ModuleId_t moduleId,
          char *fmt,
          ...
    );

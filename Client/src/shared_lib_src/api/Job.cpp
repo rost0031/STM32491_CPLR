@@ -12,11 +12,13 @@
 #include "Job.h"
 #include "serial.h"
 #include "eth.h"
+#include "LogHelper.h"
+
 /* Namespaces ----------------------------------------------------------------*/
 using namespace std;
 
 /* Compile-time called macros ------------------------------------------------*/
-
+MODULE_NAME( MODULE_JOB );
 /* Private typedefs ----------------------------------------------------------*/
 /* Private defines -----------------------------------------------------------*/
 /* Private macros ------------------------------------------------------------*/
@@ -31,16 +33,25 @@ using namespace std;
 /* Private class methods -----------------------------------------------------*/
 
 /******************************************************************************/
-Job::Job( void )
+Job::Job( void ) :
+      m_pLog(NULL)
 {
 //   Serial *serial = new Serial("/dev/ttyS1", 115200, false );
    Eth *eth = new Eth( "127.0.0.1", "1502", "7777" );
 
 }
 
+Job::Job( LogStub *log ) :
+      m_pLog(NULL)
+{
+   this->m_pLog = log;
+   this->m_pLog->log(DBG,__func__,__LINE__,SRC_CLI_EXT,MODULE_LOG, "Testing %d\n", 5);
+   DBG_printf(this->m_pLog,"Testing macro from Job()\n");
+}
+
 /******************************************************************************/
 Job::~Job( void )
 {
-
+   delete[] this->m_pLog;
 }
 /******** Copyright (C) 2015 Datacard. All rights reserved *****END OF FILE****/

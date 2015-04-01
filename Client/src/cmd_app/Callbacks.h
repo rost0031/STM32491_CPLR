@@ -34,14 +34,14 @@ void CLI_AckCallback( char* message, int len );
 //      char *message
 //);
 
-void CLI_LibLogCallback(
-      DBG_LEVEL_T logLevel,
-      const char *pFuncName,
-      int wLineNumber,
-      ModuleId_t module,
-      char *fmt,
-      ...
-);
+//void CLI_LibLogCallback(
+//      DBG_LEVEL_T logLevel,
+//      const char *pFuncName,
+//      int wLineNumber,
+//      ModuleId_t module,
+//      char *fmt,
+//      ...
+//);
 /* Exported classes ----------------------------------------------------------*/
 
 #endif                                                        /* CALLBACKS_H_ */

@@ -117,7 +117,8 @@ typedef void (*CB_LibLogHandler_t)(
       DBG_LEVEL_T logLevel,
       const char *pFuncName,
       int wLineNumber,
-      ModuleId_t module,
+      ModuleSrc_t moduleSrc,
+      ModuleId_t moduleId,
       char *fmt,
       ...
 );

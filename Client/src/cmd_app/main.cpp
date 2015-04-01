@@ -20,10 +20,15 @@
 #include "Logging.h"
 #include "CBSharedDbgLevels.h"
 #include "Callbacks.h"
+#include "ClientModules.h"
+#include "LogStub.h"
+
 /* Namespaces ----------------------------------------------------------------*/
 using namespace std;
 
 /* Compile-time called macros ------------------------------------------------*/
+MODULE_NAME( MODULE_EXT );
+
 /* Private typedefs ----------------------------------------------------------*/
 /* Private defines -----------------------------------------------------------*/
 /* Private macros ------------------------------------------------------------*/
@@ -35,44 +40,31 @@ using namespace std;
 /******************************************************************************/
 int main(int argc, char *argv[])
 {
-   cout << "Testing Client " << endl;
+   Logging *logger;
 
-   int tmp = 6;
-   CON_output(
-         DBG,
-         __func__,
-         __LINE__,
-         "Testing logging function %d\n",
-         tmp
-   );
-
-   Logging *log = new Logging();
-
-   cerr << "Demonstration of invalid logging callback setting. Expecting error: 0x"
-            << setfill('0') << setw(8) << std::hex << CLI_ERR_INVALID_CALLBACK << endl;
-   ClientError_t status = log->setLibLogCallBack( NULL );
-   if ( CLI_ERR_NONE != status ) {
-      cerr << "Failed to set logging callback. Error: 0x"
-            << setfill('0') << setw(8) << std::hex << status << endl;
+   try {
+      logger = new Logging();
+   } catch ( ... ) {
+      cerr << "Failed to set up logging.  Exiting" << endl;
+      exit(1);
    }
 
-   cerr << "Demonstration of valid logging callback setting. Expecting error: 0x"
-            << setfill('0') << setw(8) << std::hex << CLI_ERR_NONE << endl;
-   status = log->setLibLogCallBack( CLI_LibLogCallback );
-   if ( CLI_ERR_NONE != status ) {
-      cerr << "Failed to set logging callback. Error: 0x"
-            << setfill('0') << setw(8) << std::hex << status << endl;
-   } else {
-      cerr << "Successfully set up logging callback. You should have seen a date"
-            " and time with some logging printed before this.  Error: 0x"
-            << setfill('0') << setw(8) << std::hex << status << endl;
-   }
+   LOG_printf(logger, "Successfully set up logging\n");
 
-
+//   ClientError_t status;
+//
+//   status = logger->setLibLogCallBack( logger->log );
+//   if ( CLI_ERR_NONE != status ) {
+//      cerr << "Failed to set logging callback. Error: 0x"
+//            << setfill('0') << setw(8) << std::hex << status << endl;
+//      exit(1);
+//   } else {
+//      LOG_printf( logger, "Successfully set up logging callback.\n");
+//   }
 
    //   CmdlineParser *cmdline = new CmdlineParser(argc, argv);
 
-   //   Job *job = new Job();
+   Job *job = new Job(logger->getLogStubPtr());
 
 
    return (0);

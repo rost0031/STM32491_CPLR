@@ -18,10 +18,13 @@
 #include <iostream>
 #include <string>
 #include <stdarg.h>
+#include "LogHelper.h"
+#include "ClientModules.h"
+
 /* Namespaces ----------------------------------------------------------------*/
 using namespace std;
 /* Compile-time called macros ------------------------------------------------*/
-
+MODULE_NAME( MODULE_LOG );
 /* Private typedefs ----------------------------------------------------------*/
 /* Private defines -----------------------------------------------------------*/
 /* Private macros ------------------------------------------------------------*/
@@ -89,13 +92,7 @@ ClientError_t LogStub::setLibLogCallBack(
    string tmp = "Testing Library Logging Callback passed in by user";
    try {
       if ( NULL != this->m_pLibLogHandlerCBFunction ) {
-         this->m_pLibLogHandlerCBFunction(
-               LOG,
-               __func__,
-               __LINE__,
-               MODULE_LOGGING,
-               "Testing Msg Callback passed in by user\n"
-         );
+         LOG_printf(this, "Successfully set callback in LogStub\n");
       } else {
          err = CLI_ERR_INVALID_CALLBACK;
          cerr << "Invalid Library Logging callback passed in by user" << endl;
@@ -109,11 +106,12 @@ ClientError_t LogStub::setLibLogCallBack(
 }
 
 /******************************************************************************/
-void LogStub::LOG_printf(
+void LogStub::log(
       DBG_LEVEL_T dbgLvl,
       const char *pFuncName,
       int wLineNumber,
-      ModuleId_t module,
+      ModuleSrc_t moduleSrc,
+      ModuleId_t moduleId,
       char *fmt,
       ...
 )
@@ -122,11 +120,11 @@ void LogStub::LOG_printf(
       char tmpBuffer[MAX_LOG_BUFFER_LEN];
       uint8_t tmpBufferIndex = 0;
 
-      /* 1. Pass the va args list to get output to a buffer */
+      /* 3. Pass the va args list to get output to a buffer */
       va_list args;
       va_start(args, fmt);
 
-      /* 2. Print the actual user supplied data to the buffer and set the length */
+      /* 4. Put the rest of the message behind the stuff already in the buffer*/
       tmpBufferIndex += vsnprintf(
             (char *)&tmpBuffer[tmpBufferIndex],
             MAX_LOG_BUFFER_LEN - tmpBufferIndex, // Account for the part of the buffer that was already written.
@@ -135,12 +133,13 @@ void LogStub::LOG_printf(
       );
       va_end(args);
 
-      /* Call the callback that will pass the data to the caller of the library */
+      /* 5. Call the callback that will pass the data to the caller of the library */
       this->m_pLibLogHandlerCBFunction(
             dbgLvl,
             pFuncName,
             wLineNumber,
-            module,
+            moduleSrc,
+            moduleId,
             tmpBuffer
       );
    } else {
