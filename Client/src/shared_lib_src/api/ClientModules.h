@@ -54,6 +54,7 @@ typedef enum DBG_MODULES {
    MODULE_SERIAL   = 0x00000002, /**< Serial module debugging. */
    MODULE_ETH      = 0x00000008, /**< Ethernet module debugging. */
    MODULE_MAINMGR  = 0x00000010, /**< MainMgr AO module debugging. */
+   MODULE_LOGGING  = 0x00000020, /**< LogStub module */
 } ModuleId_t;
 
 /* Exported functions --------------------------------------------------------*/

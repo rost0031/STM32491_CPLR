@@ -41,6 +41,7 @@ extern "C" {
 
 
 /* Exported defines ----------------------------------------------------------*/
+#define MAX_LOG_BUFFER_LEN 1024  /**<Max buffer length for formatting messages*/
 /* Exported macros -----------------------------------------------------------*/
 
 /**
@@ -81,14 +82,14 @@ extern "C" {
 class CLIENT_DLL LogStub {
 
 private:
-
-   bool m_AckLoggingEnabled = NULL; /**< Allows enabling/disabling of logging of Ack msgs */
-   bool m_MsgLoggingEnabled = NULL; /**< Allows enabling/disabling of logging of Done and Prog msgs */
+   CB_MsgHandler_t m_pMsgHandlerCBFunction; /**< Callback for handling Done and Progress msgs */
+   CB_MsgHandler_t m_pAckHandlerCBFunction; /**< Callback for handling Ack msgs */
+   CB_LibLogHandler_t m_pLibLogHandlerCBFunction;  /**< Callback for handling library logging */
+   bool m_AckLoggingEnabled; /**< Allows enabling/disabling of logging of Ack msgs */
+   bool m_MsgLoggingEnabled; /**< Allows enabling/disabling of logging of Done and Prog msgs */
 public:
 
-    CB_MsgHandler_t m_pMsgHandlerCBFunction; /**< Callback for handling Done and Progress msgs */
-   CB_MsgHandler_t m_pAckHandlerCBFunction; /**< Callback for handling Ack msgs */
-   CB_LogHandler_t m_pInternalLogHandlerCBFunction;  /**< Callback for handling Internal logging */
+
 
    /**
     * @brief   Default constructor.
@@ -133,14 +134,23 @@ public:
    /**
     * This method sets a callback to handle the internal logging from the client.
     *
-    * @param  [in]  pCallbackFunction: a CB_LogHandler_t pointer to the
+    * @param  [in]  pCallbackFunction: a CB_LibLogHandler_t pointer to the
     * callback function that is implemented outside the library.
     *
     * @return ClientError_t:
     *    @arg CLI_ERR_NONE: no errors were detected
     *    else some error code indicating what went wrong
     */
-   ClientError_t setInternalLogCallBack( CB_LogHandler_t pCallbackFunction );
+   ClientError_t setLibLogCallBack( CB_LibLogHandler_t pCallbackFunction );
+
+   void LOG_printf(
+         DBG_LEVEL_T dbgLvl,
+         const char *pFuncName,
+         int wLineNumber,
+         ModuleId_t module,
+         char *fmt,
+         ...
+   );
 };
 
 #endif                                                          /* LOGSTUB_H_ */

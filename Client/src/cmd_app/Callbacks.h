@@ -17,6 +17,7 @@
 /* Includes ------------------------------------------------------------------*/
 #include "CBSharedDbgLevels.h"
 #include "CBCommApi.h"
+#include "ClientModules.h"
 
 /* Exported defines ----------------------------------------------------------*/
 /* Exported macros -----------------------------------------------------------*/
@@ -27,12 +28,20 @@ void CLI_MsgCallback( char* message, int len );
 
 void CLI_AckCallback( char* message, int len );
 
-void CLI_LogCallback(
-      DBG_LEVEL_T logLevel,
-      CBErrorCode err,
-      char *message
-);
+//void CLI_LogCallback(
+//      DBG_LEVEL_T logLevel,
+//      CBErrorCode err,
+//      char *message
+//);
 
+void CLI_LibLogCallback(
+      DBG_LEVEL_T logLevel,
+      const char *pFuncName,
+      int wLineNumber,
+      ModuleId_t module,
+      char *fmt,
+      ...
+);
 /* Exported classes ----------------------------------------------------------*/
 
 #endif                                                        /* CALLBACKS_H_ */

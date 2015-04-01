@@ -36,21 +36,25 @@ int main(int argc, char *argv[])
 {
    cout << "Testing Client " << endl;
 
+   int tmp = 6;
    CON_output(
          DBG,
          __func__,
          __LINE__,
-         "Testing logging function\n"
-         );
+         "Testing logging function %d\n",
+         tmp
+   );
 
 //   CmdlineParser *cmdline = new CmdlineParser(argc, argv);
 
    //   Job *job = new Job();
 
    Logging *log = new Logging();
-   log->setMsgCallBack( CLI_MsgCallback );
+//   log->setMsgCallBack( CLI_MsgCallback );
 
-   log->m_pLog->m_pMsgHandlerCBFunction("Test\n", 5);
+//   log->m_pLog->m_pMsgHandlerCBFunction("Test\n", 5);
+
+   log->setLibLogCallBack( CLI_LibLogCallback );
 
    cout << "Testing Client some more " << endl;
    printf("Hello\n");

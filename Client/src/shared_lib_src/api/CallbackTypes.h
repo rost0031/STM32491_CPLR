@@ -31,6 +31,7 @@ extern "C" {
 /* Generated C headers should be included inside of extern C enclosure */
 #include "CBCommApi.h"
 #include "CBSharedDbgLevels.h"
+#include "ClientModules.h"
 
 #ifdef __cplusplus
 }
@@ -84,6 +85,41 @@ typedef void (*CB_LogHandler_t)(
       DBG_LEVEL_T dbgLevel,
       CBErrorCode err,
       char *buffer
+);
+
+/**
+ * @brief   Callback type for a debug/log msg coming from the coupler board.
+ *
+ * This is a callback function type definition which should be instantiated to
+ * handle logging and debugging msgs coming from the coupler board.  This allows
+ * different handling depending if the client is commandline, menu driven, or a
+ * a gui.
+ *
+ * @param [in] dbgLevel: DBG_LEVEL_T that specifies the log priority of the msg
+ *    @arg DBG: Lowest level of debugging.  Everything printed.
+ *    @arg LOG: Basic logging.
+ *    @arg WRN: Warnings.  Non-critical errors that may have occurred that allow
+ *              operations to continue.
+ *    @arg ERR: Critical errors. Operations will stop if these occurred.
+ *    @arg CON: This is reserved for printing to the console as part of regular
+ *              operation and nothing will be prepended.  The client has no use
+ *              for this.
+ *    @arg ISR: This debug msg came from an ISR
+ *
+ * @param [in] *pFuncName: const char * string specifying the calling function's
+ *              name.
+ * @param [in]  wLineNumber: int line number where the call occurred.
+ * @param [in]  module: ModuleId_t that specifies which module called it.
+ * @param [in] *fmt: char* fmt va args type argument.
+ * @param [in]  ...: additional va args type arguments.
+ */
+typedef void (*CB_LibLogHandler_t)(
+      DBG_LEVEL_T logLevel,
+      const char *pFuncName,
+      int wLineNumber,
+      ModuleId_t module,
+      char *fmt,
+      ...
 );
 
 #endif                                                    /* CALLBACKTYPES_H_ */

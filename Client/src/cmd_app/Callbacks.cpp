@@ -12,7 +12,10 @@
 
 /* Includes ------------------------------------------------------------------*/
 #include <iostream>                              /* For cout and endl support */
+#include <stdarg.h>
 #include "Callbacks.h"
+#include "Logging.h"
+#include "LogStub.h"
 
 /* Namespaces ----------------------------------------------------------------*/
 using namespace std;
@@ -39,13 +42,44 @@ void CLI_AckCallback( char* message, int len )
 }
 
 /******************************************************************************/
-void CLI_LogCallback(
+//void CLI_DC3LogMsgCallback(
+//      DBG_LEVEL_T logLevel,
+//      CBErrorCode err,
+//      char *message
+//)
+//{
+//    cout << "in CLI_DC3LogMsgCallback, err=" << err << endl;
+//}
+
+/******************************************************************************/
+void CLI_LibLogCallback(
       DBG_LEVEL_T logLevel,
-      CBErrorCode err,
-      char *message
+      const char *pFuncName,
+      int wLineNumber,
+      ModuleId_t module,
+      char *fmt,
+      ...
 )
 {
-    cout << "in CLI_LogCallback, err=" << err << endl;
+   cout << "in CLI_LibLogCallback" << endl;
+
+   char tmpBuffer[MAX_LOG_BUFFER_LEN];
+   uint8_t tmpBufferIndex = 0;
+
+   /* 1. Pass the va args list to get output to a buffer */
+   va_list args;
+   va_start(args, fmt);
+
+   /* 2. Print the actual user supplied data to the buffer and set the length */
+   tmpBufferIndex += vsnprintf(
+         (char *)&tmpBuffer[tmpBufferIndex],
+         MAX_LOG_BUFFER_LEN - tmpBufferIndex, // Account for the part of the buffer that was already written.
+         fmt,
+         args
+   );
+   va_end(args);
+
+   CON_output(logLevel, pFuncName, wLineNumber, tmpBuffer);
 }
 
 /* Private class prototypes --------------------------------------------------*/

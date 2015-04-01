@@ -22,6 +22,12 @@
 
 /* Exported defines ----------------------------------------------------------*/
 /* Exported macros -----------------------------------------------------------*/
+
+#define LOG_printf(logObj, fmt, ...) \
+      do { logObj->output(LOG, __func__, __LINE__, fmt, \
+            ##__VA_ARGS__); \
+      } while (0)
+
 /* Exported types ------------------------------------------------------------*/
 /* Exported functions --------------------------------------------------------*/
 void CON_output(
@@ -51,6 +57,18 @@ public:
 
    ClientError_t setMsgCallBack(
          CB_MsgHandler_t pCallbackFunction
+   );
+
+   ClientError_t setLibLogCallBack(
+         CB_LibLogHandler_t pCallbackFunction
+   );
+
+   void output(
+         DBG_LEVEL_T dbgLvl,
+         const char *pFuncName,
+         int wLineNumber,
+         char *fmt,
+         ...
    );
 
    /**
