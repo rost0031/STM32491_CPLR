@@ -165,8 +165,12 @@ ifeq (win32, $(TARGET))
     DYNAMIC_LIBS            = -l$(PROJECT_DLL) -lws2_32
     
     STATIC_LINKFLAGS        = -Wl,-Bstatic 
+#    STATIC_LIBS             = -lstdc++ \
+#                              -lboost_program_options$(BOOSTLIBMOD) \
+#                              -lboost_date_time$(BOOSTLIBMOD)
+
     STATIC_LIBS             = -lstdc++ \
-                              -lboost_program_options$(BOOSTLIBMOD) \
+                              -lboost_program_options \
                               -lboost_date_time$(BOOSTLIBMOD)
     
     LIB_LOCATIONS           = -L$(BOOST_LIB_DIR) -L$(BIN_DIR)

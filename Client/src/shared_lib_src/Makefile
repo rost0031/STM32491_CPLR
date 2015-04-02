@@ -50,9 +50,9 @@ ifeq (win32, $(TARGET)) # Cross compile for windows from Ubuntu-12.04
     endif
  
     QPLIBMOD                = WIN32
-    BOOSTLIBMOD             = -mt-s
+#    BOOSTLIBMOD             = -mt-s
 #    BOOSTLIBMOD             = -mt.dll
-    BOOST_TH_LIBMOD         = _$(TARGET)
+#    BOOST_TH_LIBMOD         = _$(TARGET)
 
 else                    # Compile natively on Linux and/or Cygwin
     CROSS                   = 

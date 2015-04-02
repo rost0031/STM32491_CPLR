@@ -40,6 +40,8 @@ MODULE_NAME( MODULE_EXT );
 /******************************************************************************/
 int main(int argc, char *argv[])
 {
+   ClientError_t status = CLI_ERR_NONE;               /* Keep track of status */
+
    Logging *logger;
 
    try {
@@ -62,8 +64,11 @@ int main(int argc, char *argv[])
 //      LOG_printf( logger, "Successfully set up logging callback.\n");
 //   }
 
-   //   CmdlineParser *cmdline = new CmdlineParser(argc, argv);
-
+   CmdlineParser *cmdline = new CmdlineParser( logger );
+   if( 0 != cmdline->parse(argc, argv) ) {
+      ERR_printf(logger, "Failed to parse cmdline args. Exiting\n");
+      exit(1);
+   }
    Job *job = new Job(logger->getLogStubPtr());
 
 

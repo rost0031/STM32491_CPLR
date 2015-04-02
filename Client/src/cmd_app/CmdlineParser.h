@@ -22,6 +22,7 @@
 #include <sstream>
 #include <string>
 
+#include "Logging.h"
 /* Namespaces ----------------------------------------------------------------*/
 using namespace std;
 namespace po = boost::program_options;
@@ -44,6 +45,7 @@ class CmdlineParser {
 private:
     int     argc;/**< Standard C style number of args argument */
     char**  argv;/**< Standard C style pointer to a pointer of array of args */
+    Logging* log;/**< Pointer to a Logger class instance */
 
     bool bInteractiveRunMode; /**< User can specify if the client will run
                                    interactively (menu/gui, so the AO doesn't
@@ -59,15 +61,25 @@ public:
 
 
     /**
-     * @brief  Default constructor
+     * @brief  Constructor that sets up logging.
      *
-     * Stores the cmd line arguments in the class.
+     * @param [in] *logger: Logging pointer to an instance of Logging class
+     * @return None.
+     */
+    CmdlineParser( Logging* logger );
+
+    /**
+     * @brief  Parse passed in command line arguments
+     *
+     * Parses cmd line arguments.
      *
      * @param [in] argc: int number of arguments on cmd line
      * @param [in] **argv: char** pointer to the cmd line arguments
-     * @return None.
+     * @retval:
+     *   0: if no problems were detected.
+     *   1: if failed to parse arguments.
      */
-    CmdlineParser( int argc, char** argv );
+    int parse( int argc, char** argv );
 
     /**
      * @brief  Default destructor.
