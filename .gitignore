@@ -1,5 +1,6 @@
 # This file tells git what to ignore
-
+!Client/lib/win32/
+!Client/lib/posix/
 *.o
 *.d
 *.a
