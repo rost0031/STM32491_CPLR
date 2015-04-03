@@ -35,8 +35,10 @@
  */
 class Serial {
 
+private:
     char read_msg_[CB_MAX_MSG_LEN];/**< buffer to hold incoming msgs */
     char write_msg_[CB_MAX_MSG_LEN];/**< buffer to hold msgs being sent */
+
     uint8_t bReadNDFUSEBytes; /**< This variable will hold how many bytes to
     read on the DFUSE serial bus because ST is inconsistent about when they send
     and don't send ACKs/NACKs.  Pretty much every command sends an ACK when it's
@@ -49,7 +51,6 @@ class Serial {
     boost::asio::io_service m_io;/**< internal instance of boost's io_service  */
     boost::asio::serial_port m_port;/**< internal instance of boost's serial port pointer */
 
-private:
     /**
      * Handler for the read_some function.
      *
@@ -162,25 +163,18 @@ public:
    {
       Iterator i = begin;
       uint8_t j = 0;
-      for (i = begin, j = 0; i != end; i++, j++)
-      {
-         if ( _nBytesToRead == 0 ) /* Look for ACK/NACK */
-         {
+      for (i = begin, j = 0; i != end; i++, j++) {
+         if ( _nBytesToRead == 0 ) {/* Look for ACK/NACK */
+
             /* If a match happens, pre-increment the iterator so ACK/NACK gets
              * returned as part of the data stream */
-            if ( DFUSE_ACK == *i )
-            {
+            if ( DFUSE_ACK == *i ) {
+               return( std::make_pair(++i, true) );
+            } else if ( DFUSE_NACK == *i ) {
                return( std::make_pair(++i, true) );
             }
-            else if ( DFUSE_NACK == *i )
-            {
-               return( std::make_pair(++i, true) );
-            }
-         }
-         else /* Count until enough bytes have been read */
-         {
-            if (j == _nBytesToRead )
-            {
+         } else { /* Count until enough bytes have been read */
+            if (j == _nBytesToRead ) {
                return( std::make_pair(++i, true) );
             }
          }
@@ -198,10 +192,8 @@ private:
  * This is just a hack around the crappy boost library limitations.  They claim
  * that any type can be used but they lie.
  */
-namespace boost
-{
-   namespace asio
-   {
+namespace boost {
+   namespace asio {
       template <> struct is_match_condition< DFUSE_delim >
          : public boost::true_type {};
    }

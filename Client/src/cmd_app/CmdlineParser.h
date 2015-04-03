@@ -43,20 +43,31 @@ using namespace po;
 class CmdlineParser {
 
 private:
-    int     argc;/**< Standard C style number of args argument */
-    char**  argv;/**< Standard C style pointer to a pointer of array of args */
-    Logging* log;/**< Pointer to a Logger class instance */
+    int     m_argc;/**< Standard C style number of args argument */
+    char**  m_argv;/**< Standard C style pointer to a pointer of array of args */
+    Logging* m_log;/**< Pointer to a Logger class instance */
 
-    bool bInteractiveRunMode; /**< User can specify if the client will run
+    bool m_bInteractiveRunMode; /**< User can specify if the client will run
                                    interactively (menu/gui, so the AO doesn't
                                    stop after finishing one command) or 1 cmd at
                                    a time and quit.  The default is interactive */
 
-    vector<string> command;  /**< Vector that will hold the command along with
+    vector<string> m_command;  /**< Vector that will hold the command along with
                                   optional (ordered) arguments in the rest of
                                   the indexes. */
-    string  parsed_cmd;             /**< String containing the parsed command */
+    string  m_parsed_cmd;             /**< String containing the parsed command */
     map<string, string> parsed_args;     /**< Map containing parsed arguments */
+
+
+    /* Storage for various args collected from cmdline */
+    CBMsgRoute m_conn_mode;                   /**< Connection mode to the DC3 */
+    string  m_ip_address;                       /**< IP address to connect to */
+    string  m_remote_port;                         /**< IP port to connect to */
+    int     m_local_port;                        /**< IP port to connect from */
+    string  m_serial_dev;                    /**< serial device to connect to */
+    int     m_serial_baud;                 /**< serial device baudrate to use */
+
+
 public:
 
 

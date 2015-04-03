@@ -73,6 +73,7 @@ typedef enum DBG_MODULES {
    MODULE_MGR   = 0x00000008, /**< MainMgr AO module debugging. */
    MODULE_LOG   = 0x00000010, /**< LogStub module */
    MODULE_JOB   = 0x00000020, /**< Job module */
+   MODULE_API   = 0x00000040, /**< ClientApi module */
 
    MODULE_EXT   = 0x80000000, /**< This should be used by external callers of the library */
 } ModuleId_t;

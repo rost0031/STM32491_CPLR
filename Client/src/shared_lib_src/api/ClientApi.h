@@ -15,6 +15,7 @@
 /* Includes ------------------------------------------------------------------*/
 #include <string>
 #include "CallbackTypes.h"
+#include "LogStub.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -52,10 +53,7 @@ extern "C" {
 class CLIENT_DLL ClientApi {
 
 private:
-
-   CB_MsgHandler_t m_pMsgHandlerCBFunction;
-   CB_MsgHandler_t m_pAckHandlerCBFunction;
-   CB_LogHandler_t m_pInternalLogHandlerCBFunction;
+   LogStub *m_pLog;         /**< Pointer to LogStub instance used for logging */
 
 public:
 
@@ -68,10 +66,10 @@ public:
 
    /**
     * Constructor that sets up the upd ethernet socket
-    * @param [in]  None.
+    * @param [in]  *log: LogStub pointer to a LogStub instance.
     * @return      None.
     */
-   ClientApi( );
+   ClientApi( LogStub *log );
 
    /**
     * Destructor (default) that closes the UDP socket

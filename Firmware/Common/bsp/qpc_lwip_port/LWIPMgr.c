@@ -160,6 +160,9 @@ extern struct echo_state* LWIPMgr_es_log;
  * functions. */
 extern struct echo_state* LWIPMgr_es_sys;
 
+/* Keeps track of what port is used by client UDP connection */
+extern uint16_t LWIPMgr_cliPort;
+
 /* protected: */
 static QState LWIPMgr_initial(LWIPMgr * const me, QEvt const * const e);
 
@@ -402,6 +405,7 @@ uint16_t LWIPMgr_logPort;
 uint16_t LWIPMgr_sysPort;
 struct echo_state* LWIPMgr_es_log;
 struct echo_state* LWIPMgr_es_sys;
+uint16_t LWIPMgr_cliPort;
 /*${AOs::LWIPMgr::SM} ......................................................*/
 static QState LWIPMgr_initial(LWIPMgr * const me, QEvt const * const e) {
     /* ${AOs::LWIPMgr::SM::initial} */
@@ -426,6 +430,7 @@ static QState LWIPMgr_initial(LWIPMgr * const me, QEvt const * const e) {
      * will eventually be assigned via BOOTP based on which board this is. */
     LWIPMgr_sysPort = 1500;
     LWIPMgr_logPort = 1501;
+    LWIPMgr_cliPort = 1502;
 
     me->isEthDbgEnabled = true; // Enable debugging over ethernet by default.
 
@@ -460,7 +465,7 @@ static QState LWIPMgr_initial(LWIPMgr * const me, QEvt const * const e) {
 
     /* Set up UDP related PCB */
     me->upcb = udp_new();
-    udp_bind(me->upcb, IP_ADDR_ANY, 777);             /* use port 777 for UDP */
+    udp_bind(me->upcb, IP_ADDR_ANY, LWIPMgr_cliPort);
     udp_recv(me->upcb, &udp_rx_handler, me);
 
     /* Set up TCP related PCB  for system connnection */
@@ -1423,6 +1428,8 @@ static void udp_rx_handler(void *arg, struct udp_pcb *upcb,
     /* 2. Fill the msg payload and get the msg source and length */
     MEMCPY(msgEvt->msg, p->payload, p->len);
     msgEvt->msg_len = p->len;
+
+    DBG_printf("Received %d bytes (%s) on UDP\n", msgEvt->msg_len, msgEvt->msg);
 
     /* 3. Don't bother publishing locally.  Instead, publish the newly created
      * MsgEvt event to CommStackMgr AO */

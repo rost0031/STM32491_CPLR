@@ -84,6 +84,9 @@
     <documentation>/**&lt; Local timer for TCP send timeout. */</documentation>
    </attribute>
    <attribute name="isEthDbgEnabled" type="bool" visibility="0x01" properties="0x00"/>
+   <attribute name="cliPort" type="uint16_t" visibility="0x01" properties="0x01">
+    <documentation>/* Keeps track of what port is used by client UDP connection */</documentation>
+   </attribute>
    <statechart>
     <initial target="../1/6">
      <action>(void)e;        /* suppress the compiler warning about unused parameter */
@@ -107,6 +110,7 @@ QS_FILTER_TE_OBJ(0);           /* Turn off time event tracing for this AO */
  * will eventually be assigned via BOOTP based on which board this is. */
 LWIPMgr_sysPort = 1500;
 LWIPMgr_logPort = 1501;
+LWIPMgr_cliPort = 1502;
 
 me-&gt;isEthDbgEnabled = true; // Enable debugging over ethernet by default.
 
@@ -141,7 +145,7 @@ me-&gt;netif = eth_driver_init((QActive *)me, macaddr);
 
 /* Set up UDP related PCB */
 me-&gt;upcb = udp_new();
-udp_bind(me-&gt;upcb, IP_ADDR_ANY, 777);             /* use port 777 for UDP */
+udp_bind(me-&gt;upcb, IP_ADDR_ANY, LWIPMgr_cliPort);
 udp_recv(me-&gt;upcb, &amp;udp_rx_handler, me);
 
 /* Set up TCP related PCB  for system connnection */
@@ -1243,6 +1247,8 @@ static void udp_rx_handler(void *arg, struct udp_pcb *upcb,
     /* 2. Fill the msg payload and get the msg source and length */
     MEMCPY(msgEvt-&gt;msg, p-&gt;payload, p-&gt;len);
     msgEvt-&gt;msg_len = p-&gt;len;
+
+    DBG_printf(&quot;Received %d bytes (%s) on UDP\n&quot;, msgEvt-&gt;msg_len, msgEvt-&gt;msg);
 
     /* 3. Don't bother publishing locally.  Instead, publish the newly created
      * MsgEvt event to CommStackMgr AO */

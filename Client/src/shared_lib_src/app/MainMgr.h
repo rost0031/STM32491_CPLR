@@ -41,6 +41,7 @@ using namespace std;
 /* Includes ------------------------------------------------------------------*/
 #include "qp_port.h"                                        /* for QP support */
 #include "ClientShared.h"
+#include "LogStub.h"
 
 /* Exported defines ----------------------------------------------------------*/
 /* Exported macros -----------------------------------------------------------*/
@@ -54,8 +55,8 @@ typedef struct {
 /* protected: */
     QEvt super;
 
-    /**< Error code that indicates the status of exit. */
-    CBErrorCode errorCode;
+    /**< Error code that indicates the status of exit from this AO. */
+    ClientError_t errorCode;
 } ExitEvt;
 
 
@@ -70,7 +71,7 @@ typedef struct {
  * @retval: none
  */
 /*${AOs::MainMgr_ctor} .....................................................*/
-void MainMgr_ctor(void);
+void MainMgr_ctor(LogStub* log);
 
 
 /**< "opaque" pointer to the Active Object */

@@ -19,24 +19,27 @@
 #include "cdecode.h"
 #include "base64_wrapper.h"
 #include "CBCommApi.h"
+#include "LogHelper.h"
+#include "CBSharedMsgTypes.h"
+#include "qf_port.h"
 
 /* Namespaces ----------------------------------------------------------------*/
 using namespace std;
 
 /* Compile-time called macros ------------------------------------------------*/
+MODULE_NAME( MODULE_API );
 
 /* Private typedefs ----------------------------------------------------------*/
 /* storage for event pools... */
 static union SmallEvents {
     void   *e0;                                       /* minimum event size */
     uint8_t e1[sizeof(QEvent)];
-//    uint8_t e2[sizeof(ExitEvt)];
+    uint8_t e2[sizeof(ExitEvt)];
 } l_smlPoolSto[10];                     /* storage for the small event pool */
 
 static union MediumEvents {
     void   *e0;                                       /* minimum event size */
-//    uint8_t *e1[sizeof(MsgEvt)];
-//    uint8_t *e2[sizeof(DfuseMsgEvt)];
+    uint8_t *e1[sizeof(LrgDataEvt)];
 } l_medPoolSto[15];                    /* storage for the medium event pool */
 
 /* Private defines -----------------------------------------------------------*/
@@ -81,23 +84,6 @@ const void ClientApi::setInternalLogCallBack(
 /******************************************************************************/
 void ClientApi::run( void )
 {
-   /* instantiate all active objects */
-   MainMgr_ctor();
-
-   /* initialize the framework and the underlying RT kernel */
-   QF_init();
-
-   QS_OBJ_DICTIONARY(l_smlPoolSto);
-   QS_OBJ_DICTIONARY(l_medPoolSto);
-   QS_OBJ_DICTIONARY(l_MainMgrQueueSto);
-
-   /* init publish-subscribe */
-   QF_psInit(l_subscrSto, Q_DIM(l_subscrSto));
-
-   /* initialize event pools... */
-   QF_poolInit(l_smlPoolSto, sizeof(l_smlPoolSto), sizeof(l_smlPoolSto[0]));
-   QF_poolInit(l_medPoolSto, sizeof(l_medPoolSto), sizeof(l_medPoolSto[0]));
-
    /* start the active objects... */
    QActive_start(
          AO_MainMgr,
@@ -116,13 +102,70 @@ void ClientApi::run( void )
 }
 
 /******************************************************************************/
-ClientApi::ClientApi( )
+ClientApi::ClientApi( LogStub *log ) :
+      m_pLog(NULL)
 {
+
+   this->m_pLog = log;
+   DBG_printf(this->m_pLog,"Logging setup successful\n");
+
+   /* instantiate all active objects */
+   MainMgr_ctor( this->m_pLog );
+
+   /* initialize the framework and the underlying RT kernel */
+   QF_init();
+
+   QS_OBJ_DICTIONARY(l_smlPoolSto);
+   QS_OBJ_DICTIONARY(l_medPoolSto);
+   QS_OBJ_DICTIONARY(l_MainMgrQueueSto);
+
+   /* init publish-subscribe */
+   QF_psInit(l_subscrSto, Q_DIM(l_subscrSto));
+
+   /* initialize event pools... */
+   QF_poolInit(l_smlPoolSto, sizeof(l_smlPoolSto), sizeof(l_smlPoolSto[0]));
+   QF_poolInit(l_medPoolSto, sizeof(l_medPoolSto), sizeof(l_medPoolSto[0]));
+
+   /* This works */
+//   DBG_printf(this->m_pLog,"Attempting to init serial...\n");
+//   Serial *serial;
+//   try {
+//      serial = new Serial(
+//            "COM32",
+//            115200,
+//            false
+//      );
+//
+//   } catch (...) {
+//      cout << "ERROR: Unable to open serial port "
+//            << "COM32" << endl;
+//      exit(1); // Do a regular exit since this is critical
+//   }
+//   DBG_printf(this->m_pLog,"Attempting to write serial...\n");
+//
+//   serial->write_some("Test\n", 5);
+
+   /* This also works.*/
+   DBG_printf(this->m_pLog,"Attempting to init UDP eth...\n");
+   Eth *eth;
+   try {
+      eth = new Eth(
+            "172.27.0.75",
+            "1502",
+            "53432"
+      );
+   } catch ( ... ) {
+      cout << "ERROR: Unable to connect to UDP " << endl;
+      exit(1); // Do a regular exit since this is critical
+   }
+   DBG_printf(this->m_pLog,"Attempting to write UDP eth...\n");
+   eth->write_some("Test\n", 5);
 }
 
 /******************************************************************************/
 ClientApi::~ClientApi(  )
 {
+   delete[] this->m_pLog;
    delete[] serial;
 }
 

@@ -30,6 +30,8 @@
  */
 class Eth {
 
+private:
+
     char read_msg_[CB_MAX_MSG_LEN];/**< buffer to hold incoming msgs */
     char write_msg_[CB_MAX_MSG_LEN];/**< buffer to hold msgs being sent */
 
@@ -38,7 +40,6 @@ class Eth {
     boost::asio::ip::udp::endpoint m_rem_endpoint; /**< internal instance of a remote UDP endpoint */
     boost::asio::ip::udp::endpoint m_loc_endpoint; /**< internal instance of a local UDP endpoint */
 
-private:
     /**
      * Handler for the read_some function.
      *
@@ -48,9 +49,9 @@ private:
      * @return      None.
      */
     void read_handler(
-                        const boost::system::error_code& error,
-                        size_t bytes_transferred
-                     );
+          const boost::system::error_code& error,
+          size_t bytes_transferred
+    );
 
     /**
      * This method initiates async data read from the UDP connection and
@@ -70,9 +71,9 @@ private:
      * @return      None.
      */
     void write_handler(
-                         const boost::system::error_code& error,
-                         size_t bytes_transferred
-                      );
+          const boost::system::error_code& error,
+          size_t bytes_transferred
+    );
 
 public:
     /**

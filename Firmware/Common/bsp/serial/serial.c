@@ -368,6 +368,7 @@ inline void Serial_UART1Callback(void)
          /* 3. Publish the newly created event to current AO */
          QF_PUBLISH( (QEvent *)menuEvt, AO_SerialMgr );
 
+         DBG_printf("Got %s on serial port\n",a_UARTSettings[SERIAL_UART1].bufferRX);
          a_UARTSettings[SERIAL_UART1].indexRX = 0;       /* Reset the RX buffer */
 
       } else if ( '\r' == data ) {

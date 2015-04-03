@@ -15,12 +15,11 @@
 
 /******************************************************************************/
 void Eth::read_handler(
-                        const boost::system::error_code& error,
-                        size_t bytes_transferred
-                      )
+      const boost::system::error_code& error,
+      size_t bytes_transferred
+)
 {
-   if ( !error )
-   {
+   if ( !error ) {
       /* Construct a new msg event indicating that a msg has been received */
 //      MsgEvt *msgEvt = Q_NEW(MsgEvt, MSG_RECEIVED_SIG);
 //
@@ -31,9 +30,7 @@ void Eth::read_handler(
 //
 //      /* Publish the event */
 //      QF_PUBLISH((QEvent *)msgEvt, AO_CommStackMgr);
-   }
-   else
-   {
+   } else {
       printf("Error reading UDP data\n");
    }
 
@@ -42,7 +39,7 @@ void Eth::read_handler(
 }
 
 /******************************************************************************/
-void Eth::read_some()
+void Eth::read_some( void )
 {
    m_socket.async_receive_from(
          boost::asio::buffer(read_msg_, CB_MAX_MSG_LEN),
@@ -58,9 +55,9 @@ void Eth::read_some()
 
 /******************************************************************************/
 void Eth::write_handler(
-                           const boost::system::error_code& error,
-                           size_t bytes_transferred
-                       )
+      const boost::system::error_code& error,
+      size_t bytes_transferred
+)
 {
    write_msg_[bytes_transferred]=0;
    if (error)
@@ -84,7 +81,6 @@ void Eth::write_some(const char* message, uint16_t len)
                boost::asio::placeholders::bytes_transferred
          )
    );
-
 }
 
 /******************************************************************************/
@@ -98,15 +94,13 @@ Eth::Eth( const char *ipAddress, const char *pRemPort, const char *pLocPort )
    boost::system::error_code myError;
 
    m_socket.open( boost::asio::ip::udp::v4(), myError);
-   if (myError)
-   {
+   if (myError) {
       std::cout << "Open - " << myError.message() << std::endl;
       exit(1);
    }
 
    m_socket.bind( m_loc_endpoint, myError );
-   if (myError)
-   {
+   if (myError) {
       std::cout << "Bind - " << myError.message() << std::endl;
       exit(1);
    }

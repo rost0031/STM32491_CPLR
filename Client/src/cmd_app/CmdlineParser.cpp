@@ -35,63 +35,120 @@ MODULE_NAME( MODULE_EXT );
 
 /******************************************************************************/
 CmdlineParser::CmdlineParser( Logging* logger ) :
-            bInteractiveRunMode(true)
+            m_bInteractiveRunMode(true)
 {
-   this->log = logger;
-   DBG_printf(this->log, "Logging for CmdlineParser class enabled\n");
+   this->m_log = logger;
+   DBG_printf(this->m_log, "Logging for CmdlineParser class enabled\n");
 }
 
 /******************************************************************************/
 int CmdlineParser::parse( int argc, char** argv )
 {
    /* Make a local store cmd line args */
-   this->argc = argc;
-   this->argv = argv;
+   this->m_argc = argc;
+   this->m_argv = argv;
 
    po::options_description desc("Allowed options");
 
    desc.add_options()
          ("help,h", "produce help message")
-         ("version,v", "print version of client")
+         ("version,v", "print version of client") // TODO: not implemented
          ("mode,m", "Override the default interactive mode and allow single cmd operation")
 
+         ("ip_address,i", po::value<string>(&m_ip_address),
+            "Set remote IP address to connect to (Required if serial_dev not set)")
+
+         ("remote_port,p", po::value<string>(&m_remote_port)->default_value("1502"),
+            "Set remote port number")
+
+         ("local_port,l", po::value<int>(&m_local_port)->default_value(50249),
+            "Set local port number")
+
+         ("serial_dev,s", po::value<string>(&m_serial_dev),
+            "Set the name of the serial device to connect to instead of "
+            "using an IP connection (in the form of /dev/ttySx on cygwin/linux, "
+            "and COMX in windows. Required if remote_ip_address not set)")
+
+         ("serial_baud,b", po::value<int>(&m_serial_baud)->default_value(115200),
+            "Set the baud rate of the serial device")
    ; // End of add_options()
 
-   DBG_printf(this->log,"Parsing...\n");
+   DBG_printf(this->m_log,"Parsing cmdline arguments...\n");
    /* parse regular options */
    po::variables_map vm;
    po::parsed_options parsed = po::parse_command_line(argc, argv, desc);
    po::store( parsed, vm);
    po::notify(vm);
 
-   DBG_printf(this->log,"Finished parsing.\n");
-   if ( vm.count("mode") ) {
-
-      this->bInteractiveRunMode = false;
-
-      cout << "bInteractiveRunMode was set to false" << endl;
-   }
-   printf("4\n");
-   /* Clear out the argument map */
-//   parsed_args.clear();
-
    try {
+      /* Check for general help request first */
       if (vm.count("help")) {
-         /* If the user specified help but no commands */
          cout << desc << endl;
          cout << "To get detailed help for any command, add a --help after the command." << endl;
          exit(0);
       }
+
+      if (vm.count("version")) {
+         cout << "CmdLine Client App version: " << "TODO" << endl;
+         cout << "CmdLine Client Lib version: " << "TODO" << endl;
+         cout << "Boost Library version: " << BOOST_LIB_VERSION << endl;
+         exit(0);
+      }
+
+      /* Allow user to override the interactive (menu) mode and run in single
+       * cmd mode.  This is for scripting purposes */
+      if ( vm.count("mode") ) {
+         this->m_bInteractiveRunMode = false;
+         DBG_printf(this->m_log,"Overriding interactive mode and running in single cmd mode\n");
+      }
+
+      /* Serial and IP connections are mutually exclusive so treat them as such
+       * on the cmdline. */
+      if (vm.count("ip_address") && !vm.count("serial_dev")) {
+
+         this->m_conn_mode = _CB_EthCli;
+
+         cout << "ip_address was set to "
+               << vm["ip_address"].as<string>() << endl;
+
+         if (vm.count("remote_port")) {
+            cout << "remote_port was set to "
+                  << vm["remote_port"].as<string>() << endl;
+         }
+
+      } else if (vm.count("serial_dev") && !vm.count("ip_address")) {
+         this->m_conn_mode = _CB_Serial;
+
+         cout << "serial_dev was set to "
+               << vm["serial_dev"].as<string>() << endl;
+
+         if (vm.count("serial_baud")) {
+            cout << "serial_baud was set to "
+                  << vm["serial_baud"].as<int>() << endl;
+         }
+
+      } else  {
+         /* User didn't specify any connection options.  Attempt using default
+          * IP address on the default port. */
+         this->m_conn_mode = _CB_EthCli;
+         this->m_ip_address = "172.27.0.75";
+         LOG_printf(this->m_log,"No IP address or serial device specified.\n");
+         LOG_printf(this->m_log,"Using default ip address %s to attempt connect connection.\n", this->m_ip_address.c_str());
+      }
+
+      /* Clear out the argument map */
+      parsed_args.clear();
+
    } catch(po::error& e) {
       string error = e.what();
-      ERR_printf(this->log,"Exception %s while parsing cmdline arguments.\n", error.c_str() );
+      ERR_printf(this->m_log,"Exception %s while parsing cmdline arguments.\n", error.c_str() );
       return(1);
    } catch (...) {
-      ERR_printf(this->log, "Some Unknown error occurred while parsing cmdline arguments\n");
+      ERR_printf(this->m_log, "Some Unknown error occurred while parsing cmdline arguments\n");
       return(1);
    }
 
-   std::cout << "Boost version: " << BOOST_LIB_VERSION << std::endl;
+   return( 0 );
 }
 
 /******************************************************************************/

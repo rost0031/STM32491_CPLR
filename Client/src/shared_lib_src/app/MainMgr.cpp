@@ -36,9 +36,11 @@
 
 /* Includes ------------------------------------------------------------------*/
 #include "MainMgr.h"
+#include "LogHelper.h"
 
 /* Compile-time called macros ------------------------------------------------*/
 Q_DEFINE_THIS_FILE;
+MODULE_NAME( MODULE_MGR );
 
 /* All timeouts should be defined in CBTimeouts.h as part of the
  * CBCommAPI that should be visible to the client/coupler */
@@ -67,7 +69,10 @@ typedef struct {
     QTimeEvt exitTimerEvt;
 
     /**< Keep track of last error and that will be returned or sent back to caller */
-    CBErrorCode errorCode;
+    ClientError_t errorCode;
+
+    /**< Local pointer to the logger instance */
+    LogStub* m_pLog;
 } MainMgr;
 
 /* protected: */
@@ -84,6 +89,18 @@ static QState MainMgr_initial(MainMgr * const me, QEvt const * const e);
  * machine is going next.
  */
 static QState MainMgr_Active(MainMgr * const me, QEvt const * const e);
+
+/**
+ * @brief Wait state before exit.
+ *
+ * This state is a wait state that pauses long enough to let logging finish
+ * before exiting..
+ *
+ * @param  [in,out] me: Pointer to the state machine
+ * @param  [in,out] e:  Pointer to the event being processed.
+ * @return status_: QState type that specifies where the state
+ * machine is going next.
+ */
 static QState MainMgr_CleanupBeforeExit(MainMgr * const me, QEvt const * const e);
 
 
@@ -106,8 +123,10 @@ QActive * const AO_MainMgr = (QActive *)&l_MainMgr;    /* "opaque" AO pointer */
  * @retval: none
  */
 /*${AOs::MainMgr_ctor} .....................................................*/
-void MainMgr_ctor(void) {
+void MainMgr_ctor(LogStub* log) {
     MainMgr *me = &l_MainMgr;
+    me->m_pLog = log;
+    DBG_printf(me->m_pLog,"Logging setup successful\n");
     QActive_ctor(&me->super, (QStateHandler)&MainMgr_initial);
     QTimeEvt_ctor(&me->exitTimerEvt, EXIT_SIG);
 }
@@ -170,6 +189,18 @@ static QState MainMgr_Active(MainMgr * const me, QEvt const * const e) {
     }
     return status_;
 }
+
+/**
+ * @brief Wait state before exit.
+ *
+ * This state is a wait state that pauses long enough to let logging finish
+ * before exiting..
+ *
+ * @param  [in,out] me: Pointer to the state machine
+ * @param  [in,out] e:  Pointer to the event being processed.
+ * @return status_: QState type that specifies where the state
+ * machine is going next.
+ */
 /*${AOs::MainMgr::SM::Active::CleanupBeforeExi~} ...........................*/
 static QState MainMgr_CleanupBeforeExit(MainMgr * const me, QEvt const * const e) {
     QState status_;

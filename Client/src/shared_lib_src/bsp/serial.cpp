@@ -22,9 +22,9 @@ extern Serial *serial;
 
 /******************************************************************************/
 void Serial::read_handler(
-                           const boost::system::error_code& error,
-                           size_t bytes_transferred
-                         )
+      const boost::system::error_code& error,
+      size_t bytes_transferred
+)
 {
 
     std::istream is(&serial_stream_);
@@ -40,12 +40,9 @@ void Serial::read_handler(
           0 == line.find("LOG:")   ||
           0 == line.find("WRN:")   ||
           0 == line.find("ERR:")
-       )
-    {
+       ) {
         std::cout << "CB: " << read_msg_ << std::endl;
-    }
-    else
-    {
+    } else {
 //        /* Construct a new msg event indicating that a msg has been received */
 //        MsgEvt *msgEvt = Q_NEW(MsgEvt, MSG_RECEIVED_SIG);
 //
@@ -92,25 +89,18 @@ void Serial::read_handler_DFUSE(
    memcpy(read_msg_, header, bytes_transferred);
    serial_stream_.consume(bytes_transferred);
 
-   if ( 1 == bytes_transferred && 0 == bReadNDFUSEBytes )
-   {
-      if ( DFUSE_ACK == read_msg_[0] )
-      {
+   if ( 1 == bytes_transferred && 0 == bReadNDFUSEBytes ) {
+      if ( DFUSE_ACK == read_msg_[0] )  {
          /* If the buffer size is 1, then this is an independent ACK msg*/
 //         QEvt *qEvt = Q_NEW(QEvt, DFUSE_ACK_SIG);
 //         QF_PUBLISH((QEvent *)qEvt, AO_CommStackMgr);
-      }
-      else if ( DFUSE_NACK == read_msg_[0] )
-      {
+      } else if ( DFUSE_NACK == read_msg_[0] ) {
 //         QEvt *qEvt = Q_NEW(QEvt, DFUSE_NACK_SIG);
 //         QF_PUBLISH((QEvent *)qEvt, AO_CommStackMgr);
       }
-   }
-   else if ( bytes_transferred > 1 )
-   {
+   } else if ( bytes_transferred > 1 ) {
       /* Reset the flag to read n bytes if it's set */
-      if ( bReadNDFUSEBytes > 0 )
-      {
+      if ( bReadNDFUSEBytes > 0 ) {
          bReadNDFUSEBytes = 0;
       }
 
@@ -201,13 +191,10 @@ Serial::Serial(const char *dev_name, int baud_rate, bool bDFUSEComm) : m_io(), m
 
    /* These settings depend on whether we are running serial in "regular" or
     * DFUSE mode. */
-   if ( bDFUSEComm ) /* DFUSE specific setting and read function */
-   {
+   if ( bDFUSEComm ) {/* DFUSE specific setting and read function */
       m_port.set_option( boost::asio::serial_port_base::parity(boost::asio::serial_port::parity::even ) );   // Even for regular serial
       read_some_DFUSE();
-   }
-   else /* Regular serial specific setting and read function */
-   {
+   } else {/* Regular serial specific setting and read function */
       m_port.set_option( boost::asio::serial_port_base::parity(boost::asio::serial_port::parity::none ) );   // None for regular serial
       read_some();
    }

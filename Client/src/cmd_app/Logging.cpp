@@ -111,6 +111,7 @@ void Logging::log(
       case MODULE_LOG: moduleName = "M_LOG"; break;
       case MODULE_EXT: moduleName = "M_EXT"; break;
       case MODULE_JOB: moduleName = "M_JOB"; break;
+      case MODULE_API: moduleName = "M_API"; break;
       default:         moduleName = "M_???"; break;
    }
 

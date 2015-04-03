@@ -15,13 +15,18 @@
 #include <iostream>
 #include <stdio.h>
 #include <iomanip>
+
+/* Local App includes */
 #include "CmdlineParser.h"
-#include "Job.h"
 #include "Logging.h"
+
+/* Lib includes */
+#include "Job.h"
 #include "CBSharedDbgLevels.h"
 #include "Callbacks.h"
 #include "ClientModules.h"
 #include "LogStub.h"
+#include "ClientApi.h"
 
 /* Namespaces ----------------------------------------------------------------*/
 using namespace std;
@@ -69,6 +74,10 @@ int main(int argc, char *argv[])
       ERR_printf(logger, "Failed to parse cmdline args. Exiting\n");
       exit(1);
    }
+
+   /* Set up the client api and initialize its logging */
+   ClientApi *client = new ClientApi(logger->getLogStubPtr());
+
    Job *job = new Job(logger->getLogStubPtr());
 
 

@@ -9,8 +9,8 @@
    <documentation>/**
  * @brief Event type for exiting from MainMgr with an error code.
  */</documentation>
-   <attribute name="errorCode" type="CBErrorCode" visibility="0x01" properties="0x00">
-    <documentation>/**&lt; Error code that indicates the status of exit. */</documentation>
+   <attribute name="errorCode" type="ClientError_t" visibility="0x01" properties="0x00">
+    <documentation>/**&lt; Error code that indicates the status of exit from this AO. */</documentation>
    </attribute>
   </class>
  </package>
@@ -25,8 +25,11 @@
    <attribute name="exitTimerEvt" type="QTimeEvt" visibility="0x01" properties="0x00">
     <documentation>/**&lt; Used for timing out the actual exit for cleanup */</documentation>
    </attribute>
-   <attribute name="errorCode" type="CBErrorCode" visibility="0x01" properties="0x00">
+   <attribute name="errorCode" type="ClientError_t" visibility="0x01" properties="0x00">
     <documentation>/**&lt; Keep track of last error and that will be returned or sent back to caller */</documentation>
+   </attribute>
+   <attribute name="m_pLog" type="LogStub*" visibility="0x01" properties="0x00">
+    <documentation>/**&lt; Local pointer to the logger instance */</documentation>
    </attribute>
    <statechart>
     <initial target="../1">
@@ -65,6 +68,17 @@ EXIT(me-&gt;errorCode);</action>
       </tran_glyph>
      </tran>
      <state name="CleanupBeforeExit">
+      <documentation>/**
+ * @brief Wait state before exit.
+ *
+ * This state is a wait state that pauses long enough to let logging finish
+ * before exiting..
+ *
+ * @param  [in,out] me: Pointer to the state machine
+ * @param  [in,out] e:  Pointer to the event being processed.
+ * @return status_: QState type that specifies where the state
+ * machine is going next.
+ */</documentation>
       <entry>/* Arm the first time for a long time.  */
 QTimeEvt_postIn(
     &amp;me-&gt;exitTimerEvt,
@@ -101,7 +115,10 @@ QF_stop();</action>
  * @param [in]: none.
  * @retval: none
  */</documentation>
+   <parameter name="log" type="LogStub*"/>
    <code>MainMgr *me = &amp;l_MainMgr;
+me-&gt;m_pLog = log;
+DBG_printf(me-&gt;m_pLog,&quot;Logging setup successful\n&quot;);
 QActive_ctor(&amp;me-&gt;super, (QStateHandler)&amp;MainMgr_initial);
 QTimeEvt_ctor(&amp;me-&gt;exitTimerEvt, EXIT_SIG);</code>
   </operation>
@@ -134,6 +151,7 @@ using namespace std;
 /* Includes ------------------------------------------------------------------*/
 #include &quot;qp_port.h&quot;                                        /* for QP support */
 #include &quot;ClientShared.h&quot;
+#include &quot;LogStub.h&quot;
 
 /* Exported defines ----------------------------------------------------------*/
 /* Exported macros -----------------------------------------------------------*/
@@ -174,9 +192,11 @@ $declare(AOs::AO_MainMgr)
 
 /* Includes ------------------------------------------------------------------*/
 #include &quot;MainMgr.h&quot;
+#include &quot;LogHelper.h&quot;
 
 /* Compile-time called macros ------------------------------------------------*/
 Q_DEFINE_THIS_FILE;
+MODULE_NAME( MODULE_MGR );
 
 /* All timeouts should be defined in CBTimeouts.h as part of the
  * CBCommAPI that should be visible to the client/coupler */
