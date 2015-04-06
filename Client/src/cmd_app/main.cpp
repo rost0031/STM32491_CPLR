@@ -78,6 +78,8 @@ int main(int argc, char *argv[])
    /* Set up the client api and initialize its logging */
    ClientApi *client = new ClientApi(logger->getLogStubPtr());
 
+   client->run();
+
    Job *job = new Job(logger->getLogStubPtr());
 
 

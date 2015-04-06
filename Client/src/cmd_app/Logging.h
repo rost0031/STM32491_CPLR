@@ -19,6 +19,7 @@
 /* Includes ------------------------------------------------------------------*/
 #include "CBSharedDbgLevels.h"
 #include "LogStub.h"
+#include <boost/thread.hpp>
 
 /* Exported defines ----------------------------------------------------------*/
 /* Exported macros -----------------------------------------------------------*/
@@ -122,6 +123,7 @@ class Logging {
 private:
 
    LogStub *m_pLog;
+
 public:
 
    ClientError_t setMsgCallBack(
@@ -204,6 +206,7 @@ public:
    ~Logging( void );
 
 };
+
 
 #endif                                                          /* LOGGING_H_ */
 /******** Copyright (C) 2015 Datacard. All rights reserved *****END OF FILE****/

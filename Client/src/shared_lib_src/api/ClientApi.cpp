@@ -22,6 +22,7 @@
 #include "LogHelper.h"
 #include "CBSharedMsgTypes.h"
 #include "qf_port.h"
+#include <boost/thread.hpp>
 
 /* Namespaces ----------------------------------------------------------------*/
 using namespace std;
@@ -80,9 +81,8 @@ const void ClientApi::setInternalLogCallBack(
    this->setInternalLogCallBack( pCallbackFunction );
 }
 
-
 /******************************************************************************/
-void ClientApi::run( void )
+void runMainMgr( void )
 {
    /* start the active objects... */
    QActive_start(
@@ -95,10 +95,16 @@ void ClientApi::run( void )
          (QEvent *)0,
          "MainMgr"
    );
-
-   printf("Started QF Framework.  Client Running...\n");
    QF_run();                              /* run the QF application */
-   printf("After exit is called\n");
+}
+
+/******************************************************************************/
+void ClientApi::run( void )
+{
+   boost::thread workerThread( runMainMgr );
+   DBG_printf(this->m_pLog,"QF Framework started successfully.\n");
+//   workerThread.join();
+//   DBG_printf(this->m_pLog,"QF Framework stopped successfully.\n");
 }
 
 /******************************************************************************/

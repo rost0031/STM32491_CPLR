@@ -33,15 +33,19 @@ extern "C" {
 #define __stdcall
 #endif
 
+#ifdef __cplusplus
+}
+#endif
 
 /* Exported macros -----------------------------------------------------------*/
 /* Exported types ------------------------------------------------------------*/
 /* Exported constants --------------------------------------------------------*/
 /* Exported functions --------------------------------------------------------*/
 
-#ifdef __cplusplus
-}
-#endif
+/**
+ * @brief   This function runs
+ */
+void runMainMgr( void );
 
 /* Exported classes ----------------------------------------------------------*/
 /**
@@ -54,6 +58,7 @@ class CLIENT_DLL ClientApi {
 
 private:
    LogStub *m_pLog;         /**< Pointer to LogStub instance used for logging */
+
 
 public:
 

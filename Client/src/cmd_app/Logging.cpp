@@ -29,6 +29,9 @@ MODULE_NAME( MODULE_EXT );
 /* Private defines -----------------------------------------------------------*/
 /* Private macros ------------------------------------------------------------*/
 /* Private variables and Local objects ---------------------------------------*/
+
+//boost::mutex Logging::m_guard{};
+
 /* Private function prototypes -----------------------------------------------*/
 /* Private functions ---------------------------------------------------------*/
 /* Private class prototypes --------------------------------------------------*/
@@ -90,6 +93,7 @@ void Logging::log(
       ...
 )
 {
+
    /* 1. Get the time first so the printout of the event is as close as possible
     * to when it actually occurred */
    boost::posix_time::ptime now = boost::date_time::not_a_date_time;
@@ -136,6 +140,8 @@ void Logging::log(
       case SRC_CLI_EXT:  moduleSrcName = "S_EXT"; break;
       default:  moduleSrcName = "S_???"; break;
    }
+
+
    /* 4. Write the origin, module, debug level, time, function, and line number
     * before the rest of the data gets appended. */
    tmpBufferIndex += snprintf(
