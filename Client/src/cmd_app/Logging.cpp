@@ -19,17 +19,35 @@
 #include <stdarg.h>
 #include "LogStub.h"
 #include "ClientModules.h"
+#include "Callbacks.h"
+
+#include <boost/log/common.hpp>
+#include <boost/log/sinks.hpp>
+#include <boost/log/sources/logger.hpp>
+#include <boost/log/sources/severity_logger.hpp>
+#include <boost/log/expressions.hpp>
+
+#include <boost/shared_ptr.hpp>
+#include <boost/core/null_deleter.hpp>
+#include <boost/format/format_fwd.hpp>
+#include <boost/log/support/date_time.hpp>
+#include <iostream>
+
 /* Namespaces ----------------------------------------------------------------*/
 using namespace std;
+using namespace boost::log;
 
 /* Compile-time called macros ------------------------------------------------*/
 MODULE_NAME( MODULE_EXT );
+
+BOOST_LOG_ATTRIBUTE_KEYWORD(severity, "Severity", DBG_LEVEL_T)
+BOOST_LOG_ATTRIBUTE_KEYWORD(counter, "LineCounter", int)
+BOOST_LOG_ATTRIBUTE_KEYWORD(timestamp, "Timestamp", boost::posix_time::ptime)
 
 /* Private typedefs ----------------------------------------------------------*/
 /* Private defines -----------------------------------------------------------*/
 /* Private macros ------------------------------------------------------------*/
 /* Private variables and Local objects ---------------------------------------*/
-
 //boost::mutex Logging::m_guard{};
 
 /* Private function prototypes -----------------------------------------------*/
@@ -45,7 +63,58 @@ Logging::Logging( void ) :
 
    /* Set the callback to use this class' logging function "log".  This can also
     * be done externally but we'll do it internally so main remains clean */
-   this->setLibLogCallBack( this->log );
+//   this->setLibLogCallBack( this->log );
+
+   this->setLibLogCallBack( CLI_LibLogCallback );
+
+   /* START: simple boost log example */
+
+//
+//   logging::core::get()->set_filter(
+//         logging::trivial::severity >= logging::trivial::trace
+//   );
+//
+//   src::severity_logger< DBG_LEVEL_T > slg;
+//
+//   BOOST_LOG_SEV(slg, DBG) << "A regular message";
+   /* END: Simple boost log example */
+
+
+   typedef sinks::asynchronous_sink<sinks::text_ostream_backend> text_sink;
+   boost::shared_ptr<text_sink> sink = boost::make_shared<text_sink>();
+
+   boost::shared_ptr<std::ostream> stream {
+      &std::clog,
+      boost::null_deleter{}
+   };
+   sink->locked_backend()->add_stream(stream);
+
+
+   core::get()->add_sink(sink);                             /* Get the logger */
+
+   sources::severity_logger<DBG_LEVEL_T> lg;
+
+   sink->set_filter(                                       /* Set debug level */
+         expressions::attr< DBG_LEVEL_T >("Severity") >= LOG
+   );
+
+   sink->set_filter(                                       /* Set debug level */
+         severity >= LOG
+   );
+
+   sink->set_formatter(                                  /* Set output format */
+         expressions::stream <<
+         expressions::attr<DBG_LEVEL_T>("Severity") << ": "
+         << expressions::smessage
+    );
+
+   BOOST_LOG(lg) << "note";
+   BOOST_LOG_SEV(lg, DBG) << "dbg note";
+   BOOST_LOG_SEV(lg, LOG) << "log note";
+   BOOST_LOG_SEV(lg, WRN) << "wrn note";
+   BOOST_LOG_SEV(lg, ERR) << "err note";
+   sink->flush();
+
 }
 
 /******************************************************************************/

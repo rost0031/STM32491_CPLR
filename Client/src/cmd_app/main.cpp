@@ -27,9 +27,14 @@
 #include "ClientModules.h"
 #include "LogStub.h"
 #include "ClientApi.h"
+#include "EnumMaps.h"
+
+#include <boost/assign/list_of.hpp>
+#include <boost/unordered_map.hpp>
 
 /* Namespaces ----------------------------------------------------------------*/
 using namespace std;
+using boost::assign::map_list_of;
 
 /* Compile-time called macros ------------------------------------------------*/
 MODULE_NAME( MODULE_EXT );
@@ -38,6 +43,28 @@ MODULE_NAME( MODULE_EXT );
 /* Private defines -----------------------------------------------------------*/
 /* Private macros ------------------------------------------------------------*/
 /* Private variables and Local objects ---------------------------------------*/
+
+//const boost::unordered_map<DBG_LEVEL_T, const char*> enumToStr = map_list_of
+//      (DBG, "DBG")
+//      (LOG, "LOG")
+//      (WRN, "WRN");
+
+//template<typename T> struct map_init_helper
+//{
+//    T& data;
+//    map_init_helper(T& d) : data(d) {}
+//    map_init_helper& operator() (typename T::key_type const& key, typename T::mapped_type const& value)
+//    {
+//        data[key] = value;
+//        return *this;
+//    }
+//};
+//
+//template<typename T> map_init_helper<T> map_init(T& item)
+//{
+//    return map_init_helper<T>(item);
+//}
+
 
 /* Private function prototypes -----------------------------------------------*/
 /* Private functions ---------------------------------------------------------*/
@@ -48,6 +75,18 @@ int main(int argc, char *argv[])
    ClientError_t status = CLI_ERR_NONE;               /* Keep track of status */
 
    Logging *logger;
+
+//   cout << "Enum DBG = " << enumToStr.at(DBG) << endl;
+   std::cout << enumToString(DBG) << "\n";
+
+//   DBG_LEVEL_T tmp = LOG;
+//   std::stringstream line("DBG");
+//
+//   line >> enumFromString(tmp);
+//
+//   std::cout << "LOG: " << LOG << " : " << enumToString(tmp) << "\n";
+
+
 
    try {
       logger = new Logging();

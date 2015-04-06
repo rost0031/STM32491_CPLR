@@ -122,6 +122,7 @@ DEFINES                     =
 CPP_SRCS                    = main.cpp \
                               Callbacks.cpp \
                               CmdlineParser.cpp \
+                              EnumMaps.cpp \
                               Logging.cpp
 
 #-----------------------------------------------------------------------------
@@ -171,7 +172,8 @@ ifeq (win32, $(TARGET))
 
     STATIC_LIBS             = -lstdc++ \
                               -lboost_program_options \
-                              -lboost_date_time$(BOOSTLIBMOD)
+                              -lboost_date_time$(BOOSTLIBMOD) \
+                              -lboost_log
     
     LIB_LOCATIONS           = -L$(BOOST_LIB_DIR) -L$(BIN_DIR)
 

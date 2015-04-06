@@ -52,35 +52,46 @@ void CLI_AckCallback( char* message, int len )
 //}
 
 /******************************************************************************/
-//void CLI_LibLogCallback(
-//      DBG_LEVEL_T logLevel,
-//      const char *pFuncName,
-//      int wLineNumber,
-//      ModuleId_t module,
-//      char *fmt,
-//      ...
-//)
-//{
-//   cout << "in CLI_LibLogCallback" << endl;
-//
-//   char tmpBuffer[MAX_LOG_BUFFER_LEN];
-//   uint8_t tmpBufferIndex = 0;
-//
-//   /* 1. Pass the va args list to get output to a buffer */
-//   va_list args;
-//   va_start(args, fmt);
-//
-//   /* 2. Print the actual user supplied data to the buffer and set the length */
-//   tmpBufferIndex += vsnprintf(
-//         (char *)&tmpBuffer[tmpBufferIndex],
-//         MAX_LOG_BUFFER_LEN - tmpBufferIndex, // Account for the part of the buffer that was already written.
-//         fmt,
-//         args
-//   );
-//   va_end(args);
-//
+void CLI_LibLogCallback(
+      DBG_LEVEL_T dbgLvl,
+      const char *pFuncName,
+      int wLineNumber,
+      ModuleSrc_t moduleSrc,
+      ModuleId_t moduleId,
+      char *fmt,
+      ...
+)
+{
+   char tmpBuffer[MAX_LOG_BUFFER_LEN];
+   uint8_t tmpBufferIndex = 0;
+
+   /* 1. Pass the va args list to get output to a buffer */
+   va_list args;
+   va_start(args, fmt);
+
+   /* 2. Print the actual user supplied data to the buffer and set the length */
+   tmpBufferIndex += vsnprintf(
+         (char *)&tmpBuffer[tmpBufferIndex],
+         MAX_LOG_BUFFER_LEN - tmpBufferIndex, // Account for the part of the buffer that was already written.
+         fmt,
+         args
+   );
+   va_end(args);
+
+   switch( dbgLvl ) {
+      case DBG:
+//         BOOST_LOG_SEV(DBG) << tmpBuffer;
+         break;
+
+//      case LOG: BOOST_LOG_TRIVIAL(info) << tmpBuffer; break;
+//      case WRN: BOOST_LOG_TRIVIAL(warning) << tmpBuffer; break;
+//      case ERR: BOOST_LOG_TRIVIAL(error) << tmpBuffer; break;
+//      case CON: BOOST_LOG_TRIVIAL(debug) << tmpBuffer; break;
+//      case ISR: BOOST_LOG_TRIVIAL(debug) << tmpBuffer; break;
+//      default:  BOOST_LOG_TRIVIAL(debug) << tmpBuffer; break;
+   }
 //   LIB_logger(logLevel, pFuncName, wLineNumber, module, tmpBuffer);
-//}
+}
 
 /* Private class prototypes --------------------------------------------------*/
 

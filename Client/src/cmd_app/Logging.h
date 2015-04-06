@@ -19,7 +19,6 @@
 /* Includes ------------------------------------------------------------------*/
 #include "CBSharedDbgLevels.h"
 #include "LogStub.h"
-#include <boost/thread.hpp>
 
 /* Exported defines ----------------------------------------------------------*/
 /* Exported macros -----------------------------------------------------------*/
@@ -79,6 +78,31 @@
 /* Exported types ------------------------------------------------------------*/
 /* Exported functions --------------------------------------------------------*/
 /* Exported classes ----------------------------------------------------------*/
+
+/**
+ * @brief   The operator is used for regular stream formatting
+ *
+ * This operator
+ */
+//std::ostream& operator<< (std::ostream& strm, DBG_LEVEL_T dbgLvl)
+//{
+//    static const char* strings[] = {
+//        "DBG",
+//        "LOG",
+//        "WRN",
+//        "ERR",
+//        "CON",
+//        "ISR"
+//    };
+//
+//    if (static_cast< std::size_t >(dbgLvl) < sizeof(strings) / sizeof(*strings))
+//        strm << strings[dbgLvl];
+//    else
+//        strm << static_cast< int >(dbgLvl);
+//
+//    return strm;
+//}
+
 /**
  * @class Logging
  *
