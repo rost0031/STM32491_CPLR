@@ -74,19 +74,10 @@ int main(int argc, char *argv[])
 {
    ClientError_t status = CLI_ERR_NONE;               /* Keep track of status */
 
-   Logging *logger;
-
-//   cout << "Enum DBG = " << enumToStr.at(DBG) << endl;
+   /* Test of enum to string capability */
    std::cout << enumToString(DBG) << "\n";
 
-//   DBG_LEVEL_T tmp = LOG;
-//   std::stringstream line("DBG");
-//
-//   line >> enumFromString(tmp);
-//
-//   std::cout << "LOG: " << LOG << " : " << enumToString(tmp) << "\n";
-
-
+   Logging *logger;
 
    try {
       logger = new Logging();
@@ -95,7 +86,7 @@ int main(int argc, char *argv[])
       exit(1);
    }
 
-   LOG_printf(logger, "Successfully set up logging\n");
+//   LOG_printf(logger, "Successfully set up logging\n");
 
 //   ClientError_t status;
 //

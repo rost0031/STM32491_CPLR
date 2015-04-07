@@ -20,12 +20,29 @@
 #include "LogStub.h"
 #include "ClientModules.h"
 #include "Callbacks.h"
+#include "EnumMaps.h"
 
 #include <boost/log/common.hpp>
 #include <boost/log/sinks.hpp>
 #include <boost/log/sources/logger.hpp>
 #include <boost/log/sources/severity_logger.hpp>
+#include <boost/log/sources/severity_feature.hpp>
+#include <boost/log/expressions/formatters/date_time.hpp>
+#include <boost/log/sources/global_logger_storage.hpp>
+
+
+#include <boost/log/core.hpp>
+#include <boost/log/trivial.hpp>
 #include <boost/log/expressions.hpp>
+#include <boost/log/sinks/text_file_backend.hpp>
+#include <boost/log/sinks/sync_frontend.hpp>
+#include <boost/log/sinks/text_ostream_backend.hpp>
+#include <boost/log/utility/setup/file.hpp>
+#include <boost/log/utility/setup/common_attributes.hpp>
+#include <boost/log/utility/setup/formatter_parser.hpp>
+#include <boost/log/sources/record_ostream.hpp>
+#include <boost/log/attributes.hpp>
+#include <boost/log/utility/setup/console.hpp>
 
 #include <boost/shared_ptr.hpp>
 #include <boost/core/null_deleter.hpp>
@@ -38,22 +55,60 @@ using namespace std;
 using namespace boost::log;
 
 /* Compile-time called macros ------------------------------------------------*/
-MODULE_NAME( MODULE_EXT );
+MODULE_NAME( MODULE_EXT )
 
 BOOST_LOG_ATTRIBUTE_KEYWORD(severity, "Severity", DBG_LEVEL_T)
 BOOST_LOG_ATTRIBUTE_KEYWORD(counter, "LineCounter", int)
 BOOST_LOG_ATTRIBUTE_KEYWORD(timestamp, "Timestamp", boost::posix_time::ptime)
 
+
 /* Private typedefs ----------------------------------------------------------*/
 /* Private defines -----------------------------------------------------------*/
 /* Private macros ------------------------------------------------------------*/
 /* Private variables and Local objects ---------------------------------------*/
-//boost::mutex Logging::m_guard{};
-
 /* Private function prototypes -----------------------------------------------*/
 /* Private functions ---------------------------------------------------------*/
 /* Private class prototypes --------------------------------------------------*/
 /* Private classes -----------------------------------------------------------*/
+
+// Attribute value tag type
+struct severity_tag;
+
+// The formatting logic for the severity level
+template< typename CharT, typename TraitsT >
+inline std::basic_ostream< CharT, TraitsT >& operator<< (
+    std::basic_ostream< CharT, TraitsT >& strm, DBG_LEVEL_T lvl)
+{
+    static const char* const str[] =
+    {
+        "DBG",
+        "LOG",
+        "WRN",
+        "ERR",
+        "CON",
+        "ISR"
+    };
+    if (static_cast< std::size_t >(lvl) < (sizeof(str) / sizeof(*str)))
+        strm << str[lvl];
+    else
+        strm << static_cast< int >(lvl);
+    return strm;
+}
+
+//
+//void log_init()
+//{
+//   // logging::register_simple_formatter_factory< severity_level >("Severity");
+//   logging::add_console_log(
+//         std::clog,
+//         keywords::format = "%TimeStamp% [%Uptime%] (%LineID%) <%Severity%>: %Message%"
+//   );
+//   logging::add_common_attributes();
+//   logging::core::get()->add_global_attribute("Uptime", attrs::timer());
+//}
+
+
+
 /******************************************************************************/
 Logging::Logging( void ) :
          m_pLog(NULL)
@@ -102,11 +157,27 @@ Logging::Logging( void ) :
          severity >= LOG
    );
 
-   sink->set_formatter(                                  /* Set output format */
-         expressions::stream <<
-         expressions::attr<DBG_LEVEL_T>("Severity") << ": "
-         << expressions::smessage
-    );
+//   sink->set_formatter(                                  /* Set output format */
+//         expressions::stream <<
+//         expressions::attr<DBG_LEVEL_T>("Severity") << ": "
+//         << expressions::smessage
+//    );
+
+   boost::log::core::get()->add_global_attribute("TimeStamp", boost::log::attributes::local_clock());
+   boost::log::add_common_attributes();
+   formatter format = expressions::stream
+         << expressions::format_date_time< boost::posix_time::ptime >("TimeStamp", "%Y-%m-%d %H:%M:%S.%f") << " - "
+         << expressions::attr<DBG_LEVEL_T, severity_tag>("Severity")  << ": "
+         << expressions::smessage;
+
+//   sink->set_formatter(                                  /* Set output format */
+//         expressions::stream
+//         << expressions::attr<DBG_LEVEL_T, severity_tag>("Severity")  << ": "
+//         << expressions::format_date_time(timestamp, "%Y-%m-%d %H:%M:%S") << " "
+//         << expressions::smessage
+//   );
+
+   sink->set_formatter(format);
 
    BOOST_LOG(lg) << "note";
    BOOST_LOG_SEV(lg, DBG) << "dbg note";
