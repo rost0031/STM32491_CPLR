@@ -166,7 +166,7 @@ Logging::Logging( void ) :
    /* END: Simple boost log example */
 
 //   sources::severity_logger_mt<DBG_LEVEL_T>& lg = logger::get();
-   LOG_printf_b << "Testing logging from Logging constructor";
+   LOG_out << "Testing logging from Logging constructor";
 
 
 
@@ -304,7 +304,8 @@ void Logging::log(
    /* 4. Print directly to the console now. */
 //   fwrite(tmpBuffer, tmpBufferIndex, 1, stderr);
 //   BOOST_LOG_SEV(my_logger, dbgLvl) << tmpBuffer;
-   ERR_printf_b << tmpBuffer;
+//   ERR_printf_b << tmpBuffer;
+   BOOST_LOG_SEV(my_logger::get(), dbgLvl) << tmpBuffer;
 }
 
 /******** Copyright (C) 2015 Datacard. All rights reserved *****END OF FILE****/

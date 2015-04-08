@@ -61,8 +61,8 @@ int main(int argc, char *argv[])
    }
 
 //   sources::severity_logger<DBG_LEVEL_T> lg;
-   LOG_printf_b << "Testing logging via boost from main" << endl;
-   MENU_printf_b << "Testing menu output";
+   LOG_out << "Testing logging via boost from main";
+   MENU_out << "Testing menu output";
 
 //   BOOST_LOG_TRIVIAL(fatal) << "Test";
 
@@ -82,7 +82,7 @@ int main(int argc, char *argv[])
 
    CmdlineParser *cmdline = new CmdlineParser( logger );
    if( 0 != cmdline->parse(argc, argv) ) {
-      ERR_printf(logger, "Failed to parse cmdline args. Exiting\n");
+      ERR_out << "Failed to parse cmdline args. Exiting";
       exit(1);
    }
 

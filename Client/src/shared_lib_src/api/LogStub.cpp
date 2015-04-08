@@ -92,7 +92,7 @@ ClientError_t LogStub::setLibLogCallBack(
    string tmp = "Testing Library Logging Callback passed in by user";
    try {
       if ( NULL != this->m_pLibLogHandlerCBFunction ) {
-         LOG_printf(this, "Successfully set callback in LogStub\n");
+         LOG_printf(this, "Successfully set callback in LogStub");
       } else {
          err = CLI_ERR_INVALID_CALLBACK;
          cerr << "Invalid Library Logging callback passed in by user" << endl;

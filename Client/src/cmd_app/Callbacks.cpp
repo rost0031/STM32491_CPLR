@@ -85,19 +85,19 @@ void CLI_LibLogCallback(
 
 //   BOOST_LOG_SEV(lg::get(), dbgLvl) << tmpBuffer;
 
-   switch( dbgLvl ) {
-      case DBG:
-         DBG_printf_b << tmpBuffer;
-         break;
-
-      case LOG: LOG_printf_b << tmpBuffer; break;
-      case WRN: WRN_printf_b << tmpBuffer; break;
-      case ERR: ERR_printf_b << tmpBuffer; break;
-      case CON: ERR_printf_b << tmpBuffer; break;
-      case ISR: ERR_printf_b << tmpBuffer; break;
-      default:  BOOST_LOG_TRIVIAL(debug) << tmpBuffer; break;
-   }
-//   LIB_logger(logLevel, pFuncName, wLineNumber, module, tmpBuffer);
+//   switch( dbgLvl ) {
+//      case DBG:
+//         DBG_printf_b << tmpBuffer;
+//         break;
+//
+//      case LOG: LOG_printf_b << tmpBuffer; break;
+//      case WRN: WRN_printf_b << tmpBuffer; break;
+//      case ERR: ERR_printf_b << tmpBuffer; break;
+//      case CON: ERR_printf_b << tmpBuffer; break;
+//      case ISR: ERR_printf_b << tmpBuffer; break;
+//      default:  BOOST_LOG_TRIVIAL(debug) << tmpBuffer; break;
+//   }
+   BOOST_LOG_SEV(my_logger::get(), dbgLvl) << tmpBuffer;
 }
 
 /* Private class prototypes --------------------------------------------------*/

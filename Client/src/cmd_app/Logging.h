@@ -28,7 +28,6 @@
 #include <boost/log/expressions/formatters/date_time.hpp>
 #include <boost/log/sources/global_logger_storage.hpp>
 
-
 #include <boost/log/core.hpp>
 #include <boost/log/trivial.hpp>
 #include <boost/log/expressions.hpp>
@@ -48,27 +47,18 @@
 #include <boost/format/format_fwd.hpp>
 #include <boost/log/support/date_time.hpp>
 
-//using namespace boost::log;
-
 /* Exported defines ----------------------------------------------------------*/
-
-
 /* Exported macros -----------------------------------------------------------*/
 
-typedef boost::log::sources::severity_logger_mt<DBG_LEVEL_T> logger_t;
-
-
-BOOST_LOG_GLOBAL_LOGGER(my_logger, logger_t)
-BOOST_LOG_GLOBAL_LOGGER(my_menu, logger_t)
-
 // ===== log macros =====
-#define DBG_printf_b   BOOST_LOG_SEV(my_logger::get(), DBG)<< "Hello"
-#define LOG_printf_b   BOOST_LOG_SEV(my_logger::get(), LOG) << "Hello"
-#define WRN_printf_b   BOOST_LOG_SEV(my_logger::get(), WRN)<< "Hello"
-#define ERR_printf_b   BOOST_LOG_SEV(my_logger::get(), ERR)<< "Hello"
+#define DBG_out   BOOST_LOG_SEV(my_logger::get(), DBG)
+#define LOG_out   BOOST_LOG_SEV(my_logger::get(), LOG)
+#define WRN_out   BOOST_LOG_SEV(my_logger::get(), WRN)
+#define ERR_out   BOOST_LOG_SEV(my_logger::get(), ERR)
 
+#define CON_out   BOOST_LOG_SEV(my_menu::get(), CON)
+#define MENU_out  BOOST_LOG_SEV(my_menu::get(), CON)
 
-#define MENU_printf_b  BOOST_LOG_SEV(my_menu::get(), CON)
 /**
  * @brief   Wrapper around the Logging::log() function for DBG logging.
  *
@@ -122,8 +112,11 @@ BOOST_LOG_GLOBAL_LOGGER(my_menu, logger_t)
       } while (0)
 
 /* Exported types ------------------------------------------------------------*/
+typedef boost::log::sources::severity_logger_mt<DBG_LEVEL_T> logger_t;
+
 /* Exported functions --------------------------------------------------------*/
-//void LOG_init( void );
+BOOST_LOG_GLOBAL_LOGGER(my_logger, logger_t)
+BOOST_LOG_GLOBAL_LOGGER(my_menu, logger_t)
 /* Exported classes ----------------------------------------------------------*/
 
 /**

@@ -38,7 +38,7 @@ CmdlineParser::CmdlineParser( Logging* logger ) :
             m_bInteractiveRunMode(true)
 {
    this->m_log = logger;
-   DBG_printf(this->m_log, "Logging for CmdlineParser class enabled\n");
+   DBG_out << "Logging for CmdlineParser class enabled";
 }
 
 /******************************************************************************/
@@ -73,7 +73,7 @@ int CmdlineParser::parse( int argc, char** argv )
             "Set the baud rate of the serial device")
    ; // End of add_options()
 
-   DBG_printf(this->m_log,"Parsing cmdline arguments...\n");
+   DBG_out << "Parsing cmdline arguments...";
    /* parse regular options */
    po::variables_map vm;
    po::parsed_options parsed = po::parse_command_line(argc, argv, desc);
@@ -83,15 +83,15 @@ int CmdlineParser::parse( int argc, char** argv )
    try {
       /* Check for general help request first */
       if (vm.count("help")) {
-         cout << desc << endl;
-         cout << "To get detailed help for any command, add a --help after the command." << endl;
+         CON_out << desc;
+         CON_out << "To get detailed help for any command, add a --help after the command.";
          exit(0);
       }
 
       if (vm.count("version")) {
-         cout << "CmdLine Client App version: " << "TODO" << endl;
-         cout << "CmdLine Client Lib version: " << "TODO" << endl;
-         cout << "Boost Library version: " << BOOST_LIB_VERSION << endl;
+         CON_out << "CmdLine Client App version: " << "TODO";
+         CON_out << "CmdLine Client Lib version: " << "TODO";
+         CON_out << "Boost Library version: " << BOOST_LIB_VERSION;
          exit(0);
       }
 
@@ -99,7 +99,7 @@ int CmdlineParser::parse( int argc, char** argv )
        * cmd mode.  This is for scripting purposes */
       if ( vm.count("mode") ) {
          this->m_bInteractiveRunMode = false;
-         DBG_printf(this->m_log,"Overriding interactive mode and running in single cmd mode\n");
+         DBG_out << "Overriding interactive mode and running in single cmd mode";
       }
 
       /* Serial and IP connections are mutually exclusive so treat them as such
@@ -108,25 +108,23 @@ int CmdlineParser::parse( int argc, char** argv )
 
          this->m_conn_mode = _CB_EthCli;
 
-         LOG_printf_b << "ip_address was set to "
-               << vm["ip_address"].as<string>() << endl;
-
-
+         CON_out << "ip_address was set to "
+               << vm["ip_address"].as<string>();
 
          if (vm.count("remote_port")) {
-            cout << "remote_port was set to "
-                  << vm["remote_port"].as<string>() << endl;
+            CON_out << "remote_port was set to "
+                  << vm["remote_port"].as<string>();
          }
 
       } else if (vm.count("serial_dev") && !vm.count("ip_address")) {
          this->m_conn_mode = _CB_Serial;
 
-         LOG_printf_b << "serial_dev was set to "
-               << vm["serial_dev"].as<string>() << endl;
+         LOG_out << "serial_dev was set to "
+               << vm["serial_dev"].as<string>();
 
          if (vm.count("serial_baud")) {
-            LOG_printf_b << "serial_baud was set to "
-                  << vm["serial_baud"].as<int>() << endl;
+            LOG_out << "serial_baud was set to "
+                  << vm["serial_baud"].as<int>();
          }
 
       } else  {
@@ -134,8 +132,9 @@ int CmdlineParser::parse( int argc, char** argv )
           * IP address on the default port. */
          this->m_conn_mode = _CB_EthCli;
          this->m_ip_address = "172.27.0.75";
-         LOG_printf(this->m_log,"No IP address or serial device specified.\n");
-         LOG_printf(this->m_log,"Using default ip address %s to attempt connect connection.\n", this->m_ip_address.c_str());
+         LOG_out << "No IP address or serial device specified.";
+         LOG_out << "Using default ip address "
+               << this->m_ip_address<< " to attempt connect connection.";
       }
 
       /* Clear out the argument map */
@@ -143,10 +142,10 @@ int CmdlineParser::parse( int argc, char** argv )
 
    } catch(po::error& e) {
       string error = e.what();
-      ERR_printf(this->m_log,"Exception %s while parsing cmdline arguments.\n", error.c_str() );
+      ERR_out << "Exception " << e.what() << " while parsing cmdline arguments.";
       return(1);
    } catch (...) {
-      ERR_printf(this->m_log, "Some Unknown error occurred while parsing cmdline arguments\n");
+      ERR_out << "Some Unknown error occurred while parsing cmdline arguments.";
       return(1);
    }
 
