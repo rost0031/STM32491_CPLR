@@ -89,21 +89,9 @@ BOOST_LOG_GLOBAL_LOGGER_INIT(my_logger, logger_t)
 
    core::get()->add_sink(sink);                             /* Get the logger */
 
-
-
-   sink->set_filter(                                       /* Set debug level */
-         expressions::attr< DBG_LEVEL_T >("Severity") >= LOG
-   );
-
    sink->set_filter(                                       /* Set debug level */
          severity >= LOG
    );
-
-//   sink->set_formatter(                                  /* Set output format */
-//         expressions::stream <<
-//         expressions::attr<DBG_LEVEL_T>("Severity") << ": "
-//         << expressions::smessage
-//    );
 
    boost::log::core::get()->add_global_attribute("TimeStamp", boost::log::attributes::local_clock());
    boost::log::add_common_attributes();
@@ -111,14 +99,6 @@ BOOST_LOG_GLOBAL_LOGGER_INIT(my_logger, logger_t)
          << expressions::format_date_time< boost::posix_time::ptime >("TimeStamp", "%Y-%m-%d %H:%M:%S.%f") << " - "
          << expressions::attr<DBG_LEVEL_T, severity_tag>("Severity")  << ": "
          << expressions::smessage;
-
-//   sink->set_formatter(                                  /* Set output format */
-//         expressions::stream
-//         << expressions::attr<DBG_LEVEL_T, severity_tag>("Severity")  << ": "
-//         << expressions::format_date_time(timestamp, "%Y-%m-%d %H:%M:%S") << " "
-//         << expressions::smessage
-//   );
-
    sink->set_formatter(format);
 
    BOOST_LOG(lg) << "note";
@@ -131,6 +111,41 @@ BOOST_LOG_GLOBAL_LOGGER_INIT(my_logger, logger_t)
    return lg;
 }
 
+/******************************************************************************/
+BOOST_LOG_GLOBAL_LOGGER_INIT(my_menu, logger_t)
+{
+   logger_t menu_log;
+
+   typedef sinks::asynchronous_sink<sinks::text_ostream_backend> text_sink;
+   boost::shared_ptr<text_sink> sink = boost::make_shared<text_sink>();
+
+   boost::shared_ptr<std::ostream> stream {
+      &std::clog,
+      boost::null_deleter{}
+   };
+   sink->locked_backend()->add_stream(stream);
+
+
+   core::get()->add_sink(sink);                             /* Get the logger */
+
+   sink->set_filter(                                       /* Set debug level */
+         severity >= CON
+   );
+
+   boost::log::add_common_attributes();
+   formatter format = expressions::stream
+         << expressions::smessage;
+   sink->set_formatter(format);
+
+   BOOST_LOG(menu_log) << "note";
+   BOOST_LOG_SEV(menu_log, DBG) << "dbg note";
+   BOOST_LOG_SEV(menu_log, LOG) << "log note";
+   BOOST_LOG_SEV(menu_log, WRN) << "wrn note";
+   BOOST_LOG_SEV(menu_log, CON) << "CON output for Menu printing";
+   sink->flush();
+
+   return menu_log;
+}
 /******************************************************************************/
 Logging::Logging( void ) :
          m_pLog(NULL)

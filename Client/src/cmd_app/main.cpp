@@ -62,7 +62,9 @@ int main(int argc, char *argv[])
 
 //   sources::severity_logger<DBG_LEVEL_T> lg;
    LOG_printf_b << "Testing logging via boost from main" << endl;
+   MENU_printf_b << "Testing menu output";
 
+//   BOOST_LOG_TRIVIAL(fatal) << "Test";
 
 
 //   LOG_printf(logger, "Successfully set up logging\n");

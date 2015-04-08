@@ -59,13 +59,16 @@ typedef boost::log::sources::severity_logger_mt<DBG_LEVEL_T> logger_t;
 
 
 BOOST_LOG_GLOBAL_LOGGER(my_logger, logger_t)
+BOOST_LOG_GLOBAL_LOGGER(my_menu, logger_t)
 
 // ===== log macros =====
-#define DBG_printf_b   BOOST_LOG_SEV(my_logger::get(), DBG)
-#define LOG_printf_b   BOOST_LOG_SEV(my_logger::get(), LOG)
-#define WRN_printf_b   BOOST_LOG_SEV(my_logger::get(), WRN)
-#define ERR_printf_b   BOOST_LOG_SEV(my_logger::get(), ERR)
+#define DBG_printf_b   BOOST_LOG_SEV(my_logger::get(), DBG)<< "Hello"
+#define LOG_printf_b   BOOST_LOG_SEV(my_logger::get(), LOG) << "Hello"
+#define WRN_printf_b   BOOST_LOG_SEV(my_logger::get(), WRN)<< "Hello"
+#define ERR_printf_b   BOOST_LOG_SEV(my_logger::get(), ERR)<< "Hello"
 
+
+#define MENU_printf_b  BOOST_LOG_SEV(my_menu::get(), CON)
 /**
  * @brief   Wrapper around the Logging::log() function for DBG logging.
  *
