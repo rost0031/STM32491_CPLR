@@ -20,8 +20,51 @@
 #include "CBSharedDbgLevels.h"
 #include "LogStub.h"
 
+#include <boost/log/common.hpp>
+#include <boost/log/sinks.hpp>
+#include <boost/log/sources/logger.hpp>
+#include <boost/log/sources/severity_logger.hpp>
+#include <boost/log/sources/severity_feature.hpp>
+#include <boost/log/expressions/formatters/date_time.hpp>
+#include <boost/log/sources/global_logger_storage.hpp>
+
+
+#include <boost/log/core.hpp>
+#include <boost/log/trivial.hpp>
+#include <boost/log/expressions.hpp>
+#include <boost/log/sinks/text_file_backend.hpp>
+#include <boost/log/sinks/sync_frontend.hpp>
+#include <boost/log/sinks/text_ostream_backend.hpp>
+#include <boost/log/utility/setup/file.hpp>
+#include <boost/log/utility/setup/common_attributes.hpp>
+#include <boost/log/utility/setup/formatter_parser.hpp>
+#include <boost/log/sources/record_ostream.hpp>
+#include <boost/log/attributes.hpp>
+#include <boost/log/utility/setup/console.hpp>
+#include <boost/log/sources/global_logger_storage.hpp>
+
+#include <boost/shared_ptr.hpp>
+#include <boost/core/null_deleter.hpp>
+#include <boost/format/format_fwd.hpp>
+#include <boost/log/support/date_time.hpp>
+
+//using namespace boost::log;
+
 /* Exported defines ----------------------------------------------------------*/
+
+
 /* Exported macros -----------------------------------------------------------*/
+
+typedef boost::log::sources::severity_logger_mt<DBG_LEVEL_T> logger_t;
+
+
+BOOST_LOG_GLOBAL_LOGGER(my_logger, logger_t)
+
+// ===== log macros =====
+#define DBG_printf_b   BOOST_LOG_SEV(my_logger::get(), DBG)
+#define LOG_printf_b   BOOST_LOG_SEV(my_logger::get(), LOG)
+#define WRN_printf_b   BOOST_LOG_SEV(my_logger::get(), WRN)
+#define ERR_printf_b   BOOST_LOG_SEV(my_logger::get(), ERR)
 
 /**
  * @brief   Wrapper around the Logging::log() function for DBG logging.
@@ -77,6 +120,7 @@
 
 /* Exported types ------------------------------------------------------------*/
 /* Exported functions --------------------------------------------------------*/
+//void LOG_init( void );
 /* Exported classes ----------------------------------------------------------*/
 
 /**

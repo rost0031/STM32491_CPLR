@@ -51,6 +51,8 @@ void CLI_AckCallback( char* message, int len )
 //    cout << "in CLI_DC3LogMsgCallback, err=" << err << endl;
 //}
 
+//sources::severity_logger<DBG_LEVEL_T> lg;
+
 /******************************************************************************/
 void CLI_LibLogCallback(
       DBG_LEVEL_T dbgLvl,
@@ -62,6 +64,9 @@ void CLI_LibLogCallback(
       ...
 )
 {
+
+//   sources::severity_logger<DBG_LEVEL_T> lg;
+
    char tmpBuffer[MAX_LOG_BUFFER_LEN];
    uint8_t tmpBufferIndex = 0;
 
@@ -78,17 +83,19 @@ void CLI_LibLogCallback(
    );
    va_end(args);
 
+//   BOOST_LOG_SEV(lg::get(), dbgLvl) << tmpBuffer;
+
    switch( dbgLvl ) {
       case DBG:
-//         BOOST_LOG_SEV(DBG) << tmpBuffer;
+         DBG_printf_b << tmpBuffer;
          break;
 
-//      case LOG: BOOST_LOG_TRIVIAL(info) << tmpBuffer; break;
-//      case WRN: BOOST_LOG_TRIVIAL(warning) << tmpBuffer; break;
-//      case ERR: BOOST_LOG_TRIVIAL(error) << tmpBuffer; break;
-//      case CON: BOOST_LOG_TRIVIAL(debug) << tmpBuffer; break;
-//      case ISR: BOOST_LOG_TRIVIAL(debug) << tmpBuffer; break;
-//      default:  BOOST_LOG_TRIVIAL(debug) << tmpBuffer; break;
+      case LOG: LOG_printf_b << tmpBuffer; break;
+      case WRN: WRN_printf_b << tmpBuffer; break;
+      case ERR: ERR_printf_b << tmpBuffer; break;
+      case CON: ERR_printf_b << tmpBuffer; break;
+      case ISR: ERR_printf_b << tmpBuffer; break;
+      default:  BOOST_LOG_TRIVIAL(debug) << tmpBuffer; break;
    }
 //   LIB_logger(logLevel, pFuncName, wLineNumber, module, tmpBuffer);
 }

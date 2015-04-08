@@ -22,32 +22,7 @@
 #include "Callbacks.h"
 #include "EnumMaps.h"
 
-#include <boost/log/common.hpp>
-#include <boost/log/sinks.hpp>
-#include <boost/log/sources/logger.hpp>
-#include <boost/log/sources/severity_logger.hpp>
-#include <boost/log/sources/severity_feature.hpp>
-#include <boost/log/expressions/formatters/date_time.hpp>
-#include <boost/log/sources/global_logger_storage.hpp>
 
-
-#include <boost/log/core.hpp>
-#include <boost/log/trivial.hpp>
-#include <boost/log/expressions.hpp>
-#include <boost/log/sinks/text_file_backend.hpp>
-#include <boost/log/sinks/sync_frontend.hpp>
-#include <boost/log/sinks/text_ostream_backend.hpp>
-#include <boost/log/utility/setup/file.hpp>
-#include <boost/log/utility/setup/common_attributes.hpp>
-#include <boost/log/utility/setup/formatter_parser.hpp>
-#include <boost/log/sources/record_ostream.hpp>
-#include <boost/log/attributes.hpp>
-#include <boost/log/utility/setup/console.hpp>
-
-#include <boost/shared_ptr.hpp>
-#include <boost/core/null_deleter.hpp>
-#include <boost/format/format_fwd.hpp>
-#include <boost/log/support/date_time.hpp>
 #include <iostream>
 
 /* Namespaces ----------------------------------------------------------------*/
@@ -56,6 +31,7 @@ using namespace boost::log;
 
 /* Compile-time called macros ------------------------------------------------*/
 MODULE_NAME( MODULE_EXT )
+
 
 BOOST_LOG_ATTRIBUTE_KEYWORD(severity, "Severity", DBG_LEVEL_T)
 BOOST_LOG_ATTRIBUTE_KEYWORD(counter, "LineCounter", int)
@@ -95,45 +71,11 @@ inline std::basic_ostream< CharT, TraitsT >& operator<< (
     return strm;
 }
 
-//
-//void log_init()
-//{
-//   // logging::register_simple_formatter_factory< severity_level >("Severity");
-//   logging::add_console_log(
-//         std::clog,
-//         keywords::format = "%TimeStamp% [%Uptime%] (%LineID%) <%Severity%>: %Message%"
-//   );
-//   logging::add_common_attributes();
-//   logging::core::get()->add_global_attribute("Uptime", attrs::timer());
-//}
-
-
 
 /******************************************************************************/
-Logging::Logging( void ) :
-         m_pLog(NULL)
+BOOST_LOG_GLOBAL_LOGGER_INIT(my_logger, logger_t)
 {
-   /* Create a new LogStub instance */
-   m_pLog = new LogStub();   /* No exceptions thrown from DLL so this is safe */
-
-   /* Set the callback to use this class' logging function "log".  This can also
-    * be done externally but we'll do it internally so main remains clean */
-//   this->setLibLogCallBack( this->log );
-
-   this->setLibLogCallBack( CLI_LibLogCallback );
-
-   /* START: simple boost log example */
-
-//
-//   logging::core::get()->set_filter(
-//         logging::trivial::severity >= logging::trivial::trace
-//   );
-//
-//   src::severity_logger< DBG_LEVEL_T > slg;
-//
-//   BOOST_LOG_SEV(slg, DBG) << "A regular message";
-   /* END: Simple boost log example */
-
+   logger_t lg;
 
    typedef sinks::asynchronous_sink<sinks::text_ostream_backend> text_sink;
    boost::shared_ptr<text_sink> sink = boost::make_shared<text_sink>();
@@ -147,7 +89,7 @@ Logging::Logging( void ) :
 
    core::get()->add_sink(sink);                             /* Get the logger */
 
-   sources::severity_logger<DBG_LEVEL_T> lg;
+
 
    sink->set_filter(                                       /* Set debug level */
          expressions::attr< DBG_LEVEL_T >("Severity") >= LOG
@@ -186,7 +128,41 @@ Logging::Logging( void ) :
    BOOST_LOG_SEV(lg, ERR) << "err note";
    sink->flush();
 
+   return lg;
 }
+
+/******************************************************************************/
+Logging::Logging( void ) :
+         m_pLog(NULL)
+{
+   /* Create a new LogStub instance */
+   m_pLog = new LogStub();   /* No exceptions thrown from DLL so this is safe */
+
+   /* START: simple boost log example */
+
+//
+//   logging::core::get()->set_filter(
+//         logging::trivial::severity >= logging::trivial::trace
+//   );
+//
+//   src::severity_logger< DBG_LEVEL_T > slg;
+//
+//   BOOST_LOG_SEV(slg, DBG) << "A regular message";
+   /* END: Simple boost log example */
+
+//   sources::severity_logger_mt<DBG_LEVEL_T>& lg = logger::get();
+   LOG_printf_b << "Testing logging from Logging constructor";
+
+
+
+   /* Set the callback to use this class' logging function "log".  This can also
+    * be done externally but we'll do it internally so main remains clean */
+   //   this->setLibLogCallBack( this->log );
+
+   this->setLibLogCallBack( CLI_LibLogCallback );
+
+}
+
 
 /******************************************************************************/
 Logging::~Logging( void ) {
@@ -311,7 +287,9 @@ void Logging::log(
    va_end(args);
 
    /* 4. Print directly to the console now. */
-   fwrite(tmpBuffer, tmpBufferIndex, 1, stderr);
+//   fwrite(tmpBuffer, tmpBufferIndex, 1, stderr);
+//   BOOST_LOG_SEV(my_logger, dbgLvl) << tmpBuffer;
+   ERR_printf_b << tmpBuffer;
 }
 
 /******** Copyright (C) 2015 Datacard. All rights reserved *****END OF FILE****/

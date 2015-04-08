@@ -29,12 +29,10 @@
 #include "ClientApi.h"
 #include "EnumMaps.h"
 
-#include <boost/assign/list_of.hpp>
-#include <boost/unordered_map.hpp>
 
 /* Namespaces ----------------------------------------------------------------*/
 using namespace std;
-using boost::assign::map_list_of;
+using namespace boost::log;
 
 /* Compile-time called macros ------------------------------------------------*/
 MODULE_NAME( MODULE_EXT );
@@ -43,32 +41,8 @@ MODULE_NAME( MODULE_EXT );
 /* Private defines -----------------------------------------------------------*/
 /* Private macros ------------------------------------------------------------*/
 /* Private variables and Local objects ---------------------------------------*/
-
-//const boost::unordered_map<DBG_LEVEL_T, const char*> enumToStr = map_list_of
-//      (DBG, "DBG")
-//      (LOG, "LOG")
-//      (WRN, "WRN");
-
-//template<typename T> struct map_init_helper
-//{
-//    T& data;
-//    map_init_helper(T& d) : data(d) {}
-//    map_init_helper& operator() (typename T::key_type const& key, typename T::mapped_type const& value)
-//    {
-//        data[key] = value;
-//        return *this;
-//    }
-//};
-//
-//template<typename T> map_init_helper<T> map_init(T& item)
-//{
-//    return map_init_helper<T>(item);
-//}
-
-
 /* Private function prototypes -----------------------------------------------*/
 /* Private functions ---------------------------------------------------------*/
-
 /******************************************************************************/
 int main(int argc, char *argv[])
 {
@@ -85,6 +59,11 @@ int main(int argc, char *argv[])
       cerr << "Failed to set up logging.  Exiting" << endl;
       exit(1);
    }
+
+//   sources::severity_logger<DBG_LEVEL_T> lg;
+   LOG_printf_b << "Testing logging via boost from main" << endl;
+
+
 
 //   LOG_printf(logger, "Successfully set up logging\n");
 

@@ -108,8 +108,10 @@ int CmdlineParser::parse( int argc, char** argv )
 
          this->m_conn_mode = _CB_EthCli;
 
-         cout << "ip_address was set to "
+         LOG_printf_b << "ip_address was set to "
                << vm["ip_address"].as<string>() << endl;
+
+
 
          if (vm.count("remote_port")) {
             cout << "remote_port was set to "
@@ -119,11 +121,11 @@ int CmdlineParser::parse( int argc, char** argv )
       } else if (vm.count("serial_dev") && !vm.count("ip_address")) {
          this->m_conn_mode = _CB_Serial;
 
-         cout << "serial_dev was set to "
+         LOG_printf_b << "serial_dev was set to "
                << vm["serial_dev"].as<string>() << endl;
 
          if (vm.count("serial_baud")) {
-            cout << "serial_baud was set to "
+            LOG_printf_b << "serial_baud was set to "
                   << vm["serial_baud"].as<int>() << endl;
          }
 
