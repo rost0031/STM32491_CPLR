@@ -96,7 +96,10 @@ BOOST_LOG_GLOBAL_LOGGER_INIT(my_logger, logger_t)
 
    sink->set_filter(!expressions::has_attr(menu_stream));
 
-   boost::log::core::get()->add_global_attribute("TimeStamp", boost::log::attributes::local_clock());
+   boost::log::core::get()->add_global_attribute(
+         "TimeStamp",
+         boost::log::attributes::local_clock()
+   );
    boost::log::add_common_attributes();
    formatter format = expressions::stream
          << expressions::format_date_time< boost::posix_time::ptime >("TimeStamp", "%Y-%m-%d %H:%M:%S.%f") << " - "
