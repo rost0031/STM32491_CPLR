@@ -57,12 +57,20 @@ int main(int argc, char *argv[])
       logger = new Logging();
    } catch ( ... ) {
       cerr << "Failed to set up logging.  Exiting" << endl;
-      exit(1);
+      EXIT_LOG_FLUSH(1);
    }
 
 //   sources::severity_logger<DBG_LEVEL_T> lg;
    LOG_out << "Testing logging via boost from main";
-   MENU_out << "Testing menu output";
+
+
+
+   MENU_print("Testing menu NEW output 1");
+   MENU_print("Testing menu NEW output 2");
+   MENU_print("Testing menu NEW output 3");
+   MENU_print("Testing menu NEW output 4");
+   MENU_print("Testing menu NEW output 5");
+   MENU_print("Testing menu NEW output 6");
 
 //   BOOST_LOG_TRIVIAL(fatal) << "Test";
 
@@ -83,7 +91,7 @@ int main(int argc, char *argv[])
    CmdlineParser *cmdline = new CmdlineParser( logger );
    if( 0 != cmdline->parse(argc, argv) ) {
       ERR_out << "Failed to parse cmdline args. Exiting";
-      exit(1);
+      EXIT_LOG_FLUSH(1);
    }
 
    /* Set up the client api and initialize its logging */
@@ -94,7 +102,7 @@ int main(int argc, char *argv[])
    Job *job = new Job(logger->getLogStubPtr());
 
 
-   return (0);
+   EXIT_LOG_FLUSH(0);
 }
 
 

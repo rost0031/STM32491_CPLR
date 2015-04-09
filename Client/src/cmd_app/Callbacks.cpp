@@ -97,7 +97,8 @@ void CLI_LibLogCallback(
 //      case ISR: ERR_printf_b << tmpBuffer; break;
 //      default:  BOOST_LOG_TRIVIAL(debug) << tmpBuffer; break;
 //   }
-   BOOST_LOG_SEV(my_logger::get(), dbgLvl) << tmpBuffer;
+//   BOOST_LOG_SEV(my_logger::get(), dbgLvl) << tmpBuffer;
+   LIB_out( dbgLvl, pFuncName, wLineNumber, moduleSrc, moduleId, tmpBuffer );
 }
 
 /* Private class prototypes --------------------------------------------------*/

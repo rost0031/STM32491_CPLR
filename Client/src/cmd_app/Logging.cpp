@@ -36,7 +36,8 @@ MODULE_NAME( MODULE_EXT )
 BOOST_LOG_ATTRIBUTE_KEYWORD(severity, "Severity", DBG_LEVEL_T)
 BOOST_LOG_ATTRIBUTE_KEYWORD(counter, "LineCounter", int)
 BOOST_LOG_ATTRIBUTE_KEYWORD(timestamp, "Timestamp", boost::posix_time::ptime)
-
+BOOST_LOG_ATTRIBUTE_KEYWORD(log_stream, "LogStream", std::string)
+BOOST_LOG_ATTRIBUTE_KEYWORD(menu_stream, "MenuStream", std::string)
 
 /* Private typedefs ----------------------------------------------------------*/
 /* Private defines -----------------------------------------------------------*/
@@ -90,8 +91,10 @@ BOOST_LOG_GLOBAL_LOGGER_INIT(my_logger, logger_t)
    core::get()->add_sink(sink);                             /* Get the logger */
 
    sink->set_filter(                                       /* Set debug level */
-         severity >= LOG
+         severity >= DBG
    );
+
+   sink->set_filter(!expressions::has_attr(menu_stream));
 
    boost::log::core::get()->add_global_attribute("TimeStamp", boost::log::attributes::local_clock());
    boost::log::add_common_attributes();
@@ -100,12 +103,6 @@ BOOST_LOG_GLOBAL_LOGGER_INIT(my_logger, logger_t)
          << expressions::attr<DBG_LEVEL_T, severity_tag>("Severity")  << ": "
          << expressions::smessage;
    sink->set_formatter(format);
-
-   BOOST_LOG(lg) << "note";
-   BOOST_LOG_SEV(lg, DBG) << "dbg note";
-   BOOST_LOG_SEV(lg, LOG) << "log note";
-   BOOST_LOG_SEV(lg, WRN) << "wrn note";
-   BOOST_LOG_SEV(lg, ERR) << "err note";
    sink->flush();
 
    return lg;
@@ -116,33 +113,29 @@ BOOST_LOG_GLOBAL_LOGGER_INIT(my_menu, logger_t)
 {
    logger_t menu_log;
 
-   typedef sinks::asynchronous_sink<sinks::text_ostream_backend> text_sink;
-   boost::shared_ptr<text_sink> sink = boost::make_shared<text_sink>();
+   typedef sinks::asynchronous_sink<sinks::text_ostream_backend> text_sink_menu;
+   boost::shared_ptr<text_sink_menu> sink_menu = boost::make_shared<text_sink_menu>();
 
    boost::shared_ptr<std::ostream> stream {
       &std::clog,
       boost::null_deleter{}
    };
-   sink->locked_backend()->add_stream(stream);
+   sink_menu->locked_backend()->add_stream(stream);
 
 
-   core::get()->add_sink(sink);                             /* Get the logger */
+   core::get()->add_sink(sink_menu);                             /* Get the logger */
 
-   sink->set_filter(                                       /* Set debug level */
+   sink_menu->set_filter(                                       /* Set debug level */
          severity >= CON
    );
 
-   boost::log::add_common_attributes();
-   formatter format = expressions::stream
-         << expressions::smessage;
-   sink->set_formatter(format);
+   sink_menu->set_filter(expressions::has_attr(menu_stream));
 
-   BOOST_LOG(menu_log) << "note";
-   BOOST_LOG_SEV(menu_log, DBG) << "dbg note";
-   BOOST_LOG_SEV(menu_log, LOG) << "log note";
-   BOOST_LOG_SEV(menu_log, WRN) << "wrn note";
-   BOOST_LOG_SEV(menu_log, CON) << "CON output for Menu printing";
-   sink->flush();
+   formatter format_menu = expressions::stream
+         << expressions::smessage;
+   sink_menu->set_formatter(format_menu);
+
+   sink_menu->flush();
 
    return menu_log;
 }
@@ -189,7 +182,7 @@ ClientError_t Logging::setMsgCallBack(
       CB_MsgHandler_t pCallbackFunction
 )
 {
-   cout << "Setting callback in Logging::setMsgCallBack" << endl;
+   DBG_out << "Setting callback in Logging::setMsgCallBack";
    //   ClientError_t err = m_pLog->setMsgCallBack(pCallbackFunction);
    //   return( err );
 }
@@ -199,7 +192,7 @@ ClientError_t Logging::setLibLogCallBack(
       CB_LibLogHandler_t pCallbackFunction
 )
 {
-   DBG_printf(this, "Setting a new callback for library logging\n");
+   DBG_out << "Setting a new callback for library logging";
    ClientError_t err = m_pLog->setLibLogCallBack(pCallbackFunction);
    if (CLI_ERR_NONE != err ) {
       cerr << "Failed to set logging callback. Error: 0x" << setfill('0') << setw(8) << std::hex << err << endl;

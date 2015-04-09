@@ -102,9 +102,9 @@ void runMainMgr( void )
 void ClientApi::run( void )
 {
    boost::thread workerThread( runMainMgr );
-   DBG_printf(this->m_pLog,"QF Framework started successfully.\n");
+   DBG_printf(this->m_pLog,"QF Framework started successfully.");
 //   workerThread.join();
-//   DBG_printf(this->m_pLog,"QF Framework stopped successfully.\n");
+//   DBG_printf(this->m_pLog,"QF Framework stopped successfully.");
 }
 
 /******************************************************************************/
@@ -113,7 +113,7 @@ ClientApi::ClientApi( LogStub *log ) :
 {
 
    this->m_pLog = log;
-   DBG_printf(this->m_pLog,"Logging setup successful\n");
+   DBG_printf(this->m_pLog,"Logging setup successful.");
 
    /* instantiate all active objects */
    MainMgr_ctor( this->m_pLog );
@@ -133,7 +133,7 @@ ClientApi::ClientApi( LogStub *log ) :
    QF_poolInit(l_medPoolSto, sizeof(l_medPoolSto), sizeof(l_medPoolSto[0]));
 
    /* This works */
-//   DBG_printf(this->m_pLog,"Attempting to init serial...\n");
+//   DBG_printf(this->m_pLog,"Attempting to init serial...");
 //   Serial *serial;
 //   try {
 //      serial = new Serial(
@@ -147,12 +147,12 @@ ClientApi::ClientApi( LogStub *log ) :
 //            << "COM32" << endl;
 //      exit(1); // Do a regular exit since this is critical
 //   }
-//   DBG_printf(this->m_pLog,"Attempting to write serial...\n");
+//   DBG_printf(this->m_pLog,"Attempting to write serial...");
 //
 //   serial->write_some("Test\n", 5);
 
    /* This also works.*/
-   DBG_printf(this->m_pLog,"Attempting to init UDP eth...\n");
+   DBG_printf(this->m_pLog,"Attempting to init UDP eth...");
    Eth *eth;
    try {
       eth = new Eth(
@@ -164,7 +164,7 @@ ClientApi::ClientApi( LogStub *log ) :
       cout << "ERROR: Unable to connect to UDP " << endl;
       exit(1); // Do a regular exit since this is critical
    }
-   DBG_printf(this->m_pLog,"Attempting to write UDP eth...\n");
+   DBG_printf(this->m_pLog,"Attempting to write UDP eth...");
    eth->write_some("Test\n", 5);
 }
 

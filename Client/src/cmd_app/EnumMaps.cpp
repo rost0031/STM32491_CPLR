@@ -12,6 +12,7 @@
 #include "EnumMaps.h"
 
 #include "CBSharedDbgLevels.h"
+#include "ClientModules.h"
 
 /* Namespaces ----------------------------------------------------------------*/
 using namespace std;
@@ -23,8 +24,14 @@ using namespace std;
 /* Private macros ------------------------------------------------------------*/
 /* Private variables and Local objects ---------------------------------------*/
 
-template<> char const* enumStrings<DBG_LEVEL_T>::data[] = {"DBG", "LOG", "WRN", "ERR", "CON", "ISR"};
+template<> char const* enumStrings<DBG_LEVEL_T>::data[] =
+   {"DBG", "LOG", "WRN", "ERR", "CON", "ISR"};
 
+template<> char const* enumStrings<ModuleId_t>::data[] =
+   {"Gen", "Ser", "Eth", "Mgr", "Log", "Api", "Ext"};
+
+template<> char const* enumStrings<ModuleSrc_t>::data[] =
+   {"LibCaller", "Lib", "DC3_ApplFW", "DC3_BootFW"};
 
 /* Private function prototypes -----------------------------------------------*/
 /* Private functions ---------------------------------------------------------*/

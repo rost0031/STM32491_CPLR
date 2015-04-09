@@ -126,7 +126,7 @@ QActive * const AO_MainMgr = (QActive *)&l_MainMgr;    /* "opaque" AO pointer */
 void MainMgr_ctor(LogStub* log) {
     MainMgr *me = &l_MainMgr;
     me->m_pLog = log;
-    DBG_printf(me->m_pLog,"Logging setup successful\n");
+    DBG_printf(me->m_pLog,"Logging setup successful");
     QActive_ctor(&me->super, (QStateHandler)&MainMgr_initial);
     QTimeEvt_ctor(&me->exitTimerEvt, EXIT_SIG);
 }
@@ -145,7 +145,7 @@ static QState MainMgr_initial(MainMgr * const me, QEvt const * const e) {
     QS_FUN_DICTIONARY(&QHsm_top);
     QS_FUN_DICTIONARY(&l_MainMgr_initial);
     QS_FUN_DICTIONARY(&l_MainMgr_Active);
-    cout << "Started MainMgr AO" << endl;
+    DBG_printf(me->m_pLog,"Started MainMgr AO");;
     return Q_TRAN(&MainMgr_Active);
 }
 
@@ -165,13 +165,13 @@ static QState MainMgr_Active(MainMgr * const me, QEvt const * const e) {
     switch (e->sig) {
         /* ${AOs::MainMgr::SM::Active} */
         case Q_ENTRY_SIG: {
-            cout << "Entered Active state in MainMgr AO" << endl;
+            DBG_printf(me->m_pLog,"Entered Active state in MainMgr AO");
             status_ = Q_HANDLED();
             break;
         }
         /* ${AOs::MainMgr::SM::Active::MSG_TIMEOUT_EXIT} */
         case MSG_TIMEOUT_EXIT_SIG: {
-            cout << "Timed out while waiting for a response for a sent message.  Exiting." << endl;
+            DBG_printf(me->m_pLog,"Timed out while waiting for a response for a sent message.  Exiting.");
             EXIT(me->errorCode);
             status_ = Q_HANDLED();
             break;

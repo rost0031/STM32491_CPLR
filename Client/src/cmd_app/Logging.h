@@ -19,6 +19,7 @@
 /* Includes ------------------------------------------------------------------*/
 #include "CBSharedDbgLevels.h"
 #include "LogStub.h"
+#include "EnumMaps.h"
 
 #include <boost/log/common.hpp>
 #include <boost/log/sinks.hpp>
@@ -46,19 +47,36 @@
 #include <boost/core/null_deleter.hpp>
 #include <boost/format/format_fwd.hpp>
 #include <boost/log/support/date_time.hpp>
+#include <boost/thread/thread.hpp>
 
 /* Exported defines ----------------------------------------------------------*/
 /* Exported macros -----------------------------------------------------------*/
+#define EXIT_LOG_FLUSH( returnValue ) \
+   do { \
+      boost::this_thread::sleep(boost::posix_time::milliseconds(100)); \
+      exit(returnValue); \
+   } while(0)
+
 
 // ===== log macros =====
-#define DBG_out   BOOST_LOG_SEV(my_logger::get(), DBG)
-#define LOG_out   BOOST_LOG_SEV(my_logger::get(), LOG)
-#define WRN_out   BOOST_LOG_SEV(my_logger::get(), WRN)
-#define ERR_out   BOOST_LOG_SEV(my_logger::get(), ERR)
+#define DBG_out   BOOST_LOG_SEV(my_logger::get(), DBG) << __func__ << "():" << __LINE__ << " - "
+#define LOG_out   BOOST_LOG_SEV(my_logger::get(), LOG) << __func__ << "():" << __LINE__ << " - "
+#define WRN_out   BOOST_LOG_SEV(my_logger::get(), WRN) << __func__ << "():" << __LINE__ << " - "
+#define ERR_out   BOOST_LOG_SEV(my_logger::get(), ERR) << __func__ << "():" << __LINE__ << " - "
 
 #define CON_out   BOOST_LOG_SEV(my_menu::get(), CON)
-#define MENU_out  BOOST_LOG_SEV(my_menu::get(), CON)
 
+#define LIB_out( dbgLvl, funcName, lineNum, moduleSrc, moduleId, message ) \
+   BOOST_LOG_SEV(my_logger::get(), dbgLvl) \
+      << funcName << "():" << lineNum << " - "<< message
+
+#define MENU_print(message) \
+   if (true) {\
+      BOOST_LOG_SCOPED_LOGGER_TAG(my_menu::get(), "MenuStream", "conMenu");\
+      BOOST_LOG_SEV(my_menu::get(), CON) << message; \
+   } else ((void) 0)
+
+#define CON_print(message) MENU_print(message)
 /**
  * @brief   Wrapper around the Logging::log() function for DBG logging.
  *
@@ -118,30 +136,6 @@ typedef boost::log::sources::severity_logger_mt<DBG_LEVEL_T> logger_t;
 BOOST_LOG_GLOBAL_LOGGER(my_logger, logger_t)
 BOOST_LOG_GLOBAL_LOGGER(my_menu, logger_t)
 /* Exported classes ----------------------------------------------------------*/
-
-/**
- * @brief   The operator is used for regular stream formatting
- *
- * This operator
- */
-//std::ostream& operator<< (std::ostream& strm, DBG_LEVEL_T dbgLvl)
-//{
-//    static const char* strings[] = {
-//        "DBG",
-//        "LOG",
-//        "WRN",
-//        "ERR",
-//        "CON",
-//        "ISR"
-//    };
-//
-//    if (static_cast< std::size_t >(dbgLvl) < sizeof(strings) / sizeof(*strings))
-//        strm << strings[dbgLvl];
-//    else
-//        strm << static_cast< int >(dbgLvl);
-//
-//    return strm;
-//}
 
 /**
  * @class Logging

@@ -83,16 +83,21 @@ int CmdlineParser::parse( int argc, char** argv )
    try {
       /* Check for general help request first */
       if (vm.count("help")) {
-         CON_out << desc;
-         CON_out << "To get detailed help for any command, add a --help after the command.";
-         exit(0);
+         stringstream ss;
+
+         ss << desc << endl;
+         ss << "To get detailed help for any command, add a --help after the command." << endl;
+         CON_print(ss.str());
+         EXIT_LOG_FLUSH(0);
       }
 
       if (vm.count("version")) {
-         CON_out << "CmdLine Client App version: " << "TODO";
-         CON_out << "CmdLine Client Lib version: " << "TODO";
-         CON_out << "Boost Library version: " << BOOST_LIB_VERSION;
-         exit(0);
+         stringstream ss;
+         ss << "CmdLine Client App version: " << "TODO" << endl;
+         ss << "CmdLine Client Lib version: " << "TODO" << endl;
+         ss << "Boost Library version: " << BOOST_LIB_VERSION << endl;
+         CON_print(ss.str());
+         EXIT_LOG_FLUSH(0);
       }
 
       /* Allow user to override the interactive (menu) mode and run in single
@@ -108,24 +113,30 @@ int CmdlineParser::parse( int argc, char** argv )
 
          this->m_conn_mode = _CB_EthCli;
 
-         CON_out << "ip_address was set to "
-               << vm["ip_address"].as<string>();
+         stringstream ss;
+
+         ss << "ip_address was set to "
+               << vm["ip_address"].as<string>() << endl;
 
          if (vm.count("remote_port")) {
-            CON_out << "remote_port was set to "
-                  << vm["remote_port"].as<string>();
+            ss << "remote_port was set to "
+                  << vm["remote_port"].as<string>() << endl;
          }
+         CON_print(ss.str());
 
       } else if (vm.count("serial_dev") && !vm.count("ip_address")) {
          this->m_conn_mode = _CB_Serial;
 
-         LOG_out << "serial_dev was set to "
-               << vm["serial_dev"].as<string>();
+         stringstream ss;
+
+         ss << "serial_dev was set to "
+               << vm["serial_dev"].as<string>() << endl;
 
          if (vm.count("serial_baud")) {
-            LOG_out << "serial_baud was set to "
-                  << vm["serial_baud"].as<int>();
+            ss << "serial_baud was set to "
+                  << vm["serial_baud"].as<int>()<< endl;
          }
+         CON_print(ss.str());
 
       } else  {
          /* User didn't specify any connection options.  Attempt using default
@@ -143,10 +154,10 @@ int CmdlineParser::parse( int argc, char** argv )
    } catch(po::error& e) {
       string error = e.what();
       ERR_out << "Exception " << e.what() << " while parsing cmdline arguments.";
-      return(1);
+      EXIT_LOG_FLUSH(1);
    } catch (...) {
       ERR_out << "Some Unknown error occurred while parsing cmdline arguments.";
-      return(1);
+      EXIT_LOG_FLUSH(1);
    }
 
    return( 0 );
