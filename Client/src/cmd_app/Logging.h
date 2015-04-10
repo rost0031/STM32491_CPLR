@@ -20,6 +20,7 @@
 #include "CBSharedDbgLevels.h"
 #include "LogStub.h"
 #include "EnumMaps.h"
+#include <iomanip>
 
 #include <boost/log/common.hpp>
 #include <boost/log/sinks.hpp>
@@ -49,6 +50,8 @@
 #include <boost/log/support/date_time.hpp>
 #include <boost/thread/thread.hpp>
 
+
+
 /* Exported defines ----------------------------------------------------------*/
 /* Exported macros -----------------------------------------------------------*/
 /**
@@ -74,8 +77,10 @@
  * @note: Do not use "\n" or "<<endl" at the end of the stream since the boost
  * logger automatically appends it (with no way to turn it off, it seems).
  */
-#define DBG_out   BOOST_LOG_SEV(my_logger::get(), DBG) \
-                                 << __func__ << "():" << __LINE__ << " - "
+#define DBG_out   BOOST_LOG_SEV(my_logger::get(), DBG)                        \
+      << "[" << "Ext" << "]"                                                  \
+      << ":["<< maskableEnumToString(this_module_) << "]"                     \
+      << __func__ << "():" << __LINE__ << " - "
 
 /**
  * @brief  Stream macro to do LOG level logging
@@ -86,8 +91,11 @@
  * @note: Do not use "\n" or "<<endl" at the end of the stream since the boost
  * logger automatically appends it (with no way to turn it off, it seems).
  */
-#define LOG_out   BOOST_LOG_SEV(my_logger::get(), LOG) \
-                                 << __func__ << "():" << __LINE__ << " - "
+#define LOG_out   BOOST_LOG_SEV(my_logger::get(), LOG)                        \
+      << "[" << "Ext" << "]"                                                  \
+      << ":["<< maskableEnumToString(this_module_) << "]"                     \
+      << __func__ << "():" << __LINE__ << " - "
+
 
 /**
  * @brief  Stream macro to do WRN level logging
@@ -98,8 +106,11 @@
  * @note: Do not use "\n" or "<<endl" at the end of the stream since the boost
  * logger automatically appends it (with no way to turn it off, it seems).
  */
-#define WRN_out   BOOST_LOG_SEV(my_logger::get(), WRN) \
-                                 << __func__ << "():" << __LINE__ << " - "
+#define WRN_out   BOOST_LOG_SEV(my_logger::get(), WRN)                        \
+      << "[" << "Ext" << "]"                                                  \
+      << ":["<< maskableEnumToString(this_module_) << "]"                     \
+      << __func__ << "():" << __LINE__ << " - "
+
 
 /**
  * @brief  Stream macro to do ERR level logging
@@ -110,8 +121,11 @@
  * @note: Do not use "\n" or "<<endl" at the end of the stream since the boost
  * logger automatically appends it (with no way to turn it off, it seems).
  */
-#define ERR_out   BOOST_LOG_SEV(my_logger::get(), ERR) \
-                                  << __func__ << "():" << __LINE__ << " - "
+#define ERR_out   BOOST_LOG_SEV(my_logger::get(), ERR)                        \
+      << "[" << "Ext" << "]"                                                  \
+      << ":["<< maskableEnumToString(this_module_) << "]"                     \
+      << __func__ << "():" << __LINE__ << " - "
+
 
 #define CON_out   BOOST_LOG_SEV(my_menu::get(), CON)
 
@@ -153,9 +167,11 @@
  * @param [in] message: buffer that contains the original log message.
  * @return:  None.
  */
-#define LIB_out( dbgLvl, funcName, lineNum, moduleSrc, moduleId, message ) \
-   BOOST_LOG_SEV(my_logger::get(), dbgLvl) \
-      << funcName << "():" << lineNum << " - "<< message
+#define LIB_out( dbgLvl, funcName, lineNum, moduleSrc, moduleId, message )    \
+   BOOST_LOG_SEV(my_logger::get(), dbgLvl)                                    \
+   << "[" << setw(3) << maskableEnumToString(moduleSrc) << "]"                \
+   << ":[" << setw(3) << maskableEnumToString(moduleId) << "]"                \
+   << funcName << "():" << lineNum << " - "<< message;
 
 /**
  * @brief  Wrapper around the boost log that outputs a naked string to cout.
@@ -170,10 +186,10 @@
  * @param [in] message: string type that contains the data to print.
  * @return: None.
  */
-#define MENU_print(message) \
-   if (true) {\
-      BOOST_LOG_SCOPED_LOGGER_TAG(my_menu::get(), "MenuStream", "conMenu");\
-      BOOST_LOG_SEV(my_menu::get(), CON) << message; \
+#define MENU_print(message)                                                   \
+   if (true) {                                                                \
+      BOOST_LOG_SCOPED_LOGGER_TAG(my_menu::get(), "MenuStream", "conMenu");   \
+      BOOST_LOG_SEV(my_menu::get(), CON) << message;                          \
    } else ((void) 0)
 
 /**

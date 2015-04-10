@@ -52,11 +52,11 @@ private:
                                    stop after finishing one command) or 1 cmd at
                                    a time and quit.  The default is interactive */
 
-    vector<string> m_command;  /**< Vector that will hold the command along with
+    std::vector<string> m_command;  /**< Vector that will hold the command along with
                                   optional (ordered) arguments in the rest of
                                   the indexes. */
     string  m_parsed_cmd;             /**< String containing the parsed command */
-    map<string, string> parsed_args;     /**< Map containing parsed arguments */
+    std::map<string, string> parsed_args;     /**< Map containing parsed arguments */
 
 
     /* Storage for various args collected from cmdline */

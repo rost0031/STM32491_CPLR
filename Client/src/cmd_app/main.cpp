@@ -51,6 +51,14 @@ int main(int argc, char *argv[])
    /* Test of enum to string capability */
    std::cout << enumToString(DBG) << "\n";
 
+   std::cout << maskableEnumToString(MODULE_ETH) << std::endl;
+
+   std::cout << maskableEnumToString(SRC_DC3_BOOT) << std::endl;
+//   std::cout << enumToString(MODULE_ETH) << "\n";
+
+
+//   std::cout << enumToString(SRC_DC3_BOOT) << "\n";
+
    Logging *logger;
 
    try {
