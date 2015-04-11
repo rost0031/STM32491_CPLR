@@ -29,6 +29,16 @@ MODULE_NAME( MODULE_LOG );
 /* Private defines -----------------------------------------------------------*/
 /* Private macros ------------------------------------------------------------*/
 /* Private variables and Local objects ---------------------------------------*/
+
+/**< This "global" variable is used to keep track of all the modules which have
+ * debugging enabled throughout the system.
+ * @note 1: this var should not be accessed directly by the developer.
+ * @note 2: this var should be set/cleared/checked by
+ * #DBG_ENABLE_DEBUG_FOR_MODULE(), #DBG_DISABLE_DEBUG_FOR_MODULE(),
+ * #DBG_TOGGLE_DEBUG_FOR_MODULE(), #DBG_CHECK_DEBUG_FOR_MODULE() macros only!
+ */
+uint32_t  glbDbgConfig = 0;
+
 /* Private function prototypes -----------------------------------------------*/
 /* Private functions ---------------------------------------------------------*/
 /* Private class prototypes --------------------------------------------------*/
@@ -106,6 +116,30 @@ ClientError_t LogStub::setLibLogCallBack(
 }
 
 /******************************************************************************/
+void LogStub::enableLogForLibModule( ModuleId_t moduleId )
+{
+   DBG_ENABLE_DEBUG_FOR_MODULE( moduleId );
+}
+
+/******************************************************************************/
+void LogStub::disableLogForLibModule( ModuleId_t moduleId )
+{
+   DBG_DISABLE_DEBUG_FOR_MODULE( moduleId );
+}
+
+/******************************************************************************/
+void LogStub::enableLogForAllLibModules( void )
+{
+   DBG_ENABLE_DEBUG_FOR_ALL_MODULES();
+}
+
+/******************************************************************************/
+void LogStub::disableLogForAllLibModules( void )
+{
+   DBG_DISABLE_DEBUG_FOR_ALL_MODULES();
+}
+
+/******************************************************************************/
 void LogStub::log(
       DBG_LEVEL_T dbgLvl,
       const char *pFuncName,
@@ -116,8 +150,9 @@ void LogStub::log(
       ...
 )
 {
+   char tmpBuffer[MAX_LOG_BUFFER_LEN];
    if ( NULL != this->m_pLibLogHandlerCBFunction ) {
-      char tmpBuffer[MAX_LOG_BUFFER_LEN];
+
       uint8_t tmpBufferIndex = 0;
 
       /* 3. Pass the va args list to get output to a buffer */
@@ -143,7 +178,10 @@ void LogStub::log(
             tmpBuffer
       );
    } else {
-      cerr << "Callback is null" << endl;
+      /* No callback registered.  If WRN or greater, just cerr it */
+      if (dbgLvl > LOG) {
+         cerr << "[" << dbgLvl << "]" << pFuncName << "():" << wLineNumber << ":" << tmpBuffer << endl;
+      }
    }
 
 }

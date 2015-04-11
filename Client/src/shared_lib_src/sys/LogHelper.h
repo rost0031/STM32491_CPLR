@@ -20,9 +20,52 @@
 #include "CBSharedDbgLevels.h"
 #include "ClientModules.h"
 
-
 /* Exported defines ----------------------------------------------------------*/
 /* Exported macros -----------------------------------------------------------*/
+
+/**
+ * @brief   Enable debugging output for a given module.
+ *
+ * @param [in] @c name_: DBG_MODL_T enum representing the module.
+ */
+#define DBG_ENABLE_DEBUG_FOR_MODULE( name_ ) \
+      glbDbgConfig |= name_;
+
+/**
+ * @brief   Disable debugging output for a given module.
+ *
+ * @param [in] @c name_: DBG_MODL_T enum representing the module.
+ */
+#define DBG_DISABLE_DEBUG_FOR_MODULE( name_ ) \
+      glbDbgConfig &= ~name_;
+
+/**
+ * @brief   Toggle debugging output for a given module.
+ *
+ * @param [in] @c name_: DBG_MODL_T enum representing the module.
+ */
+#define DBG_TOGGLE_DEBUG_FOR_MODULE( name_ ) \
+      glbDbgConfig ^= name_;
+
+/**
+ * @brief   Toggle debugging output for a given module.
+ *
+ * @param [in] @c name_: DBG_MODL_T enum representing the module.
+ */
+#define DBG_CHECK_DEBUG_FOR_MODULE( name_ ) \
+      ( glbDbgConfig & name_ )
+/**
+ * @brief   Disable debugging output for all modules.
+ */
+#define DBG_DISABLE_DEBUG_FOR_ALL_MODULES( ) \
+      glbDbgConfig = 0x00000000;
+
+/**
+ * @brief   Enable debugging output for all modules.
+ */
+#define DBG_ENABLE_DEBUG_FOR_ALL_MODULES( ) \
+      glbDbgConfig = 0xFFFFFFFF;
+
 /**
  * @brief   Wrapper around the LogStup::log() function for DBG logging.
  *
@@ -31,9 +74,11 @@
  * @param [in] ...: va_args style additional arguments.
  * @return  None.
  */
-#define DBG_printf(logInstance, fmt, ...) \
-      do { logInstance->log(DBG, __func__, __LINE__, SRC_CLI_LIB, this_module_, fmt, \
-            ##__VA_ARGS__); \
+#define DBG_printf(logInstance, fmt, ...)                                     \
+   do {                                                                       \
+      if ( glbDbgConfig & this_module_ )                                      \
+         {logInstance->log( DBG, __func__, __LINE__, SRC_CLI_LIB,             \
+               this_module_, fmt, ##__VA_ARGS__);}                            \
       } while (0)
 
 /**
@@ -45,8 +90,10 @@
  * @return  None.
  */
 #define LOG_printf(logInstance, fmt, ...) \
-      do { logInstance->log(LOG, __func__, __LINE__, SRC_CLI_LIB, this_module_, fmt, \
-            ##__VA_ARGS__); \
+   do {                                                                       \
+      if ( glbDbgConfig & this_module_ )                                      \
+         {logInstance->log( LOG, __func__, __LINE__, SRC_CLI_LIB,             \
+               this_module_, fmt, ##__VA_ARGS__);}                            \
       } while (0)
 
 /**
@@ -76,6 +123,9 @@
       } while (0)
 
 /* Exported types ------------------------------------------------------------*/
+/* Exported variables --------------------------------------------------------*/
+extern uint32_t  glbDbgConfig; /**< Allow global access to debug info */
+
 /* Exported functions --------------------------------------------------------*/
 /* Exported classes ----------------------------------------------------------*/
 

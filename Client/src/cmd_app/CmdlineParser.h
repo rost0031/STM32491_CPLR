@@ -45,7 +45,6 @@ class CmdlineParser {
 private:
     int     m_argc;/**< Standard C style number of args argument */
     char**  m_argv;/**< Standard C style pointer to a pointer of array of args */
-    Logging* m_log;/**< Pointer to a Logger class instance */
 
     bool m_bInteractiveRunMode; /**< User can specify if the client will run
                                    interactively (menu/gui, so the AO doesn't
@@ -77,7 +76,7 @@ public:
      * @param [in] *logger: Logging pointer to an instance of Logging class
      * @return None.
      */
-    CmdlineParser( Logging* logger );
+    CmdlineParser();
 
     /**
      * @brief  Parse passed in command line arguments

@@ -34,11 +34,10 @@ MODULE_NAME( MODULE_EXT );
 /* Private class methods -----------------------------------------------------*/
 
 /******************************************************************************/
-CmdlineParser::CmdlineParser( Logging* logger ) :
+CmdlineParser::CmdlineParser( void ) :
             m_bInteractiveRunMode(true)
 {
-   this->m_log = logger;
-   DBG_out << "Logging for CmdlineParser class enabled";
+   DBG_out << "Instantiated CmdlineParser.  Ready to parse cmdline args.";
 }
 
 /******************************************************************************/

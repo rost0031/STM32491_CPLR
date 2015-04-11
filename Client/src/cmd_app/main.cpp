@@ -48,66 +48,47 @@ int main(int argc, char *argv[])
 {
    ClientError_t status = CLI_ERR_NONE;               /* Keep track of status */
 
-   /* Test of enum to string capability */
-   std::cout << enumToString(DBG) << "\n";
+   LOG_out << "Starting " << argv[0];
 
-   std::cout << maskableEnumToString(MODULE_ETH) << std::endl;
+   /* 1. Create a new LogStub instance.  This allows setting of logging
+    * callbacks to the rest of the client library.  Safe to do this without
+    * try/catch since no exceptions are thrown from library. */
+    LogStub *pLogStub = new LogStub();
 
-   std::cout << maskableEnumToString(SRC_DC3_BOOT) << std::endl;
-//   std::cout << enumToString(MODULE_ETH) << "\n";
-
-
-//   std::cout << enumToString(SRC_DC3_BOOT) << "\n";
-
-   Logging *logger;
-
-   try {
-      logger = new Logging();
-   } catch ( ... ) {
-      cerr << "Failed to set up logging.  Exiting" << endl;
+   /* 2. Set the callback functions which allow the library to log to this
+    * cmdline client. */
+   status = pLogStub->setLibLogCallBack( CLI_LibLogCallback );
+   if ( CLI_ERR_NONE != status ) {
+      ERR_out << "Failed to set library logging callback function. Exiting...";
       EXIT_LOG_FLUSH(1);
    }
 
-//   sources::severity_logger<DBG_LEVEL_T> lg;
-   LOG_out << "Testing logging via boost from main";
 
+   /* 3. Enable and disable logging for various modules in the library */
+   pLogStub->enableLogForAllLibModules();
 
+//   MENU_print("Testing menu NEW output 1");
+//   MENU_print("Testing menu NEW output 2");
+//   MENU_print("Testing menu NEW output 3");
+//   MENU_print("Testing menu NEW output 4");
+//   MENU_print("Testing menu NEW output 5");
+//   MENU_print("Testing menu NEW output 6");
 
-   MENU_print("Testing menu NEW output 1");
-   MENU_print("Testing menu NEW output 2");
-   MENU_print("Testing menu NEW output 3");
-   MENU_print("Testing menu NEW output 4");
-   MENU_print("Testing menu NEW output 5");
-   MENU_print("Testing menu NEW output 6");
+   /* 3. Create a new CmdlineParser instance. */
+   CmdlineParser *cmdline = new CmdlineParser();
 
-//   BOOST_LOG_TRIVIAL(fatal) << "Test";
-
-
-//   LOG_printf(logger, "Successfully set up logging\n");
-
-//   ClientError_t status;
-//
-//   status = logger->setLibLogCallBack( logger->log );
-//   if ( CLI_ERR_NONE != status ) {
-//      cerr << "Failed to set logging callback. Error: 0x"
-//            << setfill('0') << setw(8) << std::hex << status << endl;
-//      exit(1);
-//   } else {
-//      LOG_printf( logger, "Successfully set up logging callback.\n");
-//   }
-
-   CmdlineParser *cmdline = new CmdlineParser( logger );
+   /* 4. Attempt to parse the cmdline arguments. */
    if( 0 != cmdline->parse(argc, argv) ) {
       ERR_out << "Failed to parse cmdline args. Exiting";
       EXIT_LOG_FLUSH(1);
    }
 
    /* Set up the client api and initialize its logging */
-   ClientApi *client = new ClientApi(logger->getLogStubPtr());
+   ClientApi *client = new ClientApi(pLogStub);
 
    client->run();
 
-   Job *job = new Job(logger->getLogStubPtr());
+   Job *job = new Job(pLogStub);
 
 
    EXIT_LOG_FLUSH(0);

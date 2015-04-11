@@ -113,7 +113,7 @@ public:
    ClientError_t setAckCallBack( CB_MsgHandler_t pCallbackFunction );
 
    /**
-    * This method sets a callback to handle the internal logging from the client.
+    * @brief   Set a callback to handle the internal logging from the client.
     *
     * @param  [in]  pCallbackFunction: a CB_LibLogHandler_t pointer to the
     * callback function that is implemented outside the library.
@@ -123,6 +123,45 @@ public:
     *    else some error code indicating what went wrong
     */
    ClientError_t setLibLogCallBack( CB_LibLogHandler_t pCallbackFunction );
+
+   /**
+    * @brief   Enable logging for a given module of the library.
+    * Enable DBG and LOG level messages from a given module of the library.
+    * See ModuleId_t for module options.
+    *
+    * @param [in] moduleId: ModuleId_t that specifies which module to enable
+    * logging for.
+    * @return: None.
+    */
+   void enableLogForLibModule( ModuleId_t moduleId );
+
+   /**
+    * @brief   Disable logging for a given module of the library.
+    * Disable DBG and LOG level messages from a given module of the library.
+    * See ModuleId_t for module options.
+    *
+    * @note: WRN and ERR level messages cannot be silenced but they should not
+    * appear unless there's an actual problem.
+    *
+    * @param [in] moduleId: ModuleId_t that specifies which module to disable
+    * logging for.
+    * @return: None.
+    */
+   void disableLogForLibModule( ModuleId_t moduleId );
+
+   /**
+    * @brief   Enable logging for all library modules.
+    * @param   None.
+    * @return  None.
+    */
+   void enableLogForAllLibModules( void );
+
+   /**
+    * @brief   Disable logging for all library modules.
+    * @param   None.
+    * @return  None.
+    */
+   void disableLogForAllLibModules( void );
 
    /**
     * @brief   Output logging msg

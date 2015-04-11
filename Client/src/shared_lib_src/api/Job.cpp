@@ -45,8 +45,6 @@ Job::Job( LogStub *log ) :
       m_pLog(NULL)
 {
    this->m_pLog = log;
-   this->m_pLog->log(DBG,__func__,__LINE__,SRC_CLI_EXT,MODULE_LOG, "Testing %d\n", 5);
-   DBG_printf(this->m_pLog,"Testing macro from Job()\n");
 }
 
 /******************************************************************************/
