@@ -17,6 +17,8 @@
 #include "CallbackTypes.h"
 #include "LogStub.h"
 
+#include <boost/thread.hpp>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -58,7 +60,7 @@ class CLIENT_DLL ClientApi {
 
 private:
    LogStub *m_pLog;         /**< Pointer to LogStub instance used for logging */
-
+   boost::thread m_workerThread;          /**< Thread to start MainMgr and QF */
 
 public:
 
@@ -68,6 +70,13 @@ public:
     * @return      None.
     */
    void run();
+
+   /**
+    * @brief   Waits for the MainMgr AO to finish.
+    * @param   None.
+    * @return  None.
+    */
+   void waitForDone( void );
 
    /**
     * Constructor that sets up the upd ethernet socket
@@ -83,37 +92,6 @@ public:
     * @return      None.
     */
    ~ClientApi( void );
-
-   /**
-    * This method sets a callback to handle all and any general Redwood msgs.
-    *
-    * @param  [in]  pCallbackFunction: a cbRedwoodMsgHandler pointer to the
-    * callback function that is implemented outside the library.
-    *
-    * @return None:
-    */
-   const void setMsgCallBack( CB_MsgHandler_t pCallbackFunction );
-
-   /**
-    * This method sets a callback to handle just the Ack msgs from Redwood since
-    * the user may or may not want to see these.
-    *
-    * @param  [in]  pCallbackFunction: a cbRedwoodMsgHandler pointer to the
-    * callback function that is implemented outside the library.
-    *
-    * @return None:
-    */
-   const void setAckCallBack( CB_MsgHandler_t pCallbackFunction );
-
-   /**
-    * This method sets a callback to handle the internal logging from the client.
-    *
-    * @param  [in]  pCallbackFunction: a cbRedwoodLogHandler pointer to the
-    * callback function that is implemented outside the library.
-    *
-    * @return None:
-    */
-   const void setInternalLogCallBack( CB_LogHandler_t pCallbackFunction );
 
 };
 

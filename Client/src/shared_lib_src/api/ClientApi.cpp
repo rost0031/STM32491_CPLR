@@ -22,7 +22,6 @@
 #include "LogHelper.h"
 #include "CBSharedMsgTypes.h"
 #include "qf_port.h"
-#include <boost/thread.hpp>
 
 /* Namespaces ----------------------------------------------------------------*/
 using namespace std;
@@ -58,30 +57,6 @@ static QSubscrList l_subscrSto[MAX_PUB_SIG];
 /* Private functions ---------------------------------------------------------*/
 
 /******************************************************************************/
-const void ClientApi::setMsgCallBack(
-      CB_MsgHandler_t pCallbackFunction
-)
-{
-   this->setMsgCallBack( pCallbackFunction );
-}
-
-/******************************************************************************/
-const void ClientApi::setAckCallBack(
-      CB_MsgHandler_t pCallbackFunction
-)
-{
-   this->setAckCallBack( pCallbackFunction );
-}
-
-/******************************************************************************/
-const void ClientApi::setInternalLogCallBack(
-      CB_LogHandler_t pCallbackFunction
-)
-{
-   this->setInternalLogCallBack( pCallbackFunction );
-}
-
-/******************************************************************************/
 void runMainMgr( void )
 {
    /* start the active objects... */
@@ -98,13 +73,22 @@ void runMainMgr( void )
    QF_run();                              /* run the QF application */
 }
 
+/* Private class prototypes --------------------------------------------------*/
+/* Private classes -----------------------------------------------------------*/
+
 /******************************************************************************/
 void ClientApi::run( void )
 {
-   boost::thread workerThread( runMainMgr );
+   this->m_workerThread = boost::thread( runMainMgr );
    DBG_printf(this->m_pLog,"QF Framework started successfully.");
-//   workerThread.join();
-//   DBG_printf(this->m_pLog,"QF Framework stopped successfully.");
+}
+
+/******************************************************************************/
+void ClientApi::waitForDone( void )
+{
+   DBG_printf(this->m_pLog,"Waiting for MainMgr to be finished.");
+   this->m_workerThread.join();
+   DBG_printf(this->m_pLog,"Thread finished. Returning\n");
 }
 
 /******************************************************************************/
@@ -161,8 +145,8 @@ ClientApi::ClientApi( LogStub *log ) :
             "53432"
       );
    } catch ( ... ) {
-      cout << "ERROR: Unable to connect to UDP " << endl;
-      exit(1); // Do a regular exit since this is critical
+      ERR_printf("Unable to connect to UDP. Exiting");
+      EXIT_LOG_FLUSH(1); // Do a regular exit since this is critical
    }
    DBG_printf(this->m_pLog,"Attempting to write UDP eth...");
    eth->write_some("Test\n", 5);

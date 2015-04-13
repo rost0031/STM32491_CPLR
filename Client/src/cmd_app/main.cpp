@@ -72,7 +72,6 @@ int main(int argc, char *argv[])
 //   WRN_out << "WRN test before setting ";
 //   ERR_out << "ERR test before setting ";
 
-   DBG_out << "Disabling DBG level logging.  You should not see any DBG after this";
    LOG_setDbgLvl(DBG); /* Set logging level */
 //   DBG_out << "DBG test after setting ";
 //   LOG_out << "LOG test after setting ";
@@ -103,6 +102,8 @@ int main(int argc, char *argv[])
 
    Job *job = new Job(pLogStub);
 
+   DBG_out<< "Waiting for MainMgr AO to finish";
+   client->waitForDone();
 
    EXIT_LOG_FLUSH(0);
 }

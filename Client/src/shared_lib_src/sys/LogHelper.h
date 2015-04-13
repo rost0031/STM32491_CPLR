@@ -89,7 +89,7 @@
  * @param [in] ...: va_args style additional arguments.
  * @return  None.
  */
-#define LOG_printf(logInstance, fmt, ...) \
+#define LOG_printf(logInstance, fmt, ...)                                     \
    do {                                                                       \
       if ( glbDbgConfig & this_module_ )                                      \
          {logInstance->log( LOG, __func__, __LINE__, SRC_CLI_LIB,             \
@@ -104,9 +104,9 @@
  * @param [in] ...: va_args style additional arguments.
  * @return  None.
  */
-#define WRN_printf(logInstance, fmt, ...) \
-      do { logInstance->log(WRN, __func__, __LINE__, SRC_CLI_LIB, this_module_, fmt, \
-            ##__VA_ARGS__); \
+#define WRN_printf(logInstance, fmt, ...)                                     \
+      do { logInstance->log(WRN, __func__, __LINE__, SRC_CLI_LIB,             \
+            this_module_, fmt, ##__VA_ARGS__);                                \
       } while (0)
 
 /**
@@ -117,9 +117,9 @@
  * @param [in] ...: va_args style additional arguments.
  * @return  None.
  */
-#define ERR_printf(logInstance, fmt, ...) \
-      do { logInstance->log(ERR, __func__, __LINE__, SRC_CLI_LIB, this_module_, fmt, \
-            ##__VA_ARGS__); \
+#define ERR_printf(logInstance, fmt, ...)                                     \
+      do { logInstance->log(ERR, __func__, __LINE__, SRC_CLI_LIB,             \
+            this_module_, fmt, ##__VA_ARGS__);                                \
       } while (0)
 
 /* Exported types ------------------------------------------------------------*/
