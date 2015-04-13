@@ -157,7 +157,6 @@ else                     # default Debug configuration .......................
     CPPFLAGS                = -O0 -g3 -ggdb  -std=gnu++0x -c -Wall \
                               -Wno-write-strings $(INCLUDES) $(DEFINES)
 endif
-
                               
 # Modify the INCLUDES to point to the boost libraries compiled for windows
 ifeq (win32, $(TARGET))

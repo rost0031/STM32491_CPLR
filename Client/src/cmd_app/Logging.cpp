@@ -37,9 +37,6 @@ BOOST_LOG_ATTRIBUTE_KEYWORD(timestamp, "Timestamp", boost::posix_time::ptime)
 BOOST_LOG_ATTRIBUTE_KEYWORD(log_stream, "LogStream", std::string)
 BOOST_LOG_ATTRIBUTE_KEYWORD(menu_stream, "MenuStream", std::string)
 
-
-
-
 /* Private typedefs ----------------------------------------------------------*/
 /* Private defines -----------------------------------------------------------*/
 /* Private macros ------------------------------------------------------------*/
@@ -50,9 +47,9 @@ struct severity_tag;
 
 /* Private function prototypes -----------------------------------------------*/
 /* Private functions ---------------------------------------------------------*/
-void LOG_setDbgLvl( DBG_LEVEL_T )
+void LOG_setDbgLvl( DBG_LEVEL_T dbgLvl )
 {
-
+   boost::log::core::get()->set_filter( severity >= dbgLvl );
 }
 /* Private class prototypes --------------------------------------------------*/
 /* Private classes -----------------------------------------------------------*/

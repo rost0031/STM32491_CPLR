@@ -241,7 +241,6 @@ ifeq (win32, $(TARGET))
     LIBS                   += -lws2_32 # Needed for win32 builds only
     DEFINES                += -DBOOST_THREAD_USE_LIB -DWIN32COMPILE -DBOOST_ALL_NO_LIB -D_SECURE_SCL=0
     DLL_EXT                 = dll
-
 else
     LINKFLAGS               = -Wl,-soname,$(LIB_PREFIX)$(PROJECT_DLL).$(DLL_EXT) \
                               -Wl,--whole-archive $(API_STATIC_LIBS) \

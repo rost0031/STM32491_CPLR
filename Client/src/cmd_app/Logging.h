@@ -213,6 +213,16 @@ typedef boost::log::sources::severity_logger_mt<DBG_LEVEL_T> logger_t;
 
 /* Exported variables --------------------------------------------------------*/
 /* Exported functions --------------------------------------------------------*/
+
+/**
+ * @brief   Set universal logging level
+ * This function can be used to change the logging level on the fly after the
+ * logging has been set up.
+ * @param [in] dbgLvl: DBG_LEVEL_T log level to set
+ * @return: None.
+ */
+void LOG_setDbgLvl( DBG_LEVEL_T dbgLvl );
+
 /**
  * @brief   A boost macro that instantiates a thread safe global logger
  *

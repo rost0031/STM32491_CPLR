@@ -67,6 +67,19 @@ int main(int argc, char *argv[])
    /* 3. Enable and disable logging for various modules in the library */
    pLogStub->enableLogForAllLibModules();
 
+//   DBG_out << "DBG test before setting ";
+//   LOG_out << "LOG test before setting ";
+//   WRN_out << "WRN test before setting ";
+//   ERR_out << "ERR test before setting ";
+
+   DBG_out << "Disabling DBG level logging.  You should not see any DBG after this";
+   LOG_setDbgLvl(DBG); /* Set logging level */
+//   DBG_out << "DBG test after setting ";
+//   LOG_out << "LOG test after setting ";
+//   WRN_out << "WRN test after setting ";
+//   ERR_out << "ERR test after setting ";
+//
+//
 //   MENU_print("Testing menu NEW output 1");
 //   MENU_print("Testing menu NEW output 2");
 //   MENU_print("Testing menu NEW output 3");
