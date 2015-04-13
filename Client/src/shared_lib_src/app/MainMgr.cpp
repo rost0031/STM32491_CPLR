@@ -73,6 +73,9 @@ typedef struct {
 
     /**< Local pointer to the logger instance */
     LogStub* m_pLog;
+
+    /**< Local pointer to the comm instance */
+    comm* m_pComm;
 } MainMgr;
 
 /* protected: */
@@ -119,7 +122,7 @@ QActive * const AO_MainMgr = (QActive *)&l_MainMgr;    /* "opaque" AO pointer */
  * @brief C "constructor" for MainMgr "class".
  * Initializes all the timers and queues used by the AO, sets up a deferral
  * queue, and sets of the first state.
- * @param [in]: none.
+ * @param [in]: *log: LogStub pointer to a logging object.
  * @retval: none
  */
 /*${AOs::MainMgr_ctor} .....................................................*/
@@ -129,6 +132,20 @@ void MainMgr_ctor(LogStub* log) {
     DBG_printf(me->m_pLog,"Logging setup successful");
     QActive_ctor(&me->super, (QStateHandler)&MainMgr_initial);
     QTimeEvt_ctor(&me->exitTimerEvt, EXIT_SIG);
+}
+
+/**
+ * @brief Sets a new connection.
+ * This globally accesible function sets a new connection for MainMgr AO to use.
+ * @param [in] *comm: comm pointer to a new connection object.
+ * @retval: none
+ */
+/*${AOs::MainMgr_setConn} ..................................................*/
+void MainMgr_setConn(comm* comm) {
+    delete[] l_MainMgr.m_pComm; /* Remove old connection */
+    l_MainMgr.m_pComm = comm;  /* Set new connection */
+    DBG_printf(l_MainMgr.m_pLog,"Set new connection");
+
 }
 
 /**
@@ -145,7 +162,7 @@ static QState MainMgr_initial(MainMgr * const me, QEvt const * const e) {
     QS_FUN_DICTIONARY(&QHsm_top);
     QS_FUN_DICTIONARY(&l_MainMgr_initial);
     QS_FUN_DICTIONARY(&l_MainMgr_Active);
-    DBG_printf(me->m_pLog,"Started MainMgr AO");;
+    DBG_printf(me->m_pLog,"Started MainMgr AO");
     return Q_TRAN(&MainMgr_Active);
 }
 

@@ -22,6 +22,7 @@
 #include "LogHelper.h"
 #include "CBSharedMsgTypes.h"
 #include "qf_port.h"
+#include "comm.h"
 
 /* Namespaces ----------------------------------------------------------------*/
 using namespace std;
@@ -44,11 +45,6 @@ static union MediumEvents {
 
 /* Private defines -----------------------------------------------------------*/
 /* Private macros ------------------------------------------------------------*/
-
-/* Global pointers to device objects and cmdline parser */
-Serial          *serial;
-Eth             *ethernet;
-
 /* Private variables and Local objects ---------------------------------------*/
 static QEvent const *l_MainMgrQueueSto[10];
 static QSubscrList l_subscrSto[MAX_PUB_SIG];
@@ -77,28 +73,30 @@ void runMainMgr( void )
 /* Private classes -----------------------------------------------------------*/
 
 /******************************************************************************/
-void ClientApi::run( void )
+void ClientApi::setNewConnection(
+      const char *ipAddress,
+      const char *pRemPort,
+      const char *pLocPort
+)
 {
-   this->m_workerThread = boost::thread( runMainMgr );
-   DBG_printf(this->m_pLog,"QF Framework started successfully.");
+   comm* my_comm = new comm(this->m_pLog, ipAddress, pRemPort, pLocPort);
+   MainMgr_setConn(my_comm);
 }
 
 /******************************************************************************/
-void ClientApi::waitForDone( void )
+void ClientApi::setNewConnection(
+      const char *dev_name,
+      int baud_rate,
+      bool bDFUSEComm
+)
 {
-   DBG_printf(this->m_pLog,"Waiting for MainMgr to be finished.");
-   this->m_workerThread.join();
-   DBG_printf(this->m_pLog,"Thread finished. Returning\n");
+   comm* my_comm = new comm(this->m_pLog, dev_name, baud_rate, bDFUSEComm);
+   MainMgr_setConn(my_comm);
 }
 
 /******************************************************************************/
-ClientApi::ClientApi( LogStub *log ) :
-      m_pLog(NULL)
+void ClientApi::qfSetup( void )
 {
-
-   this->m_pLog = log;
-   DBG_printf(this->m_pLog,"Logging setup successful.");
-
    /* instantiate all active objects */
    MainMgr_ctor( this->m_pLog );
 
@@ -115,6 +113,63 @@ ClientApi::ClientApi( LogStub *log ) :
    /* initialize event pools... */
    QF_poolInit(l_smlPoolSto, sizeof(l_smlPoolSto), sizeof(l_smlPoolSto[0]));
    QF_poolInit(l_medPoolSto, sizeof(l_medPoolSto), sizeof(l_medPoolSto[0]));
+}
+
+/******************************************************************************/
+void ClientApi::run( void )
+{
+   this->m_workerThread = boost::thread( runMainMgr );
+   DBG_printf(this->m_pLog,"QF Framework started successfully.");
+}
+
+/******************************************************************************/
+void ClientApi::waitForDone( void )
+{
+   DBG_printf(this->m_pLog,"Waiting for MainMgr to be finished.");
+   this->m_workerThread.join();
+   DBG_printf(this->m_pLog,"Thread finished. Returning\n");
+}
+
+/******************************************************************************/
+void ClientApi::setLogging( LogStub *log )
+{
+   this->m_pLog = log;
+   DBG_printf(this->m_pLog,"Logging setup successful.");
+}
+
+/******************************************************************************/
+ClientApi::ClientApi(
+      LogStub *log,
+      const char *ipAddress,
+      const char *pRemPort,
+      const char *pLocPort
+) :  m_pLog(NULL)
+{
+   this->setLogging(log);
+   this->qfSetup();                               /* Initialize QF framework. */
+   this->setNewConnection(ipAddress, pRemPort, pLocPort);
+}
+
+/******************************************************************************/
+ClientApi::ClientApi(
+         LogStub *log,
+         const char *dev_name,
+         int baud_rate,
+         bool bDFUSEComm
+) :  m_pLog(NULL)
+{
+   this->setLogging(log);
+   this->qfSetup();                               /* Initialize QF framework. */
+   this->setNewConnection(dev_name, baud_rate, bDFUSEComm);
+}
+
+/******************************************************************************/
+ClientApi::ClientApi( LogStub *log ) :
+      m_pLog(NULL)
+{
+
+   this->setLogging(log);                                      /* Set logging */
+   this->qfSetup();                               /* Initialize QF framework. */
 
    /* This works */
 //   DBG_printf(this->m_pLog,"Attempting to init serial...");
@@ -136,26 +191,43 @@ ClientApi::ClientApi( LogStub *log ) :
 //   serial->write_some("Test\n", 5);
 
    /* This also works.*/
+//   DBG_printf(this->m_pLog,"Attempting to init UDP eth...");
+//   Eth *eth;
+//   try {
+//      eth = new Eth(
+//            "172.27.0.75",
+//            "1502",
+//            "53432"
+//      );
+//   } catch ( ... ) {
+//      ERR_printf("Unable to connect to UDP. Exiting");
+//      EXIT_LOG_FLUSH(1); // Do a regular exit since this is critical
+//   }
+//   DBG_printf(this->m_pLog,"Attempting to write UDP eth...");
+//   eth->write_some("Test\n", 5);
+
+   /* This also works.*/
    DBG_printf(this->m_pLog,"Attempting to init UDP eth...");
-   Eth *eth;
+   comm *m_comm;
    try {
-      eth = new Eth(
+      m_comm = new comm(
+            this->m_pLog,
             "172.27.0.75",
             "1502",
             "53432"
       );
    } catch ( ... ) {
-      ERR_printf("Unable to connect to UDP. Exiting");
-      EXIT_LOG_FLUSH(1); // Do a regular exit since this is critical
+      ERR_printf(this->m_pLog,"Unable to connect to UDP. Exiting");
+      return; // Do a regular exit since this is critical
    }
    DBG_printf(this->m_pLog,"Attempting to write UDP eth...");
-   eth->write_some("Test\n", 5);
+   m_comm->write_some("Test\n", 5);
+
 }
 
 /******************************************************************************/
 ClientApi::~ClientApi(  )
 {
    delete[] this->m_pLog;
-   delete[] serial;
 }
 

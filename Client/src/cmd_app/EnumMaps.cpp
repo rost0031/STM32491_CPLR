@@ -45,6 +45,7 @@ std::map<ModuleId_t, std::string> m_ModuleId = boost::assign::map_list_of
       ( MODULE_JOB   , "Job" )
       ( MODULE_API   , "Api" )
       ( MODULE_EXT   , "Ext" )
+      ( MODULE_COM   , "Com" )
       ; //End of m_ModuleId map
 
 /**

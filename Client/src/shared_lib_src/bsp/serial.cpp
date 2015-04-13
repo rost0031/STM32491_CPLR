@@ -43,18 +43,23 @@ void Serial::read_handler(
        ) {
         std::cout << "CB: " << read_msg_ << std::endl;
     } else {
-//        /* Construct a new msg event indicating that a msg has been received */
-//        MsgEvt *msgEvt = Q_NEW(MsgEvt, MSG_RECEIVED_SIG);
-//
-//        /* Decode the message from base64 and write it directly to the event. */
-//        int decoded_sz = base64_decode(read_msg_, bytes_transferred, msgEvt->msg, CB_MAX_MSG_LEN);
-//
-//        /* Set the size and source */
-//        msgEvt->msg_len = decoded_sz;
-//        msgEvt->source = SERIAL;
-//
-//        /* Publish the event */
-//        QF_PUBLISH((QEvent *)msgEvt, AO_CommStackMgr);
+       /* Construct a new msg event indicating that a msg has been received */
+       MsgEvt *msgEvt = Q_NEW(MsgEvt, MSG_RECEIVED_SIG);
+
+       /* Decode the message from base64 and write it directly to the event. */
+       int decoded_sz = base64_decode(
+             read_msg_,
+             bytes_transferred,
+             msgEvt->msg,
+             CB_MAX_MSG_LEN
+       );
+
+       /* Set the size and source */
+       msgEvt->msg_len = decoded_sz;
+       msgEvt->msg_src = _CB_Serial;
+
+       /* Publish the event */
+       QF_PUBLISH((QEvent *)msgEvt, AO_MainMgr);
     }
 
     /* Continue reading */
@@ -167,7 +172,8 @@ void Serial::expect_n_bytes( uint16_t bytes )
 }
 
 /******************************************************************************/
-Serial::Serial(const char *dev_name, int baud_rate, bool bDFUSEComm) : m_io(), m_port(m_io, dev_name)
+Serial::Serial(const char *dev_name, int baud_rate, bool bDFUSEComm) :
+      m_io(), m_port(m_io, dev_name)
 {
 
    /* Set the bReadNDFUSEBytes to zero so that we don't accidentally quit

@@ -95,6 +95,22 @@ int main(int argc, char *argv[])
       EXIT_LOG_FLUSH(1);
    }
 
+   if( cmdline->isConnEth() ) {
+      string ipAddr, remPort, locPort;
+      cmdline->getEthConnOpts(ipAddr, remPort, locPort);
+      DBG_out << "Got " << ipAddr << ", " << remPort << ", " << locPort;
+   } else if ( cmdline->isConnSer() ) {
+      string serDev;
+      int baudRate = 0;
+      bool dfuseFlag = true;
+      cmdline->getSerConnOpts(serDev, &baudRate, &dfuseFlag);
+      DBG_out << "Got " << serDev << ", " << baudRate << ", " << dfuseFlag;
+   } else {
+      ERR_out << "Neither serial nor ethernet connection chosen. Exiting";
+      EXIT_LOG_FLUSH(1);
+   }
+
+
    /* Set up the client api and initialize its logging */
    ClientApi *client = new ClientApi(pLogStub);
 

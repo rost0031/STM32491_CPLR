@@ -33,20 +33,11 @@ MODULE_NAME( MODULE_EXT );
 
 /* Private class methods -----------------------------------------------------*/
 
-/******************************************************************************/
-CmdlineParser::CmdlineParser( void ) :
-            m_bInteractiveRunMode(true)
-{
-   DBG_out << "Instantiated CmdlineParser.  Ready to parse cmdline args.";
-}
+
 
 /******************************************************************************/
 int CmdlineParser::parse( int argc, char** argv )
 {
-   /* Make a local store cmd line args */
-   this->m_argc = argc;
-   this->m_argv = argv;
-
    po::options_description desc("Allowed options");
 
    desc.add_options()
@@ -60,7 +51,7 @@ int CmdlineParser::parse( int argc, char** argv )
          ("remote_port,p", po::value<string>(&m_remote_port)->default_value("1502"),
             "Set remote port number")
 
-         ("local_port,l", po::value<int>(&m_local_port)->default_value(50249),
+         ("local_port,l", po::value<string>(&m_local_port)->default_value("50249"),
             "Set local port number")
 
          ("serial_dev,s", po::value<string>(&m_serial_dev),
@@ -74,14 +65,14 @@ int CmdlineParser::parse( int argc, char** argv )
 
    DBG_out << "Parsing cmdline arguments...";
    /* parse regular options */
-   po::variables_map vm;
+
    po::parsed_options parsed = po::parse_command_line(argc, argv, desc);
-   po::store( parsed, vm);
-   po::notify(vm);
+   po::store( parsed, m_vm);
+   po::notify(m_vm);
 
    try {
       /* Check for general help request first */
-      if (vm.count("help")) {
+      if (m_vm.count("help")) {
          stringstream ss;
 
          ss << desc << endl;
@@ -90,7 +81,7 @@ int CmdlineParser::parse( int argc, char** argv )
          EXIT_LOG_FLUSH(0);
       }
 
-      if (vm.count("version")) {
+      if (m_vm.count("version")) {
          stringstream ss;
          ss << "CmdLine Client App version: " << "TODO" << endl;
          ss << "CmdLine Client Lib version: " << "TODO" << endl;
@@ -101,39 +92,42 @@ int CmdlineParser::parse( int argc, char** argv )
 
       /* Allow user to override the interactive (menu) mode and run in single
        * cmd mode.  This is for scripting purposes */
-      if ( vm.count("mode") ) {
+      if ( m_vm.count("mode") ) {
          this->m_bInteractiveRunMode = false;
          DBG_out << "Overriding interactive mode and running in single cmd mode";
       }
 
       /* Serial and IP connections are mutually exclusive so treat them as such
        * on the cmdline. */
-      if (vm.count("ip_address") && !vm.count("serial_dev")) {
+      if (m_vm.count("ip_address") && !m_vm.count("serial_dev")) {
 
          this->m_conn_mode = _CB_EthCli;
 
          stringstream ss;
 
-         ss << "ip_address was set to "
-               << vm["ip_address"].as<string>() << endl;
+         ss << "UDP connection to: "
+               << m_vm["ip_address"].as<string>() << ":"
+               << m_vm["remote_port"].as<string>()
+               << "from local port "
+                  << m_vm["local_port"].as<string>() << endl;
 
-         if (vm.count("remote_port")) {
-            ss << "remote_port was set to "
-                  << vm["remote_port"].as<string>() << endl;
-         }
          CON_print(ss.str());
 
-      } else if (vm.count("serial_dev") && !vm.count("ip_address")) {
+      } else if (m_vm.count("serial_dev") && !m_vm.count("ip_address")) {
          this->m_conn_mode = _CB_Serial;
 
          stringstream ss;
 
-         ss << "serial_dev was set to "
-               << vm["serial_dev"].as<string>() << endl;
+         ss << "Serial connection on "
+               << m_vm["serial_dev"].as<string>()
+               << " with "
+               << m_vm["serial_baud"].as<int>()
+               << " baud rate";
 
-         if (vm.count("serial_baud")) {
-            ss << "serial_baud was set to "
-                  << vm["serial_baud"].as<int>()<< endl;
+         if (this->m_dfuse) {
+            ss << " with DFUSE parameters" << endl;
+         } else {
+            ss << " without DFUSE parameters" << endl;
          }
          CON_print(ss.str());
 
@@ -144,11 +138,11 @@ int CmdlineParser::parse( int argc, char** argv )
          this->m_ip_address = "172.27.0.75";
          LOG_out << "No IP address or serial device specified.";
          LOG_out << "Using default ip address "
-               << this->m_ip_address<< " to attempt connect connection.";
+               << this->m_ip_address << " to attempt connect connection.";
       }
 
       /* Clear out the argument map */
-      parsed_args.clear();
+      m_parsed_args.clear();
 
    } catch(po::error& e) {
       string error = e.what();
@@ -160,6 +154,57 @@ int CmdlineParser::parse( int argc, char** argv )
    }
 
    return( 0 );
+}
+
+/******************************************************************************/
+bool CmdlineParser::isConnEth( void )
+{
+   if (m_vm.count("ip_address") && !m_vm.count("serial_dev")) {
+      return true;
+   } else {
+      return false;
+   }
+}
+
+/******************************************************************************/
+bool CmdlineParser::isConnSer( void )
+{
+   if (m_vm.count("serial_dev") && !m_vm.count("ip_address")) {
+      return true;
+   } else {
+      return false;
+   }
+}
+
+/******************************************************************************/
+void CmdlineParser::getEthConnOpts(
+      string& ipAddress,
+      string& remPort,
+      string& locPort
+)
+{
+   ipAddress = this->m_ip_address;
+   remPort = this->m_remote_port;
+   locPort = this->m_local_port;
+}
+
+/******************************************************************************/
+void CmdlineParser::getSerConnOpts(
+      string& devName,
+      int *baudRate,
+      bool *dfuseFlag
+)
+{
+   devName = this->m_serial_dev;
+   *baudRate = this->m_serial_baud;
+   *dfuseFlag = this->m_dfuse;
+}
+
+/******************************************************************************/
+CmdlineParser::CmdlineParser( void ) :
+      m_bInteractiveRunMode(true), m_dfuse(false)
+{
+   DBG_out << "Instantiated CmdlineParser.  Ready to parse cmdline args.";
 }
 
 /******************************************************************************/

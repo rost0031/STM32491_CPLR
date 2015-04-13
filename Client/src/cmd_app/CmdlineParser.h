@@ -33,6 +33,7 @@ using namespace po;
 /* Exported types ------------------------------------------------------------*/
 /* Exported functions --------------------------------------------------------*/
 /* Exported classes ----------------------------------------------------------*/
+
 /**
 * @class CmdlineParser
 *
@@ -43,40 +44,31 @@ using namespace po;
 class CmdlineParser {
 
 private:
-    int     m_argc;/**< Standard C style number of args argument */
-    char**  m_argv;/**< Standard C style pointer to a pointer of array of args */
 
     bool m_bInteractiveRunMode; /**< User can specify if the client will run
                                    interactively (menu/gui, so the AO doesn't
                                    stop after finishing one command) or 1 cmd at
                                    a time and quit.  The default is interactive */
 
-    std::vector<string> m_command;  /**< Vector that will hold the command along with
-                                  optional (ordered) arguments in the rest of
-                                  the indexes. */
-    string  m_parsed_cmd;             /**< String containing the parsed command */
-    std::map<string, string> parsed_args;     /**< Map containing parsed arguments */
+    bool    m_dfuse;     /**< Serial connection will be used for DFU commands */
 
+    std::vector<string> m_command;  /**< Vector that will hold the command along
+                                  with optional (ordered) arguments in the rest
+                                  of  the indexes. */
+    string  m_parsed_cmd;           /**< String containing the parsed command */
+
+    std::map<string, string> m_parsed_args;   /**< Map containing parsed args */
+    po::variables_map m_vm;                     /**< boost program options vm */
 
     /* Storage for various args collected from cmdline */
     CBMsgRoute m_conn_mode;                   /**< Connection mode to the DC3 */
     string  m_ip_address;                       /**< IP address to connect to */
     string  m_remote_port;                         /**< IP port to connect to */
-    int     m_local_port;                        /**< IP port to connect from */
+    string  m_local_port;                        /**< IP port to connect from */
     string  m_serial_dev;                    /**< serial device to connect to */
     int     m_serial_baud;                 /**< serial device baudrate to use */
 
-
 public:
-
-
-    /**
-     * @brief  Constructor that sets up logging.
-     *
-     * @param [in] *logger: Logging pointer to an instance of Logging class
-     * @return None.
-     */
-    CmdlineParser();
 
     /**
      * @brief  Parse passed in command line arguments
@@ -92,17 +84,61 @@ public:
     int parse( int argc, char** argv );
 
     /**
+     * @brief  Check whether connection request an ethernet one
+     * @param  None.
+     * @return bool:
+     *   @arg true: if ethernet requested.
+     *   @arg false: if other requested.
+     */
+    bool isConnEth( void );
+
+    /**
+     * @brief  Check whether connection request a serial one
+     * @param  None.
+     * @return bool:
+     *   @arg true: if serial requested.
+     *   @arg false: if other requested.
+     */
+    bool isConnSer( void );
+
+    /**
+     * @brief  Get ethernet connection parameters
+     * @param [out] ipAddress: string ref to fill in with ip address
+     * @param [out] remPort: string ref to fill in with remote port
+     * @param [out] locPort: string ref to fill in with local port
+     * @return None.
+     */
+    void getEthConnOpts(
+          string& ipAddress,
+          string& remPort,
+          string& locPort
+    );
+
+    /**
+     * @brief  Get serial connection parameters
+     * @param [out] devName: string ref to fill in with serial device name
+     * @param [out] *baudRate: int pointer to fill in with baud rate
+     * @param [out] *dfuseFlag: bool pointer to fill in dfuse flag.
+     * @return None.
+     */
+    void getSerConnOpts(
+          string& devName,
+          int *baudRate,
+          bool *dfuseFlag
+    );
+
+    /**
+     * @brief  Constructor that sets up logging.
+     *
+     * @param [in] *logger: Logging pointer to an instance of Logging class
+     * @return None.
+     */
+    CmdlineParser();
+
+    /**
      * @brief  Default destructor.
      */
     ~CmdlineParser( void );
-
-    /**
-     * @brief  Parse the cmd line arguments that were stored by the constructor.
-     * @param  None
-     * @return None
-     */
-    void parseArgs( void );
-
 
 
 };

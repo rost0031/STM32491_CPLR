@@ -11,7 +11,6 @@
 // $Log$
 
 #include "eth.h"
-#include "base64_wrapper.h"
 
 /******************************************************************************/
 void Eth::read_handler(
@@ -21,15 +20,15 @@ void Eth::read_handler(
 {
    if ( !error ) {
       /* Construct a new msg event indicating that a msg has been received */
-//      MsgEvt *msgEvt = Q_NEW(MsgEvt, MSG_RECEIVED_SIG);
-//
-//      /* Copy data and set the size and source */
-//      memcpy( msgEvt->msg, read_msg_, bytes_transferred );
-//      msgEvt->msg_len = bytes_transferred;
-//      msgEvt->source = IP;
-//
-//      /* Publish the event */
-//      QF_PUBLISH((QEvent *)msgEvt, AO_CommStackMgr);
+      MsgEvt *msgEvt = Q_NEW(MsgEvt, MSG_RECEIVED_SIG);
+
+      /* Copy data and set the size and source */
+      memcpy( msgEvt->msg, read_msg_, bytes_transferred );
+      msgEvt->msg_len = bytes_transferred;
+      msgEvt->msg_src = _CB_EthCli;
+
+      /* Publish the event */
+      QF_PUBLISH((QEvent *)msgEvt, AO_MainMgr);
    } else {
       printf("Error reading UDP data\n");
    }

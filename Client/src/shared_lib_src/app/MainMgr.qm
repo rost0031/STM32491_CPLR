@@ -31,13 +31,16 @@
    <attribute name="m_pLog" type="LogStub*" visibility="0x01" properties="0x00">
     <documentation>/**&lt; Local pointer to the logger instance */</documentation>
    </attribute>
+   <attribute name="m_pComm" type="comm*" visibility="0x01" properties="0x00">
+    <documentation>/**&lt; Local pointer to the comm instance */</documentation>
+   </attribute>
    <statechart>
     <initial target="../1">
      <action>QS_OBJ_DICTIONARY(&amp;l_MainMgr);
 QS_FUN_DICTIONARY(&amp;QHsm_top);
 QS_FUN_DICTIONARY(&amp;l_MainMgr_initial);
 QS_FUN_DICTIONARY(&amp;l_MainMgr_Active);
-cout &lt;&lt; &quot;Started MainMgr AO&quot; &lt;&lt; endl;</action>
+DBG_printf(me-&gt;m_pLog,&quot;Started MainMgr AO&quot;);</action>
      <initial_glyph conn="1,2,4,3,11,2">
       <action box="0,-2,6,2"/>
      </initial_glyph>
@@ -53,9 +56,9 @@ cout &lt;&lt; &quot;Started MainMgr AO&quot; &lt;&lt; endl;</action>
  * @return status_: QState type that specifies where the state
  * machine is going next.
  */</documentation>
-     <entry>cout &lt;&lt; &quot;Entered Active state in MainMgr AO&quot; &lt;&lt; endl;</entry>
+     <entry>DBG_printf(me-&gt;m_pLog,&quot;Entered Active state in MainMgr AO&quot;);</entry>
      <tran trig="MSG_TIMEOUT_EXIT">
-      <action>cout &lt;&lt; &quot;Timed out while waiting for a response for a sent message.  Exiting.&quot; &lt;&lt; endl;
+      <action>DBG_printf(me-&gt;m_pLog,&quot;Timed out while waiting for a response for a sent message.  Exiting.&quot;);
 EXIT(me-&gt;errorCode);</action>
       <tran_glyph conn="111,69,1,-1,-12">
        <action box="-14,-2,14,2"/>
@@ -112,15 +115,28 @@ QF_stop();</action>
  * @brief C &quot;constructor&quot; for MainMgr &quot;class&quot;.
  * Initializes all the timers and queues used by the AO, sets up a deferral
  * queue, and sets of the first state.
- * @param [in]: none.
+ * @param [in]: *log: LogStub pointer to a logging object.
  * @retval: none
  */</documentation>
    <parameter name="log" type="LogStub*"/>
    <code>MainMgr *me = &amp;l_MainMgr;
 me-&gt;m_pLog = log;
-DBG_printf(me-&gt;m_pLog,&quot;Logging setup successful\n&quot;);
+DBG_printf(me-&gt;m_pLog,&quot;Logging setup successful&quot;);
 QActive_ctor(&amp;me-&gt;super, (QStateHandler)&amp;MainMgr_initial);
 QTimeEvt_ctor(&amp;me-&gt;exitTimerEvt, EXIT_SIG);</code>
+  </operation>
+  <operation name="MainMgr_setConn" type="void" visibility="0x00" properties="0x00">
+   <documentation>/**
+ * @brief Sets a new connection.
+ * This globally accesible function sets a new connection for MainMgr AO to use.
+ * @param [in] *comm: comm pointer to a new connection object.
+ * @retval: none
+ */</documentation>
+   <parameter name="comm" type="comm*"/>
+   <code>delete[] l_MainMgr.m_pComm; /* Remove old connection */
+l_MainMgr.m_pComm = comm;  /* Set new connection */
+DBG_printf(l_MainMgr.m_pLog,&quot;Set new connection&quot;);
+</code>
   </operation>
  </package>
  <directory name=".">
@@ -152,6 +168,7 @@ using namespace std;
 #include &quot;qp_port.h&quot;                                        /* for QP support */
 #include &quot;ClientShared.h&quot;
 #include &quot;LogStub.h&quot;
+#include &quot;comm.h&quot;
 
 /* Exported defines ----------------------------------------------------------*/
 /* Exported macros -----------------------------------------------------------*/
@@ -161,6 +178,7 @@ $declare(Events)
 /* Exported constants --------------------------------------------------------*/
 /* Exported functions --------------------------------------------------------*/
 $declare(AOs::MainMgr_ctor)
+$declare(AOs::MainMgr_setConn)
 $declare(AOs::AO_MainMgr)
 
 /**
@@ -222,6 +240,7 @@ QActive * const AO_MainMgr = (QActive *)&amp;l_MainMgr;    /* &quot;opaque&quot;
 /* Private function prototypes -----------------------------------------------*/
 /* Private functions ---------------------------------------------------------*/
 $define(AOs::MainMgr_ctor)
+$define(AOs::MainMgr_setConn)
 $define(AOs::MainMgr)
 
 /**

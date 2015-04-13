@@ -175,6 +175,7 @@ C_SRCS                      = cdecode.c \
 CPP_SRCS                    = bsp.cpp \
                               serial.cpp \
                               eth.cpp \
+                              comm.cpp \
                               fwLdr.cpp \
                               ClientApi.cpp \
                               Job.cpp \

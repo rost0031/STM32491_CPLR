@@ -42,6 +42,7 @@ using namespace std;
 #include "qp_port.h"                                        /* for QP support */
 #include "ClientShared.h"
 #include "LogStub.h"
+#include "comm.h"
 
 /* Exported defines ----------------------------------------------------------*/
 /* Exported macros -----------------------------------------------------------*/
@@ -67,11 +68,21 @@ typedef struct {
  * @brief C "constructor" for MainMgr "class".
  * Initializes all the timers and queues used by the AO, sets up a deferral
  * queue, and sets of the first state.
- * @param [in]: none.
+ * @param [in]: *log: LogStub pointer to a logging object.
  * @retval: none
  */
 /*${AOs::MainMgr_ctor} .....................................................*/
 void MainMgr_ctor(LogStub* log);
+
+
+/**
+ * @brief Sets a new connection.
+ * This globally accesible function sets a new connection for MainMgr AO to use.
+ * @param [in] *comm: comm pointer to a new connection object.
+ * @retval: none
+ */
+/*${AOs::MainMgr_setConn} ..................................................*/
+void MainMgr_setConn(comm* comm);
 
 
 /**< "opaque" pointer to the Active Object */
