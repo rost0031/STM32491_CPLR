@@ -72,25 +72,50 @@ void runMainMgr( void )
 /* Private classes -----------------------------------------------------------*/
 
 /******************************************************************************/
-void ClientApi::setNewConnection(
+ClientError_t ClientApi::setNewConnection(
       const char *ipAddress,
       const char *pRemPort,
       const char *pLocPort
 )
 {
-   Comm* my_comm = new Comm(this->m_pLog, ipAddress, pRemPort, pLocPort);
+   Comm* my_comm;
+   try {
+      my_comm = new Comm(this->m_pLog, ipAddress, pRemPort, pLocPort);
+   } catch  ( exception &e ) {
+      ERR_printf(
+            this->m_pLog,"Exception trying to open UDP connection: %s",
+            e.what()
+      );
+      return( CLI_ERR_UDP_EXCEPTION_CAUGHT );
+   }
+
    MainMgr_setConn(my_comm);
+
+   return( CLI_ERR_NONE );
 }
 
 /******************************************************************************/
-void ClientApi::setNewConnection(
+ClientError_t ClientApi::setNewConnection(
       const char *dev_name,
       int baud_rate,
       bool bDFUSEComm
 )
 {
-   Comm* my_comm = new Comm(this->m_pLog, dev_name, baud_rate, bDFUSEComm);
+   Comm* my_comm;
+   try {
+      my_comm = new Comm(this->m_pLog, dev_name, baud_rate, bDFUSEComm);
+   } catch ( exception &e ) {
+      ERR_printf(
+            this->m_pLog,
+            "Exception trying to open serial connection: %s",
+            e.what()
+      );
+      return( CLI_ERR_SER_EXCEPTION_CAUGHT );
+   }
+
    MainMgr_setConn(my_comm);
+
+   return( CLI_ERR_NONE );
 }
 
 /******************************************************************************/
@@ -168,7 +193,12 @@ ClientApi::ClientApi(
 {
    this->setLogging(log);
    this->qfSetup();                               /* Initialize QF framework. */
-   this->setNewConnection(dev_name, baud_rate, bDFUSEComm);
+   try {
+      this->setNewConnection(dev_name, baud_rate, bDFUSEComm);
+   } catch ( exception &e ) {
+      ERR_printf(this->m_pLog,"Exception trying to open serial connection: %s", e.what());
+      throw( &e );
+   }
 }
 
 /******************************************************************************/

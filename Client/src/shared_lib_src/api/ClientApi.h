@@ -79,7 +79,7 @@ public:
     * @param[in]   *pLocPort: pointer to the local port number string.
     * @return  None.
     */
-   void setNewConnection(
+   ClientError_t setNewConnection(
          const char *ipAddress,
          const char *pRemPort,
          const char *pLocPort
@@ -95,7 +95,7 @@ public:
     *   @arg  FALSE: set up serial for regular serial comms.
     * @return  None.
     */
-   void setNewConnection(
+   ClientError_t setNewConnection(
          const char *dev_name,
          int baud_rate,
          bool bDFUSEComm

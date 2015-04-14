@@ -87,14 +87,12 @@ void BSP_randomSeed(uint32_t seed)
 /******************************************************************************/
 void QF_onStartup(void)
 {
-
     QF_setTickRate(BSP_TICKS_PER_SEC);         /* set the desired tick rate */
 }
 
 /******************************************************************************/
 void QF_onCleanup(void)
 {
-    printf("\nBye! Bye!\n");
     QS_EXIT();                                    /* perfomr the QS cleanup */
 }
 

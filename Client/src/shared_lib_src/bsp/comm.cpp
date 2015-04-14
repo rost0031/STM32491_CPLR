@@ -1,5 +1,5 @@
 /**
- * @file    comm.h
+ * @file    comm.cpp
  * Wrapper class that abstracts ethernet and serial (and possibly other future)
  * communication channels.
  *

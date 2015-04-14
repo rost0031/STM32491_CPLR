@@ -95,20 +95,33 @@ int main(int argc, char *argv[])
       EXIT_LOG_FLUSH(1);
    }
 
-   /* Set up the client api and initialize its logging */
-   ClientApi *client;
+   /* 5. Set up the client api and initialize its logging.  Users can call the
+    * constructor that also sets up the communication at the same time but if
+    * something goes wrong and an exception is thrown, the program will log it
+    * but attempt to continue since exceptions can't be thrown across dll
+    * boundaries. This way is safer because it allows for explicit error
+    * checking via error codes from class functions. */
+   ClientApi *client = new ClientApi( pLogStub );
 
+   /* 6. Set the connection.  This is done separately so that the ClientApi
+    * class can catch any exceptions that happen and convert them to error
+    * codes that the functions can return (and constructors can't). */
    if( cmdline->isConnEth() ) {
       string ipAddr, remPort, locPort;
       cmdline->getEthConnOpts(ipAddr, remPort, locPort);
       DBG_out << "Got " << ipAddr << ", " << remPort << ", " << locPort;
-      client = new ClientApi(
-            pLogStub,
+
+      status = client->setNewConnection(
             ipAddr.c_str(),
             remPort.c_str(),
             locPort.c_str()
       );
 
+      if ( CLI_ERR_NONE != status ) {
+         ERR_out << "Unable to open UDP connection. Error: 0x"
+               << setfill('0') << setw(8) << hex << status;
+         EXIT_LOG_FLUSH(1);
+      }
    } else if ( cmdline->isConnSer() ) {
       string serDev;
       int baudRate = 0;
@@ -116,22 +129,22 @@ int main(int argc, char *argv[])
       cmdline->getSerConnOpts(serDev, &baudRate, &dfuseFlag);
       DBG_out << "Got " << serDev << ", " << baudRate << ", " << dfuseFlag;
 
-      client = new ClientApi(
-            pLogStub,
+      status = client->setNewConnection(
             serDev.c_str(),
             baudRate,
             dfuseFlag
       );
 
-   } else {
-      ERR_out << "Neither serial nor ethernet connection chosen. Exiting";
-      EXIT_LOG_FLUSH(1);
+      if ( CLI_ERR_NONE != status ) {
+         ERR_out << "Unable to open Serial connection. Error: 0x"
+               << setfill('0') << setw(8) << hex << status;
+         CON_print("!!! Make sure you're using the correct serial port and nothing else is using it !!!");
+         EXIT_LOG_FLUSH(1);
+      }
    }
 
-
-   /* Set up the client api and initialize its logging */
-//   ClientApi *client = new ClientApi(pLogStub);
-
+   /* 7. Start the client.  This starts job processing and can now accept
+    * requests for work to be done as well as the responses from the DC3. */
    client->run(); /* Set the client running */
 
    Job *job = new Job(pLogStub);
