@@ -10,8 +10,6 @@
 
 /* Includes ------------------------------------------------------------------*/
 #include "Job.h"
-#include "serial.h"
-#include "eth.h"
 #include "LogHelper.h"
 
 /* Namespaces ----------------------------------------------------------------*/
@@ -37,7 +35,7 @@ Job::Job( void ) :
       m_pLog(NULL)
 {
 //   Serial *serial = new Serial("/dev/ttyS1", 115200, false );
-   Eth *eth = new Eth( "127.0.0.1", "1502", "7777" );
+//   Eth *eth = new Eth( "127.0.0.1", "1502", "7777" );
 
 }
 

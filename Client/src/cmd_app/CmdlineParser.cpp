@@ -26,15 +26,8 @@ MODULE_NAME( MODULE_EXT );
 /* Private variables and Local objects ---------------------------------------*/
 /* Private function prototypes -----------------------------------------------*/
 /* Private functions ---------------------------------------------------------*/
-
-
-
 /* Private class prototypes --------------------------------------------------*/
-
 /* Private class methods -----------------------------------------------------*/
-
-
-
 /******************************************************************************/
 int CmdlineParser::parse( int argc, char** argv )
 {

@@ -16,15 +16,16 @@
 /* Includes ------------------------------------------------------------------*/
 #include "LogStub.h"
 #include "serial.h"
-#include "eth.h"
+#include "udp.h"
 
 /* Exported defines ----------------------------------------------------------*/
 /* Exported macros -----------------------------------------------------------*/
 /* Exported types ------------------------------------------------------------*/
 /* Exported functions --------------------------------------------------------*/
 /* Exported classes ----------------------------------------------------------*/
+
 /**
-* @class Job
+* @class comm
 *
 * @brief This class abstracts various communication channels
 *
@@ -32,11 +33,11 @@
 * possibly others) in with an interface that provides the same interface to all
 * the different ways to access the FW.
 */
-class comm {
+class Comm {
 
 private:
    LogStub *m_pLog; /**< Pointer to LogStub instance used for logging */
-   Eth     *m_pEth; /**< Pointer to an Eth object */
+   Udp     *m_pUdp; /**< Pointer to an Udp object */
    Serial  *m_pSer; /**< Pointer to a Serial object */
 
 public:
@@ -64,7 +65,7 @@ public:
      *
      * @return None.
      */
-    comm(
+    Comm(
           LogStub *log,
           const char *dev_name,
           int baud_rate,
@@ -81,7 +82,7 @@ public:
      *
      * @return None.
      */
-    comm(
+    Comm(
           LogStub *log,
           const char *ipAddress,
           const char *pRemPort,
@@ -91,8 +92,7 @@ public:
     /**
      * @brief  Default destructor.
      */
-    ~comm( void );
-
+    ~Comm( void );
 };
 
 #endif                                                             /* COMM_H_ */

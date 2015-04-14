@@ -1,19 +1,20 @@
-// $Id$
 /**
- * @file    eth.h
- * Declarations of functions needed for a "server" for udp communication
+ * @file    udp.h
+ * Class that implements boost asio asynchronous, non-blocking UDP IO.
  *
  * @date    08/23/2013
  * @author  Harry Rostovtsev
  * @email   harry_rostovtsev@datacard.com
  * Copyright (C) 2013 Datacard. All rights reserved.
  */
-// $Log$
+
+/* Define to prevent recursive inclusion -------------------------------------*/
 #ifndef UDP_H
 #define UDP_H
 
 /* Includes ------------------------------------------------------------------*/
 #include "ClientShared.h"
+#include "MainMgrDefs.h"
 #include <unistd.h>
 #include <iostream>
 #include <boost/asio.hpp>
@@ -22,13 +23,16 @@
 #include <boost/bind.hpp>
 #include <boost/thread.hpp>
 
+/* Exported defines ----------------------------------------------------------*/
+/* Exported macros -----------------------------------------------------------*/
+/* Exported types ------------------------------------------------------------*/
+/* Exported functions --------------------------------------------------------*/
+/* Exported classes ----------------------------------------------------------*/
 /**
- * @class Eth
- *
- * @brief This class handles sending and receiving data over UDP for a
- * any Redwood clients.  It SHOULD be OS independent since it uses Boost.
+ * @class Udp
+ * @brief This class handles sending and receiving data over UDP.
  */
-class Eth {
+class Udp {
 
 private:
 
@@ -41,7 +45,7 @@ private:
     boost::asio::ip::udp::endpoint m_loc_endpoint; /**< internal instance of a local UDP endpoint */
 
     /**
-     * Handler for the read_some function.
+     * @brief Handler for the read_some function.
      *
      * @param[in|out]   error: Error that can occur during a read
      * @param[in|out]   bytes_transferred: number of bytes transferred
@@ -54,7 +58,7 @@ private:
     );
 
     /**
-     * This method initiates async data read from the UDP connection and
+     * @brief This method initiates async data read from the UDP connection and
      * launches the read_handler() when data is there.
      *
      * @param       None.
@@ -63,7 +67,7 @@ private:
     void read_some( void );
 
     /**
-     * Handler for the write_some() method
+     * @brief Handler for the write_some() method
      *
      * @param[in|out]   error: Error that can occur during a write
      * @param[in|out]   bytes_transferred: number of bytes transferred
@@ -77,7 +81,7 @@ private:
 
 public:
     /**
-     * Write some data asynchronously to the UDP connection
+     * @brief Write some data asynchronously to the UDP connection
      *
      * @param[in]   message: pointer to the buffer containing the data to write.
      * @param[in]   len: number of bytes in the buffer that need to be sent.
@@ -87,7 +91,7 @@ public:
     void write_some( const char* message, uint16_t len );
 
     /**
-     * Constructor that sets up the upd ethernet socket
+     * @brief Constructor that sets up the upd ethernet socket
      *
      * @param[in]   *ipAddress: pointer to the remote IP address string.
      * @param[in]   *pRemPort: pointer to the remote port number string.
@@ -95,15 +99,15 @@ public:
      *
      * @return      None.
      */
-    Eth( const char *ipAddress, const char *pRemPort, const char *pLocPort );
+    Udp( const char *ipAddress, const char *pRemPort, const char *pLocPort );
 
     /**
-     * Destructor (default) that closes the UDP socket
+     * @brief Destructor (default) that closes the UDP socket
      *
      * @param       None.
      * @return      None.
      */
-    ~Eth( void );
+    ~Udp( void );
 };
 
 #endif                                                               /* UDP_H */

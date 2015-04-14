@@ -39,7 +39,7 @@ using namespace std;
 std::map<ModuleId_t, std::string> m_ModuleId = boost::assign::map_list_of
       ( MODULE_GEN   , "Gen" )
       ( MODULE_SER   , "Ser" )
-      ( MODULE_ETH   , "Eth" )
+      ( MODULE_UDP   , "Udp" )
       ( MODULE_MGR   , "Mgr" )
       ( MODULE_LOG   , "Log" )
       ( MODULE_JOB   , "Job" )

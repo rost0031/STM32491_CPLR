@@ -174,7 +174,7 @@ C_SRCS                      = cdecode.c \
 # C++ source files
 CPP_SRCS                    = bsp.cpp \
                               serial.cpp \
-                              eth.cpp \
+                              udp.cpp \
                               comm.cpp \
                               fwLdr.cpp \
                               ClientApi.cpp \

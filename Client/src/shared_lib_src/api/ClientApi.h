@@ -123,6 +123,13 @@ public:
    void setLogging( LogStub *log );
 
    /**
+    * @brief   Stops the client api state machine
+    * @param   None.
+    * @return: None.
+    */
+   void stop( void );
+
+   /**
     * Constructor that sets up logging and an ethernet connection.
     * @param [in]  *log: LogStub pointer to a LogStub instance.
     * @param[in]   *ipAddress: pointer to the remote IP address string.

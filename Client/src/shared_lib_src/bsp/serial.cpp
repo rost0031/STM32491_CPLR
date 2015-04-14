@@ -1,24 +1,34 @@
-// $Id$
 /**
  * @file    serial.cpp
- * Definitions of functions needed for a "server" for ethernet and
- * serial communications
+ * Class that implements boost asio asynchronous, non-blocking serial IO.
  *
  * @date    02/18/2013
  * @author  Harry Rostovtsev
  * @email   harry_rostovtsev@datacard.com
  * Copyright (C) 2013 Datacard. All rights reserved.
  */
-// $Log$
 
+/* Includes ------------------------------------------------------------------*/
 #include "serial.h"
 #include "base64_wrapper.h"
 #include <iomanip>
 #include <sstream>
+#include "LogHelper.h"
 
+/* Namespaces ----------------------------------------------------------------*/
 using namespace std;
 
-extern Serial *serial;
+/* Compile-time called macros ------------------------------------------------*/
+MODULE_NAME( MODULE_SER );
+
+/* Private typedefs ----------------------------------------------------------*/
+/* Private defines -----------------------------------------------------------*/
+/* Private macros ------------------------------------------------------------*/
+/* Private variables and Local objects ---------------------------------------*/
+/* Private function prototypes -----------------------------------------------*/
+/* Private functions ---------------------------------------------------------*/
+/* Private class prototypes --------------------------------------------------*/
+/* Private class methods -----------------------------------------------------*/
 
 /******************************************************************************/
 void Serial::read_handler(
@@ -26,7 +36,6 @@ void Serial::read_handler(
       size_t bytes_transferred
 )
 {
-
     std::istream is(&serial_stream_);
     std::string line;
     std::getline(is, line);
@@ -138,9 +147,9 @@ void Serial::read_some_DFUSE( void )
 
 /******************************************************************************/
 void Serial::write_handler(
-                              const boost::system::error_code& error,
-                              size_t bytes_transferred
-                          )
+      const boost::system::error_code& error,
+      size_t bytes_transferred
+)
 {
    write_msg_[bytes_transferred]=0;
 //    std::cout << bytes_transferred << " bytes written: " << write_msg_ << std::endl;
@@ -181,13 +190,7 @@ Serial::Serial(const char *dev_name, int baud_rate, bool bDFUSEComm) :
    bReadNDFUSEBytes = 0;
 
    /* Set the serial port options explicitly.  This isn't necessary in Linux or
-    * Cygwin but for some reason, Windows compi
-     * @param[in]   baud_rate: serial baud rate.
-     * @param[in]   bDFUSEComm: bool that specifies whether to set up serial
-     * for DFUSE or regular serial communication.
-     *   @arg  TRUE: set up serial for DFUSE
-     *   @arg  FALSE: set up serial for regular serial comms.
-     *les don't work if this isn't done.
+    * Cygwin but for some reason, Windows compiles don't work if this isn't done.
     * Either way, now that DFUSE serial is in the mix, the parity has to be set
     * differently depending on how the serial is being configured. */
    m_port.set_option( boost::asio::serial_port_base::character_size( 8 ) );
@@ -198,10 +201,18 @@ Serial::Serial(const char *dev_name, int baud_rate, bool bDFUSEComm) :
    /* These settings depend on whether we are running serial in "regular" or
     * DFUSE mode. */
    if ( bDFUSEComm ) {/* DFUSE specific setting and read function */
-      m_port.set_option( boost::asio::serial_port_base::parity(boost::asio::serial_port::parity::even ) );   // Even for regular serial
+      m_port.set_option(
+            boost::asio::serial_port_base::parity(
+                  boost::asio::serial_port::parity::even
+            )
+      );   // Even for regular serial
       read_some_DFUSE();
    } else {/* Regular serial specific setting and read function */
-      m_port.set_option( boost::asio::serial_port_base::parity(boost::asio::serial_port::parity::none ) );   // None for regular serial
+      m_port.set_option(
+            boost::asio::serial_port_base::parity(
+                  boost::asio::serial_port::parity::none
+            )
+      );   // None for regular serial
       read_some();
    }
 
@@ -214,3 +225,5 @@ Serial::~Serial( void )
 {
    m_port.close();
 }
+
+/******** Copyright (C) 2015 Datacard. All rights reserved *****END OF FILE****/

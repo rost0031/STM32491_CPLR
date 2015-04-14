@@ -74,8 +74,8 @@ typedef struct {
     /**< Local pointer to the logger instance */
     LogStub* m_pLog;
 
-    /**< Local pointer to the comm instance */
-    comm* m_pComm;
+    /**< Local pointer to the Comm instance */
+    Comm* m_pComm;
 } MainMgr;
 
 /* protected: */
@@ -141,7 +141,7 @@ void MainMgr_ctor(LogStub* log) {
  * @retval: none
  */
 /*${AOs::MainMgr_setConn} ..................................................*/
-void MainMgr_setConn(comm* comm) {
+void MainMgr_setConn(Comm* comm) {
     delete[] l_MainMgr.m_pComm; /* Remove old connection */
     l_MainMgr.m_pComm = comm;  /* Set new connection */
     DBG_printf(l_MainMgr.m_pLog,"Set new connection");
@@ -162,6 +162,9 @@ static QState MainMgr_initial(MainMgr * const me, QEvt const * const e) {
     QS_FUN_DICTIONARY(&QHsm_top);
     QS_FUN_DICTIONARY(&l_MainMgr_initial);
     QS_FUN_DICTIONARY(&l_MainMgr_Active);
+
+    QActive_subscribe((QActive *)me, EXIT_SIG);
+
     DBG_printf(me->m_pLog,"Started MainMgr AO");
     return Q_TRAN(&MainMgr_Active);
 }
@@ -196,6 +199,7 @@ static QState MainMgr_Active(MainMgr * const me, QEvt const * const e) {
         /* ${AOs::MainMgr::SM::Active::EXIT} */
         case EXIT_SIG: {
             me->errorCode = ((ExitEvt *)e)->errorCode;
+            DBG_printf(me->m_pLog,"Received exit");
             status_ = Q_TRAN(&MainMgr_CleanupBeforeExit);
             break;
         }
@@ -236,6 +240,7 @@ static QState MainMgr_CleanupBeforeExit(MainMgr * const me, QEvt const * const e
         /* ${AOs::MainMgr::SM::Active::CleanupBeforeExi~::EXIT} */
         case EXIT_SIG: {
             //exit( me->exit_code );
+            DBG_printf(me->m_pLog,"Calling QActive_stop");
             QActive_stop(AO_MainMgr);
             QF_stop();
             status_ = Q_HANDLED();

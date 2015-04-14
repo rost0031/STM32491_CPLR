@@ -31,8 +31,8 @@
    <attribute name="m_pLog" type="LogStub*" visibility="0x01" properties="0x00">
     <documentation>/**&lt; Local pointer to the logger instance */</documentation>
    </attribute>
-   <attribute name="m_pComm" type="comm*" visibility="0x01" properties="0x00">
-    <documentation>/**&lt; Local pointer to the comm instance */</documentation>
+   <attribute name="m_pComm" type="Comm*" visibility="0x01" properties="0x00">
+    <documentation>/**&lt; Local pointer to the Comm instance */</documentation>
    </attribute>
    <statechart>
     <initial target="../1">
@@ -40,6 +40,9 @@
 QS_FUN_DICTIONARY(&amp;QHsm_top);
 QS_FUN_DICTIONARY(&amp;l_MainMgr_initial);
 QS_FUN_DICTIONARY(&amp;l_MainMgr_Active);
+
+QActive_subscribe((QActive *)me, EXIT_SIG);
+
 DBG_printf(me-&gt;m_pLog,&quot;Started MainMgr AO&quot;);</action>
      <initial_glyph conn="1,2,4,3,11,2">
       <action box="0,-2,6,2"/>
@@ -65,7 +68,8 @@ EXIT(me-&gt;errorCode);</action>
       </tran_glyph>
      </tran>
      <tran trig="EXIT" target="../2">
-      <action>me-&gt;errorCode = ((ExitEvt *)e)-&gt;errorCode;</action>
+      <action>me-&gt;errorCode = ((ExitEvt *)e)-&gt;errorCode;
+DBG_printf(me-&gt;m_pLog,&quot;Received exit&quot;);</action>
       <tran_glyph conn="3,70,3,3,17">
        <action box="0,-2,6,2"/>
       </tran_glyph>
@@ -90,6 +94,7 @@ QTimeEvt_postIn(
 );</entry>
       <tran trig="EXIT">
        <action>//exit( me-&gt;exit_code );
+DBG_printf(me-&gt;m_pLog,&quot;Calling QActive_stop&quot;);
 QActive_stop(AO_MainMgr);
 QF_stop();</action>
        <tran_glyph conn="20,74,3,-1,16">
@@ -132,7 +137,7 @@ QTimeEvt_ctor(&amp;me-&gt;exitTimerEvt, EXIT_SIG);</code>
  * @param [in] *comm: comm pointer to a new connection object.
  * @retval: none
  */</documentation>
-   <parameter name="comm" type="comm*"/>
+   <parameter name="comm" type="Comm*"/>
    <code>delete[] l_MainMgr.m_pComm; /* Remove old connection */
 l_MainMgr.m_pComm = comm;  /* Set new connection */
 DBG_printf(l_MainMgr.m_pLog,&quot;Set new connection&quot;);
@@ -169,6 +174,7 @@ using namespace std;
 #include &quot;ClientShared.h&quot;
 #include &quot;LogStub.h&quot;
 #include &quot;comm.h&quot;
+#include &quot;MainMgrDefs.h&quot;
 
 /* Exported defines ----------------------------------------------------------*/
 /* Exported macros -----------------------------------------------------------*/

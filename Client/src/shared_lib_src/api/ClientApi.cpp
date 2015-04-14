@@ -11,10 +11,9 @@
 /* Includes ------------------------------------------------------------------*/
 #include "ClientApi.h"
 #include "Job.h"
-#include "serial.h"
-#include "eth.h"
 #include "ClientShared.h"
 #include "MainMgr.h"
+#include "MainMgrDefs.h"
 #include "cencode.h"
 #include "cdecode.h"
 #include "base64_wrapper.h"
@@ -79,7 +78,7 @@ void ClientApi::setNewConnection(
       const char *pLocPort
 )
 {
-   comm* my_comm = new comm(this->m_pLog, ipAddress, pRemPort, pLocPort);
+   Comm* my_comm = new Comm(this->m_pLog, ipAddress, pRemPort, pLocPort);
    MainMgr_setConn(my_comm);
 }
 
@@ -90,7 +89,7 @@ void ClientApi::setNewConnection(
       bool bDFUSEComm
 )
 {
-   comm* my_comm = new comm(this->m_pLog, dev_name, baud_rate, bDFUSEComm);
+   Comm* my_comm = new Comm(this->m_pLog, dev_name, baud_rate, bDFUSEComm);
    MainMgr_setConn(my_comm);
 }
 
@@ -135,6 +134,15 @@ void ClientApi::setLogging( LogStub *log )
 {
    this->m_pLog = log;
    DBG_printf(this->m_pLog,"Logging setup successful.");
+}
+
+/******************************************************************************/
+void ClientApi::stop( void )
+{
+   DBG_printf(this->m_pLog,"Stopping client.");
+   QEvt* evt = Q_NEW(QEvt, EXIT_SIG);
+   QF_PUBLISH((QEvt *)evt, AO_MainMgr);
+
 }
 
 /******************************************************************************/
@@ -208,9 +216,9 @@ ClientApi::ClientApi( LogStub *log ) :
 
    /* This also works.*/
    DBG_printf(this->m_pLog,"Attempting to init UDP eth...");
-   comm *m_comm;
+   Comm *m_comm;
    try {
-      m_comm = new comm(
+      m_comm = new Comm(
             this->m_pLog,
             "172.27.0.75",
             "1502",
@@ -230,4 +238,5 @@ ClientApi::~ClientApi(  )
 {
    delete[] this->m_pLog;
 }
+
 

@@ -95,16 +95,34 @@ int main(int argc, char *argv[])
       EXIT_LOG_FLUSH(1);
    }
 
+   /* Set up the client api and initialize its logging */
+   ClientApi *client;
+
    if( cmdline->isConnEth() ) {
       string ipAddr, remPort, locPort;
       cmdline->getEthConnOpts(ipAddr, remPort, locPort);
       DBG_out << "Got " << ipAddr << ", " << remPort << ", " << locPort;
+      client = new ClientApi(
+            pLogStub,
+            ipAddr.c_str(),
+            remPort.c_str(),
+            locPort.c_str()
+      );
+
    } else if ( cmdline->isConnSer() ) {
       string serDev;
       int baudRate = 0;
       bool dfuseFlag = true;
       cmdline->getSerConnOpts(serDev, &baudRate, &dfuseFlag);
       DBG_out << "Got " << serDev << ", " << baudRate << ", " << dfuseFlag;
+
+      client = new ClientApi(
+            pLogStub,
+            serDev.c_str(),
+            baudRate,
+            dfuseFlag
+      );
+
    } else {
       ERR_out << "Neither serial nor ethernet connection chosen. Exiting";
       EXIT_LOG_FLUSH(1);
@@ -112,15 +130,19 @@ int main(int argc, char *argv[])
 
 
    /* Set up the client api and initialize its logging */
-   ClientApi *client = new ClientApi(pLogStub);
+//   ClientApi *client = new ClientApi(pLogStub);
 
-   client->run();
+   client->run(); /* Set the client running */
 
    Job *job = new Job(pLogStub);
 
+   boost::this_thread::sleep(boost::posix_time::milliseconds(500));
+   client->stop();
    DBG_out<< "Waiting for MainMgr AO to finish";
+   boost::this_thread::sleep(boost::posix_time::milliseconds(500));
    client->waitForDone();
 
+   DBG_out<< "Exiting normally";
    EXIT_LOG_FLUSH(0);
 }
 

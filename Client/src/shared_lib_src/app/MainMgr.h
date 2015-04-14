@@ -43,6 +43,7 @@ using namespace std;
 #include "ClientShared.h"
 #include "LogStub.h"
 #include "comm.h"
+#include "MainMgrDefs.h"
 
 /* Exported defines ----------------------------------------------------------*/
 /* Exported macros -----------------------------------------------------------*/
@@ -82,7 +83,7 @@ void MainMgr_ctor(LogStub* log);
  * @retval: none
  */
 /*${AOs::MainMgr_setConn} ..................................................*/
-void MainMgr_setConn(comm* comm);
+void MainMgr_setConn(Comm* comm);
 
 
 /**< "opaque" pointer to the Active Object */

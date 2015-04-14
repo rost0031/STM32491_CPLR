@@ -1,19 +1,32 @@
-// $Id$
 /**
- * @file    eth.cpp
- * Definitions of functions needed for a "server" for ethernet udp communication
+ * @file    udp.cpp
+ * Class that implements boost asio asynchronous, non-blocking UDP IO.
  *
  * @date    08/23/2013
  * @author  Harry Rostovtsev
  * @email   harry_rostovtsev@datacard.com
  * Copyright (C) 2013 Datacard. All rights reserved.
  */
-// $Log$
 
-#include "eth.h"
+/* Includes ------------------------------------------------------------------*/
+#include "udp.h"
+#include "LogHelper.h"
+
+/* Namespaces ----------------------------------------------------------------*/
+/* Compile-time called macros ------------------------------------------------*/
+MODULE_NAME( MODULE_UDP );
+
+/* Private typedefs ----------------------------------------------------------*/
+/* Private defines -----------------------------------------------------------*/
+/* Private macros ------------------------------------------------------------*/
+/* Private variables and Local objects ---------------------------------------*/
+/* Private function prototypes -----------------------------------------------*/
+/* Private functions ---------------------------------------------------------*/
+/* Private class prototypes --------------------------------------------------*/
+/* Private class methods -----------------------------------------------------*/
 
 /******************************************************************************/
-void Eth::read_handler(
+void Udp::read_handler(
       const boost::system::error_code& error,
       size_t bytes_transferred
 )
@@ -38,13 +51,13 @@ void Eth::read_handler(
 }
 
 /******************************************************************************/
-void Eth::read_some( void )
+void Udp::read_some( void )
 {
    m_socket.async_receive_from(
          boost::asio::buffer(read_msg_, CB_MAX_MSG_LEN),
          m_loc_endpoint,
          boost::bind(
-               &Eth::read_handler,
+               &Udp::read_handler,
                this,
                boost::asio::placeholders::error,
                boost::asio::placeholders::bytes_transferred
@@ -53,7 +66,7 @@ void Eth::read_some( void )
 }
 
 /******************************************************************************/
-void Eth::write_handler(
+void Udp::write_handler(
       const boost::system::error_code& error,
       size_t bytes_transferred
 )
@@ -67,14 +80,14 @@ void Eth::write_handler(
 }
 
 /******************************************************************************/
-void Eth::write_some(const char* message, uint16_t len)
+void Udp::write_some(const char* message, uint16_t len)
 {
    memcpy(write_msg_, message, len);
    m_socket.async_send_to(
          boost::asio::buffer( write_msg_, len ),
          m_rem_endpoint,
          boost::bind(
-               &Eth::write_handler,
+               &Udp::write_handler,
                this,
                boost::asio::placeholders::error,
                boost::asio::placeholders::bytes_transferred
@@ -83,7 +96,7 @@ void Eth::write_some(const char* message, uint16_t len)
 }
 
 /******************************************************************************/
-Eth::Eth( const char *ipAddress, const char *pRemPort, const char *pLocPort )
+Udp::Udp( const char *ipAddress, const char *pRemPort, const char *pLocPort )
    : m_io(),
      m_socket( m_io ),
      m_rem_endpoint(boost::asio::ip::address::from_string(ipAddress), atoi(pRemPort)),
@@ -111,7 +124,7 @@ Eth::Eth( const char *ipAddress, const char *pRemPort, const char *pLocPort )
 }
 
 /******************************************************************************/
-Eth::~Eth(  )
+Udp::~Udp(  )
 {
    m_socket.close();
 }

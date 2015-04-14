@@ -1,55 +1,62 @@
-// $Id$
 /**
  * @file    serial.h
- * Declarations of functions needed for a "server" for ethernet and
- * serial communications
+ * Class that implements boost asio asynchronous, non-blocking serial IO.
  *
  * @date    02/18/2013
  * @author  Harry Rostovtsev
  * @email   harry_rostovtsev@datacard.com
  * Copyright (C) 2013 Datacard. All rights reserved.
  */
-// $Log$
 
-
+/* Define to prevent recursive inclusion -------------------------------------*/
 #ifndef SERIAL_H
 #define SERIAL_H
 
 /* Includes ------------------------------------------------------------------*/
 #include "ClientShared.h"
+#include "MainMgrDefs.h"
 #include <unistd.h>
 #include <iostream>
-#include "boost/asio.hpp"
-#include "boost/asio/serial_port.hpp"
-#include "boost/system/error_code.hpp"
-#include "boost/system/system_error.hpp"
-#include "boost/bind.hpp"
-#include "boost/thread.hpp"
+#include <boost/asio.hpp>
+#include <boost/asio/serial_port.hpp>
+#include <boost/system/error_code.hpp>
+#include <boost/system/system_error.hpp>
+#include <boost/bind.hpp>
+#include <boost/thread.hpp>
 #include "dfuse.h"
+
+/* Exported defines ----------------------------------------------------------*/
+/* Exported macros -----------------------------------------------------------*/
+/* Exported types ------------------------------------------------------------*/
+/* Exported functions --------------------------------------------------------*/
+/* Exported classes ----------------------------------------------------------*/
 
 /**
  * @class Serial
  *
- * @brief This class handles sending and receiving data over serial for a
- * any Redwood clients.  It SHOULD be OS independent since it uses Boost.
+ * @brief This class handles sending and receiving data over serial.
  */
 class Serial {
 
 private:
-    char read_msg_[CB_MAX_MSG_LEN];/**< buffer to hold incoming msgs */
-    char write_msg_[CB_MAX_MSG_LEN];/**< buffer to hold msgs being sent */
+    char read_msg_[CB_MAX_MSG_LEN];         /**< buffer to hold incoming msgs */
+    char write_msg_[CB_MAX_MSG_LEN];      /**< buffer to hold msgs being sent */
 
-    uint8_t bReadNDFUSEBytes; /**< This variable will hold how many bytes to
-    read on the DFUSE serial bus because ST is inconsistent about when they send
-    and don't send ACKs/NACKs.  Pretty much every command sends an ACK when it's
-    finished except for READ_MEM.  This variable needs to get set when sending
-    how many bytes to read (last step of the READ_MEM DFUSE cmd) so that this
-    class will know when to stop reading.  This variable is ignored when set to
-    0. */
-    boost::asio::streambuf serial_stream_;
+    uint8_t bReadNDFUSEBytes;    /**< This variable will hold how many bytes to
+                                    read on the DFUSE serial bus because ST is
+                                    inconsistent about when they send and don't
+                                    send ACKs/NACKs.  Pretty much every command
+                                    sends an ACK when it's finished except for
+                                    READ_MEM.  This variable needs to get set
+                                    when sending how many bytes to read (last
+                                    step of the READ_MEM DFUSE cmd) so that this
+                                    class will know when to stop reading. This
+                                    variable is ignored when set to 0. */
 
-    boost::asio::io_service m_io;/**< internal instance of boost's io_service  */
-    boost::asio::serial_port m_port;/**< internal instance of boost's serial port pointer */
+    boost::asio::streambuf serial_stream_;          /**< Serial stream buffer */
+
+    boost::asio::io_service m_io;                /**< instance of io_service  */
+    boost::asio::serial_port m_port;     /**< instance of serial port pointer */
 
     /**
      * Handler for the read_some function.
@@ -59,7 +66,10 @@ private:
      *
      * @return      None.
      */
-    void read_handler(  const boost::system::error_code& error, size_t bytes_transferred);
+    void read_handler(
+          const boost::system::error_code& error,
+          size_t bytes_transferred
+    );
 
     /**
      * This method initiates async data read from the serial port and launches
@@ -78,7 +88,10 @@ private:
      *
      * @return      None.
      */
-    void read_handler_DFUSE(  const boost::system::error_code& error, size_t bytes_transferred);
+    void read_handler_DFUSE(
+          const boost::system::error_code& error,
+          size_t bytes_transferred
+    );
 
     /**
      * This method initiates async data read DFUSE data from the serial port and
@@ -97,7 +110,10 @@ private:
      *
      * @return      None.
      */
-    void write_handler(  const boost::system::error_code& error, size_t bytes_transferred);
+    void write_handler(
+          const boost::system::error_code& error,
+          size_t bytes_transferred
+    );
 
 public:
     /**
@@ -154,7 +170,8 @@ class DFUSE_delim
 {
 public:
 
-   explicit DFUSE_delim( uint16_t nBytesToRead ) : _nBytesToRead( nBytesToRead ) {}
+   explicit DFUSE_delim( uint16_t nBytesToRead ) :
+      _nBytesToRead( nBytesToRead ) {}
 
    template <typename Iterator> std::pair<Iterator, bool> operator()(
          Iterator begin,

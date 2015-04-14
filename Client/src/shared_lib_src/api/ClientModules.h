@@ -69,7 +69,7 @@ extern "C" {
 typedef enum DBG_MODULES {
    MODULE_GEN   = 0x00000001, /**< General module debugging (main, bsp, etc) */
    MODULE_SER   = 0x00000002, /**< Serial module debugging. */
-   MODULE_ETH   = 0x00000004, /**< Ethernet module debugging. */
+   MODULE_UDP   = 0x00000004, /**< UDP ethernet module debugging. */
    MODULE_MGR   = 0x00000008, /**< MainMgr AO module debugging. */
    MODULE_LOG   = 0x00000010, /**< LogStub module */
    MODULE_JOB   = 0x00000020, /**< Job module */
