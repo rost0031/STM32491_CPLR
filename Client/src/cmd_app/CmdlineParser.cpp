@@ -22,48 +22,103 @@ MODULE_NAME( MODULE_EXT );
 
 /* Private typedefs ----------------------------------------------------------*/
 /* Private defines -----------------------------------------------------------*/
+#define CHARS_PER_LINE 80     /**<! Max characters to print per line for help */
+
 /* Private macros ------------------------------------------------------------*/
 /* Private variables and Local objects ---------------------------------------*/
 /* Private function prototypes -----------------------------------------------*/
 /* Private functions ---------------------------------------------------------*/
+/******************************************************************************/
+void printCmdSpecificHelp(  const std::string& description,
+                            const std::string& prototype,
+                            const std::string& example)
+{
+   stringstream ss;
+   ss << endl << endl;
+   for (uint8_t i=0; i < CHARS_PER_LINE; i++) {
+      ss << "=";
+   }
+   ss << endl;
+   ss << "Command Description: " << endl;
+   std::copy(description.begin(), description.end(),
+         ff_ostream_iterator(ss, "", CHARS_PER_LINE));
+   ss << endl << endl;
+   ss << "Command Prototype(s): " << endl;
+   std::copy(prototype.begin(), prototype.end(),
+         ff_ostream_iterator(ss, "", CHARS_PER_LINE));
+   ss << endl << endl;
+
+   ss << "Command Example(s): " << endl;
+   std::copy(example.begin(), example.end(),
+         ff_ostream_iterator(ss, "", CHARS_PER_LINE));
+   ss << endl;
+   for (uint8_t i=0; i < CHARS_PER_LINE; i++) {
+      ss << "=";
+   }
+   ss << endl;
+
+   CON_print(ss.str());
+
+   DBG_out << "printCmdSpecificHelp requested";
+}
 /* Private class prototypes --------------------------------------------------*/
 /* Private class methods -----------------------------------------------------*/
 /******************************************************************************/
 int CmdlineParser::parse( int argc, char** argv )
 {
+   std::string appName = argv[0];               /* Store the application name */
+   unsigned found = appName.find_last_of("/\\");
+   appName = appName.substr(found+1);
+
+   /* Strin vars to use for detailed help */
+   string description;
+   string prototype;
+   string example;
+
    po::options_description desc("Allowed options");
 
-   desc.add_options()
-         ("help,h", "produce help message")
-         ("version,v", "print version of client") // TODO: not implemented
-         ("mode,m", "Override the default interactive mode and allow single cmd operation")
+      try {
+      desc.add_options()
+            /* Common options always required */
+            ("help,h", "produce help message")
+            ("version,v", "print version of client") // TODO: not implemented
+            ("mode,m", "Override the default interactive mode and allow single cmd operation")
 
-         ("ip_address,i", po::value<string>(&m_ip_address),
-            "Set remote IP address to connect to (Required if serial_dev not set)")
+            ("ip_address,i", po::value<string>(&m_ip_address),
+               "Set remote IP address to connect to (Required if serial_dev not set)")
 
-         ("remote_port,p", po::value<string>(&m_remote_port)->default_value("1502"),
-            "Set remote port number")
+            ("remote_port,p", po::value<string>(&m_remote_port)->default_value("1502"),
+               "Set remote port number")
 
-         ("local_port,l", po::value<string>(&m_local_port)->default_value("50249"),
-            "Set local port number")
+            ("local_port,l", po::value<string>(&m_local_port)->default_value("50249"),
+               "Set local port number")
 
-         ("serial_dev,s", po::value<string>(&m_serial_dev),
-            "Set the name of the serial device to connect to instead of "
-            "using an IP connection (in the form of /dev/ttySx on cygwin/linux, "
-            "and COMX in windows. Required if remote_ip_address not set)")
+            ("serial_dev,s", po::value<string>(&m_serial_dev),
+               "Set the name of the serial device to connect to instead of "
+               "using an IP connection (in the form of /dev/ttySx on cygwin/linux, "
+               "and COMX in windows. Required if remote_ip_address not set)")
 
-         ("serial_baud,b", po::value<int>(&m_serial_baud)->default_value(115200),
-            "Set the baud rate of the serial device")
-   ; // End of add_options()
+            ("serial_baud,b", po::value<int>(&m_serial_baud)->default_value(115200),
+               "Set the baud rate of the serial device")
 
-   DBG_out << "Parsing cmdline arguments...";
-   /* parse regular options */
+            /* Options only required if running in non-interactive mode */
+            ("flash_fw", po::value<vector<string>>(&m_command)->multitoken(),
+               "Flash FW on the DC3"
+               "Example: '--flash_fw file=../some/path/DC3Appl.bin fw=DC3Appl'"
+               "Example: '--flash_fw file=../some/path/DC3Boot.bin fw=DC3Boot'")
 
-   po::parsed_options parsed = po::parse_command_line(argc, argv, desc);
-   po::store( parsed, m_vm);
-   po::notify(m_vm);
+            ("get_mode", po::value<vector<string>>(&m_command)->zero_tokens(),
+               "Get current operating mode of the DC3. (Bootloader or Application) "
+               "Example: '--get_mode' ")
+      ; // End of add_options()
 
-   try {
+      DBG_out << "Parsing cmdline arguments...";
+      /* parse regular options */
+
+      po::parsed_options parsed = po::parse_command_line(argc, argv, desc);
+      po::store( parsed, m_vm);
+      po::notify(m_vm);
+
       /* Check for general help request first */
       if (m_vm.count("help")) {
          stringstream ss;
@@ -83,12 +138,53 @@ int CmdlineParser::parse( int argc, char** argv )
          EXIT_LOG_FLUSH(0);
       }
 
-      /* Allow user to override the interactive (menu) mode and run in single
-       * cmd mode.  This is for scripting purposes */
-      if ( m_vm.count("mode") ) {
-         this->m_bInteractiveRunMode = false;
-         DBG_out << "Overriding interactive mode and running in single cmd mode";
+
+      /* Clear out the argument map */
+      m_parsed_args.clear();
+
+      /* Figure out which command is being specified */
+      if (m_vm.count("get_mode")) {
+         m_parsed_cmd = "get_mode";
+         DBG_out << "get_mode";
+
+         for(uint8_t i = 0; i < m_vm["get_mode"].as< vector<string> >().size(); i++) {
+            DBG_out << m_vm["get_mode"].as< vector<string> >()[i];
+            if (std::string::npos != m_vm["get_mode"].as< vector<string> >()[i].find("help")) {
+               DBG_out << "get_mode help requested";
+               /* This is a dumb workaround for multitoken since the --help switch appears as one of the
+                * arguments.  You have to do this anytime you are not using a zero_tokens() in the cmdline*/
+               description = m_parsed_cmd + " command sends a request to the "
+                     "DC3 to get its current operating mode.  The "
+                     "possible return values are ";
+               prototype = appName + " [connection options] --" + m_parsed_cmd;
+               example = appName + " -i 192.168.1.75 --" + m_parsed_cmd;
+
+               printCmdSpecificHelp(description, prototype, example);
+               EXIT_LOG_FLUSH(0);
+            }
+         }
+
+
+
+
+
+
+//         /* Check if command specific help was requested */
+//         if (m_vm.count("help")) {
+//            DBG_out << "get_mode help requested";
+//            string description = m_parsed_cmd + " command sends a request to the "
+//                  "DC3 to get its current operating mode.  The "
+//                  "possible return values are ";
+//            string prototype = appName + " [connection options] --" + m_parsed_cmd;
+//            string example = appName + " -i 192.168.1.75 --" + m_parsed_cmd;
+//
+//            printCmdSpecificHelp(description, prototype, example);
+//            EXIT_LOG_FLUSH(0);
+//         }
+
       }
+
+
 
       /* Serial and IP connections are mutually exclusive so treat them as such
        * on the cmdline. */
@@ -134,8 +230,16 @@ int CmdlineParser::parse( int argc, char** argv )
                << this->m_ip_address << " to attempt connect connection.";
       }
 
-      /* Clear out the argument map */
-      m_parsed_args.clear();
+
+      /* Allow user to override the interactive (menu) mode and run in single
+       * cmd mode.  This is for scripting purposes */
+      if ( m_vm.count("mode") ) {
+         this->m_bInteractiveRunMode = false;
+         DBG_out << "Overriding interactive mode and running in single cmd mode";
+
+      }
+
+
 
    } catch(po::error& e) {
       string error = e.what();
