@@ -67,11 +67,19 @@ EXIT(me-&gt;errorCode);</action>
        <action box="-14,-2,14,2"/>
       </tran_glyph>
      </tran>
-     <tran trig="EXIT" target="../2">
+     <tran trig="EXIT" target="../3">
       <action>me-&gt;errorCode = ((ExitEvt *)e)-&gt;errorCode;
 DBG_printf(me-&gt;m_pLog,&quot;Received exit&quot;);</action>
       <tran_glyph conn="3,70,3,3,17">
        <action box="0,-2,6,2"/>
+      </tran_glyph>
+     </tran>
+     <tran trig="TEST_JOB">
+      <action>DBG_printf(me-&gt;m_pLog,&quot;Received TEST_JOB, posting response to the raw queue&quot;);
+QEvt* evt = Q_NEW(QEvt, TEST_JOB_DONE_SIG);
+QEQueue_postFIFO(&amp;cliQueue, (QEvt *)evt);</action>
+      <tran_glyph conn="3,62,3,-1,18">
+       <action box="0,-2,10,2"/>
       </tran_glyph>
      </tran>
      <state name="CleanupBeforeExit">
@@ -182,6 +190,8 @@ using namespace std;
 $declare(Events)
 
 /* Exported constants --------------------------------------------------------*/
+extern QEQueue cliQueue;      /**&lt; raw queue to talk between ClientApi and AO */
+
 /* Exported functions --------------------------------------------------------*/
 $declare(AOs::MainMgr_ctor)
 $declare(AOs::MainMgr_setConn)
@@ -227,8 +237,8 @@ MODULE_NAME( MODULE_MGR );
 #define EXIT(error_code)                              \
 do {                                                  \
         ExitEvt *exEv = Q_NEW(ExitEvt, EXIT_SIG);     \
-        exEv-&gt;errorCode = error_code;             \
-        QF_PUBLISH((QEvent *)exEv, AO_MainMgr);  \
+        exEv-&gt;errorCode = error_code;                 \
+        QF_PUBLISH((QEvent *)exEv, AO_MainMgr);       \
    } while (0)
 
 /* Private typedefs ----------------------------------------------------------*/
@@ -239,6 +249,7 @@ $declare(AOs::MainMgr)
 /* Private macros ------------------------------------------------------------*/
 /* Private variables and Local objects ---------------------------------------*/
 static MainMgr l_MainMgr;            /* the single instance of the MainMgr AO */
+QEQueue cliQueue;        /**&lt; raw queue to talk between ClientApi and AO */
 
 /* Global-scope objects ------------------------------------------------------*/
 QActive * const AO_MainMgr = (QActive *)&amp;l_MainMgr;    /* &quot;opaque&quot; AO pointer */

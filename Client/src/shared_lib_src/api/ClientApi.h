@@ -113,7 +113,7 @@ public:
     * @param   None.
     * @return  None.
     */
-   void waitForDone( void );
+   void waitForStop( void );
 
    /**
     * @brief   Sets a new LogStub pointer.
@@ -128,6 +128,16 @@ public:
     * @return: None.
     */
    void stop( void );
+
+   /**
+    * @brief   Starts a new job
+    * @param   None.
+    * @return  None.
+    */
+   void startJob( void );
+
+   bool pollForJobDone( void );
+   void waitForJobDone( void );
 
    /**
     * Constructor that sets up logging and an ethernet connection.

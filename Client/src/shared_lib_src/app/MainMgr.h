@@ -63,6 +63,8 @@ typedef struct {
 
 
 /* Exported constants --------------------------------------------------------*/
+extern QEQueue cliQueue;      /**< raw queue to talk between ClientApi and AO */
+
 /* Exported functions --------------------------------------------------------*/
 
 /**

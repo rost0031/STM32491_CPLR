@@ -22,6 +22,7 @@
 #include "CBSharedMsgTypes.h"
 #include "qf_port.h"
 #include "comm.h"
+#include <boost/thread/thread.hpp>
 
 /* Namespaces ----------------------------------------------------------------*/
 using namespace std;
@@ -45,7 +46,9 @@ static union MediumEvents {
 /* Private defines -----------------------------------------------------------*/
 /* Private macros ------------------------------------------------------------*/
 /* Private variables and Local objects ---------------------------------------*/
-static QEvent const *l_MainMgrQueueSto[10];
+static QEvt const *l_MainMgrQueueSto[10];
+static QEvt const *l_cliQueueSto[10]; /**< Storage for raw QE queue for
+                                                 communicating with ClientApi */
 static QSubscrList l_subscrSto[MAX_PUB_SIG];
 
 /* Private function prototypes -----------------------------------------------*/
@@ -137,6 +140,9 @@ void ClientApi::qfSetup( void )
    /* initialize event pools... */
    QF_poolInit(l_smlPoolSto, sizeof(l_smlPoolSto), sizeof(l_smlPoolSto[0]));
    QF_poolInit(l_medPoolSto, sizeof(l_medPoolSto), sizeof(l_medPoolSto[0]));
+
+   /* initialize the raw queues */
+   QEQueue_init(&cliQueue, l_cliQueueSto, Q_DIM(l_cliQueueSto));
 }
 
 /******************************************************************************/
@@ -147,7 +153,7 @@ void ClientApi::run( void )
 }
 
 /******************************************************************************/
-void ClientApi::waitForDone( void )
+void ClientApi::waitForStop( void )
 {
    DBG_printf(this->m_pLog,"Waiting for MainMgr to be finished.");
    this->m_workerThread.join();
@@ -169,6 +175,58 @@ void ClientApi::stop( void )
    QF_PUBLISH((QEvt *)evt, AO_MainMgr);
 
 }
+
+/******************************************************************************/
+void ClientApi::startJob( void )
+{
+   DBG_printf(this->m_pLog,"Starting job.");
+   /* Create the event and directly post it to the right AO. */
+   QEvt* evt = Q_NEW(QEvt, TEST_JOB_SIG);
+   QACTIVE_POST(AO_MainMgr, (QEvt *)(evt), AO_MainMgr);
+}
+
+/******************************************************************************/
+bool ClientApi::pollForJobDone( void )
+{
+   /* Check if there's data in the queue and process it if there. */
+   QEvt const *evt = QEQueue_get(&cliQueue);
+   if ( evt != (QEvt *)0 ) { /* Check whether an event is present in queue */
+
+
+      DBG_printf(this->m_pLog,"Job finish found in queue.");
+
+      switch( evt->sig ) {        /* Identify the event by its signal enum */
+         case TEST_JOB_DONE_SIG:
+            break;
+         default:
+            break;
+      }
+
+
+      QF_gc(evt); /* !!! Don't forget to garbage collect the event after
+                        processing the event.  After this, any data to which
+                        this pointer points to may not be valid and should not
+                        be referenced. */
+      return true;
+   } else {
+      return false;
+   }
+}
+
+/******************************************************************************/
+void ClientApi::waitForJobDone( void )
+{
+   DBG_printf(this->m_pLog,"Waiting for job to finish.");
+   for (;;) {                         /* Beginning of the thread forever loop */
+      if (pollForJobDone()) {
+         return;
+      }
+      /* Sleep for 5 ms*/
+      boost::this_thread::sleep(boost::posix_time::milliseconds(5));
+   }
+}
+
+
 
 /******************************************************************************/
 ClientApi::ClientApi(

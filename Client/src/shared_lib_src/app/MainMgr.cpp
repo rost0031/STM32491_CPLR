@@ -47,8 +47,8 @@ MODULE_NAME( MODULE_MGR );
 #define EXIT(error_code)                              \
 do {                                                  \
         ExitEvt *exEv = Q_NEW(ExitEvt, EXIT_SIG);     \
-        exEv->errorCode = error_code;             \
-        QF_PUBLISH((QEvent *)exEv, AO_MainMgr);  \
+        exEv->errorCode = error_code;                 \
+        QF_PUBLISH((QEvent *)exEv, AO_MainMgr);       \
    } while (0)
 
 /* Private typedefs ----------------------------------------------------------*/
@@ -111,6 +111,7 @@ static QState MainMgr_CleanupBeforeExit(MainMgr * const me, QEvt const * const e
 /* Private macros ------------------------------------------------------------*/
 /* Private variables and Local objects ---------------------------------------*/
 static MainMgr l_MainMgr;            /* the single instance of the MainMgr AO */
+QEQueue cliQueue;        /**< raw queue to talk between ClientApi and AO */
 
 /* Global-scope objects ------------------------------------------------------*/
 QActive * const AO_MainMgr = (QActive *)&l_MainMgr;    /* "opaque" AO pointer */
@@ -201,6 +202,14 @@ static QState MainMgr_Active(MainMgr * const me, QEvt const * const e) {
             me->errorCode = ((ExitEvt *)e)->errorCode;
             DBG_printf(me->m_pLog,"Received exit");
             status_ = Q_TRAN(&MainMgr_CleanupBeforeExit);
+            break;
+        }
+        /* ${AOs::MainMgr::SM::Active::TEST_JOB} */
+        case TEST_JOB_SIG: {
+            DBG_printf(me->m_pLog,"Received TEST_JOB, posting response to the raw queue");
+            QEvt* evt = Q_NEW(QEvt, TEST_JOB_DONE_SIG);
+            QEQueue_postFIFO(&cliQueue, (QEvt *)evt);
+            status_ = Q_HANDLED();
             break;
         }
         default: {

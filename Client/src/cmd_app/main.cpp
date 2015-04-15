@@ -149,11 +149,20 @@ int main(int argc, char *argv[])
 
    Job *job = new Job(pLogStub);
 
+   DBG_out << "Waiting until the state machine is up and running...";
+   boost::this_thread::sleep(boost::posix_time::milliseconds(20));
+   DBG_out << "Starting a test job.";
+   client->startJob();
+
+   DBG_out << "Waiting for test job to finish...";
+   client->waitForJobDone();
+
+   DBG_out << "Test job finished. Exiting.";
    boost::this_thread::sleep(boost::posix_time::milliseconds(500));
    client->stop();
    DBG_out<< "Waiting for MainMgr AO to finish";
    boost::this_thread::sleep(boost::posix_time::milliseconds(500));
-   client->waitForDone();
+   client->waitForStop();
 
    DBG_out<< "Exiting normally";
    EXIT_LOG_FLUSH(0);
