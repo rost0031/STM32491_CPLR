@@ -75,7 +75,7 @@ int CmdlineParser::parse( int argc, char** argv )
    string prototype;
    string example;
 
-   po::options_description desc("Allowed options");
+   po::options_description desc("Global options");
 
       try {
       desc.add_options()
@@ -119,72 +119,34 @@ int CmdlineParser::parse( int argc, char** argv )
       po::store( parsed, m_vm);
       po::notify(m_vm);
 
-      /* Check for general help request first */
-      if (m_vm.count("help")) {
-         stringstream ss;
-
-         ss << desc << endl;
-         ss << "To get detailed help for any command, add a --help after the command." << endl;
-         CON_print(ss.str());
-         EXIT_LOG_FLUSH(0);
-      }
-
-      if (m_vm.count("version")) {
-         stringstream ss;
-         ss << "CmdLine Client App version: " << "TODO" << endl;
-         ss << "CmdLine Client Lib version: " << "TODO" << endl;
-         ss << "Boost Library version: " << BOOST_LIB_VERSION << endl;
-         CON_print(ss.str());
-         EXIT_LOG_FLUSH(0);
-      }
-
-
       /* Clear out the argument map */
       m_parsed_args.clear();
 
-      /* Figure out which command is being specified */
-      if (m_vm.count("get_mode")) {
-         m_parsed_cmd = "get_mode";
-         DBG_out << "get_mode";
 
-         for(uint8_t i = 0; i < m_vm["get_mode"].as< vector<string> >().size(); i++) {
-            DBG_out << m_vm["get_mode"].as< vector<string> >()[i];
-            if (std::string::npos != m_vm["get_mode"].as< vector<string> >()[i].find("help")) {
-               DBG_out << "get_mode help requested";
-               /* This is a dumb workaround for multitoken since the --help switch appears as one of the
-                * arguments.  You have to do this anytime you are not using a zero_tokens() in the cmdline*/
-               description = m_parsed_cmd + " command sends a request to the "
-                     "DC3 to get its current operating mode.  The "
-                     "possible return values are ";
-               prototype = appName + " [connection options] --" + m_parsed_cmd;
-               example = appName + " -i 192.168.1.75 --" + m_parsed_cmd;
+      /* Allow user to override the interactive (menu) mode and run in single
+       * cmd mode.  This is for scripting purposes.  Only check the commands if
+       * this is specified */
+      if ( m_vm.count("mode") ) {
+         this->m_bInteractiveRunMode = false;
+         DBG_out << "Overriding interactive mode and running in single cmd mode";
+
+         /* Figure out which command is being specified */
+         if (m_vm.count("get_mode")) {
+            m_parsed_cmd = "get_mode";
+
+            if (m_vm.count("help")) {  /* Check for command specific help req */
+               string description = m_parsed_cmd + " command sends a request to "
+                     "the DC3 to get its current operating mode. The possible "
+                     "return values are "; //TODO: Get the actual values from enum maps.
+               string prototype = appName + " [connection options] --" + m_parsed_cmd;
+               string example = appName + " -i 192.168.1.75 --" + m_parsed_cmd;
 
                printCmdSpecificHelp(description, prototype, example);
                EXIT_LOG_FLUSH(0);
             }
          }
 
-
-
-
-
-
-//         /* Check if command specific help was requested */
-//         if (m_vm.count("help")) {
-//            DBG_out << "get_mode help requested";
-//            string description = m_parsed_cmd + " command sends a request to the "
-//                  "DC3 to get its current operating mode.  The "
-//                  "possible return values are ";
-//            string prototype = appName + " [connection options] --" + m_parsed_cmd;
-//            string example = appName + " -i 192.168.1.75 --" + m_parsed_cmd;
-//
-//            printCmdSpecificHelp(description, prototype, example);
-//            EXIT_LOG_FLUSH(0);
-//         }
-
-      }
-
-
+      } // end of "if ( m_vm.count("mode") )"
 
       /* Serial and IP connections are mutually exclusive so treat them as such
        * on the cmdline. */
@@ -231,12 +193,20 @@ int CmdlineParser::parse( int argc, char** argv )
       }
 
 
-      /* Allow user to override the interactive (menu) mode and run in single
-       * cmd mode.  This is for scripting purposes */
-      if ( m_vm.count("mode") ) {
-         this->m_bInteractiveRunMode = false;
-         DBG_out << "Overriding interactive mode and running in single cmd mode";
+      if (m_vm.count("help")) {
+         stringstream ss;
 
+         ss << desc << endl;
+         ss << "To get detailed help for any command, add a --help after the command." << endl;
+         CON_print(ss.str());
+         EXIT_LOG_FLUSH(0);
+      } else if (m_vm.count("version")) {
+         stringstream ss;
+         ss << "CmdLine Client App version: " << "TODO" << endl;
+         ss << "CmdLine Client Lib version: " << "TODO" << endl;
+         ss << "Boost Library version: " << BOOST_LIB_VERSION << endl;
+         CON_print(ss.str());
+         EXIT_LOG_FLUSH(0);
       }
 
 
