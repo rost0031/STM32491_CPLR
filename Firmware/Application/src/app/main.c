@@ -77,10 +77,9 @@ static union MediumEvents {
  */
 static union LargeEvents {
     void   *e0;                                       /* minimum event size */
-    uint8_t e1[sizeof(MsgEvt)];
-    uint8_t e2[sizeof(EthEvt)];
-    uint8_t e3[sizeof(LrgDataEvt)];
-    uint8_t e4[sizeof(I2CWriteReqEvt)];
+    uint8_t e1[sizeof(EthEvt)];
+    uint8_t e2[sizeof(LrgDataEvt)];
+    uint8_t e3[sizeof(I2CWriteReqEvt)];
 } l_lrgPoolSto[100];                    /* storage for the large event pool */
 
 /* Private function prototypes -----------------------------------------------*/

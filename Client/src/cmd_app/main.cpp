@@ -47,8 +47,10 @@ MODULE_NAME( MODULE_EXT );
 int main(int argc, char *argv[])
 {
    ClientError_t status = CLI_ERR_NONE;               /* Keep track of status */
-
-   LOG_out << "Starting " << argv[0];
+   string appName = argv[0];
+   unsigned found = appName.find_last_of("/\\");
+   appName = appName.substr(found+1);
+   LOG_out << "Starting " << appName;
 
    /* 1. Create a new LogStub instance.  This allows setting of logging
     * callbacks to the rest of the client library.  Safe to do this without
@@ -62,7 +64,6 @@ int main(int argc, char *argv[])
       ERR_out << "Failed to set library logging callback function. Exiting...";
       EXIT_LOG_FLUSH(1);
    }
-
 
    /* 3. Enable and disable logging for various modules in the library */
    pLogStub->enableLogForAllLibModules();
@@ -150,7 +151,7 @@ int main(int argc, char *argv[])
    Job *job = new Job(pLogStub);
 
    DBG_out << "Waiting until the state machine is up and running...";
-   boost::this_thread::sleep(boost::posix_time::milliseconds(20));
+   boost::this_thread::sleep(boost::posix_time::milliseconds(10));
    DBG_out << "Starting a test job.";
    client->startJob();
 
@@ -158,10 +159,10 @@ int main(int argc, char *argv[])
    client->waitForJobDone();
 
    DBG_out << "Test job finished. Exiting.";
-   boost::this_thread::sleep(boost::posix_time::milliseconds(500));
+   boost::this_thread::sleep(boost::posix_time::milliseconds(50));
    client->stop();
    DBG_out<< "Waiting for MainMgr AO to finish";
-   boost::this_thread::sleep(boost::posix_time::milliseconds(500));
+   boost::this_thread::sleep(boost::posix_time::milliseconds(50));
    client->waitForStop();
 
    DBG_out<< "Exiting normally";

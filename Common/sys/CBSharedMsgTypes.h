@@ -16,8 +16,6 @@
 #define CBSHAREDMSGTYPES_H_
 
 /* Includes ------------------------------------------------------------------*/
-#include "qp_port.h"                                       /* For QPC support */
-
 /* Exported defines ----------------------------------------------------------*/
 
 /* This is the MAX length of msgs in bytes that can be sent over serial to the
@@ -26,33 +24,6 @@
 
 /* Exported macros -----------------------------------------------------------*/
 /* Exported types ------------------------------------------------------------*/
-
-/**
- * @brief Struct for messages.
- * TODO: this should be depricated and LrgDataEvt used instead
- * Uses CommStackSignals for signal names.  These events are responsible
- * for getting data from Eth/Serial to CommStackMgr
- */
-typedef struct MsgEvtTag {
-/* protected: */
-    QEvt super;
-    CBMsgRoute msg_src;                            /**< Source of the message */
-    uint16_t msg_len;                           /**< Length of the msg buffer */
-    char msg[CB_MAX_MSG_LEN];      /**< Buffer that holds the data of the msg */
-} MsgEvt;
-
-/**
- * @brief Event type for transferring large data.
- */
-typedef struct LrgDataEvtTag {
-/* protected: */
-    QEvt       super;
-    CBMsgRoute src;                                   /**< Source of the data */
-    CBMsgRoute dst;                              /**< Destination of the data */
-    uint16_t   dataLen;                    /**< Length of the data in dataBuf */
-    uint8_t    dataBuf[CB_MAX_MSG_LEN];       /**< Buffer that holds the data */
-} LrgDataEvt;
-
 /* Exported constants --------------------------------------------------------*/
 /* Exported functions --------------------------------------------------------*/
 

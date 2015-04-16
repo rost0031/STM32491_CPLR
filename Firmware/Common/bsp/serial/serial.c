@@ -25,7 +25,6 @@
 #include <stdio.h>
 #include "qp_port.h"                                        /* for QP support */
 #include "CBSignals.h"
-#include "CBErrors.h"
 #include "bsp.h"
 #include "SerialMgr.h"
 #include "DbgMgr.h"
@@ -53,7 +52,7 @@ DBG_DEFINE_THIS_MODULE( DBG_MODL_SERIAL ); /* For debug system to ID this module
  * @brief Buffers for Serial interfaces
  */
 static char          Uart1TxBuffer[CB_MAX_MSG_LEN];
-static char          Uart1RxBuffer[MENU_MAX_CMD_LEN];
+static char          Uart1RxBuffer[CB_MAX_MSG_LEN];
 /**
  * @brief An internal array of structures that holds almost all the settings for
  * the all serial ports used in the system.
@@ -255,51 +254,82 @@ void Serial_DMAStartXfer(
 }
 
 /******************************************************************************/
-uint32_t Serial_send_base64_enc_msg(
-      SerialPort_T serial_port,
-      char *message,
-      uint16_t len
+CBErrorCode Serial_sendBase64Enc(
+      SerialPort_T serPort,
+      DevAccess_t devAcc,
+      uint8_t *dataBuf,
+      uint16_t dataLen
 )
 {
-   char encoded_serial_buf[CB_MAX_MSG_LEN];
-   int encoded_sz = base64_encode( message, len, encoded_serial_buf, CB_MAX_MSG_LEN );
+   uint8_t encDataBuf[CB_MAX_MSG_LEN];
+   uint16_t encDataLen = base64_encode(
+         (char *)dataBuf,
+         dataLen,
+         (char *)encDataBuf,
+         CB_MAX_MSG_LEN
+   );
 
-   if(encoded_sz < 1)
+   if(encDataLen < 1)
    {
       err_slow_printf("Encoding failed\n");
       return ERR_SERIAL_MSG_BASE64_ENC_FAILED;
    }
 
    /* Return the result of the raw message send function */
-   return( Serial_send_raw_msg( serial_port, encoded_serial_buf, encoded_sz ) );
+   return( Serial_sendRaw( serPort, devAcc, encDataBuf, encDataLen ) );
 }
 
 /******************************************************************************/
-uint32_t Serial_send_raw_msg(
-      SerialPort_T serial_port,
-      char *message,
-      uint16_t len
+CBErrorCode Serial_sendRaw(
+      SerialPort_T serPort,
+      DevAccess_t devAcc,
+      const uint8_t const *dataBuf,
+      const uint16_t dataLen
 )
 {
-   if ( len >= CB_MAX_MSG_LEN ) {
+   if ( dataLen >= CB_MAX_MSG_LEN ) {                     /* Check the length */
       return ERR_SERIAL_MSG_TOO_LONG;
    }
 
-   /* Assumes nothing about the size of the message, send it all and let the
-    * receiver interpret it. It is up to the sender and receiver to agree on a
-    * terminating character.  In most cases, base64 encoded messages will be
-    * sent and they use a newline to terminate.  In some cases (scanner), this
-    * will not be the case */
-   for ( uint16_t i = 0; i < len; i++ ) {
-      uint32_t timeout = SERIAL_LONG_TIMEOUT;   // every byte starts a new timeout count
+   if ( DEV_ACC_DMA == devAcc ) {              /* DMA access, post and forget */
 
-      while( RESET == USART_GetFlagStatus( a_UARTSettings[ serial_port ].usart, USART_FLAG_TXE ) ) {
-         if( (timeout--) <= 0 ) {
-            err_slow_printf("!!! - Hardware not responding while trying to send a serial msg\n");
-            return ERR_SERIAL_HW_TIMEOUT;
+      /* TODO: if any more serial ports are added, make sure to directly post to
+       * the correct AO instead of currently defaulting to AO_SerialMgr */
+      (void )serPort;
+
+      /* 1. Construct a new msg event indicating that a msg has been received */
+      LrgDataEvt *evt = Q_NEW(LrgDataEvt, UART_DMA_START_SIG);
+
+      /* 2. Fill the msg payload with the message */
+      MEMCPY(evt->dataBuf, dataBuf, dataLen);
+      evt->dataLen = dataLen;
+      evt->dst = _CB_NoRoute;
+      evt->src = _CB_Serial;                    /* Serial only sent from here */
+
+      /* 3. Directly post to the LWIPMgr AO. */
+      QACTIVE_POST(
+            AO_SerialMgr,
+            (QEvt *)(evt),
+            senderAO
+      );
+   } else {              /* BYTE access, cycle through all the bytes and wait */
+
+      /* Assumes nothing about the size of the message, send it all and let the
+       * receiver interpret it. It is up to the sender and receiver to agree on
+       * a terminating character.  In most cases, base64 encoded messages will
+       * be sent and they use a newline to terminate.  In some cases, this
+       * doesn't hold true */
+      for ( uint16_t i = 0; i < dataLen; i++ ) {
+         uint32_t timeout = SERIAL_LONG_TIMEOUT;   // every byte starts a new timeout count
+
+         while( RESET == USART_GetFlagStatus( a_UARTSettings[ serPort ].usart, USART_FLAG_TXE ) ) {
+            if( (timeout--) <= 0 ) {
+               err_slow_printf("!!! - Hardware not responding while trying to send a serial msg\n");
+               return ERR_SERIAL_HW_TIMEOUT;
+            }
          }
+         USART_SendData( a_UARTSettings[ serPort ].usart, dataBuf[i] );
       }
-      USART_SendData( a_UARTSettings[ serial_port ].usart, message[i] );
    }
 
    return ERR_NONE;
@@ -334,25 +364,11 @@ inline void Serial_UART1Callback(void)
 
       if ( '\n' == data && a_UARTSettings[SERIAL_UART1].indexRX > 0 ) {
 
-         /* 1. Construct a new msg event indicating that a msg has been received */
-//         MsgEvt *msgEvt = Q_NEW( MsgEvt, MSG_RECEIVED_SIG );
-//
-//         /* 2. Fill the msg payload with payload (the actual received msg)*/
-//         MEMCPY(
-//               msgEvt->msg,
-//               a_UARTSettings[SERIAL_UART1].bufferRX,
-//               a_UARTSettings[SERIAL_UART1].indexRX
-//         );
-//         msgEvt->msg_len = a_UARTSettings[SERIAL_UART1].indexRX;
-//         msgEvt->msg_src = SERIAL_UART1;
-//
-//         /* 3. Publish the newly created event to current AO */
-//         QF_PUBLISH( (QEvent *)msgEvt, AO_SerialMgr );
-
          /* If a newline is received and the buffer is not empty, post event
           * with the buffer data */
          a_UARTSettings[SERIAL_UART1].bufferRX[ a_UARTSettings[SERIAL_UART1].indexRX++ ] = data;
 
+#if 0 // TODO: Old menu stuff.  Keep for now but get rid of eventually
          /* Serial can only receive menu commands */
          MenuEvt *menuEvt = Q_NEW( MenuEvt, DBG_MENU_REQ_SIG );
 
@@ -367,6 +383,23 @@ inline void Serial_UART1Callback(void)
 
          /* 3. Publish the newly created event to current AO */
          QF_PUBLISH( (QEvent *)menuEvt, AO_SerialMgr );
+#endif
+
+         /* 1. Construct a new msg event indicating that a msg has been received */
+         LrgDataEvt *msgEvt = Q_NEW(LrgDataEvt, SER_RECEIVED_SIG);
+
+         /* 2. Fill the msg payload and get the msg source and length */
+         MEMCPY(
+               msgEvt->dataBuf,
+               a_UARTSettings[SERIAL_UART1].bufferRX,
+               a_UARTSettings[SERIAL_UART1].indexRX
+         );
+         msgEvt->dataLen = a_UARTSettings[SERIAL_UART1].indexRX;
+         msgEvt->src = _CB_Serial;
+         msgEvt->dst = _CB_NoRoute;
+
+         /* 3.Publish the newly created event */
+         QF_PUBLISH((QEvent *)msgEvt, AO_SerialMgr);
 
          DBG_printf("Got %s on serial port\n",a_UARTSettings[SERIAL_UART1].bufferRX);
          a_UARTSettings[SERIAL_UART1].indexRX = 0;       /* Reset the RX buffer */
@@ -375,10 +408,10 @@ inline void Serial_UART1Callback(void)
          /* If a linefeed is received, toss it out. */
          data = 0;
       } else {
-         if ( a_UARTSettings[SERIAL_UART1].indexRX >= MENU_MAX_CMD_LEN ) {
+         if ( a_UARTSettings[SERIAL_UART1].indexRX >= CB_MAX_MSG_LEN ) {
             WRN_printf(
                   "Attempting to RX a serial msg over %d bytes which will overrun the buffer. Ignoring\n",
-                  MENU_MAX_CMD_LEN
+                  CB_MAX_MSG_LEN
             );
             a_UARTSettings[SERIAL_UART1].indexRX = 0;       /* Reset the RX buffer */
          } else {

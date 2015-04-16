@@ -18,6 +18,7 @@
 /* Includes ------------------------------------------------------------------*/
 #include "stm32f4xx.h"
 #include "bsp_defs.h"
+#include "CBErrors.h"
 /* Exported defines ----------------------------------------------------------*/
 /* Exported macros -----------------------------------------------------------*/
 /* Exported types ------------------------------------------------------------*/
@@ -140,40 +141,49 @@ void Serial_DMAStartXfer(
  * it, one character at a time. The last character sent is the '\n' character.
  * That is how the receiver knows the message is complete.
  *
- * @param [in]  serial_port: a USART_Port type that specifies how to look up settings
+ * @param [in]  serPort: a USART_Port type that specifies how to look up settings
  * in the serial port settings structure
- * @param [in]  *message: pointer to the buffer with message to send
- * @param [in]  len: length of the message to send
- * @retval  uint32_t: error code from error.h
+ * @param [in]  devAcc: DevAccess_t var that specifies how to access the device:
+ *    @arg DEV_ACC_BLK: blocking one byte at a time access.
+ *    @arg DEV_ACC_DMA: non-blocking DMA access.
+ * @param [in] *dataBuf: pointer to the buffer with data to send
+ * @param [in]  dataLen: length of the data to send
+ * @retval  CBErrorCode: error code from error.h
  *    @arg  ERR_NONE:   No errors
  *    @arg  ERR_SERIAL_HW_TIMEOUT:     Serial hardware stopped responding
  *    @arg  ERR_SERIAL_MSG_TOO_LONG:   Message being sent is longer than MAX_MSG_LEN
  *    @arg  ERR_SERIAL_MSG_BASE64_ENC_FAILED: Failed to base64 encode the message, likely due to length
  */
-uint32_t Serial_send_base64_enc_msg(
-      SerialPort_T serial_port,
-      char *message,
-      uint16_t len
+CBErrorCode Serial_sendBase64Enc(
+      SerialPort_T serPort,
+      DevAccess_t devAcc,
+      uint8_t *dataBuf,
+      uint16_t dataLen
 );
 
 /**
  * @brief   Send a raw message over serial.
  *
- * Sends a message as it is (raw) out through the specified serial port.
+ * Sends a message as it is (raw) out through the specified serial port using
+ * either blocking one-byte-at-a-time access or using delayed DMA.
  *
- * @param [in]  serial_port: a USART_Port type that specifies how to look up settings
+ * @param [in]  serPort: a USART_Port type that specifies how to look up settings
  * in the serial port settings structure
- * @param [in]  *message: pointer to the buffer with message to send
- * @param [in]  len: length of the message to send
- * @retval  uint32_t: error code from error.h
+ * @param [in]  devAcc: DevAccess_t var that specifies how to access the device:
+ *    @arg DEV_ACC_BLK: blocking one byte at a time access.
+ *    @arg DEV_ACC_DMA: non-blocking DMA access.
+ * @param [in] *dataBuf: pointer to the buffer with data to send
+ * @param [in]  dataLen: length of the data to send
+ * @retval  CBErrorCode: error code from error.h
  *    @arg  ERR_NONE:   No errors
  *    @arg  ERR_SERIAL_HW_TIMEOUT:     Serial hardware stopped responding
  *    @arg  ERR_SERIAL_MSG_TOO_LONG:   Message being sent is longer than MAX_MSG_LEN
  */
-uint32_t Serial_send_raw_msg(
-      SerialPort_T serial_port,
-      char *message,
-      uint16_t len
+CBErrorCode Serial_sendRaw(
+      SerialPort_T serPort,
+      DevAccess_t devAcc,
+      const uint8_t const *dataBuf,
+      const uint16_t dataLen
 );
 
 /**

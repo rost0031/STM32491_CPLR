@@ -275,6 +275,7 @@ INCLUDES                = -I$(SRC_DIR) \
                           \
                           -I$(STM32F4XX_STD_PERIPH_DIR)/inc \
                           \
+                          -I$(COMMON_FW_SYS_DIR) \
                           -I$(CON_OUT_DIR) \
                           -I$(DBG_CNTRL_DIR) \
                           -I$(DB_SETTINGS_DIR) \

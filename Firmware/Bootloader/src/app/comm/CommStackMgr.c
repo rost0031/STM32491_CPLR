@@ -125,8 +125,8 @@ static QState CommStackMgr_initial(CommStackMgr * const me, QEvt const * const e
     QS_FUN_DICTIONARY(&CommStackMgr_initial);
     QS_FUN_DICTIONARY(&CommStackMgr_Active);
 
-    QActive_subscribe((QActive *)me, MSG_SEND_OUT_SIG);
-    QActive_subscribe((QActive *)me, MSG_RECEIVED_SIG);
+    QActive_subscribe((QActive *)me, ETH_UDP_RECEIVED_SIG);
+    QActive_subscribe((QActive *)me, SER_RECEIVED_SIG);
     QActive_subscribe((QActive *)me, TIME_TEST_SIG);
     return Q_TRAN(&CommStackMgr_Active);
 }
@@ -153,17 +153,6 @@ static QState CommStackMgr_Active(CommStackMgr * const me, QEvt const * const e)
                 (QActive *)me,
                 SEC_TO_TICKS( 5 )
             );
-            status_ = Q_HANDLED();
-            break;
-        }
-        /* ${AOs::CommStackMgr::SM::Active::MSG_SEND_OUT} */
-        case MSG_SEND_OUT_SIG: {
-            status_ = Q_HANDLED();
-            break;
-        }
-        /* ${AOs::CommStackMgr::SM::Active::MSG_RECEIVED} */
-        case MSG_RECEIVED_SIG: {
-            DBG_printf("Received a msg\n");
             status_ = Q_HANDLED();
             break;
         }
@@ -287,6 +276,12 @@ static QState CommStackMgr_Active(CommStackMgr * const me, QEvt const * const e)
                  (int)slow_print_finish_time.sub_sec
             );
             */
+            status_ = Q_HANDLED();
+            break;
+        }
+        /* ${AOs::CommStackMgr::SM::Active::SER_RECEIVED} */
+        case SER_RECEIVED_SIG: {
+            DBG_printf("SER_RECIEVED\n");
             status_ = Q_HANDLED();
             break;
         }

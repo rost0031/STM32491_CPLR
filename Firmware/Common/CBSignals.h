@@ -17,9 +17,24 @@
 
 /* Includes ------------------------------------------------------------------*/
 #include "qep_port.h"
+#include "CBSharedMsgTypes.h"
+#include "CBCommApi.h"
 /* Exported defines ----------------------------------------------------------*/
 /* Exported macros -----------------------------------------------------------*/
 /* Exported types ------------------------------------------------------------*/
+
+/**
+ * @brief Event type for transferring large data.
+ */
+typedef struct LrgDataEvtTag {
+/* protected: */
+    QEvt       super;
+    CBMsgRoute src;                                   /**< Source of the data */
+    CBMsgRoute dst;                              /**< Destination of the data */
+    uint16_t   dataLen;                    /**< Length of the data in dataBuf */
+    uint8_t    dataBuf[CB_MAX_MSG_LEN];       /**< Buffer that holds the data */
+} LrgDataEvt;
+
 
 /**
  * @enum First signal
@@ -34,8 +49,10 @@ enum FirstSignal {
  * @enum Signals used by CommStackMgr
  */
 enum CommStackSignals {
-   MSG_SEND_OUT_SIG = FIRST_SIG, /** This signal must start at the previous category max signal */
-   MSG_RECEIVED_SIG,
+   ETH_UDP_SEND_OUT_SIG = FIRST_SIG, /** This signal must start at the previous category max signal */
+   ETH_UDP_RECEIVED_SIG,
+   SER_RECEIVED_SIG,
+   CLI_RECIEVED_SIG,
    TIME_TEST_SIG,
    MSG_MAX_SIG,
 };

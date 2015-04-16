@@ -367,8 +367,13 @@ static void LWIP_tcpError(void * arg, err_t err);
   * @param  part: a u16_t type containing the port number used to connect.
   * @retval None
   */
-static void udp_rx_handler(void *arg, struct udp_pcb *upcb,
-                           struct pbuf *p, struct ip_addr *addr, u16_t port);
+static void udp_rx_handler(
+      void *arg,
+      struct udp_pcb *upcb,
+      struct pbuf *p,
+      struct ip_addr *addr,
+      u16_t port
+);
 
 /* Private functions ---------------------------------------------------------*/
 
@@ -552,8 +557,8 @@ static QState LWIPMgr_Active(LWIPMgr * const me, QEvt const * const e) {
             /* Event posted that will include (inside it) a msg to send */
             if (me->upcb->remote_port != (uint16_t)0) {
                 struct pbuf *p = pbuf_new(
-                    (u8_t *)((EthEvt const *)e)->msg,
-                    ((EthEvt const *)e)->msg_len
+                    (u8_t *)((LrgDataEvt const *)e)->dataBuf,
+                    ((LrgDataEvt const *)e)->dataLen
                 );
                 if (p != (struct pbuf *)0) {
                     udp_send(me->upcb, p);
@@ -1404,35 +1409,49 @@ static void LWIP_tcpError(void * arg, err_t err) {
     ERR_printf("Handling error, freeing memory\n");
 }
 
-/* Ethernet message sender ...................................................*/
-void ETH_SendMsg_Handler(MsgEvt const *e) {
+/* Ethernet UDP message sender .................................................*/
+void ETH_SendUdp(
+      const uint8_t* const dataBuf,
+      const uint16_t const dataLen,
+      const QActive* const senderAO
+)
+{
+   /* 1. Construct a new msg event indicating that a msg has been received */
+   LrgDataEvt *ethEvt = Q_NEW(LrgDataEvt, ETH_UDP_SEND_SIG);
 
-        /* 1. Construct a new msg event indicating that a msg has been received */
-        EthEvt *ethEvt = Q_NEW(EthEvt, ETH_UDP_SEND_SIG);
+   /* 2. Fill the msg payload with the message */
+   MEMCPY(ethEvt->dataBuf, dataBuf, dataLen);
+   ethEvt->dataLen = dataLen;
+   ethEvt->dst = _CB_NoRoute;
+   ethEvt->src = _CB_EthCli;                  /* UDP only sent from this port */
 
-        /* 2. Fill the msg payload with the message */
-        MEMCPY(ethEvt->msg, e->msg, e->msg_len);
-        ethEvt->msg_len = e->msg_len;
-
-        /* 3. Publish the newly created EthEvt event to LWIPMgr AO */
-        QF_PUBLISH((QEvent *)ethEvt, AO_LWIPMgr);
+   /* 3. Directly post to the LWIPMgr AO. */
+   QACTIVE_POST(
+         AO_LWIPMgr,
+         (QEvt *)(ethEvt),
+         senderAO
+   );
 }
 
 /* UDP handler ...............................................................*/
-static void udp_rx_handler(void *arg, struct udp_pcb *upcb,
-                           struct pbuf *p, struct ip_addr *addr, u16_t port) {
-
+static void udp_rx_handler(
+      void *arg,
+      struct udp_pcb *upcb,
+      struct pbuf *p,
+      struct ip_addr *addr,
+      u16_t port
+)
+{
     /* 1. Construct a new msg event indicating that a msg has been received */
-    MsgEvt *msgEvt = Q_NEW(MsgEvt, MSG_RECEIVED_SIG);
+    LrgDataEvt *msgEvt = Q_NEW(LrgDataEvt, CLI_RECIEVED_SIG);
 
     /* 2. Fill the msg payload and get the msg source and length */
-    MEMCPY(msgEvt->msg, p->payload, p->len);
-    msgEvt->msg_len = p->len;
+    MEMCPY(msgEvt->dataBuf, p->payload, p->len);
+    msgEvt->dataLen = p->len;
 
-    DBG_printf("Received %d bytes (%s) on UDP\n", msgEvt->msg_len, msgEvt->msg);
+//    DBG_printf("Received %d bytes (%s) on UDP\n", msgEvt->dataLen, msgEvt->dataBuf);
 
-    /* 3. Don't bother publishing locally.  Instead, publish the newly created
-     * MsgEvt event to CommStackMgr AO */
+    /* 3.Publish the newly created event */
     QF_PUBLISH((QEvent *)msgEvt, AO_LWIPMgr);
 
     /* 4. connect to the remote host */
@@ -1441,7 +1460,6 @@ static void udp_rx_handler(void *arg, struct udp_pcb *upcb,
     /* 5. Free up the pbuf */
     pbuf_free(p);
 }
-
 /**
  * @}
  * end addtogroup groupLWIP_QPC_Eth

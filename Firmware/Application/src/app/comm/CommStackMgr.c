@@ -14,7 +14,7 @@
 * or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
 * for more details.
 *****************************************************************************/
-/*${.::CommStackMgr_gen.c} .................................................*/
+/*${.::CommStackMgr_gen~} ..................................................*/
 /**
  * @file    CommStackMgr.c
  * Declarations for functions for the CommStackMgr AO.  This state
@@ -105,7 +105,7 @@ QActive * const AO_CommStackMgr = (QActive *)&l_CommStackMgr;  /* "opaque" AO po
  * @param  None
  * @retval None
  */
-/*${AOs::CommStackMgr_ctor} ................................................*/
+/*${AOs::CommStackMgr_cto~} ................................................*/
 void CommStackMgr_ctor(void) {
     CommStackMgr *me = &l_CommStackMgr;
     QActive_ctor(&me->super, (QStateHandler)&CommStackMgr_initial);
@@ -126,8 +126,6 @@ static QState CommStackMgr_initial(CommStackMgr * const me, QEvt const * const e
     QS_FUN_DICTIONARY(&CommStackMgr_initial);
     QS_FUN_DICTIONARY(&CommStackMgr_Active);
 
-    QActive_subscribe((QActive *)me, MSG_SEND_OUT_SIG);
-    QActive_subscribe((QActive *)me, MSG_RECEIVED_SIG);
     QActive_subscribe((QActive *)me, TIME_TEST_SIG);
     return Q_TRAN(&CommStackMgr_Active);
 }
@@ -154,17 +152,6 @@ static QState CommStackMgr_Active(CommStackMgr * const me, QEvt const * const e)
                 (QActive *)me,
                 SEC_TO_TICKS( 5 )
             );
-            status_ = Q_HANDLED();
-            break;
-        }
-        /* ${AOs::CommStackMgr::SM::Active::MSG_SEND_OUT} */
-        case MSG_SEND_OUT_SIG: {
-            status_ = Q_HANDLED();
-            break;
-        }
-        /* ${AOs::CommStackMgr::SM::Active::MSG_RECEIVED} */
-        case MSG_RECEIVED_SIG: {
-            DBG_printf("Received a msg\n");
             status_ = Q_HANDLED();
             break;
         }

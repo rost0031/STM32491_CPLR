@@ -17,7 +17,7 @@
 #define BSP_DEFS_H_
 
 /* Includes ------------------------------------------------------------------*/
-#include "Shared.h"                                   /*  Common Declarations */
+#include "bsp_shared.h"                               /*  Common Declarations */
 #include "qp_port.h"                                        /* for QP support */
 #include "qf_port.h"
 #include "stm32f4xx.h"

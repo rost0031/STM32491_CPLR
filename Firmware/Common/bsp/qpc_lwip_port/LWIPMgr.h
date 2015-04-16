@@ -106,17 +106,21 @@ extern QActive * const AO_LWIPMgr;
 
 /**
  * @brief    Send UDP msg over ethernet.
- * This function is the implementation of a stub function in CommStackMgr.  It
- * is used to do the actual sending of data over ethernet on the embedded side.
- * The simulator will have its own implementation of this function due to the
- * use of totally different ip stacks and threading paradigms.
+ * This function wraps a buffer, length, destination, and source and creates a
+ * correct event to post to the LWIPMgr AO to send over UDP.
  *
- * @param [in,out] e: a MsgEvt const event pointer to the MsgEvt that contains the
- * length and message to be sent.
+ * @param [in] *dataBuf: const uint8_t pointer to the buffer of data to send.
+ * @param [in]  dataLen: length of data to send.
+ * @param [in]  senderAO: which AO is sending the data.  If called from outside
+ * of an AO, use 0.
  *
  * @return None
  */
-void ETH_SendMsg_Handler(MsgEvt const *e);
+void ETH_SendUdp(
+      const uint8_t* const dataBuf,
+      const uint16_t const dataLen,
+      const QActive* const senderAO
+);
 
 /**
  * @}

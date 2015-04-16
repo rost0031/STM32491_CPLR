@@ -17,6 +17,7 @@
 #define BSP_DEFS_H_
 
 /* Includes ------------------------------------------------------------------*/
+#include "bsp_shared.h"                         /* Common bsp device settings */
 #include "Shared.h"                                   /*  Common Declarations */
 #include "qp_port.h"                                        /* for QP support */
 #include "qf_port.h"
