@@ -14,7 +14,7 @@
 #include <iomanip>
 #include <sstream>
 #include "LogHelper.h"
-
+#include "MainMgr.h"
 /* Namespaces ----------------------------------------------------------------*/
 using namespace std;
 
@@ -53,22 +53,23 @@ void Serial::read_handler(
         std::cout << "CB: " << read_msg_ << std::endl;
     } else {
        /* Construct a new msg event indicating that a msg has been received */
-       MsgEvt *msgEvt = Q_NEW(MsgEvt, MSG_RECEIVED_SIG);
+       LrgDataEvt *evt = Q_NEW(LrgDataEvt, MSG_RECEIVED_SIG);
 
        /* Decode the message from base64 and write it directly to the event. */
        int decoded_sz = base64_decode(
              read_msg_,
              bytes_transferred,
-             msgEvt->msg,
+             (char *)evt->dataBuf,
              CB_MAX_MSG_LEN
        );
 
        /* Set the size and source */
-       msgEvt->msg_len = decoded_sz;
-       msgEvt->msg_src = _CB_Serial;
+       evt->dataLen = decoded_sz;
+       evt->src = _CB_Serial;
+       evt->dst = _CB_Serial;
 
-       /* Publish the event */
-       QF_PUBLISH((QEvent *)msgEvt, AO_MainMgr);
+       /* Directly post the event */
+       QACTIVE_POST(AO_MainMgr, (QEvt *)(evt), AO_MainMgr);
     }
 
     /* Continue reading */
@@ -99,7 +100,9 @@ void Serial::read_handler_DFUSE(
 {
    /* These very confusing several lines are how you get data out of a boost
     * streambuffer. */
-   const char* header=boost::asio::buffer_cast<const char*>(serial_stream_.data());
+   const char* header =
+         boost::asio::buffer_cast<const char*>( serial_stream_.data() );
+
    memcpy(read_msg_, header, bytes_transferred);
    serial_stream_.consume(bytes_transferred);
 
@@ -152,7 +155,15 @@ void Serial::write_handler(
 )
 {
    write_msg_[bytes_transferred]=0;
-//    std::cout << bytes_transferred << " bytes written: " << write_msg_ << std::endl;
+   if (error) {
+      ERR_printf(
+            this->m_pLog,
+            "Send error: %s.  %d bytes written: %s",
+            error.message().c_str(),
+            bytes_transferred,
+            write_msg_
+      );
+   }
 }
 
 /******************************************************************************/
@@ -178,6 +189,13 @@ void Serial::write_some( char* message, uint16_t len )
 void Serial::expect_n_bytes( uint16_t bytes )
 {
    bReadNDFUSEBytes = bytes;
+}
+
+/******************************************************************************/
+void Serial::setLogging( LogStub *log )
+{
+   this->m_pLog = log;
+   DBG_printf(this->m_pLog,"Logging setup successful.");
 }
 
 /******************************************************************************/

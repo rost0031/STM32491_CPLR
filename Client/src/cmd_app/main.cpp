@@ -21,7 +21,6 @@
 #include "Logging.h"
 
 /* Lib includes */
-#include "Job.h"
 #include "CBSharedDbgLevels.h"
 #include "Callbacks.h"
 #include "ClientModules.h"
@@ -148,7 +147,15 @@ int main(int argc, char *argv[])
     * requests for work to be done as well as the responses from the DC3. */
    client->run(); /* Set the client running */
 
-   Job *job = new Job(pLogStub);
+//   struct CBBasicMsg _CBBasicMsg;
+//   uint8_t _buffer[20];
+//   int offset;
+//
+//   _CBBasicMsg._msgID = 0;
+//   _CBBasicMsg._msgName = _CBGetBootModeMsg;
+//   _CBBasicMsg.
+//   CBBasicMsg_write_delimited_to(&_CBBasicMsg, (void *)_buffer, 0);
+
 
    DBG_out << "Waiting until the state machine is up and running...";
    boost::this_thread::sleep(boost::posix_time::milliseconds(10));

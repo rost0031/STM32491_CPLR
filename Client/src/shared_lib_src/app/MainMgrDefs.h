@@ -14,6 +14,8 @@
 #define MAINMGRDEFS_H_
 
 /* Includes ------------------------------------------------------------------*/
+#include "CBCommApi.h"
+
 /* Exported defines ----------------------------------------------------------*/
 /* Exported macros -----------------------------------------------------------*/
 /* Exported types ------------------------------------------------------------*/
@@ -38,6 +40,8 @@ enum MainMgrSignals {
     */
    MSG_SEND_OUT_SIG = Q_USER_SIG,
    MSG_RECEIVED_SIG,
+   MSG_ACK_TIMEOUT_SIG,
+   MSG_DONE_TIMEOUT_SIG,
    MSG_TIMEOUT_EXIT_SIG,
    MSG_DFUSE_SEND_SIG,
    MSG_DFUSE_RECV_SIG,
@@ -54,6 +58,18 @@ enum MainMgrSignals {
    MAX_SHARED_SIG,
    MAX_PUB_SIG,
 };
+
+/**
+ * @brief Event type for transferring large data.
+ */
+typedef struct LrgDataEvtTag {
+/* protected: */
+    QEvt       super;
+    CBMsgRoute src;                                   /**< Source of the data */
+    CBMsgRoute dst;                              /**< Destination of the data */
+    uint16_t   dataLen;                    /**< Length of the data in dataBuf */
+    uint8_t    dataBuf[CB_MAX_MSG_LEN];       /**< Buffer that holds the data */
+} LrgDataEvt;
 
 /* Exported constants --------------------------------------------------------*/
 /* Exported functions --------------------------------------------------------*/

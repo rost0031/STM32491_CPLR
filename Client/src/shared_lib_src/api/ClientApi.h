@@ -60,8 +60,20 @@ class CLIENT_DLL ClientApi {
 
 private:
    LogStub *m_pLog;         /**< Pointer to LogStub instance used for logging */
+   unsigned int m_msgId;   /* Msg ID incrementing counter for unique msg ids. */
+   bool m_bRequestProg;     /* Flag to see if progress messages are requested */
+   CBMsgRoute m_msgRoute; /* This is set based on the connection used (UDP vs Serial) */
+
    boost::thread m_workerThread;          /**< Thread to start MainMgr and QF */
 
+   /* All the different msg structures that exist */
+   struct CBBasicMsg          m_basicMsg;
+   struct CBStatusPayloadMsg  m_statusPayloadMsg;
+   struct CBVersionPayloadMsg m_versionPayloadMsg;
+   struct CBRunModePayloadMsg m_runmodePayloadMsg;
+
+   uint8_t dataBuf[1000];
+   int dataLen;
    /**
     * @brief   Helper function for QF startup.
     * An intenal helper function that gets called by all constructors to do the
@@ -72,6 +84,16 @@ private:
    void qfSetup( void );
 public:
 
+   /****************************************************************************
+    *                    DC3 requests
+    ***************************************************************************/
+   ClientError_t DC3_getMode(CBErrorCode *status, CBBootMode *mode);
+
+
+
+   /****************************************************************************
+    *                    Client control functionality
+    ***************************************************************************/
    /**
     * @brief   Sets up a new ethernet connection
     * @param[in]   *ipAddress: pointer to the remote IP address string.

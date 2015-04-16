@@ -12,6 +12,7 @@
 /* Includes ------------------------------------------------------------------*/
 #include "comm.h"
 #include "LogHelper.h"
+#include "base64_wrapper.h"
 
 /* Namespaces ----------------------------------------------------------------*/
 using namespace std;
@@ -29,14 +30,38 @@ MODULE_NAME( MODULE_COM );
 /* Private class methods -----------------------------------------------------*/
 
 /******************************************************************************/
-void Comm::write_some( char* message, uint16_t len )
+ClientError_t Comm::write_some( char* message, uint16_t len )
 {
    if ( this->m_pSer ) {
-      this->m_pSer->write_some( message, len );
+      /* Serial messages have to be base64 encoded */
+      char enDataBuf[CB_MAX_MSG_LEN];
+      int encDataLen = base64_encode( message, len, enDataBuf, CB_MAX_MSG_LEN );
+
+      if(encDataLen < 1) {
+         ERR_printf(this->m_pLog,"Encoding failed\n");
+         return CLI_ERR_SER_MSG_BASE64_ENC_FAILED;
+      }
+      this->m_pSer->write_some( enDataBuf, encDataLen );
    } else if ( this->m_pUdp ) {
       this->m_pUdp->write_some( message, len );
    } else {
       ERR_printf(this->m_pLog, "No comm interface have been set up.");
+      return CLI_ERR_COMM_NOT_SET;
+   }
+   return CLI_ERR_NONE;
+}
+
+/******************************************************************************/
+void Comm::setLogging( LogStub *log )
+{
+   this->m_pLog = log;
+   DBG_printf(this->m_pLog,"Logging setup successful.");
+   if ( this->m_pSer ) {
+      this->m_pSer->setLogging( log);
+   } else if ( this->m_pUdp ) {
+      this->m_pUdp->setLogging( log );
+   } else {
+      WRN_printf(this->m_pLog, "No active connections to set logging for");
    }
 }
 
@@ -50,6 +75,7 @@ Comm::Comm(
 {
    this->m_pLog = log;
    this->m_pSer = new Serial( dev_name, baud_rate, bDFUSEComm);
+   this->m_pSer->setLogging( log);
 }
 
 /******************************************************************************/
@@ -62,6 +88,7 @@ Comm::Comm(
 {
    this->m_pLog = log;
    this->m_pUdp = new Udp( ipAddress, pRemPort, pLocPort);
+   this->m_pUdp->setLogging( log );
 }
 
 /******************************************************************************/

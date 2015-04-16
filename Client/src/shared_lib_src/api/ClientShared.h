@@ -22,7 +22,6 @@
 #include <fcntl.h>
 #include <fstream>
 #include "ClientTimeouts.h"
-#include "CBSharedMsgTypes.h"
 
 /* This is necessary since C++ code is pulling in a library compiled as C */
 extern "C" {

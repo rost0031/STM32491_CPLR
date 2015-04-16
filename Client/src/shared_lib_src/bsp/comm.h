@@ -25,14 +25,14 @@
 /* Exported classes ----------------------------------------------------------*/
 
 /**
-* @class comm
-*
-* @brief This class abstracts various communication channels
-*
-* This class is responsible for abstracting serial, ethernet (UDP) (and
-* possibly others) in with an interface that provides the same interface to all
-* the different ways to access the FW.
-*/
+ * @class comm
+ *
+ * @brief This class abstracts various communication channels
+ *
+ * This class is responsible for abstracting serial, ethernet (UDP) (and
+ * possibly others) in with an interface that provides the same interface to all
+ * the different ways to access the FW.
+ */
 class Comm {
 
 private:
@@ -42,57 +42,64 @@ private:
 
 public:
 
-    /**
-     * @brief  Write some data asynchronously to the setup interface.
-     *
-     * @param[in]   message: pointer to the buffer containing the data to write.
-     * @param[in]   len: number of bytes in the buffer that need to be sent.
-     *
-     * @return      None.
-     */
-   void write_some( char* message, uint16_t len );
+   /**
+    * @brief  Write some data asynchronously to the setup interface.
+    *
+    * @param[in]   message: pointer to the buffer containing the data to write.
+    * @param[in]   len: number of bytes in the buffer that need to be sent.
+    *
+    * @return:    ClientError_t status of the write.
+    */
+   ClientError_t write_some( char* message, uint16_t len );
 
-    /**
-     * @brief  Constructor that initializes a serial interface and logging.
-     * @param [in] *log: LogStub pointer to the class that has the proper
-     *                   callbacks set up for logging.
-     * @param[in]   dev_name: serial device name.  /dev/ttyS10 or COMX
-     * @param[in]   baud_rate: serial baud rate.
-     * @param[in]   bDFUSEComm: bool that specifies whether to set up serial
-     * for DFUSE or regular serial communication.
-     *   @arg  TRUE: set up serial for DFUSE
-     *   @arg  FALSE: set up serial for regular serial comms.
-     *
-     * @return None.
-     */
-    Comm(
-          LogStub *log,
-          const char *dev_name,
-          int baud_rate,
-          bool bDFUSEComm
-    );
+   /**
+    * @brief   Sets a new LogStub pointer.
+    * @param [in]  *log: LogStub pointer to a LogStub instance.
+    * @return: None.
+    */
+   void setLogging( LogStub *log );
 
-    /**
-     * @brief  Constructor that initializes an ethernet interface and logging.
-     * @param [in] *log: LogStub pointer to the class that has the proper
-     *                   callbacks set up for logging.
-     * @param[in]   *ipAddress: pointer to the remote IP address string.
-     * @param[in]   *pRemPort: pointer to the remote port number string.
-     * @param[in]   *pLocPort: pointer to the local port number string.
-     *
-     * @return None.
-     */
-    Comm(
-          LogStub *log,
-          const char *ipAddress,
-          const char *pRemPort,
-          const char *pLocPort
-    );
+   /**
+    * @brief  Constructor that initializes a serial interface and logging.
+    * @param [in] *log: LogStub pointer to the class that has the proper
+    *                   callbacks set up for logging.
+    * @param[in]   dev_name: serial device name.  /dev/ttyS10 or COMX
+    * @param[in]   baud_rate: serial baud rate.
+    * @param[in]   bDFUSEComm: bool that specifies whether to set up serial
+    * for DFUSE or regular serial communication.
+    *   @arg  TRUE: set up serial for DFUSE
+    *   @arg  FALSE: set up serial for regular serial comms.
+    *
+    * @return None.
+    */
+   Comm(
+         LogStub *log,
+         const char *dev_name,
+         int baud_rate,
+         bool bDFUSEComm
+   );
 
-    /**
-     * @brief  Default destructor.
-     */
-    ~Comm( void );
+   /**
+    * @brief  Constructor that initializes an ethernet interface and logging.
+    * @param [in] *log: LogStub pointer to the class that has the proper
+    *                   callbacks set up for logging.
+    * @param[in]   *ipAddress: pointer to the remote IP address string.
+    * @param[in]   *pRemPort: pointer to the remote port number string.
+    * @param[in]   *pLocPort: pointer to the local port number string.
+    *
+    * @return None.
+    */
+   Comm(
+         LogStub *log,
+         const char *ipAddress,
+         const char *pRemPort,
+         const char *pLocPort
+   );
+
+   /**
+    * @brief  Default destructor.
+    */
+   ~Comm( void );
 };
 
 #endif                                                             /* COMM_H_ */

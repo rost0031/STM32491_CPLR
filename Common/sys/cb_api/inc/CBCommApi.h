@@ -31,5 +31,10 @@ typedef enum CBMsgType         CBMsgType;
 typedef enum CBMsgRoute        CBMsgRoute;
 typedef enum CBBootMode        CBBootMode;
 
+
+/* This is the MAX length of msgs in bytes that can be sent over serial to the
+ * RFID board */
+#define CB_MAX_MSG_LEN 300
+
 #endif                                                        /* CBCOMMAPI_H_ */
 /******** Copyright (C) 2013 Datacard. All rights reserved *****END OF FILE****/

@@ -33,17 +33,17 @@ void Udp::read_handler(
 {
    if ( !error ) {
       /* Construct a new msg event indicating that a msg has been received */
-      MsgEvt *msgEvt = Q_NEW(MsgEvt, MSG_RECEIVED_SIG);
+      LrgDataEvt *evt = Q_NEW(LrgDataEvt, MSG_RECEIVED_SIG);
 
       /* Copy data and set the size and source */
-      memcpy( msgEvt->msg, read_msg_, bytes_transferred );
-      msgEvt->msg_len = bytes_transferred;
-      msgEvt->msg_src = _CB_EthCli;
+      memcpy( evt->dataBuf, read_msg_, bytes_transferred );
+      evt->dataLen = bytes_transferred;
+      evt->src = _CB_EthCli;
 
       /* Publish the event */
-      QF_PUBLISH((QEvent *)msgEvt, AO_MainMgr);
+      QF_PUBLISH((QEvent *)evt, AO_MainMgr);
    } else {
-      printf("Error reading UDP data\n");
+      ERR_printf(this->m_pLog, "Unable to read UDP data");
    }
 
    /* Continue reading */
@@ -72,10 +72,14 @@ void Udp::write_handler(
 )
 {
    write_msg_[bytes_transferred]=0;
-   if (error)
-   {
-      std::cout << "Send - " << error.message() << std::endl;
-      std::cout << bytes_transferred << " bytes written: " << write_msg_ << std::endl;
+   if (error) {
+      ERR_printf(
+            this->m_pLog,
+            "Send error: %s.  %d bytes written: %s",
+            error.message().c_str(),
+            bytes_transferred,
+            write_msg_
+      );
    }
 }
 
@@ -93,6 +97,13 @@ void Udp::write_some(const char* message, uint16_t len)
                boost::asio::placeholders::bytes_transferred
          )
    );
+}
+
+/******************************************************************************/
+void Udp::setLogging( LogStub *log )
+{
+   this->m_pLog = log;
+   DBG_printf(this->m_pLog,"Logging setup successful.");
 }
 
 /******************************************************************************/

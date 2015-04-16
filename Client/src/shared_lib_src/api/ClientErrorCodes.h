@@ -63,9 +63,16 @@ typedef enum ClientErrors
 
    /* Serial error category.                     0x00010000 - 0x0001FFFF */
    CLI_ERR_SER_EXCEPTION_CAUGHT                                = 0x00010000,
+   CLI_ERR_SER_MSG_BASE64_ENC_FAILED                           = 0x00010001,
 
    /* UDP error category.                        0x00020000 - 0x0002FFFF */
    CLI_ERR_UDP_EXCEPTION_CAUGHT                                = 0x00020000,
+
+   /* Comm error category                        0x00030000 - 0x0003FFFF */
+   CLI_ERR_COMM_NOT_SET                                        = 0x00030000,
+
+   /* Message error category                     0x00040000 - 0x0004FFFF */
+   CLI_ERR_INVALID_MSG                                         = 0x00040000,
 
    /* Reserved errors                            0xFFFFFFFE - 0xFFFFFFFF */
    CLI_ERR_UNIMPLEMENTED                                       = 0xFFFFFFFE,

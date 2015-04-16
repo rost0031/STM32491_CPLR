@@ -40,7 +40,7 @@ QS_FUN_DICTIONARY(&amp;CommStackMgr_initial);
 QS_FUN_DICTIONARY(&amp;CommStackMgr_Active);
 
 QActive_subscribe((QActive *)me, TIME_TEST_SIG);</action>
-     <initial_glyph conn="1,2,4,3,4,2">
+     <initial_glyph conn="1,2,4,3,5,2">
       <action box="0,-2,6,2"/>
      </initial_glyph>
     </initial>

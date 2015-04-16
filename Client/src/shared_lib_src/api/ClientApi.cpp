@@ -10,17 +10,13 @@
 
 /* Includes ------------------------------------------------------------------*/
 #include "ClientApi.h"
-#include "Job.h"
 #include "ClientShared.h"
 #include "MainMgr.h"
 #include "MainMgrDefs.h"
 #include "cencode.h"
 #include "cdecode.h"
 #include "base64_wrapper.h"
-#include "CBCommApi.h"
 #include "LogHelper.h"
-#include "CBSharedMsgTypes.h"
-#include "qf_port.h"
 #include "comm.h"
 #include <boost/thread/thread.hpp>
 
@@ -75,6 +71,27 @@ void runMainMgr( void )
 /* Private classes -----------------------------------------------------------*/
 
 /******************************************************************************/
+ClientError_t ClientApi::DC3_getMode(CBErrorCode *status, CBBootMode *mode)
+{
+   /* Settings specific to this message */
+   this->m_basicMsg._msgName     = _CBGetBootModeMsg;
+   this->m_basicMsg._msgPayload  = _CBNoMsg;
+   this->m_basicMsg._msgType     = _CB_Req;
+
+   /* Common settings for most messages */
+   this->m_basicMsg._msgID       = this->m_msgId;
+   this->m_basicMsg._msgReqProg  = (unsigned long)this->m_bRequestProg;
+   this->m_basicMsg._msgRoute    = this->m_msgRoute;
+
+
+   LrgDataEvt *evt = Q_NEW(LrgDataEvt, MSG_SEND_OUT_SIG);
+   evt->dataLen = CBBasicMsg_write_delimited_to(&m_basicMsg, evt->dataBuf, 0);
+   evt->dst = m_msgRoute;
+   evt->src = m_msgRoute;
+   QACTIVE_POST(AO_MainMgr, (QEvt *)(evt), AO_MainMgr);
+}
+
+/******************************************************************************/
 ClientError_t ClientApi::setNewConnection(
       const char *ipAddress,
       const char *pRemPort,
@@ -93,7 +110,7 @@ ClientError_t ClientApi::setNewConnection(
    }
 
    MainMgr_setConn(my_comm);
-
+   m_msgRoute = _CB_EthCli;
    return( CLI_ERR_NONE );
 }
 
@@ -117,7 +134,7 @@ ClientError_t ClientApi::setNewConnection(
    }
 
    MainMgr_setConn(my_comm);
-
+   m_msgRoute = _CB_Serial;
    return( CLI_ERR_NONE );
 }
 
@@ -192,7 +209,6 @@ bool ClientApi::pollForJobDone( void )
    QEvt const *evt = QEQueue_get(&cliQueue);
    if ( evt != (QEvt *)0 ) { /* Check whether an event is present in queue */
 
-
       DBG_printf(this->m_pLog,"Job finish found in queue.");
 
       switch( evt->sig ) {        /* Identify the event by its signal enum */
@@ -234,7 +250,7 @@ ClientApi::ClientApi(
       const char *ipAddress,
       const char *pRemPort,
       const char *pLocPort
-) :  m_pLog(NULL)
+) :  m_pLog(NULL), m_msgId( 0 ), m_bRequestProg( false ), m_msgRoute( _CB_EthCli )
 {
    this->setLogging(log);
    this->qfSetup();                               /* Initialize QF framework. */
@@ -247,7 +263,7 @@ ClientApi::ClientApi(
          const char *dev_name,
          int baud_rate,
          bool bDFUSEComm
-) :  m_pLog(NULL)
+) :  m_pLog(NULL), m_msgId( 0 ), m_bRequestProg( false ), m_msgRoute( _CB_Serial )
 {
    this->setLogging(log);
    this->qfSetup();                               /* Initialize QF framework. */
@@ -261,7 +277,7 @@ ClientApi::ClientApi(
 
 /******************************************************************************/
 ClientApi::ClientApi( LogStub *log ) :
-      m_pLog(NULL)
+      m_pLog(NULL), m_msgId( 0 ), m_bRequestProg( false ), m_msgRoute( _CB_NoRoute )
 {
 
    this->setLogging(log);                                      /* Set logging */

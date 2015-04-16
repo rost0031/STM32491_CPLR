@@ -60,6 +60,11 @@
     * Timeouts used by MainMgr AO.
     *@{*/
    #define MAINMGR_MAX_TIME_SEC_EXIT_DELAY                                    0.1
+
+   #define MAINMGR_MAX_TOUT_SEC_ACK_WAIT                                      1.0
+
+   #define MAINMGR_MAX_TOUT_SEC_DONE_WAIT                                     3.0
+
    /*@} MainMgr AO Timeouts and Times */
 
 /*@} Coupler Board Timeout Maximums*/

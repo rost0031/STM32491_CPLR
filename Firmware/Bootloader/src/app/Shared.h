@@ -21,7 +21,6 @@
 #include "CBErrors.h"                               /* for system error codes */
 #include "CBSignals.h"                                  /* for system signals */
 #include "CBCommApi.h"                                  /* for CB API support */
-#include "CBSharedMsgTypes.h"      /* for msg types that are used by everyone */
 
 /* Exported defines ----------------------------------------------------------*/
 /* Exported macros -----------------------------------------------------------*/
