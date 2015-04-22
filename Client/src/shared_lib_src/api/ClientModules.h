@@ -75,6 +75,7 @@ typedef enum DBG_MODULES {
    MODULE_JOB   = 0x00000020, /**< Job module */
    MODULE_API   = 0x00000040, /**< ClientApi module */
    MODULE_COM   = 0x00000080, /**< Comm interface module */
+   MODULE_MSG   = 0x00000100, /**< Msg interface module */
 
    MODULE_EXT   = 0x80000000, /**< This should be used by external callers of the library */
 } ModuleId_t;

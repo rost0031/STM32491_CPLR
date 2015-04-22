@@ -32,7 +32,6 @@ extern "C" {
 #include "CBCommApi.h"
 #include "CBSharedDbgLevels.h"
 #include "ClientModules.h"
-
 #ifdef __cplusplus
 }
 #endif
@@ -43,19 +42,57 @@ extern "C" {
 /* Exported types ------------------------------------------------------------*/
 
 /**
- * @brief   Callback type for a message that is coming from the coupler board.
+ * @brief   Callback type for an Req msg going to the coupler board.
  *
  * This is a callback function type definition which should be instantiated to
- * handle msgs coming from the coupler board.  This allows different handling
+ * handle Req msgs going to the coupler board. This allows different handling of
+ * logging outgoing Req msgs depending if the client is commandline, menu
+ * driven, or a a gui.
+ *
+ * @param [in] basicMsg: CBBasicMsg struct of raw data contained in the Req msg.
+ * @param [in] basicMsgMap: std map that contains text values of the basicMsg
+ * struct, ready to print
+ * @return: None.
+ */
+typedef void (*CB_ReqLogHandler_t)(
+      struct CBBasicMsg basicMsgStruct
+);
+
+/**
+ * @brief   Callback type for an Ack msg coming from the coupler board.
+ *
+ * This is a callback function type definition which should be instantiated to
+ * handle Ack msgs coming from the coupler board. This allows different handling
  * depending if the client is commandline, menu driven, or a a gui.
  *
- * @param err: CBErrorCode type that specifies what error was sent from coupler
- *             or occurred.
- * @param *buffer: char pointer to buffer containing the message to be printed.
+ * @param [in] basicMsg: CBBasicMsg struct of raw data contained in the Ack msg.
+ * @param [in] basicMsgMap: std map that contains text values of the basicMsg
+ * struct, ready to print
+ * @return: None.
  */
-typedef void (*CB_MsgHandler_t)(
-      char *message,
-      int len
+typedef void (*CB_AckLogHandler_t)(
+      struct CBBasicMsg basicMsgStruct
+);
+
+/**
+ * @brief   Callback type for an Done msg coming from the coupler board.
+ *
+ * This is a callback function type definition which should be instantiated to
+ * handle Done msgs coming from the coupler board. This allows different
+ * handling depending if the client is commandline, menu driven, or a a gui.
+ *
+ * @param [in] basicMsgStruct: CBBasicMsg struct of raw data contained in the Ack msg.
+ * @param [in] payloadMsgName: CBMsgName that specifies which payload msg to
+ * look up in the union of all payload msgs.
+ * @param [in] payloadMsgUnion: CBPayloadMsgUnion_t uniont that contains the union
+ * of all possible payload msgs.
+ *
+ * @return: None.
+ */
+typedef void (*CB_DoneLogHandler_t)(
+      struct CBBasicMsg basicMsgStruct,
+      CBMsgName payloadMsgName,
+      CBPayloadMsgUnion_t payloadMsgUnion
 );
 
 /**

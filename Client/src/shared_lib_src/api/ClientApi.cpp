@@ -19,6 +19,7 @@
 #include "LogHelper.h"
 #include "comm.h"
 #include <boost/thread/thread.hpp>
+#include "msg_utils.h"
 
 /* Namespaces ----------------------------------------------------------------*/
 using namespace std;
@@ -89,6 +90,40 @@ ClientError_t ClientApi::DC3_getMode(CBErrorCode *status, CBBootMode *mode)
    evt->dst = m_msgRoute;
    evt->src = m_msgRoute;
    QACTIVE_POST(AO_MainMgr, (QEvt *)(evt), AO_MainMgr);
+
+   char *tmp = (char *)malloc(sizeof(char) * 1000);
+   uint16_t tmpStrLen;
+   ClientError_t convertStatus = MSG_hexToStr(
+         evt->dataBuf,
+         evt->dataLen,
+         tmp,
+         1000,
+         &tmpStrLen,
+         0,
+         '-',
+         true
+   );
+
+   DBG_printf(this->m_pLog,"ConStatus: 0x%x, sending a buffer with: %s", convertStatus, tmp);
+   free(tmp);
+
+   CBBasicMsg basicMsg;
+   CBMsgName payloadMsgName = _CBNoMsg;
+   CBPayloadMsgUnion_t payloadMsgUnion;
+   memset(&payloadMsgUnion, 0, sizeof(payloadMsgUnion));
+
+   ClientError_t clientStatus = waitForJobDone(
+         &basicMsg,
+         &payloadMsgName,
+         &payloadMsgUnion
+   );
+
+   if ( CLI_ERR_NONE == clientStatus ) {
+      *status = (CBErrorCode)payloadMsgUnion.runmodePayload._errorCode;
+      *mode = payloadMsgUnion.runmodePayload._bootMode;
+   }
+
+   return clientStatus;
 }
 
 /******************************************************************************/
@@ -163,7 +198,7 @@ void ClientApi::qfSetup( void )
 }
 
 /******************************************************************************/
-void ClientApi::run( void )
+void ClientApi::start( void )
 {
    this->m_workerThread = boost::thread( runMainMgr );
    DBG_printf(this->m_pLog,"QF Framework started successfully.");
@@ -203,8 +238,16 @@ void ClientApi::startJob( void )
 }
 
 /******************************************************************************/
-bool ClientApi::pollForJobDone( void )
+ClientError_t ClientApi::pollForJobDone(
+      CBBasicMsg *basicMsg,
+      CBMsgName *payloadMsgName,
+      CBPayloadMsgUnion_t *payloadMsgUnion
+)
 {
+   /* This code indicates to the caller that the function is didn't find any
+    * events in the queue this call. */
+   ClientError_t status = CLI_ERR_MSG_WAITING_FOR_RESP;
+
    /* Check if there's data in the queue and process it if there. */
    QEvt const *evt = QEQueue_get(&cliQueue);
    if ( evt != (QEvt *)0 ) { /* Check whether an event is present in queue */
@@ -213,36 +256,211 @@ bool ClientApi::pollForJobDone( void )
 
       switch( evt->sig ) {        /* Identify the event by its signal enum */
          case TEST_JOB_DONE_SIG:
+            DBG_printf(this->m_pLog, "Got TEST_JOB_DONE_SIG");
+            break;
+         case MSG_ACK_RECVD_SIG:
+            DBG_printf(this->m_pLog, "Got MSG_ACK_RECVD_SIG");
+            CBBasicMsg_read_delimited_from(
+                  (void*)((LrgDataEvt const *) evt)->dataBuf,
+                  basicMsg,
+                  0
+            );
+            if (this->m_pAckHandlerCBFunction) {
+               this->m_pAckHandlerCBFunction( *basicMsg );
+            }
+            DBG_printf(this->m_pLog, "Got an Ack msg");
+            break;
+         case MSG_PROG_RECVD_SIG:
+            DBG_printf(this->m_pLog, "Got MSG_PROG_RECVD_SIG");
+            DBG_printf(
+                  this->m_pLog,
+                  "Got a progress msg but not handler set up for it..."
+            );
+            break;
+         case MSG_DONE_RECVD_SIG: {
+            DBG_printf(this->m_pLog, "Got MSG_DONE_RECVD_SIG");
+            int offset = CBBasicMsg_read_delimited_from(
+                  (void*)((LrgDataEvt const *) evt)->dataBuf,
+                  basicMsg,
+                  0
+            );
+
+            *payloadMsgName = basicMsg->_msgPayload;
+            /* Extract the payload (if exists) since this buffer is going away the moment we get
+             * into a state.  We'll figure out later if it's valid, right before we send an Ack */
+            switch( *payloadMsgName ) {
+               case _CBNoMsg:
+                  WRN_printf( this->m_pLog, "No payload detected, this is probably an error" );
+                  break;
+               case _CBStatusPayloadMsg:
+                  DBG_printf( this->m_pLog, "Status payload detected");
+                  CBStatusPayloadMsg_read_delimited_from(
+                        (void*)((LrgDataEvt const *) evt)->dataBuf,
+                        &(payloadMsgUnion->statusPayload),
+                        offset
+                  );
+                  break;
+               case _CBVersionPayloadMsg:
+                  DBG_printf( this->m_pLog, "Version payload detected");
+                  break;
+               case _CBBootModePayloadMsg:
+                  DBG_printf( this->m_pLog, "BootMode payload detected");
+                  break;
+               default:
+                  WRN_printf( this->m_pLog, "Unknown payload detected, this is probably an error");
+                  break;
+            }
+
+            if (this->m_pDoneHandlerCBFunction) {
+               this->m_pDoneHandlerCBFunction( *basicMsg, *payloadMsgName, *payloadMsgUnion );
+            }
+            status = CLI_ERR_NONE;
+            break;
+         }
+         case MSG_ACK_TIMED_OUT_SIG:
+            DBG_printf(this->m_pLog, "Got MSG_ACK_TIMED_OUT_SIG");
+            status = CLI_ERR_MSG_ACK_WAIT_TIMED_OUT;
+            break;
+         case MSG_DONE_TIMED_OUT_SIG:
+            DBG_printf(this->m_pLog, "Got MSG_DONE_TIMED_OUT_SIG");
+            status = CLI_ERR_MSG_DONE_WAIT_TIMED_OUT;
             break;
          default:
+            /* We should never get here */
+            status = CLI_ERR_UNKNOWN;
+            WRN_printf(
+                  this->m_pLog,
+                  "Unknown event in the queue; signal: %d, client error: 0x%08x",
+                  evt->sig, status
+            );
             break;
       }
 
 
-      QF_gc(evt); /* !!! Don't forget to garbage collect the event after
-                        processing the event.  After this, any data to which
-                        this pointer points to may not be valid and should not
-                        be referenced. */
-      return true;
-   } else {
-      return false;
+      /* !!! Don't forget to garbage collect the event after processing the
+       * event. After this, any data to which this pointer points to may not be
+       * valid and should not be referenced. This should be done in the calling
+       * function. */
+      QF_gc(evt);
    }
+
+   return( status );
 }
 
 /******************************************************************************/
-void ClientApi::waitForJobDone( void )
+ClientError_t ClientApi::waitForJobDone(
+      CBBasicMsg *basicMsg,
+      CBMsgName *payloadMsgName,
+      CBPayloadMsgUnion_t *payloadMsgUnion
+)
 {
+   ClientError_t status = CLI_ERR_NONE;
    DBG_printf(this->m_pLog,"Waiting for job to finish.");
    for (;;) {                         /* Beginning of the thread forever loop */
-      if (pollForJobDone()) {
-         return;
+
+      status = pollForJobDone(basicMsg, payloadMsgName, payloadMsgUnion);
+      if (CLI_ERR_MSG_WAITING_FOR_RESP != status ) {
+         return status;
       }
       /* Sleep for 5 ms*/
       boost::this_thread::sleep(boost::posix_time::milliseconds(5));
    }
 }
 
+/******************************************************************************/
+ClientError_t ClientApi::setReqCallBack(
+      CB_ReqLogHandler_t pCallbackFunction
+)
+{
+   ClientError_t err = CLI_ERR_NONE;
 
+   this->m_pReqHandlerCBFunction = pCallbackFunction;
+
+   /* This is a potentially dangerous call since the user could have passed in
+    * garbage instead of a valid pointer */
+   try {
+      CBBasicMsg basicMsg;
+      memset(&basicMsg, 0, sizeof(basicMsg));
+      basicMsg._msgID = 0;
+      basicMsg._msgName = _CBNoMsg;
+      basicMsg._msgPayload = _CBNoMsg;
+      basicMsg._msgReqProg = 0;
+      basicMsg._msgRoute = _CB_NoRoute;
+      basicMsg._msgType = _CB_Req;
+
+      this->m_pReqHandlerCBFunction( basicMsg );
+   } catch ( ... ) {
+      err = CLI_ERR_INVALID_CALLBACK;
+      cerr << "Invalid callback passed in by user" << endl;
+      this->m_pReqHandlerCBFunction = NULL;
+   }
+
+   return( err );
+}
+
+/******************************************************************************/
+ClientError_t ClientApi::setAckCallBack(
+      CB_AckLogHandler_t pCallbackFunction
+)
+{
+   ClientError_t err = CLI_ERR_NONE;
+   this->m_pAckHandlerCBFunction = pCallbackFunction;
+
+   /* This is a potentially dangerous call since the user could have passed in
+    * garbage instead of a valid pointer */
+   try {
+      CBBasicMsg basicMsg;
+      memset(&basicMsg, 0, sizeof(basicMsg));
+      basicMsg._msgID = 0;
+      basicMsg._msgName = _CBNoMsg;
+      basicMsg._msgPayload = _CBNoMsg;
+      basicMsg._msgReqProg = 0;
+      basicMsg._msgRoute = _CB_NoRoute;
+      basicMsg._msgType = _CB_Ack;
+      this->m_pAckHandlerCBFunction( basicMsg );
+   } catch ( ... ) {
+      err = CLI_ERR_INVALID_CALLBACK;
+      cerr << "Invalid callback passed in by user" << endl;
+      this->m_pReqHandlerCBFunction = NULL;
+   }
+
+   return( err );
+}
+
+/******************************************************************************/
+ClientError_t ClientApi::setDoneCallBack(
+      CB_DoneLogHandler_t pCallbackFunction
+)
+{
+   ClientError_t err = CLI_ERR_NONE;
+   this->m_pDoneHandlerCBFunction = pCallbackFunction;
+
+   /* This is a potentially dangerous call since the user could have passed in
+    * garbage instead of a valid pointer */
+   try {
+      CBBasicMsg basicMsg;
+      memset(&basicMsg, 0, sizeof(basicMsg));
+      basicMsg._msgID = 0;
+      basicMsg._msgName = _CBNoMsg;
+      basicMsg._msgPayload = _CBNoMsg;
+      basicMsg._msgReqProg = 0;
+      basicMsg._msgRoute = _CB_NoRoute;
+      basicMsg._msgType = _CB_Ack;
+
+      CBMsgName payloadName = _CBStatusPayloadMsg;
+      CBPayloadMsgUnion_t payloadMsgUnion;
+      payloadMsgUnion.statusPayload._errorCode = ERR_NONE;
+      this->m_pDoneHandlerCBFunction( basicMsg, payloadName, payloadMsgUnion);
+   } catch ( ... ) {
+      err = CLI_ERR_INVALID_CALLBACK;
+      cerr << "Invalid callback passed in by user" << endl;
+      this->m_pReqHandlerCBFunction = NULL;
+   }
+
+   return( err );
+
+
+}
 
 /******************************************************************************/
 ClientApi::ClientApi(
@@ -250,7 +468,11 @@ ClientApi::ClientApi(
       const char *ipAddress,
       const char *pRemPort,
       const char *pLocPort
-) :  m_pLog(NULL), m_msgId( 0 ), m_bRequestProg( false ), m_msgRoute( _CB_EthCli )
+) :   m_pLog(NULL),
+      m_pReqHandlerCBFunction(NULL),
+      m_pAckHandlerCBFunction(NULL),
+      m_pDoneHandlerCBFunction(NULL),
+      m_msgId( 0 ), m_bRequestProg( false ), m_msgRoute( _CB_EthCli )
 {
    this->setLogging(log);
    this->qfSetup();                               /* Initialize QF framework. */
@@ -263,7 +485,11 @@ ClientApi::ClientApi(
          const char *dev_name,
          int baud_rate,
          bool bDFUSEComm
-) :  m_pLog(NULL), m_msgId( 0 ), m_bRequestProg( false ), m_msgRoute( _CB_Serial )
+) :   m_pLog(NULL),
+      m_pReqHandlerCBFunction(NULL),
+      m_pAckHandlerCBFunction(NULL),
+      m_pDoneHandlerCBFunction(NULL),
+      m_msgId( 0 ), m_bRequestProg( false ), m_msgRoute( _CB_Serial )
 {
    this->setLogging(log);
    this->qfSetup();                               /* Initialize QF framework. */
@@ -277,7 +503,11 @@ ClientApi::ClientApi(
 
 /******************************************************************************/
 ClientApi::ClientApi( LogStub *log ) :
-      m_pLog(NULL), m_msgId( 0 ), m_bRequestProg( false ), m_msgRoute( _CB_NoRoute )
+      m_pLog(NULL),
+      m_pReqHandlerCBFunction(NULL),
+      m_pAckHandlerCBFunction(NULL),
+      m_pDoneHandlerCBFunction(NULL),
+      m_msgId( 0 ), m_bRequestProg( false ), m_msgRoute( _CB_NoRoute )
 {
 
    this->setLogging(log);                                      /* Set logging */
@@ -319,21 +549,21 @@ ClientApi::ClientApi( LogStub *log ) :
 //   eth->write_some("Test\n", 5);
 
    /* This also works.*/
-   DBG_printf(this->m_pLog,"Attempting to init UDP eth...");
-   Comm *m_comm;
-   try {
-      m_comm = new Comm(
-            this->m_pLog,
-            "172.27.0.75",
-            "1502",
-            "53432"
-      );
-   } catch ( ... ) {
-      ERR_printf(this->m_pLog,"Unable to connect to UDP. Exiting");
-      return; // Do a regular exit since this is critical
-   }
-   DBG_printf(this->m_pLog,"Attempting to write UDP eth...");
-   m_comm->write_some("Test\n", 5);
+//   DBG_printf(this->m_pLog,"Attempting to init UDP eth...");
+//   Comm *m_comm;
+//   try {
+//      m_comm = new Comm(
+//            this->m_pLog,
+//            "172.27.0.75",
+//            "1502",
+//            "53432"
+//      );
+//   } catch ( ... ) {
+//      ERR_printf(this->m_pLog,"Unable to connect to UDP. Exiting");
+//      return; // Do a regular exit since this is critical
+//   }
+//   DBG_printf(this->m_pLog,"Attempting to write UDP eth...");
+//   m_comm->write_some("Test\n", 5);
 
 }
 
@@ -342,5 +572,6 @@ ClientApi::~ClientApi(  )
 {
    delete[] this->m_pLog;
 }
+
 
 

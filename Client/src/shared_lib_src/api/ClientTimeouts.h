@@ -21,7 +21,7 @@
 #define BSP_TICKS_PER_SEC   1000U
 
 #ifdef WIN32COMPILE
-#define WIN32_TIME_MULT       0.1
+#define WIN32_TIME_MULT       1
 #else
 #define WIN32_TIME_MULT       1
 #endif

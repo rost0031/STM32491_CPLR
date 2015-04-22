@@ -60,6 +60,10 @@ class CLIENT_DLL ClientApi {
 
 private:
    LogStub *m_pLog;         /**< Pointer to LogStub instance used for logging */
+   CB_ReqLogHandler_t m_pReqHandlerCBFunction; /**< Callback for handling Req msgs */
+   CB_AckLogHandler_t m_pAckHandlerCBFunction; /**< Callback for handling Ack msgs */
+   CB_DoneLogHandler_t m_pDoneHandlerCBFunction; /**< Callback for handling Done msgs */
+
    unsigned int m_msgId;   /* Msg ID incrementing counter for unique msg ids. */
    bool m_bRequestProg;     /* Flag to see if progress messages are requested */
    CBMsgRoute m_msgRoute; /* This is set based on the connection used (UDP vs Serial) */
@@ -82,6 +86,29 @@ private:
     * @return  None.
     */
    void qfSetup( void );
+
+   /**
+    * @brief   Polls for new events in the queue from MainMgr AO.
+    * @param   None
+    * @return: QEvt pointer to the event that is now in the queue.
+    */
+   ClientError_t pollForJobDone(
+         CBBasicMsg *basicMsg,
+         CBMsgName *payloadMsgName,
+         CBPayloadMsgUnion_t *payloadMsgUnion
+   );
+
+   /**
+    * @brief   Blocks while waiting for new events in queue from MainMgr AO.
+    * @param:  None
+    * @return: QEvt pointer to the event that is now in the queue.
+    */
+   ClientError_t waitForJobDone(
+         CBBasicMsg *basicMsg,
+         CBMsgName *payloadMsgName,
+         CBPayloadMsgUnion_t *payloadMsgUnion
+   );
+
 public:
 
    /****************************************************************************
@@ -124,11 +151,14 @@ public:
    );
 
    /**
-    * Kicks of the command to run.
+    * @breif   Starts the client.
+    *
+    * This must be called after a connection has been set up and before any
+    * commands are executed.
     * @param[in]   None.
     * @return      None.
     */
-   void run( void );
+   void start( void );
 
    /**
     * @brief   Waits for the MainMgr AO to finish.
@@ -158,8 +188,41 @@ public:
     */
    void startJob( void );
 
-   bool pollForJobDone( void );
-   void waitForJobDone( void );
+   /**
+    * This method sets a callback to handle Req msgs.
+    *
+    * @param  [in]  pCallbackFunction: a CB_ReqLogHandler_t pointer to the
+    * callback function that is implemented outside the library.
+    *
+    * @return ClientError_t:
+    *    @arg CLI_ERR_NONE: no errors were detected
+    *    else some error code indicating what went wrong
+    */
+   ClientError_t setReqCallBack( CB_ReqLogHandler_t pCallbackFunction );
+
+   /**
+    * This method sets a callback to handle Ack msgs.
+    *
+    * @param  [in]  pCallbackFunction: a CB_AckLogHandler_t pointer to the
+    * callback function that is implemented outside the library.
+    *
+    * @return ClientError_t:
+    *    @arg CLI_ERR_NONE: no errors were detected
+    *    else some error code indicating what went wrong
+    */
+   ClientError_t setAckCallBack( CB_AckLogHandler_t pCallbackFunction );
+
+   /**
+    * This method sets a callback to handle Done msgs.
+    *
+    * @param  [in]  pCallbackFunction: a CB_DoneLogHandler_t pointer to the
+    * callback function that is implemented outside the library.
+    *
+    * @return ClientError_t:
+    *    @arg CLI_ERR_NONE: no errors were detected
+    *    else some error code indicating what went wrong
+    */
+   ClientError_t setDoneCallBack( CB_DoneLogHandler_t pCallbackFunction );
 
    /**
     * Constructor that sets up logging and an ethernet connection.

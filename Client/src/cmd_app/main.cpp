@@ -143,27 +143,41 @@ int main(int argc, char *argv[])
       }
    }
 
-   /* 7. Start the client.  This starts job processing and can now accept
+
+   /* 7. Set callbacks for Req, Ack, and Done msg types. */
+   status = client->setReqCallBack(CLI_ReqCallback);
+   if ( CLI_ERR_NONE != status ) {
+      WRN_out << "Failed to set library callback function for Req msgs.";
+   }
+   status = client->setAckCallBack(CLI_AckCallback);
+   if ( CLI_ERR_NONE != status ) {
+      WRN_out << "Failed to set library callback function for Ack msgs.";
+   }
+   status = client->setDoneCallBack(CLI_DoneCallback);
+   if ( CLI_ERR_NONE != status ) {
+      WRN_out << "Failed to set library callback function for Done msgs.";
+   }
+
+   /* 8. Start the client.  This starts processing and can now accept
     * requests for work to be done as well as the responses from the DC3. */
-   client->run(); /* Set the client running */
-
-//   struct CBBasicMsg _CBBasicMsg;
-//   uint8_t _buffer[20];
-//   int offset;
-//
-//   _CBBasicMsg._msgID = 0;
-//   _CBBasicMsg._msgName = _CBGetBootModeMsg;
-//   _CBBasicMsg.
-//   CBBasicMsg_write_delimited_to(&_CBBasicMsg, (void *)_buffer, 0);
-
+   client->start(); /* Set the client running */
 
    DBG_out << "Waiting until the state machine is up and running...";
-   boost::this_thread::sleep(boost::posix_time::milliseconds(10));
-   DBG_out << "Starting a test job.";
-   client->startJob();
+   boost::this_thread::sleep(boost::posix_time::milliseconds(5));
 
-   DBG_out << "Waiting for test job to finish...";
-   client->waitForJobDone();
+
+   CBErrorCode statusDC3;
+   CBBootMode mode = _CB_NoBootMode;
+   ClientError_t statusCli = client->DC3_getMode(&statusDC3, &mode);
+
+   DBG_out << "DC3 boot mode is: " << mode << " and status: "
+         << statusDC3 << ". Client status: " << hex << statusCli;
+
+//   DBG_out << "Starting a test job.";
+//   client->startJob();
+//
+//   DBG_out << "Waiting for test job to finish...";
+//   client->waitForJobDone();
 
    DBG_out << "Test job finished. Exiting.";
    boost::this_thread::sleep(boost::posix_time::milliseconds(50));

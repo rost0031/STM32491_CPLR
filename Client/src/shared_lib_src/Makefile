@@ -120,9 +120,6 @@ BOOST_LIB_DIR               = $(EXT_LIB_BIN_DIR)
 # Base64 encoding module
 BASE64_DIR                  = $(COMMON_CLI_SYS_DIR)/libb64
 
-# Shared Client Utils
-FWLDR_DIR                   = $(SYS_DIR)/fwLdr
-
 #-----------------------------------------------------------------------------
 # SOURCE VIRTUAL DIRECTORIES
 #-----------------------------------------------------------------------------
@@ -130,8 +127,7 @@ VPATH                       = $(API_DIR) \
                               $(APP_DIR) \
                               $(BSP_DIR) \
                               $(SYS_DIR) \
-                              $(BASE64_DIR) \
-                              $(FWLDR_DIR)
+                              $(BASE64_DIR)
 
 #-----------------------------------------------------------------------------
 # INCLUDE DIRECTORIES
@@ -147,7 +143,6 @@ INCLUDES                    = -I$(SRC_DIR) \
                               -I$(CB_API_GEN_SRC_DIR) \
                               \
                               -I$(BASE64_DIR) \
-                              -I$(FWLDR_DIR) \
                               \
                               -I$(QPC)/include \
                               -I$(QP_PORT_DIR) \
@@ -179,7 +174,8 @@ CPP_SRCS                    = bsp.cpp \
                               fwLdr.cpp \
                               ClientApi.cpp \
                               MainMgr.cpp \
-                              LogStub.cpp
+                              LogStub.cpp \
+                              msg_utils.cpp
 
 #-----------------------------------------------------------------------------
 # BUILD OPTIONS FOR VARIOUS CONFIGURATIONS

@@ -18,15 +18,63 @@
 #include "CBSharedDbgLevels.h"
 #include "CBCommApi.h"
 #include "ClientModules.h"
+#include <map>
 
 /* Exported defines ----------------------------------------------------------*/
 /* Exported macros -----------------------------------------------------------*/
 /* Exported types ------------------------------------------------------------*/
 /* Exported functions --------------------------------------------------------*/
 
-void CLI_MsgCallback( char* message, int len );
+/**
+ * @brief   Callback for an Req msg going to the coupler board.
+ *
+ * This is a callback which should be instantiated to handle Req msgs going to
+ * the coupler board. This performs a pretty-print of data going out in the Req
+ * msg.
+ *
+ * @param [in] basicMsgStruct: CBBasicMsg struct of raw data contained in the
+ * Req msg.
+ * @return: None.
+ */
+void CLI_ReqCallback(
+      struct CBBasicMsg basicMsgStruct
+);
 
-void CLI_AckCallback( char* message, int len );
+/**
+ * @brief   Callback for an Ack msg coming from the coupler board.
+ *
+ * This is a callback which should be instantiated to handle Ack msgs coming
+ * from the coupler board. This performs a pretty-print of data going out in the
+ * Ack msg.
+ *
+ * @param [in] basicMsgStruct: CBBasicMsg struct of raw data contained in the
+ * Ack msg.
+ * @return: None.
+ */
+void CLI_AckCallback(
+      struct CBBasicMsg basicMsgStruct
+);
+
+
+/**
+ * @brief   Callback for an Done msg coming from the coupler board.
+ *
+ * This is a callback which should be instantiated to handle Done msgs coming
+ * from the coupler board. This performs a pretty-print of data in the Done msg.
+ *
+ * @param [in] basicMsgStruct: CBBasicMsg struct of raw data contained in the Ack msg.
+ * @param [in] payloadMsgName: CBMsgName that specifies which payload msg to
+ * look up in the union of all payload msgs.
+ * @param [in] payloadMsgUnion: CBPayloadMsgUnion_t uniont that contains the union
+ * of all possible payload msgs.
+ *
+ * @return: None.
+ */
+void CLI_DoneCallback(
+      struct CBBasicMsg basicMsgStruct,
+      CBMsgName payloadMsgName,
+      CBPayloadMsgUnion_t payloadMsgUnion
+);
 
 //void CLI_LogCallback(
 //      DBG_LEVEL_T logLevel,

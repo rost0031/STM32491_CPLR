@@ -255,10 +255,10 @@ void Serial_DMAStartXfer(
 
 /******************************************************************************/
 CBErrorCode Serial_sendBase64Enc(
-      SerialPort_T serPort,
-      DevAccess_t devAcc,
-      uint8_t *dataBuf,
-      uint16_t dataLen
+      const uint8_t *dataBuf,
+      const uint16_t dataLen,
+      const SerialPort_T serPort,
+      const DevAccess_t devAcc
 )
 {
    uint8_t encDataBuf[CB_MAX_MSG_LEN];
@@ -269,22 +269,21 @@ CBErrorCode Serial_sendBase64Enc(
          CB_MAX_MSG_LEN
    );
 
-   if(encDataLen < 1)
-   {
+   if(encDataLen < 1) {
       err_slow_printf("Encoding failed\n");
       return ERR_SERIAL_MSG_BASE64_ENC_FAILED;
    }
 
    /* Return the result of the raw message send function */
-   return( Serial_sendRaw( serPort, devAcc, encDataBuf, encDataLen ) );
+   return( Serial_sendRaw( encDataBuf, encDataLen, serPort, devAcc ) );
 }
 
 /******************************************************************************/
 CBErrorCode Serial_sendRaw(
-      SerialPort_T serPort,
-      DevAccess_t devAcc,
       const uint8_t const *dataBuf,
-      const uint16_t dataLen
+      const uint16_t dataLen,
+      const SerialPort_T serPort,
+      const DevAccess_t devAcc
 )
 {
    if ( dataLen >= CB_MAX_MSG_LEN ) {                     /* Check the length */
@@ -310,7 +309,7 @@ CBErrorCode Serial_sendRaw(
       QACTIVE_POST(
             AO_SerialMgr,
             (QEvt *)(evt),
-            senderAO
+            0
       );
    } else {              /* BYTE access, cycle through all the bytes and wait */
 

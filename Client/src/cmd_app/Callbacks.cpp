@@ -21,6 +21,7 @@
 using namespace std;
 
 /* Compile-time called macros ------------------------------------------------*/
+MODULE_NAME( MODULE_LOG );
 
 /* Private typedefs ----------------------------------------------------------*/
 /* Private defines -----------------------------------------------------------*/
@@ -30,28 +31,42 @@ using namespace std;
 /* Private functions ---------------------------------------------------------*/
 
 /******************************************************************************/
-void CLI_MsgCallback( char* message, int len )
+void CLI_ReqCallback(
+      struct CBBasicMsg basicMsgStruct
+)
 {
-   cout << "In CLI_MsgCallback callback" << endl;
+//   cout << "In CLI_ReqCallback callback" << endl;
+   LOG_out << "Sending Req msg:";
+   stringstream ss;
+   ss << "------------------- Req Msg Contents -------------------";
+   CON_print(ss.str());
 }
 
 /******************************************************************************/
-void CLI_AckCallback( char* message, int len )
+void CLI_AckCallback(
+      struct CBBasicMsg basicMsgStruct
+)
 {
-   cout << "in CLI_AckCallback, len=" << len << endl;
+//   cout << "in CLI_AckCallback "<< endl;
+   LOG_out << "Received Ack msg:";
+   stringstream ss;
+   ss << "------------------- Ack Msg Contents -------------------";
+   CON_print(ss.str());
 }
 
 /******************************************************************************/
-//void CLI_DC3LogMsgCallback(
-//      DBG_LEVEL_T logLevel,
-//      CBErrorCode err,
-//      char *message
-//)
-//{
-//    cout << "in CLI_DC3LogMsgCallback, err=" << err << endl;
-//}
-
-//sources::severity_logger<DBG_LEVEL_T> lg;
+void CLI_DoneCallback(
+      struct CBBasicMsg basicMsgStruct,
+      CBMsgName payloadMsgName,
+      CBPayloadMsgUnion_t payloadMsgUnion
+)
+{
+//   cout << "in CLI_DoneCallback "<< endl;
+   LOG_out << "Received Done msg:";
+   stringstream ss;
+   ss << "------------------- Done Msg Contents ------------------";
+   CON_print(ss.str());
+}
 
 /******************************************************************************/
 void CLI_LibLogCallback(
@@ -83,21 +98,6 @@ void CLI_LibLogCallback(
    );
    va_end(args);
 
-//   BOOST_LOG_SEV(lg::get(), dbgLvl) << tmpBuffer;
-
-//   switch( dbgLvl ) {
-//      case DBG:
-//         DBG_printf_b << tmpBuffer;
-//         break;
-//
-//      case LOG: LOG_printf_b << tmpBuffer; break;
-//      case WRN: WRN_printf_b << tmpBuffer; break;
-//      case ERR: ERR_printf_b << tmpBuffer; break;
-//      case CON: ERR_printf_b << tmpBuffer; break;
-//      case ISR: ERR_printf_b << tmpBuffer; break;
-//      default:  BOOST_LOG_TRIVIAL(debug) << tmpBuffer; break;
-//   }
-//   BOOST_LOG_SEV(my_logger::get(), dbgLvl) << tmpBuffer;
    LIB_out( dbgLvl, pFuncName, wLineNumber, moduleSrc, moduleId, tmpBuffer );
 }
 

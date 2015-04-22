@@ -111,15 +111,12 @@ extern QActive * const AO_LWIPMgr;
  *
  * @param [in] *dataBuf: const uint8_t pointer to the buffer of data to send.
  * @param [in]  dataLen: length of data to send.
- * @param [in]  senderAO: which AO is sending the data.  If called from outside
- * of an AO, use 0.
  *
- * @return None
+ * @return CBErrorCode: status of send
  */
-void ETH_SendUdp(
+CBErrorCode ETH_SendUdp(
       const uint8_t* const dataBuf,
-      const uint16_t const dataLen,
-      const QActive* const senderAO
+      const uint16_t const dataLen
 );
 
 /**

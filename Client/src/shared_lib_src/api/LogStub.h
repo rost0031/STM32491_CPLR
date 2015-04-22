@@ -63,14 +63,9 @@ extern "C" {
 class CLIENT_DLL LogStub {
 
 private:
-   CB_MsgHandler_t m_pMsgHandlerCBFunction; /**< Callback for handling Done and Progress msgs */
-   CB_MsgHandler_t m_pAckHandlerCBFunction; /**< Callback for handling Ack msgs */
    CB_LibLogHandler_t m_pLibLogHandlerCBFunction;  /**< Callback for handling library logging */
-   bool m_AckLoggingEnabled; /**< Allows enabling/disabling of logging of Ack msgs */
-   bool m_MsgLoggingEnabled; /**< Allows enabling/disabling of logging of Done and Prog msgs */
+
 public:
-
-
 
    /**
     * @brief   Default constructor.
@@ -87,30 +82,6 @@ public:
     * @brief   Default destructor
     */
    ~LogStub( void );
-
-   /**
-    * This method sets a callback to handle all and any general Done and Prog msgs.
-    *
-    * @param  [in]  pCallbackFunction: a CB_MsgHandler_t pointer to the
-    * callback function that is implemented outside the library.
-    *
-    * @return ClientError_t:
-    *    @arg CLI_ERR_NONE: no errors were detected
-    *    else some error code indicating what went wrong
-    */
-   ClientError_t setMsgCallBack( CB_MsgHandler_t pCallbackFunction );
-
-   /**
-    * This method sets a callback to handle all and any general Ack msgs.
-    *
-    * @param  [in]  pCallbackFunction: a CB_MsgHandler_t pointer to the
-    * callback function that is implemented outside the library.
-    *
-    * @return ClientError_t:
-    *    @arg CLI_ERR_NONE: no errors were detected
-    *    else some error code indicating what went wrong
-    */
-   ClientError_t setAckCallBack( CB_MsgHandler_t pCallbackFunction );
 
    /**
     * @brief   Set a callback to handle the internal logging from the client.

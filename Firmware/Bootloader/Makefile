@@ -336,6 +336,9 @@ C_SRCS                  = \
                           sdram.c \
                           dbg_cntrl.c \
                           db.c \
+                          cencode.c \
+                          cdecode.c \
+                          base64_wrapper.c \
                           \
                           LWIPMgr.c \
                           I2CBusMgr.c \

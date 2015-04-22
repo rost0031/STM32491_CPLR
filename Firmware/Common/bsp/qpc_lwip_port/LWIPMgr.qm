@@ -185,7 +185,7 @@ QActive_subscribe((QActive *)me, DBG_MENU_SIG);
 QActive_subscribe((QActive *)me, TCP_DONE_SIG);
 QActive_subscribe((QActive *)me, ETH_DBG_TOGGLE_SIG);
 </action>
-     <initial_glyph conn="1,2,4,3,8,6">
+     <initial_glyph conn="1,2,4,3,8,5">
       <action box="0,-2,6,2"/>
      </initial_glyph>
     </initial>
@@ -215,7 +215,7 @@ QTimeEvt_postIn(
 );
 QTimeEvt_disarm(&amp;me-&gt;te_TcpSend);</entry>
      <exit>QTimeEvt_disarm(&amp;me-&gt;te_LWIP_SLOW_TICK);</exit>
-     <tran trig="ETH_UDP_SEND">
+     <tran trig="ETH_UDP_SEND, CLI_SEND_DATA">
       <action>/* Event posted that will include (inside it) a msg to send */
 if (me-&gt;upcb-&gt;remote_port != (uint16_t)0) {
     struct pbuf *p = pbuf_new(
@@ -227,19 +227,19 @@ if (me-&gt;upcb-&gt;remote_port != (uint16_t)0) {
         pbuf_free(p);                   /* don't leak the pbuf! */
     }
 }</action>
-      <tran_glyph conn="3,74,3,-1,15">
-       <action box="0,-2,13,2"/>
+      <tran_glyph conn="2,79,3,-1,15">
+       <action box="0,-4,13,4"/>
       </tran_glyph>
      </tran>
      <tran trig="LWIP_RX_READY">
       <action>eth_driver_read();</action>
-      <tran_glyph conn="3,62,3,-1,15">
+      <tran_glyph conn="2,62,3,-1,15">
        <action box="0,-2,17,2"/>
       </tran_glyph>
      </tran>
      <tran trig="LWIP_TX_READY">
       <action>eth_driver_write();</action>
-      <tran_glyph conn="3,65,3,-1,15">
+      <tran_glyph conn="2,65,3,-1,15">
        <action box="0,-2,13,2"/>
       </tran_glyph>
      </tran>
@@ -297,19 +297,19 @@ if (me-&gt;auto_ip_tmr &gt;= AUTOIP_TMR_INTERVAL) {
     autoip_tmr();
 }
 #endif</action>
-      <tran_glyph conn="3,68,3,-1,15">
+      <tran_glyph conn="2,68,3,-1,15">
        <action box="0,-2,15,2"/>
       </tran_glyph>
      </tran>
      <tran trig="LWIP_RX_OVERRUN">
       <action>LINK_STATS_INC(link.err);</action>
-      <tran_glyph conn="3,71,3,-1,15">
+      <tran_glyph conn="2,71,3,-1,15">
        <action box="0,-2,15,2"/>
       </tran_glyph>
      </tran>
      <tran trig="ETH_DBG_TOGGLE">
       <action>me-&gt;isEthDbgEnabled = !(me-&gt;isEthDbgEnabled);</action>
-      <tran_glyph conn="3,77,3,-1,15">
+      <tran_glyph conn="2,74,3,-1,15">
        <action box="0,-2,15,2"/>
       </tran_glyph>
      </tran>
@@ -355,7 +355,7 @@ if (QEQueue_getNFree(&amp;me-&gt;deferredEvtQueue) &gt; 0) {
        <choice>
         <guard brief="else"/>
         <action>DBG_printf(&quot;Conn NULL\n&quot;);</action>
-        <choice_glyph conn="26,14,4,-1,4">
+        <choice_glyph conn="25,14,4,-1,4">
          <action box="1,2,10,2"/>
         </choice_glyph>
        </choice>
@@ -368,7 +368,7 @@ if (QEQueue_getNFree(&amp;me-&gt;deferredEvtQueue) &gt; 0) {
         <choice target="../../../../7">
          <guard>else</guard>
          <action>WRN_printf(&quot;MEM unavailable, trying again in a bit...\n&quot;);</action>
-         <choice_glyph conn="59,14,4,3,6,40">
+         <choice_glyph conn="58,14,4,3,6,40">
           <action box="0,4,10,2"/>
          </choice_glyph>
         </choice>
@@ -385,25 +385,25 @@ pbuf_free(p);                                  // don't leak the pbuf!</action>
          <choice target="../../../../../7">
           <guard brief="Data not sent?">false == dataSent</guard>
           <action>pbuf_free(p);                                  // don't leak the pbuf!</action>
-          <choice_glyph conn="73,14,5,3,26">
+          <choice_glyph conn="72,14,5,3,26">
            <action box="1,-2,14,2"/>
           </choice_glyph>
          </choice>
          <choice>
           <guard>else</guard>
-          <choice_glyph conn="73,14,4,-1,4">
+          <choice_glyph conn="72,14,4,-1,4">
            <action box="0,2,6,2"/>
           </choice_glyph>
          </choice>
-         <choice_glyph conn="59,14,5,-1,14">
+         <choice_glyph conn="58,14,5,-1,14">
           <action box="1,-2,10,2"/>
          </choice_glyph>
         </choice>
-        <choice_glyph conn="26,14,5,-1,33">
+        <choice_glyph conn="25,14,5,-1,33">
          <action box="1,0,12,2"/>
         </choice_glyph>
        </choice>
-       <tran_glyph conn="7,14,3,-1,19">
+       <tran_glyph conn="6,14,3,-1,19">
         <action box="0,-2,11,2"/>
        </tran_glyph>
       </tran>
@@ -424,7 +424,7 @@ pbuf_free(p);                                  // don't leak the pbuf!</action>
          <choice target="../../../../../7">
           <guard>else</guard>
           <action>WRN_printf(&quot;MEM unavailable, trying again in a bit...\n&quot;);</action>
-          <choice_glyph conn="59,23,4,3,6,40">
+          <choice_glyph conn="58,23,4,3,6,40">
            <action box="0,4,10,2"/>
           </choice_glyph>
          </choice>
@@ -441,41 +441,41 @@ pbuf_free(p);                                  // don't leak the pbuf!</action>
           <choice target="../../../../../../7">
            <guard brief="Data not sent?">false == dataSent</guard>
            <action>pbuf_free(p);                                  // don't leak the pbuf!</action>
-           <choice_glyph conn="73,23,5,3,26">
+           <choice_glyph conn="72,23,5,3,26">
             <action box="1,-2,14,2"/>
            </choice_glyph>
           </choice>
           <choice>
            <guard>else</guard>
-           <choice_glyph conn="73,23,4,-1,4">
+           <choice_glyph conn="72,23,4,-1,4">
             <action box="0,2,6,2"/>
            </choice_glyph>
           </choice>
-          <choice_glyph conn="59,23,5,-1,14">
+          <choice_glyph conn="58,23,5,-1,14">
            <action box="1,-2,10,2"/>
           </choice_glyph>
          </choice>
-         <choice_glyph conn="45,23,5,-1,14">
+         <choice_glyph conn="44,23,5,-1,14">
           <action box="1,-2,12,2"/>
          </choice_glyph>
         </choice>
         <choice>
          <guard brief="else"/>
-         <choice_glyph conn="45,23,4,-1,4">
+         <choice_glyph conn="44,23,4,-1,4">
           <action box="0,2,10,2"/>
          </choice_glyph>
         </choice>
-        <choice_glyph conn="26,23,5,-1,19">
+        <choice_glyph conn="25,23,5,-1,19">
          <action box="1,-2,14,2"/>
         </choice_glyph>
        </choice>
        <choice>
         <guard>else</guard>
-        <choice_glyph conn="26,23,4,-1,4">
+        <choice_glyph conn="25,23,4,-1,4">
          <action box="0,2,10,2"/>
         </choice_glyph>
        </choice>
-       <tran_glyph conn="7,23,3,-1,19">
+       <tran_glyph conn="6,23,3,-1,19">
         <action box="0,-4,18,4"/>
        </tran_glyph>
       </tran>
@@ -502,7 +502,7 @@ if (me-&gt;upcb-&gt;remote_port != (uint16_t)0) {
         <choice target="../../../../7">
          <guard>else</guard>
          <action>WRN_printf(&quot;MEM unavailable, trying again in a bit...\n&quot;);</action>
-         <choice_glyph conn="59,35,4,3,6,40">
+         <choice_glyph conn="58,35,4,3,6,40">
           <action box="0,4,10,2"/>
          </choice_glyph>
         </choice>
@@ -519,36 +519,36 @@ pbuf_free(p);                                  // don't leak the pbuf!</action>
          <choice target="../../../../../7">
           <guard brief="Data not sent?">false == dataSent</guard>
           <action>pbuf_free(p);                                  // don't leak the pbuf!</action>
-          <choice_glyph conn="73,35,5,3,26">
+          <choice_glyph conn="72,35,5,3,26">
            <action box="1,-2,14,2"/>
           </choice_glyph>
          </choice>
          <choice>
           <guard>else</guard>
-          <choice_glyph conn="73,35,4,-1,4">
+          <choice_glyph conn="72,35,4,-1,4">
            <action box="0,2,6,2"/>
           </choice_glyph>
          </choice>
-         <choice_glyph conn="59,35,5,-1,14">
+         <choice_glyph conn="58,35,5,-1,14">
           <action box="1,-2,10,2"/>
          </choice_glyph>
         </choice>
-        <choice_glyph conn="45,35,5,-1,14">
+        <choice_glyph conn="44,35,5,-1,14">
          <action box="1,-2,12,2"/>
         </choice_glyph>
        </choice>
        <choice>
         <guard brief="else"/>
         <action>ERR_printf(&quot;Attempting to send data over system ethernet port but no connection exists.  Something is probably very wrong!\n&quot;);</action>
-        <choice_glyph conn="45,35,4,-1,4">
+        <choice_glyph conn="44,35,4,-1,4">
          <action box="0,2,10,2"/>
         </choice_glyph>
        </choice>
-       <tran_glyph conn="7,35,3,-1,38">
+       <tran_glyph conn="6,35,3,-1,38">
         <action box="0,-2,17,2"/>
        </tran_glyph>
       </tran>
-      <state_glyph node="7,6,76,48">
+      <state_glyph node="6,6,76,48">
        <entry box="1,2,6,2"/>
        <exit box="1,4,6,2"/>
       </state_glyph>
@@ -576,7 +576,7 @@ QTimeEvt_rearm(
 );</entry>
       <exit>QTimeEvt_disarm( &amp;me-&gt;te_TcpSend );</exit>
       <tran trig="TCP_DONE" target="../../6">
-       <tran_glyph conn="99,50,3,1,-16">
+       <tran_glyph conn="98,50,3,1,-16">
         <action box="-15,-2,15,2"/>
        </tran_glyph>
       </tran>
@@ -589,22 +589,22 @@ QTimeEvt_rearm(
    /* notify the request sender that the request was ignored.. */
    err_slow_printf(&quot;Unable to defer an ETH event&quot;);
 }</action>
-       <tran_glyph conn="99,45,3,-1,14">
+       <tran_glyph conn="98,45,3,-1,14">
         <action box="0,-6,16,6"/>
        </tran_glyph>
       </tran>
       <tran trig="TCP_TIMEOUT" target="../../6">
        <action>ERR_printf(&quot;Timed out waiting for TCP acks.  Returning to Idle.  Data loss likely\n&quot;);</action>
-       <tran_glyph conn="99,53,3,1,-16">
+       <tran_glyph conn="98,53,3,1,-16">
         <action box="-15,-2,13,2"/>
        </tran_glyph>
       </tran>
-      <state_glyph node="99,6,19,48">
+      <state_glyph node="98,6,19,48">
        <entry box="1,2,6,2"/>
        <exit box="1,4,6,2"/>
       </state_glyph>
      </state>
-     <state_glyph node="3,2,125,78">
+     <state_glyph node="2,2,125,84">
       <entry box="1,2,5,2"/>
       <exit box="1,4,5,2"/>
      </state_glyph>
@@ -1134,6 +1134,7 @@ return ret_err;</code>
 #include &quot;bsp_defs.h&quot;
 #include &quot;DbgMgr.h&quot;                                            /* For MenuEvt */
 #include &quot;project_includes.h&quot;                     /* Projec specific includes */
+#include &quot;CommStackMgr.h&quot;
 #if CPLR_APP
 #include &quot;cplr.h&quot;
 #elif CPLR_BOOT
@@ -1229,10 +1230,9 @@ $define(AOs::LWIP_tcpClose)
 $define(AOs::LWIP_tcpError)
 
 /* Ethernet UDP message sender .................................................*/
-void ETH_SendUdp(
+CBErrorCode ETH_SendUdp(
       const uint8_t* const dataBuf,
-      const uint16_t const dataLen,
-      const QActive* const senderAO
+      const uint16_t const dataLen
 )
 {
    /* 1. Construct a new msg event indicating that a msg has been received */
@@ -1248,8 +1248,9 @@ void ETH_SendUdp(
    QACTIVE_POST(
          AO_LWIPMgr,
          (QEvt *)(ethEvt),
-         senderAO
+         0
    );
+   return( ERR_NONE );
 }
 
 /* UDP handler ...............................................................*/
@@ -1262,7 +1263,7 @@ static void udp_rx_handler(
 )
 {
     /* 1. Construct a new msg event indicating that a msg has been received */
-    LrgDataEvt *msgEvt = Q_NEW(LrgDataEvt, CLI_RECIEVED_SIG);
+    LrgDataEvt *msgEvt = Q_NEW(LrgDataEvt, CLI_RECEIVED_SIG);
 
     /* 2. Fill the msg payload and get the msg source and length */
     MEMCPY(msgEvt-&gt;dataBuf, p-&gt;payload, p-&gt;len);
@@ -1271,7 +1272,14 @@ static void udp_rx_handler(
 //    DBG_printf(&quot;Received %d bytes (%s) on UDP\n&quot;, msgEvt-&gt;dataLen, msgEvt-&gt;dataBuf);
 
     /* 3.Publish the newly created event */
-    QF_PUBLISH((QEvent *)msgEvt, AO_LWIPMgr);
+//    QF_PUBLISH((QEvent *)msgEvt, AO_LWIPMgr);
+
+    /* 3. Directly post event to CommStackMgr */
+    QACTIVE_POST(
+            AO_CommStackMgr,
+            (QEvt *)(msgEvt),
+            AO_LWIPMgr
+      );
 
     /* 4. connect to the remote host */
     udp_connect(upcb, addr, port);
@@ -1351,15 +1359,12 @@ $declare(AOs::AO_LWIPMgr)
  *
  * @param [in] *dataBuf: const uint8_t pointer to the buffer of data to send.
  * @param [in]  dataLen: length of data to send.
- * @param [in]  senderAO: which AO is sending the data.  If called from outside
- * of an AO, use 0.
  *
- * @return None
+ * @return CBErrorCode: status of send
  */
-void ETH_SendUdp(
+CBErrorCode ETH_SendUdp(
       const uint8_t* const dataBuf,
-      const uint16_t const dataLen,
-      const QActive* const senderAO
+      const uint16_t const dataLen
 );
 
 /**

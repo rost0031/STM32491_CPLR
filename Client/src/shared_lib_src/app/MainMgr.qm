@@ -34,11 +34,8 @@
    <attribute name="m_pComm" type="Comm*" visibility="0x01" properties="0x00">
     <documentation>/**&lt; Local pointer to the Comm instance */</documentation>
    </attribute>
-   <attribute name="ackTimerEvt" type="QTimeEvt" visibility="0x01" properties="0x00">
-    <documentation>/**&lt; Used for timing out waiting for an Ack to a Req msg */</documentation>
-   </attribute>
-   <attribute name="doneTimerEvt" type="QTimeEvt" visibility="0x01" properties="0x00">
-    <documentation>/**&lt; Used for timing out waiting for an Done to a Req msg */</documentation>
+   <attribute name="msgTimerEvt" type="QTimeEvt" visibility="0x01" properties="0x00">
+    <documentation>/**&lt; Used for timing out waiting for responses (Ack, Prog, Done) to a Req msg */</documentation>
    </attribute>
    <statechart>
     <initial target="../1">
@@ -48,6 +45,7 @@ QS_FUN_DICTIONARY(&amp;l_MainMgr_initial);
 QS_FUN_DICTIONARY(&amp;l_MainMgr_Active);
 
 QActive_subscribe((QActive *)me, EXIT_SIG);
+QActive_subscribe((QActive *)me, MSG_RECEIVED_SIG);
 QActive_subscribe((QActive *)me, MSG_SEND_OUT_SIG);
 
 DBG_printf(me-&gt;m_pLog,&quot;Started MainMgr AO&quot;);</action>
@@ -57,7 +55,7 @@ DBG_printf(me-&gt;m_pLog,&quot;Started MainMgr AO&quot;);</action>
     </initial>
     <state name="Active">
      <documentation>/**
- * @brief This state is a catch-all Active state.
+ * @brief Catch-all Active state.
  * If any signals need to be handled that do not cause state transitions and 
  * are common to the entire AO, they should be handled here.
  *
@@ -75,24 +73,17 @@ QTimeEvt_postIn(
 QTimeEvt_disarm(&amp;me-&gt;exitTimerEvt);
 
 QTimeEvt_postIn(
-    &amp;me-&gt;ackTimerEvt,
+    &amp;me-&gt;msgTimerEvt,
     (QActive *)me,
     SEC_TO_TICKS( MAINMGR_MAX_TIME_SEC_EXIT_DELAY )
 );
-QTimeEvt_disarm(&amp;me-&gt;ackTimerEvt);
-
-QTimeEvt_postIn(
-    &amp;me-&gt;doneTimerEvt,
-    (QActive *)me,
-    SEC_TO_TICKS( MAINMGR_MAX_TIME_SEC_EXIT_DELAY )
-);
-QTimeEvt_disarm(&amp;me-&gt;doneTimerEvt);
+QTimeEvt_disarm(&amp;me-&gt;msgTimerEvt);
 
 DBG_printf(me-&gt;m_pLog,&quot;Entered Active state in MainMgr AO&quot;);</entry>
      <tran trig="MSG_TIMEOUT_EXIT">
       <action>DBG_printf(me-&gt;m_pLog,&quot;Timed out while waiting for a response for a sent message.  Exiting.&quot;);
 EXIT(me-&gt;errorCode);</action>
-      <tran_glyph conn="111,69,1,-1,-12">
+      <tran_glyph conn="114,69,5,-1,-18">
        <action box="-14,-2,14,2"/>
       </tran_glyph>
      </tran>
@@ -111,10 +102,31 @@ QEQueue_postFIFO(&amp;cliQueue, (QEvt *)evt);</action>
        <action box="0,-2,10,2"/>
       </tran_glyph>
      </tran>
-     <tran trig="MSG_SEND_OUT" target="../5">
+     <tran trig="MSG_SEND_OUT" target="../5/2">
       <action>DBG_printf(me-&gt;m_pLog,&quot;Got SEND_MSG, sending msg...&quot;);
-</action>
-      <tran_glyph conn="3,51,3,3,20">
+
+me-&gt;m_pComm-&gt;write_some(
+    (char *)((LrgDataEvt const *)e)-&gt;dataBuf,
+    ((LrgDataEvt const *)e)-&gt;dataLen
+);
+
+char tmp[1000];
+uint16_t tmpStrLen;
+ClientError_t convertStatus = MSG_hexToStr(
+    ((LrgDataEvt const *)e)-&gt;dataBuf,
+    ((LrgDataEvt const *)e)-&gt;dataLen,
+    tmp,
+    1000,
+    &amp;tmpStrLen,
+    0,
+    '-',
+    true
+);
+
+DBG_printf(me-&gt;m_pLog,&quot;ConStatus: 0x%x, sending a buffer with: %s&quot;, convertStatus, tmp);
+
+DBG_printf(me-&gt;m_pLog,&quot;Sent msg, waiting for Ack...&quot;);</action>
+      <tran_glyph conn="3,19,3,3,25">
        <action box="0,-2,12,2"/>
       </tran_glyph>
      </tran>
@@ -149,45 +161,20 @@ QF_stop();</action>
        <entry box="1,2,5,2"/>
       </state_glyph>
      </state>
-     <state name="WaitForAck">
-      <documentation>/**
- * @brief Wait for Ack from a message.
- * This state just waits for an Ack response for a sent message.
- *
- * @param  [in,out] me: Pointer to the state machine
- * @param  [in,out] e:  Pointer to the event being processed.
- * @return status_: QState type that specifies where the state
- * machine is going next.
- */</documentation>
-      <entry>/* Post a timer on entry */
-QTimeEvt_rearm(
-    &amp;me-&gt;ackTimerEvt,
-    SEC_TO_TICKS( MAINMGR_MAX_TOUT_SEC_ACK_WAIT )
-);
+     <state name="WaitingForJobDone">
+      <exit>QTimeEvt_disarm(&amp;me-&gt;msgTimerEvt);</exit>
+      <tran trig="MSG_RESP_TIMEOUT" target="../..">
+       <action>ERR_printf(me-&gt;m_pLog, &quot;Got MSG_RESP_TIMEOUT. Aborting.&quot;);
 
-me-&gt;m_pComm-&gt;write_some(
-    (char *)((LrgDataEvt const *)e)-&gt;dataBuf,
-    ((LrgDataEvt const *)e)-&gt;dataLen
-);
-
-DBG_printf(me-&gt;m_pLog,&quot;Sent msg, waiting for Ack...&quot;);</entry>
-      <tran trig="MSG_ACK_TIMEOUT" target="../..">
-       <tran_glyph conn="23,57,3,3,-20">
+QEvt* evt = Q_NEW(QEvt, MSG_DONE_TIMED_OUT_SIG);
+QEQueue_postFIFO(&amp;cliQueue, (QEvt *)evt);
+</action>
+       <tran_glyph conn="24,24,3,3,-21">
         <action box="-17,-2,14,2"/>
        </tran_glyph>
       </tran>
-      <tran trig="MSG_RECEIVED" target="../../6">
-       <action>DBG_printf(me-&gt;m_pLog,&quot;Got MSG_RECEIVED, waiting for Done Resp msg...&quot;);</action>
-       <tran_glyph conn="46,51,1,3,21">
-        <action box="0,-2,10,2"/>
-       </tran_glyph>
-      </tran>
-      <state_glyph node="23,48,23,10">
-       <entry box="1,2,6,2"/>
-      </state_glyph>
-     </state>
-     <state name="WaitForDone">
-      <documentation>/**
+      <state name="WaitForDone">
+       <documentation>/**
  * @brief Wait for Done from a message.
  * This state just waits for an Done response for a sent message.
  *
@@ -196,43 +183,142 @@ DBG_printf(me-&gt;m_pLog,&quot;Sent msg, waiting for Ack...&quot;);</entry>
  * @return status_: QState type that specifies where the state
  * machine is going next.
  */</documentation>
-      <entry>/* Post a timer on entry */
+       <entry>/* Post a timer on entry */
 QTimeEvt_rearm(
-    &amp;me-&gt;doneTimerEvt,
+    &amp;me-&gt;msgTimerEvt,
     SEC_TO_TICKS( MAINMGR_MAX_TOUT_SEC_DONE_WAIT )
 );
 </entry>
-      <tran trig="MSG_DONE_TIMEOUT" target="../..">
-       <tran_glyph conn="67,59,3,3,-64">
-        <action box="-17,-2,14,2"/>
-       </tran_glyph>
-      </tran>
-      <tran trig="MSG_RECEIVED" target="../..">
-       <action>DBG_printf(me-&gt;m_pLog,&quot;Got done msg, putting it in the queue...&quot;);
-LrgDataEvt* evt = Q_NEW(LrgDataEvt, TEST_JOB_DONE_SIG);
+       <exit>QTimeEvt_disarm(&amp;me-&gt;msgTimerEvt);</exit>
+       <tran trig="MSG_RECEIVED">
+        <action>DBG_printf(me-&gt;m_pLog,&quot;Got MSG_RECEIVED, parsing to see if it's Prog or Done...&quot;);
 
-evt-&gt;src = ((LrgDataEvt const *)e)-&gt;src;
-evt-&gt;dst = ((LrgDataEvt const *)e)-&gt;dst;
-evt-&gt;dataLen = ((LrgDataEvt const *)e)-&gt;dataLen;
-memcpy(
-    evt-&gt;dataBuf,
-    ((LrgDataEvt const *)e)-&gt;dataBuf,
-    evt-&gt;dataLen
+struct CBBasicMsg basicMsg;
+memset(&amp;basicMsg, 0, sizeof(basicMsg));
+CBBasicMsg_read_delimited_from(
+    (void*)((LrgDataEvt const *) e)-&gt;dataBuf,
+    &amp;basicMsg,
+    0
+);</action>
+        <choice>
+         <guard brief="Prog?">_CB_Prog == basicMsg._msgType</guard>
+         <action>/* Since this is a progres msg, rearm the timer for longer */
+QTimeEvt_rearm(
+    &amp;me-&gt;msgTimerEvt,
+    SEC_TO_TICKS( MAINMGR_MAX_TOUT_SEC_DONE_WAIT )
 );
+
+
+DBG_printf(me-&gt;m_pLog,&quot;Msg parsed as Prog, continuing...&quot;);
+
+/* Post an MSG_PROG_RECVD_SIG to the queue so the caller can decide what 
+ * to do (if anything) with this information. */
+
+/* Changed only the signal associated with event and repost it directly to the queue*/
+((LrgDataEvt *) e)-&gt;super.sig = MSG_PROG_RECVD_SIG;
+QEQueue_postFIFO(&amp;cliQueue, (QEvt *)e);</action>
+         <choice_glyph conn="92,18,4,-1,4,8">
+          <action box="1,2,6,2"/>
+         </choice_glyph>
+        </choice>
+        <choice target="../../../..">
+         <guard brief="Done?">_CB_Done == basicMsg._msgType</guard>
+         <action>DBG_printf(me-&gt;m_pLog,&quot;Msg parsed as Done, finishing...&quot;);
+
+/* Post an MSG_DONE_RECVD_SIG to the queue so the caller can decide what 
+ * to do (if anything) with this information. */
+
+/* Changed only the signal associated with event and repost it directly to the queue*/
+((LrgDataEvt *) e)-&gt;super.sig = MSG_DONE_RECVD_SIG;
+QEQueue_postFIFO(&amp;cliQueue, (QEvt *)e);</action>
+         <choice_glyph conn="92,18,5,1,22">
+          <action box="1,-2,6,2"/>
+         </choice_glyph>
+        </choice>
+        <tran_glyph conn="78,18,1,-1,14">
+         <action box="0,-2,13,2"/>
+        </tran_glyph>
+       </tran>
+       <state_glyph node="63,15,15,10">
+        <entry box="1,2,6,2"/>
+        <exit box="1,4,6,2"/>
+       </state_glyph>
+      </state>
+      <state name="WaitForAck">
+       <documentation>/**
+ * @brief Wait for Ack from a message.
+ * This state just waits for an Ack response for a sent message.
+ *
+ * @param  [in,out] me: Pointer to the state machine
+ * @param  [in,out] e:  Pointer to the event being processed.
+ * @return status_: QState type that specifies where the state
+ * machine is going next.
+ */</documentation>
+       <entry>/* Post a timer on entry */
+QTimeEvt_rearm(
+    &amp;me-&gt;msgTimerEvt,
+    SEC_TO_TICKS( MAINMGR_MAX_TOUT_SEC_ACK_WAIT )
+);
+</entry>
+       <exit>QTimeEvt_disarm(&amp;me-&gt;msgTimerEvt);</exit>
+       <tran trig="MSG_RECEIVED">
+        <action>DBG_printf(me-&gt;m_pLog,&quot;Got MSG_RECEIVED, parsing to see if it's an Ack...&quot;);
+struct CBBasicMsg basicMsg;
+memset(&amp;basicMsg, 0, sizeof(basicMsg));
+CBBasicMsg_read_delimited_from(
+    (void*)((LrgDataEvt const *) e)-&gt;dataBuf,
+    &amp;basicMsg,
+    0
+);
+
+</action>
+        <choice target="../../../..">
+         <guard>else</guard>
+         <action>ERR_printf(
+    me-&gt;m_pLog,
+    &quot;While expecting an Ack, got invalid msgType %d. Aborting.&quot;,
+    basicMsg._msgType
+);
+
+QEvt* evt = Q_NEW(QEvt, MSG_ACK_TIMED_OUT_SIG);
 QEQueue_postFIFO(&amp;cliQueue, (QEvt *)evt);</action>
-       <tran_glyph conn="90,51,1,1,21">
-        <action box="0,-2,15,2"/>
-       </tran_glyph>
-      </tran>
-      <state_glyph node="67,48,23,12">
-       <entry box="1,2,6,2"/>
+         <choice_glyph conn="55,18,4,3,9,-52">
+          <action box="0,2,10,2"/>
+         </choice_glyph>
+        </choice>
+        <choice target="../../../1">
+         <guard brief="Ack?">_CB_Ack == basicMsg._msgType</guard>
+         <action>DBG_printf(me-&gt;m_pLog,&quot;Msg parsed as Ack, continuing...&quot;);
+
+/* Post an MSG_ACK_RECVD_SIG to the queue so the caller can decide what 
+ * to do (if anything) with this information. */
+
+/* Changed only the signal associated with event and repost it directly to the queue*/
+((LrgDataEvt *) e)-&gt;super.sig = MSG_ACK_RECVD_SIG;
+QEQueue_postFIFO(&amp;cliQueue, (QEvt *)e);
+</action>
+         <choice_glyph conn="55,18,5,3,8">
+          <action box="1,-2,6,2"/>
+         </choice_glyph>
+        </choice>
+        <tran_glyph conn="42,18,1,-1,13">
+         <action box="0,-2,10,2"/>
+        </tran_glyph>
+       </tran>
+       <state_glyph node="28,15,14,10">
+        <entry box="1,2,6,2"/>
+        <exit box="1,4,6,2"/>
+       </state_glyph>
+      </state>
+      <state_glyph node="24,8,82,32">
+       <exit box="1,2,6,2"/>
       </state_glyph>
      </state>
-     <state_glyph node="3,2,108,76">
+     <state_glyph node="3,2,111,76">
       <entry box="1,2,6,2"/>
      </state_glyph>
     </state>
-    <state_diagram size="115,80"/>
+    <state_diagram size="142,80"/>
    </statechart>
   </class>
   <attribute name="AO_MainMgr" type="QActive * const" visibility="0x00" properties="0x00">
@@ -265,8 +351,7 @@ me-&gt;m_pLog = log;
 DBG_printf(me-&gt;m_pLog,&quot;Logging setup successful&quot;);
 QActive_ctor(&amp;me-&gt;super, (QStateHandler)&amp;MainMgr_initial);
 QTimeEvt_ctor(&amp;me-&gt;exitTimerEvt, EXIT_SIG);
-QTimeEvt_ctor(&amp;me-&gt;ackTimerEvt, MSG_ACK_TIMEOUT_SIG);
-QTimeEvt_ctor(&amp;me-&gt;doneTimerEvt, MSG_DONE_TIMEOUT_SIG);</code>
+QTimeEvt_ctor(&amp;me-&gt;msgTimerEvt, MSG_RESP_TIMEOUT_SIG);</code>
   </operation>
  </package>
  <directory name=".">
@@ -344,6 +429,9 @@ $declare(AOs::AO_MainMgr)
 /* Includes ------------------------------------------------------------------*/
 #include &quot;MainMgr.h&quot;
 #include &quot;LogHelper.h&quot;
+#include &lt;cstring&gt;
+#include &quot;ClientShared.h&quot;
+#include &quot;msg_utils.h&quot;
 
 /* Compile-time called macros ------------------------------------------------*/
 Q_DEFINE_THIS_FILE;

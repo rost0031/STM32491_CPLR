@@ -37,6 +37,9 @@
 /* Includes ------------------------------------------------------------------*/
 #include "MainMgr.h"
 #include "LogHelper.h"
+#include <cstring>
+#include "ClientShared.h"
+#include "msg_utils.h"
 
 /* Compile-time called macros ------------------------------------------------*/
 Q_DEFINE_THIS_FILE;
@@ -77,18 +80,15 @@ typedef struct {
     /**< Local pointer to the Comm instance */
     Comm* m_pComm;
 
-    /**< Used for timing out waiting for an Ack to a Req msg */
-    QTimeEvt ackTimerEvt;
-
-    /**< Used for timing out waiting for an Done to a Req msg */
-    QTimeEvt doneTimerEvt;
+    /**< Used for timing out waiting for responses (Ack, Prog, Done) to a Req msg */
+    QTimeEvt msgTimerEvt;
 } MainMgr;
 
 /* protected: */
 static QState MainMgr_initial(MainMgr * const me, QEvt const * const e);
 
 /**
- * @brief This state is a catch-all Active state.
+ * @brief Catch-all Active state.
  * If any signals need to be handled that do not cause state transitions and
  * are common to the entire AO, they should be handled here.
  *
@@ -111,17 +111,7 @@ static QState MainMgr_Active(MainMgr * const me, QEvt const * const e);
  * machine is going next.
  */
 static QState MainMgr_CleanupBeforeExit(MainMgr * const me, QEvt const * const e);
-
-/**
- * @brief Wait for Ack from a message.
- * This state just waits for an Ack response for a sent message.
- *
- * @param  [in,out] me: Pointer to the state machine
- * @param  [in,out] e:  Pointer to the event being processed.
- * @return status_: QState type that specifies where the state
- * machine is going next.
- */
-static QState MainMgr_WaitForAck(MainMgr * const me, QEvt const * const e);
+static QState MainMgr_WaitingForJobDone(MainMgr * const me, QEvt const * const e);
 
 /**
  * @brief Wait for Done from a message.
@@ -133,6 +123,17 @@ static QState MainMgr_WaitForAck(MainMgr * const me, QEvt const * const e);
  * machine is going next.
  */
 static QState MainMgr_WaitForDone(MainMgr * const me, QEvt const * const e);
+
+/**
+ * @brief Wait for Ack from a message.
+ * This state just waits for an Ack response for a sent message.
+ *
+ * @param  [in,out] me: Pointer to the state machine
+ * @param  [in,out] e:  Pointer to the event being processed.
+ * @return status_: QState type that specifies where the state
+ * machine is going next.
+ */
+static QState MainMgr_WaitForAck(MainMgr * const me, QEvt const * const e);
 
 
 /* Private defines -----------------------------------------------------------*/
@@ -161,8 +162,7 @@ void MainMgr_ctor(LogStub* log) {
     DBG_printf(me->m_pLog,"Logging setup successful");
     QActive_ctor(&me->super, (QStateHandler)&MainMgr_initial);
     QTimeEvt_ctor(&me->exitTimerEvt, EXIT_SIG);
-    QTimeEvt_ctor(&me->ackTimerEvt, MSG_ACK_TIMEOUT_SIG);
-    QTimeEvt_ctor(&me->doneTimerEvt, MSG_DONE_TIMEOUT_SIG);
+    QTimeEvt_ctor(&me->msgTimerEvt, MSG_RESP_TIMEOUT_SIG);
 }
 
 /**
@@ -195,6 +195,7 @@ static QState MainMgr_initial(MainMgr * const me, QEvt const * const e) {
     QS_FUN_DICTIONARY(&l_MainMgr_Active);
 
     QActive_subscribe((QActive *)me, EXIT_SIG);
+    QActive_subscribe((QActive *)me, MSG_RECEIVED_SIG);
     QActive_subscribe((QActive *)me, MSG_SEND_OUT_SIG);
 
     DBG_printf(me->m_pLog,"Started MainMgr AO");
@@ -202,7 +203,7 @@ static QState MainMgr_initial(MainMgr * const me, QEvt const * const e) {
 }
 
 /**
- * @brief This state is a catch-all Active state.
+ * @brief Catch-all Active state.
  * If any signals need to be handled that do not cause state transitions and
  * are common to the entire AO, they should be handled here.
  *
@@ -226,18 +227,11 @@ static QState MainMgr_Active(MainMgr * const me, QEvt const * const e) {
             QTimeEvt_disarm(&me->exitTimerEvt);
 
             QTimeEvt_postIn(
-                &me->ackTimerEvt,
+                &me->msgTimerEvt,
                 (QActive *)me,
                 SEC_TO_TICKS( MAINMGR_MAX_TIME_SEC_EXIT_DELAY )
             );
-            QTimeEvt_disarm(&me->ackTimerEvt);
-
-            QTimeEvt_postIn(
-                &me->doneTimerEvt,
-                (QActive *)me,
-                SEC_TO_TICKS( MAINMGR_MAX_TIME_SEC_EXIT_DELAY )
-            );
-            QTimeEvt_disarm(&me->doneTimerEvt);
+            QTimeEvt_disarm(&me->msgTimerEvt);
 
             DBG_printf(me->m_pLog,"Entered Active state in MainMgr AO");
             status_ = Q_HANDLED();
@@ -269,6 +263,27 @@ static QState MainMgr_Active(MainMgr * const me, QEvt const * const e) {
         case MSG_SEND_OUT_SIG: {
             DBG_printf(me->m_pLog,"Got SEND_MSG, sending msg...");
 
+            me->m_pComm->write_some(
+                (char *)((LrgDataEvt const *)e)->dataBuf,
+                ((LrgDataEvt const *)e)->dataLen
+            );
+
+            char tmp[1000];
+            uint16_t tmpStrLen;
+            ClientError_t convertStatus = MSG_hexToStr(
+                ((LrgDataEvt const *)e)->dataBuf,
+                ((LrgDataEvt const *)e)->dataLen,
+                tmp,
+                1000,
+                &tmpStrLen,
+                0,
+                '-',
+                true
+            );
+
+            DBG_printf(me->m_pLog,"ConStatus: 0x%x, sending a buffer with: %s", convertStatus, tmp);
+
+            DBG_printf(me->m_pLog,"Sent msg, waiting for Ack...");
             status_ = Q_TRAN(&MainMgr_WaitForAck);
             break;
         }
@@ -322,46 +337,24 @@ static QState MainMgr_CleanupBeforeExit(MainMgr * const me, QEvt const * const e
     }
     return status_;
 }
-
-/**
- * @brief Wait for Ack from a message.
- * This state just waits for an Ack response for a sent message.
- *
- * @param  [in,out] me: Pointer to the state machine
- * @param  [in,out] e:  Pointer to the event being processed.
- * @return status_: QState type that specifies where the state
- * machine is going next.
- */
-/*${AOs::MainMgr::SM::Active::WaitForAck} ..................................*/
-static QState MainMgr_WaitForAck(MainMgr * const me, QEvt const * const e) {
+/*${AOs::MainMgr::SM::Active::WaitingForJobDon~} ...........................*/
+static QState MainMgr_WaitingForJobDone(MainMgr * const me, QEvt const * const e) {
     QState status_;
     switch (e->sig) {
-        /* ${AOs::MainMgr::SM::Active::WaitForAck} */
-        case Q_ENTRY_SIG: {
-            /* Post a timer on entry */
-            QTimeEvt_rearm(
-                &me->ackTimerEvt,
-                SEC_TO_TICKS( MAINMGR_MAX_TOUT_SEC_ACK_WAIT )
-            );
-
-            me->m_pComm->write_some(
-                (char *)((LrgDataEvt const *)e)->dataBuf,
-                ((LrgDataEvt const *)e)->dataLen
-            );
-
-            DBG_printf(me->m_pLog,"Sent msg, waiting for Ack...");
+        /* ${AOs::MainMgr::SM::Active::WaitingForJobDon~} */
+        case Q_EXIT_SIG: {
+            QTimeEvt_disarm(&me->msgTimerEvt);
             status_ = Q_HANDLED();
             break;
         }
-        /* ${AOs::MainMgr::SM::Active::WaitForAck::MSG_ACK_TIMEOUT} */
-        case MSG_ACK_TIMEOUT_SIG: {
+        /* ${AOs::MainMgr::SM::Active::WaitingForJobDon~::MSG_RESP_TIMEOUT} */
+        case MSG_RESP_TIMEOUT_SIG: {
+            ERR_printf(me->m_pLog, "Got MSG_RESP_TIMEOUT. Aborting.");
+
+            QEvt* evt = Q_NEW(QEvt, MSG_DONE_TIMED_OUT_SIG);
+            QEQueue_postFIFO(&cliQueue, (QEvt *)evt);
+
             status_ = Q_TRAN(&MainMgr_Active);
-            break;
-        }
-        /* ${AOs::MainMgr::SM::Active::WaitForAck::MSG_RECEIVED} */
-        case MSG_RECEIVED_SIG: {
-            DBG_printf(me->m_pLog,"Got MSG_RECEIVED, waiting for Done Resp msg...");
-            status_ = Q_TRAN(&MainMgr_WaitForDone);
             break;
         }
         default: {
@@ -381,45 +374,153 @@ static QState MainMgr_WaitForAck(MainMgr * const me, QEvt const * const e) {
  * @return status_: QState type that specifies where the state
  * machine is going next.
  */
-/*${AOs::MainMgr::SM::Active::WaitForDone} .................................*/
+/*${AOs::MainMgr::SM::Active::WaitingForJobDon~::WaitForDone} ..............*/
 static QState MainMgr_WaitForDone(MainMgr * const me, QEvt const * const e) {
     QState status_;
     switch (e->sig) {
-        /* ${AOs::MainMgr::SM::Active::WaitForDone} */
+        /* ${AOs::MainMgr::SM::Active::WaitingForJobDon~::WaitForDone} */
         case Q_ENTRY_SIG: {
             /* Post a timer on entry */
             QTimeEvt_rearm(
-                &me->doneTimerEvt,
+                &me->msgTimerEvt,
                 SEC_TO_TICKS( MAINMGR_MAX_TOUT_SEC_DONE_WAIT )
             );
 
             status_ = Q_HANDLED();
             break;
         }
-        /* ${AOs::MainMgr::SM::Active::WaitForDone::MSG_DONE_TIMEOUT} */
-        case MSG_DONE_TIMEOUT_SIG: {
-            status_ = Q_TRAN(&MainMgr_Active);
+        /* ${AOs::MainMgr::SM::Active::WaitingForJobDon~::WaitForDone} */
+        case Q_EXIT_SIG: {
+            QTimeEvt_disarm(&me->msgTimerEvt);
+            status_ = Q_HANDLED();
             break;
         }
-        /* ${AOs::MainMgr::SM::Active::WaitForDone::MSG_RECEIVED} */
+        /* ${AOs::MainMgr::SM::Active::WaitingForJobDon~::WaitForDone::MSG_RECEIVED} */
         case MSG_RECEIVED_SIG: {
-            DBG_printf(me->m_pLog,"Got done msg, putting it in the queue...");
-            LrgDataEvt* evt = Q_NEW(LrgDataEvt, TEST_JOB_DONE_SIG);
+            DBG_printf(me->m_pLog,"Got MSG_RECEIVED, parsing to see if it's Prog or Done...");
 
-            evt->src = ((LrgDataEvt const *)e)->src;
-            evt->dst = ((LrgDataEvt const *)e)->dst;
-            evt->dataLen = ((LrgDataEvt const *)e)->dataLen;
-            memcpy(
-                evt->dataBuf,
-                ((LrgDataEvt const *)e)->dataBuf,
-                evt->dataLen
+            struct CBBasicMsg basicMsg;
+            memset(&basicMsg, 0, sizeof(basicMsg));
+            CBBasicMsg_read_delimited_from(
+                (void*)((LrgDataEvt const *) e)->dataBuf,
+                &basicMsg,
+                0
             );
-            QEQueue_postFIFO(&cliQueue, (QEvt *)evt);
-            status_ = Q_TRAN(&MainMgr_Active);
+            /* ${AOs::MainMgr::SM::Active::WaitingForJobDon~::WaitForDone::MSG_RECEIVED::[Prog?]} */
+            if (_CB_Prog == basicMsg._msgType) {
+                /* Since this is a progres msg, rearm the timer for longer */
+                QTimeEvt_rearm(
+                    &me->msgTimerEvt,
+                    SEC_TO_TICKS( MAINMGR_MAX_TOUT_SEC_DONE_WAIT )
+                );
+
+
+                DBG_printf(me->m_pLog,"Msg parsed as Prog, continuing...");
+
+                /* Post an MSG_PROG_RECVD_SIG to the queue so the caller can decide what
+                 * to do (if anything) with this information. */
+
+                /* Changed only the signal associated with event and repost it directly to the queue*/
+                ((LrgDataEvt *) e)->super.sig = MSG_PROG_RECVD_SIG;
+                QEQueue_postFIFO(&cliQueue, (QEvt *)e);
+                status_ = Q_HANDLED();
+            }
+            /* ${AOs::MainMgr::SM::Active::WaitingForJobDon~::WaitForDone::MSG_RECEIVED::[Done?]} */
+            else if (_CB_Done == basicMsg._msgType) {
+                DBG_printf(me->m_pLog,"Msg parsed as Done, finishing...");
+
+                /* Post an MSG_DONE_RECVD_SIG to the queue so the caller can decide what
+                 * to do (if anything) with this information. */
+
+                /* Changed only the signal associated with event and repost it directly to the queue*/
+                ((LrgDataEvt *) e)->super.sig = MSG_DONE_RECVD_SIG;
+                QEQueue_postFIFO(&cliQueue, (QEvt *)e);
+                status_ = Q_TRAN(&MainMgr_Active);
+            }
+            else {
+                status_ = Q_UNHANDLED();
+            }
             break;
         }
         default: {
-            status_ = Q_SUPER(&MainMgr_Active);
+            status_ = Q_SUPER(&MainMgr_WaitingForJobDone);
+            break;
+        }
+    }
+    return status_;
+}
+
+/**
+ * @brief Wait for Ack from a message.
+ * This state just waits for an Ack response for a sent message.
+ *
+ * @param  [in,out] me: Pointer to the state machine
+ * @param  [in,out] e:  Pointer to the event being processed.
+ * @return status_: QState type that specifies where the state
+ * machine is going next.
+ */
+/*${AOs::MainMgr::SM::Active::WaitingForJobDon~::WaitForAck} ...............*/
+static QState MainMgr_WaitForAck(MainMgr * const me, QEvt const * const e) {
+    QState status_;
+    switch (e->sig) {
+        /* ${AOs::MainMgr::SM::Active::WaitingForJobDon~::WaitForAck} */
+        case Q_ENTRY_SIG: {
+            /* Post a timer on entry */
+            QTimeEvt_rearm(
+                &me->msgTimerEvt,
+                SEC_TO_TICKS( MAINMGR_MAX_TOUT_SEC_ACK_WAIT )
+            );
+
+            status_ = Q_HANDLED();
+            break;
+        }
+        /* ${AOs::MainMgr::SM::Active::WaitingForJobDon~::WaitForAck} */
+        case Q_EXIT_SIG: {
+            QTimeEvt_disarm(&me->msgTimerEvt);
+            status_ = Q_HANDLED();
+            break;
+        }
+        /* ${AOs::MainMgr::SM::Active::WaitingForJobDon~::WaitForAck::MSG_RECEIVED} */
+        case MSG_RECEIVED_SIG: {
+            DBG_printf(me->m_pLog,"Got MSG_RECEIVED, parsing to see if it's an Ack...");
+            struct CBBasicMsg basicMsg;
+            memset(&basicMsg, 0, sizeof(basicMsg));
+            CBBasicMsg_read_delimited_from(
+                (void*)((LrgDataEvt const *) e)->dataBuf,
+                &basicMsg,
+                0
+            );
+
+
+            /* ${AOs::MainMgr::SM::Active::WaitingForJobDon~::WaitForAck::MSG_RECEIVED::[Ack?]} */
+            if (_CB_Ack == basicMsg._msgType) {
+                DBG_printf(me->m_pLog,"Msg parsed as Ack, continuing...");
+
+                /* Post an MSG_ACK_RECVD_SIG to the queue so the caller can decide what
+                 * to do (if anything) with this information. */
+
+                /* Changed only the signal associated with event and repost it directly to the queue*/
+                ((LrgDataEvt *) e)->super.sig = MSG_ACK_RECVD_SIG;
+                QEQueue_postFIFO(&cliQueue, (QEvt *)e);
+
+                status_ = Q_TRAN(&MainMgr_WaitForDone);
+            }
+            /* ${AOs::MainMgr::SM::Active::WaitingForJobDon~::WaitForAck::MSG_RECEIVED::[else]} */
+            else {
+                ERR_printf(
+                    me->m_pLog,
+                    "While expecting an Ack, got invalid msgType %d. Aborting.",
+                    basicMsg._msgType
+                );
+
+                QEvt* evt = Q_NEW(QEvt, MSG_ACK_TIMED_OUT_SIG);
+                QEQueue_postFIFO(&cliQueue, (QEvt *)evt);
+                status_ = Q_TRAN(&MainMgr_Active);
+            }
+            break;
+        }
+        default: {
+            status_ = Q_SUPER(&MainMgr_WaitingForJobDone);
             break;
         }
     }

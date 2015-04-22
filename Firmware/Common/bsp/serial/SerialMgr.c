@@ -204,7 +204,7 @@ static QState SerialMgr_Active(SerialMgr * const me, QEvt const * const e) {
             status_ = Q_HANDLED();
             break;
         }
-        /* ${AOs::SerialMgr::SM::Active::UART_DMA_DBG_TOGGLE} */
+        /* ${AOs::SerialMgr::SM::Active::UART_DMA_DBG_TOG~} */
         case UART_DMA_DBG_TOGGLE_SIG: {
             me->isSerialDbgEnabled = !(me->isSerialDbgEnabled);
             status_ = Q_HANDLED();
@@ -242,8 +242,9 @@ static QState SerialMgr_Idle(SerialMgr * const me, QEvt const * const e) {
             status_ = Q_HANDLED();
             break;
         }
-        /* ${AOs::SerialMgr::SM::Active::Idle::UART_DMA_START} */
-        case UART_DMA_START_SIG: {
+        /* ${AOs::SerialMgr::SM::Active::Idle::UART_DMA_START, ~} */
+        case UART_DMA_START_SIG: /* intentionally fall through */
+        case CLI_SEND_DATA_SIG: {
             /* Set up the DMA buffer here.  This copies the data from the event to the UART's
              * private buffer as well to avoid someone overwriting it */
             Serial_DMAConfig(
@@ -268,7 +269,7 @@ static QState SerialMgr_Idle(SerialMgr * const me, QEvt const * const e) {
         }
         /* ${AOs::SerialMgr::SM::Active::Idle::DBG_LOG} */
         case DBG_LOG_SIG: {
-            /* ${AOs::SerialMgr::SM::Active::Idle::DBG_LOG::[SerialDbgEnab~]} */
+            /* ${AOs::SerialMgr::SM::Active::Idle::DBG_LOG::[SerialDbgEnable~} */
             if (true == me->isSerialDbgEnabled) {
                 /* Set up the DMA buffer here.  This copies the data from the event to the UART's
                  * private buffer as well to avoid someone overwriting it */
@@ -337,7 +338,7 @@ static QState SerialMgr_Busy(SerialMgr * const me, QEvt const * const e) {
             status_ = Q_TRAN(&SerialMgr_Idle);
             break;
         }
-        /* ${AOs::SerialMgr::SM::Active::Busy::UART_DMA_START, DBG_LOG, DBG_MENU} */
+        /* ${AOs::SerialMgr::SM::Active::Busy::UART_DMA_START, ~} */
         case UART_DMA_START_SIG: /* intentionally fall through */
         case DBG_LOG_SIG: /* intentionally fall through */
         case DBG_MENU_SIG: {

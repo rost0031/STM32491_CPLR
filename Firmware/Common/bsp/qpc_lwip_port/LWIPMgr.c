@@ -47,6 +47,7 @@
 #include "bsp_defs.h"
 #include "DbgMgr.h"                                            /* For MenuEvt */
 #include "project_includes.h"                     /* Projec specific includes */
+#include "CommStackMgr.h"
 #if CPLR_APP
 #include "cplr.h"
 #elif CPLR_BOOT
@@ -552,8 +553,9 @@ static QState LWIPMgr_Active(LWIPMgr * const me, QEvt const * const e) {
             status_ = Q_HANDLED();
             break;
         }
-        /* ${AOs::LWIPMgr::SM::Active::ETH_UDP_SEND} */
-        case ETH_UDP_SEND_SIG: {
+        /* ${AOs::LWIPMgr::SM::Active::ETH_UDP_SEND, CL~} */
+        case ETH_UDP_SEND_SIG: /* intentionally fall through */
+        case CLI_SEND_DATA_SIG: {
             /* Event posted that will include (inside it) a msg to send */
             if (me->upcb->remote_port != (uint16_t)0) {
                 struct pbuf *p = pbuf_new(
@@ -1410,10 +1412,9 @@ static void LWIP_tcpError(void * arg, err_t err) {
 }
 
 /* Ethernet UDP message sender .................................................*/
-void ETH_SendUdp(
+CBErrorCode ETH_SendUdp(
       const uint8_t* const dataBuf,
-      const uint16_t const dataLen,
-      const QActive* const senderAO
+      const uint16_t const dataLen
 )
 {
    /* 1. Construct a new msg event indicating that a msg has been received */
@@ -1429,8 +1430,9 @@ void ETH_SendUdp(
    QACTIVE_POST(
          AO_LWIPMgr,
          (QEvt *)(ethEvt),
-         senderAO
+         0
    );
+   return( ERR_NONE );
 }
 
 /* UDP handler ...............................................................*/
@@ -1443,7 +1445,7 @@ static void udp_rx_handler(
 )
 {
     /* 1. Construct a new msg event indicating that a msg has been received */
-    LrgDataEvt *msgEvt = Q_NEW(LrgDataEvt, CLI_RECIEVED_SIG);
+    LrgDataEvt *msgEvt = Q_NEW(LrgDataEvt, CLI_RECEIVED_SIG);
 
     /* 2. Fill the msg payload and get the msg source and length */
     MEMCPY(msgEvt->dataBuf, p->payload, p->len);
@@ -1452,7 +1454,14 @@ static void udp_rx_handler(
 //    DBG_printf("Received %d bytes (%s) on UDP\n", msgEvt->dataLen, msgEvt->dataBuf);
 
     /* 3.Publish the newly created event */
-    QF_PUBLISH((QEvent *)msgEvt, AO_LWIPMgr);
+//    QF_PUBLISH((QEvent *)msgEvt, AO_LWIPMgr);
+
+    /* 3. Directly post event to CommStackMgr */
+    QACTIVE_POST(
+            AO_CommStackMgr,
+            (QEvt *)(msgEvt),
+            AO_LWIPMgr
+      );
 
     /* 4. connect to the remote host */
     udp_connect(upcb, addr, port);

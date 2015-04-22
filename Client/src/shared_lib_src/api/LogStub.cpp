@@ -18,6 +18,7 @@
 #include <iostream>
 #include <string>
 #include <stdarg.h>
+#include <cstring>
 #include "LogHelper.h"
 #include "ClientModules.h"
 
@@ -46,11 +47,7 @@ uint32_t  glbDbgConfig = 0;
 
 /******************************************************************************/
 LogStub::LogStub( void ) :
-   m_pMsgHandlerCBFunction(NULL),
-   m_pAckHandlerCBFunction(NULL),
-   m_pLibLogHandlerCBFunction(NULL),
-   m_AckLoggingEnabled(false),
-   m_MsgLoggingEnabled(false)
+   m_pLibLogHandlerCBFunction(NULL)
 {
 
 }
@@ -58,35 +55,7 @@ LogStub::LogStub( void ) :
 /******************************************************************************/
 LogStub::~LogStub( void ) {}
 
-/******************************************************************************/
-ClientError_t LogStub::setMsgCallBack(
-      CB_MsgHandler_t pCallbackFunction
-)
-{
-   ClientError_t err = CLI_ERR_NONE;
 
-   this->m_pMsgHandlerCBFunction = pCallbackFunction;
-
-   /* This is a potentially dangerous call since the user could have passed in
-    * garbage instead of a valid pointer */
-   string tmp = "Testing Msg Callback passed in by user";
-   try {
-      this->m_pMsgHandlerCBFunction("Testing Msg Callback passed in by user", tmp.length());
-   } catch ( ... ) {
-      err = CLI_ERR_INVALID_CALLBACK;
-      cerr << "Invalid callback passed in by user" << endl;
-   }
-
-   return( err );
-}
-
-/******************************************************************************/
-ClientError_t LogStub::setAckCallBack(
-      CB_MsgHandler_t pCallbackFunction
-)
-{
-   this->m_pAckHandlerCBFunction = pCallbackFunction;
-}
 
 /******************************************************************************/
 ClientError_t LogStub::setLibLogCallBack(
@@ -183,6 +152,6 @@ void LogStub::log(
          cerr << "[" << dbgLvl << "]" << pFuncName << "():" << wLineNumber << ":" << tmpBuffer << endl;
       }
    }
-
 }
+
 /******** Copyright (C) 2015 Datacard. All rights reserved *****END OF FILE****/

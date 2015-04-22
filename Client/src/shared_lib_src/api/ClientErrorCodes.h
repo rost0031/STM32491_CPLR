@@ -72,7 +72,14 @@ typedef enum ClientErrors
    CLI_ERR_COMM_NOT_SET                                        = 0x00030000,
 
    /* Message error category                     0x00040000 - 0x0004FFFF */
-   CLI_ERR_INVALID_MSG                                         = 0x00040000,
+   CLI_ERR_MSG_WAITING_FOR_RESP                                = 0x00040000,
+   CLI_ERR_MSG_INVALID                                         = 0x00040001,
+   CLI_ERR_MSG_ACK_WAIT_TIMED_OUT                              = 0x00040002,
+   CLI_ERR_MSG_DONE_WAIT_TIMED_OUT                             = 0x00040003,
+
+   /* Memory error category                      0x00005000 - 0x0005FFFF */
+   CLI_ERR_MEM_NULL_VALUE                                      = 0x00050000,
+   CLI_ERR_MEM_BUFFER_LEN                                      = 0x00050001,
 
    /* Reserved errors                            0xFFFFFFFE - 0xFFFFFFFF */
    CLI_ERR_UNIMPLEMENTED                                       = 0xFFFFFFFE,

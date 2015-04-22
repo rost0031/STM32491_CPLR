@@ -27,11 +27,54 @@
    <documentation>/**
  * \brief CommStackMgr &quot;class&quot;
  */</documentation>
-   <attribute name="timeTestTimerEvt" type="QTimeEvt" visibility="0x01" properties="0x00">
-    <documentation>/**&lt; Local timer for testing the clock. */</documentation>
+   <attribute name="msgTimerEvt" type="QTimeEvt" visibility="0x01" properties="0x00">
+    <documentation>/**&lt; Local timer for timing out msg processing. */</documentation>
+   </attribute>
+   <attribute name="dataBuf[CB_MAX_MSG_LEN]" type="uint8_t*" visibility="0x01" properties="0x00">
+    <documentation>/**&lt; Local buffer to store incoming msgs */</documentation>
+   </attribute>
+   <attribute name="basicMsg" type="struct CBBasicMsg" visibility="0x01" properties="0x00">
+    <documentation>/**&lt; Common struct for CBBasicMsg.  This can be re-used in most cases since once the
+ * request has been unwrapped, all the data from that struct has been stored locally */</documentation>
+   </attribute>
+   <attribute name="basicMsgOffset" type="uint16_t" visibility="0x01" properties="0x00">
+    <documentation>/**&lt; Keeps track of how far into the dataBuf basicMsg was.  Sometimes, there are
+ * additional payload msgs after the BasicMsg in the buffer and this variable allows
+ * the next deserialization step to know where to find them */</documentation>
+   </attribute>
+   <attribute name="msgRoute" type="CBMsgRoute" visibility="0x01" properties="0x00">
+    <documentation>/**&lt; Keeps track of where the message came from */</documentation>
+   </attribute>
+   <attribute name="msgId" type="uint32_t" visibility="0x01" properties="0x00">
+    <documentation>/**&lt; Keep track of the ID of the msg */</documentation>
+   </attribute>
+   <attribute name="msgReqProg" type="bool" visibility="0x01" properties="0x00">
+    <documentation>/**&lt; Keep track of whether Prog responses were requested by the sender of the msg */</documentation>
+   </attribute>
+   <attribute name="cliEvtSrc" type="CBMsgRoute" visibility="0x01" properties="0x00">
+    <documentation>/**&lt; Keep track of the CLI_RECEIVED_SIG event source in order to send it back the
+ * same comm channel */</documentation>
+   </attribute>
+   <attribute name="cliEvtDst" type="CBMsgRoute" visibility="0x01" properties="0x00">
+    <documentation>/**&lt; Keep track of the CLI_RECEIVED_SIG event destination.
+ * TODO: This isn't currently used but hold on to it just in case. Figure out if
+ * this is even needed.*/</documentation>
+   </attribute>
+   <attribute name="errorCode" type="CBErrorCode" visibility="0x01" properties="0x00">
+    <documentation>/**&lt; Keep track of errors that may occur in the AO */</documentation>
+   </attribute>
+   <attribute name="msgPayloadName" type="CBMsgName" visibility="0x01" properties="0x00">
+    <documentation>/**&lt; Keep track of what the payload msg is supposed to be upon reception.  This is
+ * necessary because basicMsg struct gets modified to send an Ack and this variable
+ * will be used to extract the rest of the payload from the data buffer where it's 
+ * still being stored. */</documentation>
+   </attribute>
+   <attribute name="payloadMsgUnion" type="CBPayloadMsgUnion_t" visibility="0x01" properties="0x00">
+    <documentation>/**&lt; Union of all the possible payload msgs.  This gets populated by the recieved msg
+ * processing and later reused to send Prog and Done msgs. */</documentation>
    </attribute>
    <statechart>
-    <initial target="../1">
+    <initial target="../1/0">
      <action>(void)e;        /* suppress the compiler warning about unused parameter */
 
 QS_OBJ_DICTIONARY(&amp;l_CommStackMgr);
@@ -39,10 +82,8 @@ QS_FUN_DICTIONARY(&amp;QHsm_top);
 QS_FUN_DICTIONARY(&amp;CommStackMgr_initial);
 QS_FUN_DICTIONARY(&amp;CommStackMgr_Active);
 
-QActive_subscribe((QActive *)me, ETH_UDP_RECEIVED_SIG);
-QActive_subscribe((QActive *)me, SER_RECEIVED_SIG);
-QActive_subscribe((QActive *)me, TIME_TEST_SIG);</action>
-     <initial_glyph conn="1,2,4,3,4,2">
+QActive_subscribe((QActive *)me, SER_RECEIVED_SIG);</action>
+     <initial_glyph conn="1,2,4,3,11,5">
       <action box="0,-2,6,2"/>
      </initial_glyph>
     </initial>
@@ -57,143 +98,45 @@ QActive_subscribe((QActive *)me, TIME_TEST_SIG);</action>
  * @return status: QState type that specifies where the state
  * machine is going next.
  */</documentation>
-     <entry>/* Every 2 seconds, post an event to print time */
-QTimeEvt_postEvery(
-    &amp;me-&gt;timeTestTimerEvt,
+     <entry>/* Arm and disarm*/
+QTimeEvt_postIn(
+    &amp;me-&gt;msgTimerEvt,
     (QActive *)me,
-    SEC_TO_TICKS( 5 )
-);</entry>
-     <tran trig="TIME_TEST">
-      <action>DBG_printf(&quot;I2C write/read test\n&quot;);
-
-
-/* Create event to request i2c data and publish it. */
-
-/* Write some data to the i2c EEPROM.  Note that after each write,
- * there's a 5ms write time delay on the eeprom.  The I2CMgr AO doesn't
- * handle that since it's device specific and will be handled by the
- * AO that handles the I2CBus1 devices. */
-
-/*
-I2CMemReadReqEvt *i2cMemReadReqEvt = Q_NEW(I2CMemReadReqEvt, EEPROM_RAW_MEM_READ_SIG);
-i2cMemReadReqEvt-&gt;addr = 0x00;
-i2cMemReadReqEvt-&gt;bytes  = 10;
-QF_PUBLISH((QEvent *)i2cMemReadReqEvt, AO_CommStackMgr);
-*/
-/*
-I2CDataEvt *i2cDataEvt = Q_NEW(I2CDataEvt, I2C_WRITE_START_SIG);
-i2cDataEvt-&gt;i2cDevice = EEPROM;
-i2cDataEvt-&gt;wAddr = 0x00;
-i2cDataEvt-&gt;wDataLen  = 17;
-i2cDataEvt-&gt;bufData[0] = 0x00;
-i2cDataEvt-&gt;bufData[1] = 0x01;
-i2cDataEvt-&gt;bufData[2] = 0x02;
-i2cDataEvt-&gt;bufData[3] = 0x03;
-i2cDataEvt-&gt;bufData[4] = 0x04;
-i2cDataEvt-&gt;bufData[5] = 0x05;
-i2cDataEvt-&gt;bufData[6] = 0x06;
-i2cDataEvt-&gt;bufData[7] = 0x07;
-i2cDataEvt-&gt;bufData[8] = 0x08;
-i2cDataEvt-&gt;bufData[9] = 0x09;
-i2cDataEvt-&gt;bufData[10] =0x0A;
-i2cDataEvt-&gt;bufData[11] =0x0B;
-i2cDataEvt-&gt;bufData[12] =0x0C;
-i2cDataEvt-&gt;bufData[13] =0x0D;
-i2cDataEvt-&gt;bufData[14] =0x0E;
-i2cDataEvt-&gt;bufData[15] =0x0F;
-i2cDataEvt-&gt;bufData[16] =0x10;
-QF_PUBLISH((QEvent *)i2cDataEvt, AO_CommStackMgr);
-*/
-
-/*
-I2CDataEvt *i2cDataEvt1 = Q_NEW(I2CDataEvt, I2C_WRITE_START_SIG);
-i2cDataEvt1-&gt;i2cDevice = EEPROM;
-i2cDataEvt1-&gt;wAddr = 0x00;
-i2cDataEvt1-&gt;wDataLen  = 2;
-i2cDataEvt1-&gt;bufData[0] = 0x00;
-i2cDataEvt1-&gt;bufData[1] = 0x01;
-QF_PUBLISH((QEvent *)i2cDataEvt1, AO_CommStackMgr);
-*/
-
-/*
-I2CEvt *i2cEvt = Q_NEW(I2CEvt, I2C_READ_START_SIG);
-i2cEvt-&gt;i2cDevice = EEPROM;
-i2cEvt-&gt;wAddr = 0x00;
-i2cEvt-&gt;wDataLen  = 20;
-QF_PUBLISH((QEvent *)i2cEvt, AO_CommStackMgr);
-
-
-
-I2CEvt *i2cEvt1 = Q_NEW(I2CEvt, I2C_READ_START_SIG);
-i2cEvt1-&gt;i2cDevice = SN_ROM;
-i2cEvt1-&gt;wAddr = 0x80;
-i2cEvt1-&gt;wDataLen  = 16;
-QF_PUBLISH((QEvent *)i2cEvt1, AO_CommStackMgr);
-*/
-
-/*
-DBG_printf(&quot;Starting destructive NOR Flash test\n&quot;);
-NOR_TestDestructive();
-DBG_printf(&quot;Finished destructive NOR Flash test\n&quot;);
-*/
-
-/*
-DBG_printf(&quot;Starting destructive SDRAM test\n&quot;);
-SDRAM_TestDestructive();
-DBG_printf(&quot;Finished destructive SDRAM test\n&quot;);
-*/
-
-/* KTREE_fakeMenuTest(); */
-
-/*
-DBG_printf(&quot;Starting SDRAM/NOR interation test\n&quot;);
-NOR_SDRAMTestInteraction();
-DBG_printf(&quot;Finished SDRAM/NOR interation test\n&quot;);
-*/
-QTimeEvt_disarm( &amp;me-&gt;timeTestTimerEvt );
-
-/*
-time_T fast_print_start_time = TIME_getTime();
-DBG_printf(&quot;Fast DBG_printf() test message from CommStackMgr\n&quot;);
-time_T fast_print_finish_time = TIME_getTime();
-
-time_T slow_print_start_time = TIME_getTime();
-dbg_slow_printf(&quot;Slow dbg_slow_printf() test message from CommStackMgr\n&quot;);
-time_T slow_print_finish_time = TIME_getTime();
-
-DBG_printf(&quot;DBG_printf() start: %02d:%02d:%02d:%d stop: %02d:%02d:%02d:%d\n&quot;,
-     fast_print_start_time.hour_min_sec.RTC_Hours,
-     fast_print_start_time.hour_min_sec.RTC_Minutes,
-     fast_print_start_time.hour_min_sec.RTC_Seconds,
-     (int)fast_print_start_time.sub_sec,
-     fast_print_finish_time.hour_min_sec.RTC_Hours,
-     fast_print_finish_time.hour_min_sec.RTC_Minutes,
-     fast_print_finish_time.hour_min_sec.RTC_Seconds,
-     (int)fast_print_finish_time.sub_sec
+    SEC_TO_TICKS( LL_MAX_TOUT_SEC_CLI_MSG_PROCESS )
 );
-DBG_printf(&quot;dbg_slow_printf() start: %02d:%02d:%02d:%d stop: %02d:%02d:%02d:%d\n&quot;,
-     slow_print_start_time.hour_min_sec.RTC_Hours,
-     slow_print_start_time.hour_min_sec.RTC_Minutes,
-     slow_print_start_time.hour_min_sec.RTC_Seconds,
-     (int)slow_print_start_time.sub_sec,
-     slow_print_finish_time.hour_min_sec.RTC_Hours,
-     slow_print_finish_time.hour_min_sec.RTC_Minutes,
-     slow_print_finish_time.hour_min_sec.RTC_Seconds,
-     (int)slow_print_finish_time.sub_sec
-);
-*/</action>
-      <tran_glyph conn="3,78,3,-1,21">
-       <action box="0,-2,11,2"/>
-      </tran_glyph>
-     </tran>
-     <tran trig="SER_RECEIVED">
-      <action>DBG_printf(&quot;SER_RECIEVED\n&quot;);
+QTimeEvt_disarm(&amp;me-&gt;msgTimerEvt);</entry>
+     <state name="Idle">
+      <documentation>/**
+ * @brief	Idle state that allows new messages to be received.
+ * The Idle state allows for handling of new incoming msgs. Msgs in other states
+ * will be either deferred or ignored.
+ *
+ * @param  [in|out] me: Pointer to the state machine
+ * @param  [in|out]  e:  Pointer to the event being processed.
+ * @return status: QState type that specifies where the state
+ * machine is going next.
+ */</documentation>
+      <entry>/* Clear out all the variables on entry to Idle state.  By this point, any error
+ * feedback should have already happened. */
+me-&gt;errorCode       = ERR_NONE;
+me-&gt;msgId           = 0;
+me-&gt;cliEvtSrc       = _CB_NoRoute;
+me-&gt;cliEvtDst       = _CB_NoRoute;
+me-&gt;msgRoute        = _CB_NoRoute;
+me-&gt;msgPayloadName  = _CBNoMsg;
+me-&gt;msgReqProg      = false;
+
+memset(&amp;me-&gt;basicMsg, 0, sizeof(me-&gt;basicMsg));
+memset(&amp;me-&gt;payloadMsgUnion, 0, sizeof(me-&gt;payloadMsgUnion));
+memset(me-&gt;dataBuf, 0, sizeof(me-&gt;dataBuf));</entry>
+      <tran trig="SER_RECEIVED">
+       <action>DBG_printf(&quot;SER_RECIEVED\n&quot;);
 
 LrgDataEvt *cliEvt = Q_NEW(LrgDataEvt, CLI_RECEIVED_SIG);
 cliEvt-&gt;dataLen = base64_decode(
     (char *)((LrgDataEvt const *) e)-&gt;dataBuf,
     ((LrgDataEvt const *) e)-&gt;dataLen,
-    (char *)cli-&gt;dataBuf,
+    (char *)cliEvt-&gt;dataBuf,
     CB_MAX_MSG_LEN
 );
 
@@ -205,21 +148,245 @@ QACTIVE_POST(
     (QEvt *)(cliEvt),
     AO_SerialMgr
 );</action>
-      <tran_glyph conn="3,12,3,-1,15">
-       <action box="0,-2,10,2"/>
-      </tran_glyph>
-     </tran>
-     <tran trig="CLI_RECEIVED">
-      <action>DBG_printf(&quot;CLI_RECIEVED\n&quot;);</action>
-      <tran_glyph conn="3,16,3,-1,15">
-       <action box="0,-2,10,2"/>
-      </tran_glyph>
-     </tran>
-     <state_glyph node="3,3,94,82">
+       <tran_glyph conn="6,38,3,-1,18">
+        <action box="0,-2,10,2"/>
+       </tran_glyph>
+      </tran>
+      <tran trig="CLI_RECEIVED" target="../../1/1">
+       <action>DBG_printf(&quot;CLI_RECIEVED\n&quot;);
+
+/* Extract the basicMsg first */
+memset(&amp;(me-&gt;basicMsg), 0, sizeof(me-&gt;basicMsg));
+me-&gt;basicMsgOffset = CBBasicMsg_read_delimited_from(
+    (void*)((LrgDataEvt const *) e)-&gt;dataBuf,
+    &amp;(me-&gt;basicMsg),
+    0
+);
+
+/* Store the event source and destination before entering a new state where that 
+ * information will be lost. */
+me-&gt;cliEvtSrc = ((LrgDataEvt const *) e)-&gt;src;
+me-&gt;cliEvtDst = ((LrgDataEvt const *) e)-&gt;dst;
+
+/* Store the basic msg elements locally since they are needed to send back all the 
+ * ack, prog, and done replies. */
+me-&gt;msgRoute   = me-&gt;basicMsg._msgRoute;
+me-&gt;msgId      = me-&gt;basicMsg._msgID;
+me-&gt;msgReqProg = (bool)(me-&gt;basicMsg._msgReqProg);
+me-&gt;msgPayloadName = me-&gt;basicMsg._msgPayload; // save this since Ack will overwrite it
+
+/* Extract the payload (if exists) since this buffer is going away the moment we get
+ * into a state.  We'll figure out later if it's valid, right before we send an Ack */
+switch( me-&gt;msgPayloadName ) {
+    case _CBNoMsg:
+        DBG_printf(&quot;No payload detected\n&quot;);
+        break;
+    case _CBStatusPayloadMsg:
+        WRN_printf(&quot;Status payload detected, this is probably an error\n&quot;);
+        break;
+    case _CBVersionPayloadMsg:
+        WRN_printf(&quot;Version payload detected, this is probably an error\n&quot;);
+        break;
+    case _CBBootModePayloadMsg:
+        DBG_printf(&quot;BootMode payload detected\n&quot;);
+        break;
+    default:
+        WRN_printf(
+            &quot;Unknown payload detected: %d, this is probably an error\n&quot;,
+            me-&gt;msgPayloadName
+        );
+        break;
+}</action>
+       <tran_glyph conn="6,17,3,3,70">
+        <action box="0,-2,10,2"/>
+       </tran_glyph>
+      </tran>
+      <state_glyph node="6,10,28,54">
+       <entry box="1,2,6,2"/>
+      </state_glyph>
+     </state>
+     <state name="BusyWithMsg">
+      <documentation>/**
+ * @brief	Busy state for msg processing.
+ * This state handles msg processing and indicates that the system is busy and
+ * cannot process another msg at this time.
+ *
+ * @param  [in|out] me: Pointer to the state machine
+ * @param  [in|out]  e:  Pointer to the event being processed.
+ * @return status: QState type that specifies where the state
+ * machine is going next.
+ */</documentation>
+      <entry>/* Arm the timer so if the message can't be processed for some reason, we can get
+ * back to idle state.  This timer may be re-armed if some messages require more 
+ * time to process than others. */
+QTimeEvt_rearm(
+    &amp;me-&gt;msgTimerEvt,
+    SEC_TO_TICKS( LL_MAX_TOUT_SEC_CLI_MSG_PROCESS )
+);
+
+/* Compose and send Ack response.  We can re-use the current structure since only
+ * one non-essential field changes. */
+me-&gt;basicMsg._msgType    = _CB_Ack;
+me-&gt;basicMsg._msgPayload = _CBNoMsg; // This was saved earlier
+/* The rest of the fields are the same */
+
+/* Serialize the msg into a buffer of a fresh event. This event will be passed to
+ * a function which will post it directly to the correct AO. */
+LrgDataEvt *evt = Q_NEW(LrgDataEvt, CLI_SEND_DATA_SIG);
+/* The src and dst are swapped on purpose since we have to tell the message to go
+ * to where it originally came from. */
+evt-&gt;dst = me-&gt;cliEvtSrc;
+evt-&gt;src = me-&gt;cliEvtDst;
+evt-&gt;dataLen = CBBasicMsg_write_delimited_to(&amp;(me-&gt;basicMsg), evt-&gt;dataBuf, 0);
+me-&gt;errorCode = Comm_sendToClient( evt );
+if ( ERR_NONE != me-&gt;errorCode ) {
+    WRN_printf(&quot;Possible error sending Ack, attempting to continue. Error: 0x%08x\n&quot;, me-&gt;errorCode);
+}</entry>
+      <exit>/* Set the fields of the msg common for all Done msgs regardless of status or msg */
+me-&gt;basicMsg._msgType    = _CB_Done;
+me-&gt;basicMsg._msgRoute   = me-&gt;msgRoute;
+me-&gt;basicMsg._msgID      = me-&gt;msgId;
+me-&gt;basicMsg._msgReqProg = (unsigned long)me-&gt;msgReqProg;
+
+/* The command specific fields should have already been set up by their respective
+ * exit transitions */
+LrgDataEvt *evt = Q_NEW(LrgDataEvt, CLI_SEND_DATA_SIG);
+evt-&gt;dataLen = CBBasicMsg_write_delimited_to(&amp;me-&gt;basicMsg, evt-&gt;dataBuf, 0);
+/* The src and dst are swapped on purpose since we have to tell the message to go
+ * to where it originally came from. */
+evt-&gt;dst = me-&gt;cliEvtSrc;
+evt-&gt;src = me-&gt;cliEvtDst;
+evt-&gt;dataLen = CBBasicMsg_write_delimited_to(&amp;(me-&gt;basicMsg), evt-&gt;dataBuf, 0);
+
+/* Append payload msg if needed */
+switch( me-&gt;msgPayloadName ) {
+    case _CBStatusPayloadMsg:
+        DBG_printf(&quot;Sending status payload\n&quot;);
+        evt-&gt;dataLen = CBStatusPayloadMsg_write_delimited_to(
+            (void*)&amp;(me-&gt;payloadMsgUnion.statusPayload),
+            evt-&gt;dataBuf,
+            evt-&gt;dataLen
+        );
+        break;
+    case _CBVersionPayloadMsg:
+        DBG_printf(&quot;Sending version payload\n&quot;);
+        evt-&gt;dataLen = CBVersionPayloadMsg_write_delimited_to(
+            (void*)&amp;(me-&gt;payloadMsgUnion.statusPayload),
+            evt-&gt;dataBuf,
+            evt-&gt;dataLen
+        );
+        break;
+    case _CBBootModePayloadMsg:
+        DBG_printf(&quot;Sending bootMode payload\n&quot;);
+        evt-&gt;dataLen = CBRunModePayloadMsg_write_delimited_to(
+            (void*)&amp;(me-&gt;payloadMsgUnion.statusPayload),
+            evt-&gt;dataBuf,
+            evt-&gt;dataLen
+        );
+        break;
+    case _CBNoMsg:
+        WRN_printf(&quot;Not sending payload as part of Done msg.\n&quot;);
+        break;
+    default:
+        WRN_printf(&quot;Unknown payload detected %d, this is probably an error\n&quot;,
+            me-&gt;msgPayloadName
+        );
+        break;
+}
+
+/* Send the Done msg buffer to the client */
+me-&gt;errorCode = Comm_sendToClient( evt );
+if ( ERR_NONE != me-&gt;errorCode ) {
+    WRN_printf(&quot;Possible error sending Done, attempting to continue. Error: 0x%08x\n&quot;, me-&gt;errorCode);
+}
+
+/* Disarm timer on exit */
+QTimeEvt_disarm(&amp;me-&gt;msgTimerEvt);</exit>
+      <tran trig="CLI_MSG_TIMEOUT" target="../../0">
+       <action>ERR_printf(&quot;Timeout trying to process %d basic msg, error: 0x%08x\n&quot;, me-&gt;errorCode);</action>
+       <tran_glyph conn="64,62,3,1,-30">
+        <action box="-14,-2,14,2"/>
+       </tran_glyph>
+      </tran>
+      <state name="ValidateMsg">
+       <documentation>/**
+ * @brief	State that ensures the system stays in the Busy state while processing.
+ * This state just self-posts an event to start the msg processing. Its primary
+ * reason for existance is to make sure that the state machine ends up inside the
+ * busy state for proper error handling (if any occur).
+ *
+ * @param  [in|out] me: Pointer to the state machine
+ * @param  [in|out]  e:  Pointer to the event being processed.
+ * @return status: QState type that specifies where the state
+ * machine is going next.
+ */</documentation>
+       <entry>/* Post to self to leave the state and continue processing the rest of the msg */
+QEvt *evt = Q_NEW(QEvt, MSG_PROCESS_SIG);
+QACTIVE_POST(AO_CommStackMgr, (QEvt *)(evt), AO_CommStackMgr);</entry>
+       <tran trig="MSG_PROCESS">
+        <action>DBG_printf(&quot;MSG_PROCESS\n&quot;);</action>
+        <choice target="../../../../0">
+         <guard brief="GetBootMode?">_CBGetBootModeMsg == me-&gt;basicMsg._msgName</guard>
+         <action>me-&gt;errorCode = ERR_NONE;
+
+DBG_printf(&quot;_CBGetBootModeMsg decoded, attempting to decode payload (if exists)\n&quot;);
+
+/* Compose Done response.  We can re-use the current structure and it will be used by
+ * the exit action of the parent state to send the msg.  Here, we only set up fields
+ * that are specific to this response. We can also destructively change the payload
+ * name since we are sending a response right after this. */
+me-&gt;msgPayloadName = _CBBootModePayloadMsg;
+
+/* Don't change the basicMsg name since it should be the same in all cases. */
+me-&gt;basicMsg._msgPayload = me-&gt;msgPayloadName;
+me-&gt;payloadMsgUnion.runmodePayload._errorCode = me-&gt;errorCode;
+me-&gt;payloadMsgUnion.runmodePayload._bootMode  = _CB_Bootloader; // This is the bootloader</action>
+         <choice_glyph conn="79,27,4,1,3,-45">
+          <action box="-11,1,11,2"/>
+         </choice_glyph>
+        </choice>
+        <choice target="../../../../0">
+         <guard>else</guard>
+         <action>me-&gt;errorCode = ERR_MSG_UNKNOWN_BASIC;
+ERR_printf(
+    &quot;Unknown msg (%d) with msgId=%d. Sending back error: 0x%08x\n&quot;,
+    me-&gt;basicMsg._msgName, me-&gt;msgId, me-&gt;errorCode);
+
+/* Compose Done response.  We can re-use the current structure and it will be used by
+ * the exit action of the parent state to send the msg.  Here, we only set up fields
+ * that are specific to this response. We can also destructively change the payload 
+ * name since we are sending a response right after this. */
+me-&gt;msgPayloadName = _CBStatusPayloadMsg;
+
+/* Don't change the basicMsg name since we don't actually know what it is but add a 
+ * status payload msg to let the user know the error. */
+me-&gt;basicMsg._msgPayload = me-&gt;msgPayloadName;
+me-&gt;payloadMsgUnion.statusPayload._errorCode = me-&gt;errorCode;
+
+
+</action>
+         <choice_glyph conn="79,27,5,1,-45">
+          <action box="-8,-2,8,2"/>
+         </choice_glyph>
+        </choice>
+        <tran_glyph conn="79,22,2,-1,5">
+         <action box="0,1,12,2"/>
+        </tran_glyph>
+       </tran>
+       <state_glyph node="76,15,17,7">
+        <entry box="1,2,6,2"/>
+       </state_glyph>
+      </state>
+      <state_glyph node="64,10,87,55">
+       <entry box="1,2,6,2"/>
+       <exit box="1,4,6,2"/>
+      </state_glyph>
+     </state>
+     <state_glyph node="3,3,156,82">
       <entry box="1,2,5,2"/>
      </state_glyph>
     </state>
-    <state_diagram size="108,90"/>
+    <state_diagram size="163,90"/>
    </statechart>
   </class>
   <attribute name="AO_CommStackMgr" type="QActive * const" visibility="0x00" properties="0x00">
@@ -236,7 +403,57 @@ QACTIVE_POST(
  */</documentation>
    <code>CommStackMgr *me = &amp;l_CommStackMgr;
 QActive_ctor(&amp;me-&gt;super, (QStateHandler)&amp;CommStackMgr_initial);
-QTimeEvt_ctor(&amp;me-&gt;timeTestTimerEvt, TIME_TEST_SIG);</code>
+QTimeEvt_ctor(&amp;me-&gt;msgTimerEvt, CLI_MSG_TIMEOUT_SIG);</code>
+  </operation>
+  <operation name="Comm_sendToClient" type="CBErrorCode" visibility="0x00" properties="0x00">
+   <documentation>/**
+ * @brief	Wrapper around serial and UDP send data function.
+ * This function acts as a simple wrapper around serial and UDP ethernet send data
+ * functions to allow easy posting of events to send out data over those interfaces.
+ * @param [in] *evt: LrgDataEvt pointer to event to send.
+ * @return: CBErrorCode indicating status of operation.
+ */</documentation>
+   <parameter name="evt" type="LrgDataEvt*"/>
+   <code>CBErrorCode status = ERR_NONE;
+if ( _CB_Serial == evt-&gt;dst ) {
+    uint8_t encDataBuf[CB_MAX_MSG_LEN];
+    memset(encDataBuf, 0, sizeof(encDataBuf));
+    uint16_t encDataLen = base64_encode(
+          (char *)(evt-&gt;dataBuf),
+          evt-&gt;dataLen,
+          (char *)encDataBuf,
+          CB_MAX_MSG_LEN
+    );
+
+    if(encDataLen &lt; 1) {
+        status = ERR_SERIAL_MSG_BASE64_ENC_FAILED;
+        ERR_printf(
+            &quot;Base64 encoding ran out of space, error: 0x%08x\n&quot;,
+            status
+        );
+        /* Set so we don't error out copying.  Client should know how to
+         * to properly handle this */
+        encDataLen = 1;
+    }
+
+    /* Modify the contents of the event with the new encoded data and send
+     * it regardless of whether we*/
+    evt-&gt;dataLen = encDataLen;
+    MEMCPY( evt-&gt;dataBuf, encDataBuf, evt-&gt;dataLen);
+    evt-&gt;dst = _CB_Serial;
+    evt-&gt;src = _CB_Serial;
+
+    /* Directly post to the LWIPMgr AO. */
+    QACTIVE_POST( AO_SerialMgr, (QEvt *)(evt), 0 );
+
+} else { /* Always attempt to send over UDP to prevent leaking the event */
+    /* No modifications needed to the UDP send so just post it directly to that AO.*/
+    /* Directly post to the LWIPMgr AO. */
+    QACTIVE_POST( AO_LWIPMgr, (QEvt *)(evt), 0 );
+}
+
+/* If we got here, src or dst was not set up properly. */
+return status;</code>
   </operation>
  </package>
  <directory name=".">
@@ -267,6 +484,11 @@ QTimeEvt_ctor(&amp;me-&gt;timeTestTimerEvt, TIME_TEST_SIG);</code>
 #include &quot;I2C1DevMgr.h&quot;                                  /* For I2C Evt types */
 #include &quot;time.h&quot;
 #include &quot;stm32f4x7_eth.h&quot;
+#include &quot;serial.h&quot;                               /* For serial functionality */
+#include &quot;LWIPMgr.h&quot;                        /* For UDP ethernet functionality */
+#include &quot;base64_wrapper.h&quot;                            /* For base64 encoding */
+#include &quot;SerialMgr.h&quot;
+#include &quot;LWIPMgr.h&quot;
 
 /* Compile-time called macros ------------------------------------------------*/
 Q_DEFINE_THIS_FILE;                 /* For QSPY to know the name of this file */
@@ -295,6 +517,7 @@ QActive * const AO_CommStackMgr = (QActive *)&amp;l_CommStackMgr;  /* &quot;opaq
 /* Private function prototypes -----------------------------------------------*/
 /* Private functions ---------------------------------------------------------*/
 $define(AOs::CommStackMgr_ctor)
+$define(AOs::Comm_sendToClient)
 $define(AOs::CommStackMgr)
 
 /**
@@ -329,6 +552,8 @@ $define(AOs::CommStackMgr)
 
 /* Includes ------------------------------------------------------------------*/
 #include &quot;qp_port.h&quot;                                        /* for QP support */
+#include &quot;CBCommApi.h&quot;               /* For API for communicating with client */
+#include &quot;CBSignals.h&quot;              /* For QP signals available to the system */
 
 /* Exported defines ----------------------------------------------------------*/
 /* Exported macros -----------------------------------------------------------*/
@@ -336,6 +561,7 @@ $define(AOs::CommStackMgr)
 /* Exported constants --------------------------------------------------------*/
 /* Exported functions --------------------------------------------------------*/
 $declare(AOs::CommStackMgr_ctor)
+$declare(AOs::Comm_sendToClient)
 $declare(AOs::AO_CommStackMgr)
 
 /* Don't declare the MsgEvt type here since it needs to be visible to LWIP, 

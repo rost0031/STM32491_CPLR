@@ -67,7 +67,7 @@
       glbDbgConfig = 0xFFFFFFFF;
 
 /**
- * @brief   Wrapper around the LogStup::log() function for DBG logging.
+ * @brief   Wrapper around the LogStub::log() function for DBG logging.
  *
  * @param [in] logInstance: LogStub instance which defines the log function.
  * @param [in] *fmt: va_args style string
@@ -82,7 +82,7 @@
       } while (0)
 
 /**
- * @brief   Wrapper around the LogStup::log() function for LOG logging.
+ * @brief   Wrapper around the LogStub::log() function for LOG logging.
  *
  * @param [in] logInstance: LogStub instance which defines the log function.
  * @param [in] *fmt: va_args style string
@@ -97,7 +97,7 @@
       } while (0)
 
 /**
- * @brief   Wrapper around the LogStup::log() function for WRN logging.
+ * @brief   Wrapper around the LogStub::log() function for WRN logging.
  *
  * @param [in] logInstance: LogStub instance which defines the log function.
  * @param [in] *fmt: va_args style string
@@ -110,7 +110,7 @@
       } while (0)
 
 /**
- * @brief   Wrapper around the LogStup::log() function for ERR logging.
+ * @brief   Wrapper around the LogStub::log() function for ERR logging.
  *
  * @param [in] logInstance: LogStub instance which defines the log function.
  * @param [in] *fmt: va_args style string

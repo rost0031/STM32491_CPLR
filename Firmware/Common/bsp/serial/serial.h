@@ -141,13 +141,13 @@ void Serial_DMAStartXfer(
  * it, one character at a time. The last character sent is the '\n' character.
  * That is how the receiver knows the message is complete.
  *
+ * @param [in] *dataBuf: pointer to the buffer with data to send
+ * @param [in]  dataLen: length of the data to send
  * @param [in]  serPort: a USART_Port type that specifies how to look up settings
  * in the serial port settings structure
  * @param [in]  devAcc: DevAccess_t var that specifies how to access the device:
  *    @arg DEV_ACC_BLK: blocking one byte at a time access.
  *    @arg DEV_ACC_DMA: non-blocking DMA access.
- * @param [in] *dataBuf: pointer to the buffer with data to send
- * @param [in]  dataLen: length of the data to send
  * @retval  CBErrorCode: error code from error.h
  *    @arg  ERR_NONE:   No errors
  *    @arg  ERR_SERIAL_HW_TIMEOUT:     Serial hardware stopped responding
@@ -155,10 +155,10 @@ void Serial_DMAStartXfer(
  *    @arg  ERR_SERIAL_MSG_BASE64_ENC_FAILED: Failed to base64 encode the message, likely due to length
  */
 CBErrorCode Serial_sendBase64Enc(
-      SerialPort_T serPort,
-      DevAccess_t devAcc,
-      uint8_t *dataBuf,
-      uint16_t dataLen
+      const uint8_t *dataBuf,
+      const uint16_t dataLen,
+      const SerialPort_T serPort,
+      const DevAccess_t devAcc
 );
 
 /**
@@ -180,10 +180,10 @@ CBErrorCode Serial_sendBase64Enc(
  *    @arg  ERR_SERIAL_MSG_TOO_LONG:   Message being sent is longer than MAX_MSG_LEN
  */
 CBErrorCode Serial_sendRaw(
-      SerialPort_T serPort,
-      DevAccess_t devAcc,
       const uint8_t const *dataBuf,
-      const uint16_t dataLen
+      const uint16_t dataLen,
+      const SerialPort_T serPort,
+      const DevAccess_t devAcc
 );
 
 /**
