@@ -90,7 +90,7 @@ typedef enum DBG_SOURCES {
    SRC_CLI_EXT  = 0x00000001, /**< Caller of the client library is the source */
    SRC_CLI_LIB  = 0x00000002, /**< Client library is the source */
    SRC_DC3_APPL = 0x00000003, /**< DC3 Application is the source */
-   SRC_DC3_BOOT = 0x00000008, /**< DC3 Bootloader is the source */
+   SRC_DC3_BOOT = 0x00000004, /**< DC3 Bootloader is the source */
 } ModuleSrc_t;
 
 /* Exported functions --------------------------------------------------------*/

@@ -60,9 +60,9 @@ class CLIENT_DLL ClientApi {
 
 private:
    LogStub *m_pLog;         /**< Pointer to LogStub instance used for logging */
-   CB_ReqLogHandler_t m_pReqHandlerCBFunction; /**< Callback for handling Req msgs */
-   CB_AckLogHandler_t m_pAckHandlerCBFunction; /**< Callback for handling Ack msgs */
-   CB_DoneLogHandler_t m_pDoneHandlerCBFunction; /**< Callback for handling Done msgs */
+   CB_ReqMsgHandler_t m_pReqHandlerCBFunction; /**< Callback for handling Req msgs */
+   CB_AckMsgHandler_t m_pAckHandlerCBFunction; /**< Callback for handling Ack msgs */
+   CB_DoneMsgHandler_t m_pDoneHandlerCBFunction; /**< Callback for handling Done msgs */
 
    unsigned int m_msgId;   /* Msg ID incrementing counter for unique msg ids. */
    bool m_bRequestProg;     /* Flag to see if progress messages are requested */
@@ -198,7 +198,7 @@ public:
     *    @arg CLI_ERR_NONE: no errors were detected
     *    else some error code indicating what went wrong
     */
-   ClientError_t setReqCallBack( CB_ReqLogHandler_t pCallbackFunction );
+   ClientError_t setReqCallBack( CB_ReqMsgHandler_t pCallbackFunction );
 
    /**
     * This method sets a callback to handle Ack msgs.
@@ -210,7 +210,7 @@ public:
     *    @arg CLI_ERR_NONE: no errors were detected
     *    else some error code indicating what went wrong
     */
-   ClientError_t setAckCallBack( CB_AckLogHandler_t pCallbackFunction );
+   ClientError_t setAckCallBack( CB_AckMsgHandler_t pCallbackFunction );
 
    /**
     * This method sets a callback to handle Done msgs.
@@ -222,7 +222,7 @@ public:
     *    @arg CLI_ERR_NONE: no errors were detected
     *    else some error code indicating what went wrong
     */
-   ClientError_t setDoneCallBack( CB_DoneLogHandler_t pCallbackFunction );
+   ClientError_t setDoneCallBack( CB_DoneMsgHandler_t pCallbackFunction );
 
    /**
     * Constructor that sets up logging and an ethernet connection.

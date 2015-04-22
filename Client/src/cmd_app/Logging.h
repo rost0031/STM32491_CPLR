@@ -76,8 +76,8 @@
  * logger automatically appends it (with no way to turn it off, it seems).
  */
 #define DBG_out   BOOST_LOG_SEV(my_logger::get(), DBG)                        \
-      << "[" << "Ext" << "]"                                                  \
-      << ":["<< maskableEnumToString(this_module_) << "]"                     \
+      << "[" << "Exe" << "]"                                                  \
+      << ":["<< maskableEnumToString(this_module_) << "] - "                  \
       << __func__ << "():" << __LINE__ << " - "
 
 /**
@@ -90,8 +90,8 @@
  * logger automatically appends it (with no way to turn it off, it seems).
  */
 #define LOG_out   BOOST_LOG_SEV(my_logger::get(), LOG)                        \
-      << "[" << "Ext" << "]"                                                  \
-      << ":["<< maskableEnumToString(this_module_) << "]"                     \
+      << "[" << "Exe" << "]"                                                  \
+      << ":["<< maskableEnumToString(this_module_) << "] - "                  \
       << __func__ << "():" << __LINE__ << " - "
 
 
@@ -105,8 +105,8 @@
  * logger automatically appends it (with no way to turn it off, it seems).
  */
 #define WRN_out   BOOST_LOG_SEV(my_logger::get(), WRN)                        \
-      << "[" << "Ext" << "]"                                                  \
-      << ":["<< maskableEnumToString(this_module_) << "]"                     \
+      << "[" << "Exe" << "]"                                                  \
+      << ":["<< maskableEnumToString(this_module_) << "] - "                  \
       << __func__ << "():" << __LINE__ << " - "
 
 
@@ -120,8 +120,8 @@
  * logger automatically appends it (with no way to turn it off, it seems).
  */
 #define ERR_out   BOOST_LOG_SEV(my_logger::get(), ERR)                        \
-      << "[" << "Ext" << "]"                                                  \
-      << ":["<< maskableEnumToString(this_module_) << "]"                     \
+      << "[" << "Exe" << "]"                                                  \
+      << ":["<< maskableEnumToString(this_module_) << "] - "                  \
       << __func__ << "():" << __LINE__ << " - "
 
 
@@ -168,7 +168,7 @@
 #define LIB_out( dbgLvl, funcName, lineNum, moduleSrc, moduleId, message )    \
    BOOST_LOG_SEV(my_logger::get(), dbgLvl)                                    \
    << "[" << setw(3) << maskableEnumToString(moduleSrc) << "]"                \
-   << ":[" << setw(3) << maskableEnumToString(moduleId) << "]"                \
+   << ":[" << setw(3) << maskableEnumToString(moduleId) << "] - "             \
    << funcName << "():" << lineNum << " - "<< message;
 
 /**
@@ -204,6 +204,26 @@
  * @return: None.
  */
 #define CON_print(message) MENU_print(message)
+
+/**
+ * @brief  Wrapper around the boost log that outputs a DC3 log message.
+ *
+ * This macro should be called to print DC3 produced log messages. This macro is
+ * unfortunately not usable as a stream.  Instead, it's up to the caller to
+ * create a string to pass into this macro.
+ *
+ * @note: Do not use "\n" or "<<endl" at the end of the stream since the boost
+ * logger automatically appends it (with no way to turn it off, it seems).
+ *
+ * @param [in] message: string type that contains the data to print.
+ * @return: None.
+ */
+#define DC3_out(dbgLvl, funcName, lineNum, dc3TimeStamp, message )                                                      \
+   BOOST_LOG_SEV(my_logger::get(), dbgLvl)                                    \
+   << "[DC3]:[N/A] - "                                                        \
+   << funcName << "():" << lineNum << " - " << dc3TimeStamp << " - " << message;
+
+
 
 /* Exported types ------------------------------------------------------------*/
 /**

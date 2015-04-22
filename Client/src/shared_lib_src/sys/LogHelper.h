@@ -122,6 +122,19 @@
             this_module_, fmt, ##__VA_ARGS__);                                \
       } while (0)
 
+
+/**
+ * @brief   Wrapper around the LogStub::log() function for ERR logging.
+ *
+ * @param [in] logInstance: LogStub instance which defines the log function.
+ * @param [in] *fmt: va_args style string
+ * @param [in] ...: va_args style additional arguments.
+ * @return  None.
+ */
+#define DC3_printf(logInstance, buffer)                                       \
+      logInstance->printDC3LogMsg( buffer );                                  \
+
+
 /* Exported types ------------------------------------------------------------*/
 /* Exported variables --------------------------------------------------------*/
 extern uint32_t  glbDbgConfig; /**< Allow global access to debug info */

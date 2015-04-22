@@ -54,7 +54,7 @@ extern "C" {
  * struct, ready to print
  * @return: None.
  */
-typedef void (*CB_ReqLogHandler_t)(
+typedef void (*CB_ReqMsgHandler_t)(
       struct CBBasicMsg basicMsgStruct
 );
 
@@ -70,7 +70,7 @@ typedef void (*CB_ReqLogHandler_t)(
  * struct, ready to print
  * @return: None.
  */
-typedef void (*CB_AckLogHandler_t)(
+typedef void (*CB_AckMsgHandler_t)(
       struct CBBasicMsg basicMsgStruct
 );
 
@@ -89,7 +89,7 @@ typedef void (*CB_AckLogHandler_t)(
  *
  * @return: None.
  */
-typedef void (*CB_DoneLogHandler_t)(
+typedef void (*CB_DoneMsgHandler_t)(
       struct CBBasicMsg basicMsgStruct,
       CBMsgName payloadMsgName,
       CBPayloadMsgUnion_t payloadMsgUnion
@@ -103,25 +103,10 @@ typedef void (*CB_DoneLogHandler_t)(
  * different handling depending if the client is commandline, menu driven, or a
  * a gui.
  *
- * @param [in] dbgLevel: DBG_LEVEL_T that specifies the log priority of the msg
- *    @arg DBG: Lowest level of debugging.  Everything printed.
- *    @arg LOG: Basic logging.
- *    @arg WRN: Warnings.  Non-critical errors that may have occurred that allow
- *              operations to continue.
- *    @arg ERR: Critical errors. Operations will stop if these occurred.
- *    @arg CON: This is reserved for printing to the console as part of regular
- *              operation and nothing will be prepended.  The client has no use
- *              for this.
- *    @arg ISR: This debug msg came from an ISR
- *
- * @param err: CBErrorCode type that specifies what error was sent from coupler
- *             or occurred.
  * @param *buffer: char pointer to buffer containing the message to be printed.
  */
-typedef void (*CB_LogHandler_t)(
-      DBG_LEVEL_T dbgLevel,
-      CBErrorCode err,
-      char *buffer
+typedef void (*CB_DC3LogHandler_t)(
+      const char *buffer
 );
 
 /**

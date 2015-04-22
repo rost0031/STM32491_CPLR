@@ -42,16 +42,17 @@ void Serial::read_handler(
     memcpy(read_msg_, line.c_str(), bytes_transferred);
     read_msg_[bytes_transferred]=0;
 
-    /* The last 2 characters of a base64 encoded string are '==' so we check for
-     * them and if present, decode and launch message.  Otherwise, we can just
-     * print them out since it's just printfs coming over serial console.*/
-    if (  0 == line.find("DBG:") ||
-          0 == line.find("LOG:")   ||
-          0 == line.find("WRN:")   ||
-          0 == line.find("ERR:")
-       ) {
-        std::cout << "CB: " << read_msg_ << std::endl;
-    } else {
+    /* If we don't find any of the strings below in the message, assume it's a
+     * base64 encoded string.  Otherwise, just print it since it's probably a
+     * logging message from DC3. */
+    if (
+          string::npos == line.find("DBG") &&
+          string::npos == line.find("LOG") &&
+          string::npos == line.find("WRN") &&
+          string::npos == line.find("ERR") &&
+          string::npos == line.find("ISR")
+    )
+    {
        /* Construct a new msg event indicating that a msg has been received */
        LrgDataEvt *evt = Q_NEW(LrgDataEvt, MSG_RECEIVED_SIG);
 
@@ -70,6 +71,8 @@ void Serial::read_handler(
 
        /* Directly post the event */
        QACTIVE_POST(AO_MainMgr, (QEvt *)(evt), AO_MainMgr);
+    } else {
+       DC3_printf(this->m_pLog, read_msg_);
     }
 
     /* Continue reading */

@@ -154,7 +154,7 @@ else                     # default Debug configuration .......................
     CFLAGS                  = -c -g3 -ggdb -std=gnu99 -Wall \
                                $(INCLUDES) $(DEFINES)
 
-    CPPFLAGS                = -O0 -g3 -ggdb  -std=gnu++0x -c -Wall \
+    CPPFLAGS                = -O0 -g3 -ggdb  -std=gnu++11 -c -Wall \
                               -Wno-write-strings $(INCLUDES) $(DEFINES)
 endif
                               

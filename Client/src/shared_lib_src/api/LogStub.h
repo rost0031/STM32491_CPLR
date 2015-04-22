@@ -63,7 +63,8 @@ extern "C" {
 class CLIENT_DLL LogStub {
 
 private:
-   CB_LibLogHandler_t m_pLibLogHandlerCBFunction;  /**< Callback for handling library logging */
+   CB_LibLogHandler_t m_pLibLogHandlerCBFunction;  /**< Callback for handling lib log msgs */
+   CB_DC3LogHandler_t m_pDC3LogHandlerCBFunction;  /**< Callback for handling DC3 log msgs */
 
 public:
 
@@ -94,6 +95,18 @@ public:
     *    else some error code indicating what went wrong
     */
    ClientError_t setLibLogCallBack( CB_LibLogHandler_t pCallbackFunction );
+
+   /**
+    * @brief   Set a callback to handle the log msgs coming from DC3 board.
+    *
+    * @param  [in]  pCallbackFunction: a CB_DC3LogHandler_t pointer to the
+    * callback function that is implemented outside the library.
+    *
+    * @return ClientError_t:
+    *    @arg CLI_ERR_NONE: no errors were detected
+    *    else some error code indicating what went wrong
+    */
+   ClientError_t setDC3LogCallBack( CB_DC3LogHandler_t pCallbackFunction );
 
    /**
     * @brief   Enable logging for a given module of the library.
@@ -179,6 +192,16 @@ public:
          ModuleId_t moduleId,
          char *fmt,
          ...
+   );
+
+   /**
+    * @brief   Print log messages from DC3
+    * This function prints out DC3 log messages that may come over the channel
+    * bus when connected over serial.
+    *
+    */
+   void printDC3LogMsg(
+         const char *msg
    );
 };
 

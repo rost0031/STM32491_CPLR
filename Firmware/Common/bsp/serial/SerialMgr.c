@@ -341,7 +341,8 @@ static QState SerialMgr_Busy(SerialMgr * const me, QEvt const * const e) {
         /* ${AOs::SerialMgr::SM::Active::Busy::UART_DMA_START, ~} */
         case UART_DMA_START_SIG: /* intentionally fall through */
         case DBG_LOG_SIG: /* intentionally fall through */
-        case DBG_MENU_SIG: {
+        case DBG_MENU_SIG: /* intentionally fall through */
+        case CLI_SEND_DATA_SIG: {
             if (QEQueue_getNFree(&me->deferredEvtQueue) > 0) {
                /* defer the request - this event will be handled
                 * when the state machine goes back to Idle state */

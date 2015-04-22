@@ -79,9 +79,6 @@ void CLI_LibLogCallback(
       ...
 )
 {
-
-//   sources::severity_logger<DBG_LEVEL_T> lg;
-
    char tmpBuffer[MAX_LOG_BUFFER_LEN];
    uint8_t tmpBufferIndex = 0;
 
@@ -100,6 +97,91 @@ void CLI_LibLogCallback(
 
    LIB_out( dbgLvl, pFuncName, wLineNumber, moduleSrc, moduleId, tmpBuffer );
 }
+
+/******************************************************************************/
+void CLI_DC3LogCallback(
+      const char *msg
+)
+{
+   /* Break apart the log msg from DC3 so we can make it look like the rest of
+    * the log messages. Its format looks like this:
+    * DBG-01:00:58:069-CommStackMgr_Idle():385:No payload detected
+    * */
+   string message(msg);
+
+   size_t pos = 0;
+
+   /* Get the debug level of the message */
+   DBG_LEVEL_T dbgLvl = CON;
+   string dbgLvlStr = "";
+   string delim = "-";
+   if ( (pos = message.find( delim )) != string::npos) {
+
+      dbgLvlStr = message.substr(0, pos);
+
+      if ( string::npos != dbgLvlStr.find("DBG") ) {
+         dbgLvl = DBG;
+         message.erase(0, pos + delim.length());
+      } else if ( string::npos != dbgLvlStr.find("LOG") ) {
+         dbgLvl = LOG;
+         message.erase(0, pos + delim.length());
+      } else if ( string::npos != dbgLvlStr.find("WRN") ) {
+         dbgLvl = WRN;
+         message.erase(0, pos + delim.length());
+      } else if ( string::npos != dbgLvlStr.find("ERR") ) {
+         dbgLvl = ERR;
+         message.erase(0, pos + delim.length());
+      } else if ( string::npos != dbgLvlStr.find("ISR") ) {
+         dbgLvl = ISR;
+         message.erase(0, pos + delim.length());
+      } else {
+         WRN_out << "Unable to figure out debug level of a DC3 log msg";
+      }
+//      DBG_out << "Found debug level: " << dbgLvlStr;
+   }
+
+   /* Get the DC3 internal timestamp of the message */
+   string timestamp = "";
+   delim = "-";
+   if ( (pos = message.find( delim )) != string::npos) {
+      timestamp = message.substr(0, pos);
+      message.erase(0, pos + delim.length());
+//      DBG_out << "Found timestamp: " << timestamp;
+   }
+
+   /* Get the DC3 internal function name of the message */
+   string funcName = "";
+   delim = "():";
+   if ( (pos = message.find( delim )) != string::npos) {
+      funcName = message.substr(0, pos);
+      message.erase(0, pos + delim.length());
+//      DBG_out << "Found funcName: " << funcName;
+   }
+
+   /* Get the DC3 internal line number of the message */
+   string lineNumber = "";
+   int lineNum = 0;
+   delim = ":";
+   if ( (pos = message.find( delim )) != string::npos) {
+      lineNumber = message.substr(0, pos);
+      lineNum = atoi(lineNumber.c_str());
+      message.erase(0, pos + delim.length());
+//      DBG_out << "Found lineNumber: " << lineNum;
+   }
+
+   /* The rest is the message but we need to trim the newline */
+   delim = "\n";
+   string msgStr = "";
+   if ( (pos = message.find( delim )) != string::npos) {
+      msgStr = message.substr(0, pos);
+//      DBG_out << "Found rest of msg:" << msgStr;
+   } else {
+      msgStr = message;
+   }
+
+   DC3_out( dbgLvl, funcName.c_str(), lineNum, timestamp.c_str(), msgStr.c_str() );
+}
+
 
 /* Private class prototypes --------------------------------------------------*/
 

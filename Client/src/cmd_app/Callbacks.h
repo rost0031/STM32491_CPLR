@@ -91,6 +91,10 @@ void CLI_LibLogCallback(
       char *fmt,
       ...
 );
+
+void CLI_DC3LogCallback(
+     const char *msg
+);
 /* Exported classes ----------------------------------------------------------*/
 
 #endif                                                        /* CALLBACKS_H_ */

@@ -347,9 +347,9 @@ static QState CommStackMgr_Idle(CommStackMgr * const me, QEvt const * const e) {
             cliEvt->dst = ((LrgDataEvt const *) e)->dst;
 
             QACTIVE_POST(
-                AO_SerialMgr,
+                AO_CommStackMgr,
                 (QEvt *)(cliEvt),
-                AO_SerialMgr
+                AO_CommStackMgr
             );
             status_ = Q_HANDLED();
             break;

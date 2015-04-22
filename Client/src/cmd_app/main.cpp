@@ -64,6 +64,12 @@ int main(int argc, char *argv[])
       EXIT_LOG_FLUSH(1);
    }
 
+   status = pLogStub->setDC3LogCallBack( CLI_DC3LogCallback );
+   if ( CLI_ERR_NONE != status ) {
+      ERR_out << "Failed to set DC3 logging callback function. Exiting...";
+      EXIT_LOG_FLUSH(1);
+   }
+
    /* 3. Enable and disable logging for various modules in the library */
    pLogStub->enableLogForAllLibModules();
 
@@ -170,14 +176,34 @@ int main(int argc, char *argv[])
    CBBootMode mode = _CB_NoBootMode;
    ClientError_t statusCli = client->DC3_getMode(&statusDC3, &mode);
 
-   DBG_out << "DC3 boot mode is: " << mode << " and status: "
-         << statusDC3 << ". Client status: " << hex << statusCli;
+   if( CLI_ERR_NONE == statusCli ) {
+      DBG_out << "DC3 boot mode is: " << mode << " and status: "
+            << statusDC3 << ". Client status: " << "0x" << std::hex
+            << statusCli << std::dec;
+   } else {
+      ERR_out << "Got error " << "0x" << std::hex
+            << statusCli << std::dec << " when trying to get boot mode";
+   }
 
 //   DBG_out << "Starting a test job.";
 //   client->startJob();
 //
 //   DBG_out << "Waiting for test job to finish...";
 //   client->waitForJobDone();
+
+
+   /* Test regular expressions: */
+//   string str1 = "DBG-01:00:58:069-CommStackMgr_Idle():359:CLI_RECIEVED\n";
+//   string str2 = "DBG-01:00:58:069-CommStackMgr_Idle():385:No payload detected\n";
+//   string str3 = "DBG-01:00:58:069-CommStackMgr_ValidateMsg():563:MSG_PROCESS\n";
+//   string str4 = "DBG-01:00:58:069-CommStackMgr_ValidateMsg():568:_CBGetBootModeMsg decoded, attempting to decode payload (if exists)\n";
+//   string str5 = "DBG-01:00:58:069-CommStackMgr_BusyWithMsg():496:Sending bootMode payload\n";
+//
+//   CLI_DC3LogCallback( str1.c_str() );
+//   CLI_DC3LogCallback( str2.c_str() );
+//   CLI_DC3LogCallback( str3.c_str() );
+//   CLI_DC3LogCallback( str4.c_str() );
+//   CLI_DC3LogCallback( str5.c_str() );
 
    DBG_out << "Test job finished. Exiting.";
    boost::this_thread::sleep(boost::posix_time::milliseconds(50));

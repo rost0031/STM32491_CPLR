@@ -47,7 +47,8 @@ uint32_t  glbDbgConfig = 0;
 
 /******************************************************************************/
 LogStub::LogStub( void ) :
-   m_pLibLogHandlerCBFunction(NULL)
+   m_pLibLogHandlerCBFunction(NULL),
+   m_pDC3LogHandlerCBFunction(NULL)
 {
 
 }
@@ -79,6 +80,33 @@ ClientError_t LogStub::setLibLogCallBack(
    } catch ( ... ) {
       err = CLI_ERR_INVALID_CALLBACK;
       cerr << "Invalid Library Logging callback passed in by user" << endl;
+   }
+
+   return( err );
+}
+
+/******************************************************************************/
+ClientError_t LogStub::setDC3LogCallBack(
+      CB_DC3LogHandler_t pCallbackFunction
+)
+{
+   ClientError_t err = CLI_ERR_NONE;
+
+   this->m_pDC3LogHandlerCBFunction = pCallbackFunction;
+
+   /* This is a potentially dangerous call since the user could have passed in
+    * garbage instead of a valid pointer */
+   string tmp = "Testing DC3 Logging Callback passed in by user";
+   try {
+      if ( NULL != this->m_pDC3LogHandlerCBFunction ) {
+         LOG_printf(this, "Successfully set callback in LogStub");
+      } else {
+         err = CLI_ERR_INVALID_CALLBACK;
+         cerr << "Invalid DC3 Logging callback passed in by user" << endl;
+      }
+   } catch ( ... ) {
+      err = CLI_ERR_INVALID_CALLBACK;
+      cerr << "Invalid DC3 Logging callback passed in by user" << endl;
    }
 
    return( err );
@@ -154,4 +182,13 @@ void LogStub::log(
    }
 }
 
+/******************************************************************************/
+void LogStub::printDC3LogMsg(
+      const char *msg
+)
+{
+   if (NULL != this->m_pDC3LogHandlerCBFunction) {
+      this->m_pDC3LogHandlerCBFunction( msg );
+   }
+}
 /******** Copyright (C) 2015 Datacard. All rights reserved *****END OF FILE****/

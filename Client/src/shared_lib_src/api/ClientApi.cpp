@@ -369,7 +369,7 @@ ClientError_t ClientApi::waitForJobDone(
 
 /******************************************************************************/
 ClientError_t ClientApi::setReqCallBack(
-      CB_ReqLogHandler_t pCallbackFunction
+      CB_ReqMsgHandler_t pCallbackFunction
 )
 {
    ClientError_t err = CLI_ERR_NONE;
@@ -400,7 +400,7 @@ ClientError_t ClientApi::setReqCallBack(
 
 /******************************************************************************/
 ClientError_t ClientApi::setAckCallBack(
-      CB_AckLogHandler_t pCallbackFunction
+      CB_AckMsgHandler_t pCallbackFunction
 )
 {
    ClientError_t err = CLI_ERR_NONE;
@@ -429,7 +429,7 @@ ClientError_t ClientApi::setAckCallBack(
 
 /******************************************************************************/
 ClientError_t ClientApi::setDoneCallBack(
-      CB_DoneLogHandler_t pCallbackFunction
+      CB_DoneMsgHandler_t pCallbackFunction
 )
 {
    ClientError_t err = CLI_ERR_NONE;

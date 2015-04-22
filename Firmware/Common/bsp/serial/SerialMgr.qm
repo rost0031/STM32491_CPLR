@@ -172,7 +172,7 @@ Serial_DMAStartXfer( SERIAL_UART1 );</entry>
         <action box="-16,-2,16,2"/>
        </tran_glyph>
       </tran>
-      <tran trig="UART_DMA_START, DBG_LOG, DBG_MENU">
+      <tran trig="UART_DMA_START, DBG_LOG, DBG_MENU, CLI_SEND_DATA">
        <action>if (QEQueue_getNFree(&amp;me-&gt;deferredEvtQueue) &gt; 0) {
    /* defer the request - this event will be handled
     * when the state machine goes back to Idle state */
