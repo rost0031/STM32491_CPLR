@@ -93,10 +93,10 @@ void LOG_msgToStream(
          case _CBBootModePayloadMsg:
             ss << setw(15) << setfill(' ') << "ErrorCode: "
             << hex << "0x" << setw(8) << setfill('0')
-            << pPayloadUnion->runmodePayload._errorCode << dec << endl;
+            << pPayloadUnion->bootmodePayload._errorCode << dec << endl;
             ss << setw(25) << setfill(' ') << "*" << "---> ";
             ss << setw(15) << setfill(' ') << "Boot Mode: "
-            << enumToString(pPayloadUnion->runmodePayload._bootMode) << endl;
+            << enumToString(pPayloadUnion->bootmodePayload._bootMode) << endl;
             break;
          default:
             break;

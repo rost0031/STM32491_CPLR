@@ -74,7 +74,7 @@ private:
    struct CBBasicMsg          m_basicMsg;
    struct CBStatusPayloadMsg  m_statusPayloadMsg;
    struct CBVersionPayloadMsg m_versionPayloadMsg;
-   struct CBRunModePayloadMsg m_runmodePayloadMsg;
+   struct CBBootModePayloadMsg m_bootmodePayloadMsg;
 
    uint8_t dataBuf[1000];
    int dataLen;

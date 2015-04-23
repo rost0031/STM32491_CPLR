@@ -414,13 +414,13 @@ message CBVersionPayloadMsg
 // Msg Desc - This message is handles communications needed for getting the 
 //            current run mode of the CB board.
 //
-// No message definition needed.  Uses CBBasicMsg with CBRunModePayloadMsg
+// No message definition needed.  Uses CBBasicMsg with CBBootModePayloadMsg
 // as a payload for CB_Done.
 // Example:
 // Client                                                             CB Board
 //   |                                                                      |
 // *Send* [[**************CBBasicMsg***********]\n]>>>>>>>>>>>>>>>>>>>>*Receive*
-//          < msgName = CBCmdLLGetRunModeTagMsg
+//          < msgName = CBGetBootModeMsg
 //          < msgID   = [uint32]                         
 //          < msgType = CB_Req                       
 //          < msgPayload = CBNoMsg  
@@ -431,9 +431,9 @@ message CBVersionPayloadMsg
 //          < msgPayload = CBNoMsg
 // *Rec*  [[************CBBasicMsg**********][**CBPayloadMsg**]\n]<<<<<<<<*Send*
 //          < msgName = CBGetBootModeMsg      < errorCode = CB_ERR_CODE  
-//          < msgID   = [uint32]              < runmode = [CB_SysRomBoot|CB_Bootloader|CB_Application]         
+//          < msgID   = [uint32]              < bootmode = [CB_SysRomBoot|CB_Bootloader|CB_Application]         
 //          < msgType = CB_Done                  
-//          < msgPayload = CBRunModePayloadMsg   
+//          < msgPayload = CBBootModePayloadMsg   
 // END CBGetBootModeMsg
 //------------------------------------------------------------------------------
 
@@ -444,40 +444,40 @@ message CBVersionPayloadMsg
 // Msg Desc - This message is handles communications needed for setting the 
 //            current run mode of the CB board.
 //
-// No message definition needed.  Uses CBBasicMsg with CBRunModePayloadMsg
+// No message definition needed.  Uses CBBasicMsg with CBBootModePayloadMsg
 // as a payload for CB_Done.
 // Example:
 // Client                                                             CB Board
 //   |                                                                      |
 // *Send*  [[************CBBasicMsg**********][**CBPayloadMsg**]\n]>>>>>>>>*Rec*
 //          < msgName = CBSetBootModeMsg         < errorCode = N/A  
-//          < msgID   = [uint32]                 < runmode = [CB_SysRomBoot|CB_Bootloader|CB_Application]       
+//          < msgID   = [uint32]                 < bootmode = [CB_SysRomBoot|CB_Bootloader|CB_Application]       
 //          < msgType = CB_Done                  
 //          < msgPayload = CBPayloadMsg  
 // *Rec*  [[**************CBBasicMsg***********]\n]<<<<<<<<<<<<<<<<<<<<<<<*Send*
 //          < msgName = CBSetBootModeMsg
 //          < msgID   = [uint32]                   
 //          < msgType = CB_Ack                        
-//          < msgPayload = CBRunModePayloadMsg
+//          < msgPayload = CBBootModePayloadMsg
 // *Rec*  [[************CBBasicMsg**********][**CBPayloadMsg**]\n]<<<<<<<<*Send*
 //          < msgName = CBSetBootModeMsg       < errorCode = CB_ERR_CODE  
-//          < msgID   = [uint32]               < runmode = [CB_SysRomBoot|CB_Bootloader|CB_Application]  
+//          < msgID   = [uint32]               < bootmode = [CB_SysRomBoot|CB_Bootloader|CB_Application]  
 //          < msgType = CB_Done                  
-//          < msgPayload = CBRunModePayloadMsg   
+//          < msgPayload = CBBootModePayloadMsg   
 // END CBSetBootModeMsg
 //------------------------------------------------------------------------------
 
 //------------------------------------------------------------------------------
-// START CBRunModePayloadMsg 
+// START CBBootModePayloadMsg 
 // Msg Tag  - 6
 // Msg Type - CBPayloadMsg.  
-// Msg Desc - Sent appended to the CBCmdLLGetRunModeTagMsg CB_Done msg and
-//            CBCmdLLSetRunModeTagMsg CB_Req msg. Uses CBRunModePayloadMsg
+// Msg Desc - Sent appended to the CBGetBootModeMsg CB_Done msg and
+//            CBSetBootModeMsg CB_Req msg. Uses CBBootModePayloadMsg
 //            structure.
 //
 // Non-standard Field Description:
-// errorCode- a uint32 number that specifies the error encountered, if any.
-// runmode  - CBBootMode enum that specifies the boot mode being requested.
+// errorCode - a uint32 number that specifies the error encountered, if any.
+// bootmode  - CBBootMode enum that specifies the boot mode being requested.
 //            Can be one of the following: 
 //                  CB_SysRomBoot  - STM32 system ROM bootmode (not currently 
 //                                   implemented)
@@ -486,7 +486,7 @@ message CBVersionPayloadMsg
 //                  The system boot mode will not respond to messages so the 
 //                  above are the only possible values. 
 //
-message CBRunModePayloadMsg 
+message CBBootModePayloadMsg 
 {
 	required uint32     errorCode = 1; // a uint32 number that specifies the
 	                                   // error encountered, if any.
@@ -500,5 +500,5 @@ message CBRunModePayloadMsg
                     // The system boot mode will not respond to messages so the 
                     // above are the only possible values. 
 }
-// END CBRunModePayloadMsg.
+// END CBBootModePayloadMsg.
 //------------------------------------------------------------------------------

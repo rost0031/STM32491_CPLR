@@ -119,8 +119,8 @@ ClientError_t ClientApi::DC3_getMode(CBErrorCode *status, CBBootMode *mode)
    );
 
    if ( CLI_ERR_NONE == clientStatus ) {
-      *status = (CBErrorCode)payloadMsgUnion.runmodePayload._errorCode;
-      *mode = payloadMsgUnion.runmodePayload._bootMode;
+      *status = (CBErrorCode)payloadMsgUnion.bootmodePayload._errorCode;
+      *mode = payloadMsgUnion.bootmodePayload._bootMode;
    }
 
    return clientStatus;
@@ -310,9 +310,9 @@ ClientError_t ClientApi::pollForJobDone(
                   break;
                case _CBBootModePayloadMsg:
                   DBG_printf( this->m_pLog, "BootMode payload detected");
-                  CBRunModePayloadMsg_read_delimited_from(
+                  CBBootModePayloadMsg_read_delimited_from(
                         (void*)((LrgDataEvt const *) evt)->dataBuf,
-                        &(payloadMsgUnion->runmodePayload),
+                        &(payloadMsgUnion->bootmodePayload),
                         offset
                   );
                   break;

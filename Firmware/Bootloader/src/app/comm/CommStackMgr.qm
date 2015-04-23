@@ -278,8 +278,8 @@ switch( me-&gt;msgPayloadName ) {
         break;
     case _CBBootModePayloadMsg:
         DBG_printf(&quot;Sending bootMode payload\n&quot;);
-        evt-&gt;dataLen = CBRunModePayloadMsg_write_delimited_to(
-            (void*)&amp;(me-&gt;payloadMsgUnion.runmodePayload),
+        evt-&gt;dataLen = CBBootModePayloadMsg_write_delimited_to(
+            (void*)&amp;(me-&gt;payloadMsgUnion.bootmodePayload),
             evt-&gt;dataBuf,
             evt-&gt;dataLen
         );
@@ -339,9 +339,9 @@ me-&gt;msgPayloadName = _CBBootModePayloadMsg;
 
 /* Don't change the basicMsg name since it should be the same in all cases. */
 me-&gt;basicMsg._msgPayload = me-&gt;msgPayloadName;
-me-&gt;payloadMsgUnion.runmodePayload._errorCode = me-&gt;errorCode;
-me-&gt;payloadMsgUnion.runmodePayload._bootMode  = _CB_Bootloader; // This is the bootloader
-DBG_printf(&quot;Setting bootMode payload with bootmode: %d\n&quot;, me-&gt;payloadMsgUnion.runmodePayload._bootMode);</action>
+me-&gt;payloadMsgUnion.bootmodePayload._errorCode = me-&gt;errorCode;
+me-&gt;payloadMsgUnion.bootmodePayload._bootMode  = _CB_Bootloader; // This is the bootloader
+DBG_printf(&quot;Setting bootMode payload with bootmode: %d\n&quot;, me-&gt;payloadMsgUnion.bootmodePayload._bootMode);</action>
          <choice_glyph conn="79,27,4,1,3,-45">
           <action box="-11,1,11,2"/>
          </choice_glyph>

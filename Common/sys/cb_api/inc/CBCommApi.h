@@ -56,7 +56,7 @@ typedef enum CBBootMode        CBBootMode;
 typedef union CBPayloadMsgs {
    struct CBStatusPayloadMsg  statusPayload;
    struct CBVersionPayloadMsg versionPayload;
-   struct CBRunModePayloadMsg runmodePayload;
+   struct CBBootModePayloadMsg bootmodePayload;
 } CBPayloadMsgUnion_t;
 
 
