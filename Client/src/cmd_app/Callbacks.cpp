@@ -16,7 +16,6 @@
 #include "Callbacks.h"
 #include "Logging.h"
 #include "LogStub.h"
-#include <boost/format.hpp>
 
 /* Namespaces ----------------------------------------------------------------*/
 using namespace std;
@@ -29,68 +28,16 @@ MODULE_NAME( MODULE_LOG );
 /* Private macros ------------------------------------------------------------*/
 /* Private variables and Local objects ---------------------------------------*/
 /* Private function prototypes -----------------------------------------------*/
-static void prettyPrintBasicMsg( struct CBBasicMsg basicMsgStruct, stringstream& ss );
-
 /* Private functions ---------------------------------------------------------*/
-
-/******************************************************************************/
-static void prettyPrintBasicMsg( struct CBBasicMsg basicMsgStruct, stringstream& ss )
-{
-//   ss << "------------------------------ "
-//         << setw(4) << enumToString(basicMsgStruct._msgType)
-//         << " Msg Contents ------------------------------" << endl;
-//
-//   ss << "|" << setw(15) << "Name"
-//         << "|" << setw(5)  << "Id"
-//         << "|" << setw(5)  << "Type"
-//         << "|" << setw(15) << "Payload"
-//         << "|" << setw(9)  << "Progress?"
-//         << "|" << setw(10) << "Route" << endl;
-//
-//   ss << "|" << setw(15) << enumToString(basicMsgStruct._msgName)
-//         << "|" << setw(5)  << basicMsgStruct._msgID
-//         << "|" << setw(5)  << enumToString(basicMsgStruct._msgType)
-//         << "|" << setw(15) << enumToString(basicMsgStruct._msgPayload)
-//         << "|" << setw(11)  << (basicMsgStruct._msgReqProg == 0 ? "No" : "Yes")
-//         << "|" << setw(10)  << enumToString(basicMsgStruct._msgRoute) << "|";
-
-   ss << setw(30) << setfill('-') << " "
-         << setw(4) << setfill(' ') << enumToString(basicMsgStruct._msgType)
-         << " Msg Contents " << setw(30) << setfill('-') << "-"<< endl;
-
-   ss << "|" << setw(15) << setfill(' ') << "Name"
-         << "|" << setw(6)  << "Id"
-         << "|" << setw(10)  << "Type"
-         << "|" << setw(15) << "Payload"
-         << "|" << setw(15)  << "Progress?"
-         << "|" << setw(10) << "Route"  << "|" << endl;
-
-   ss << "|" << setw(15) << enumToString(basicMsgStruct._msgName)
-         << "|" << setw(6)  << basicMsgStruct._msgID
-         << "|" << setw(10)  << enumToString(basicMsgStruct._msgType)
-         << "|" << setw(15) << enumToString(basicMsgStruct._msgPayload)
-         << "|" << setw(15)  << (basicMsgStruct._msgReqProg == 0 ? "No" : "Yes")
-         << "|" << setw(10)  << enumToString(basicMsgStruct._msgRoute) << "|";
-
-}
-
 /******************************************************************************/
 void CLI_ReqCallback(
       struct CBBasicMsg basicMsgStruct
 )
 {
-//   cout << "In CLI_ReqCallback callback" << endl;
-   LOG_out << "Sending Req msg:";
-
-//         this->m_basicMsg._msgName     = _CBGetBootModeMsg;
-//   this->m_basicMsg._msgPayload  = _CBNoMsg;
-//   this->m_basicMsg._msgType     = _CB_Req;
-//
-//   /* Common settings for most messages */
-//   this->m_basicMsg._msgID       = this->m_msgId;
-//   this->m_basicMsg._msgReqProg  = (unsigned long)this->m_bRequestProg;
-//   this->m_basicMsg._msgRoute    = this->m_msgRoute;
-//   CON_print(ss.str());
+   DBG_out << "Sending Req msg:";
+   stringstream ss;
+   LOG_basicMsgToStream(&basicMsgStruct, ss);
+   CON_print(ss.str());
 }
 
 /******************************************************************************/
@@ -98,10 +45,9 @@ void CLI_AckCallback(
       struct CBBasicMsg basicMsgStruct
 )
 {
-//   cout << "in CLI_AckCallback "<< endl;
-   LOG_out << "Received Ack msg:";
+   DBG_out << "Received Ack msg:";
    stringstream ss;
-   prettyPrintBasicMsg(basicMsgStruct, ss);
+   LOG_basicMsgToStream(&basicMsgStruct, ss);
 
    CON_print(ss.str());
 }
@@ -114,14 +60,10 @@ void CLI_DoneCallback(
 )
 {
 //   cout << "in CLI_DoneCallback "<< endl;
-   LOG_out << "Received Done msg:";
+   DBG_out << "Received Done msg:";
    stringstream ss;
-   ss << "------------------- Done Msg Contents ------------------" << endl;
-   ss << "Name" << "  " <<  "Id"<< "  " <<  "Type" << "  " <<  "Payload"
-         << "  " <<  "Progress?"<< "  " <<  "Route" << endl;
-   ss << basicMsgStruct._msgName << "  " <<  basicMsgStruct._msgID << "  "
-         << basicMsgStruct._msgType << "  " <<  basicMsgStruct._msgPayload
-         << "  " <<  basicMsgStruct._msgReqProg  << "  " <<  basicMsgStruct._msgRoute;
+   LOG_basicMsgToStream(&basicMsgStruct, ss);
+
    CON_print(ss.str());
 }
 

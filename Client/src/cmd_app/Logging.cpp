@@ -47,10 +47,47 @@ struct severity_tag;
 
 /* Private function prototypes -----------------------------------------------*/
 /* Private functions ---------------------------------------------------------*/
+
+/******************************************************************************/
 void LOG_setDbgLvl( DBG_LEVEL_T dbgLvl )
 {
    boost::log::core::get()->set_filter( severity >= dbgLvl );
 }
+
+/******************************************************************************/
+void LOG_basicMsgToStream( struct CBBasicMsg *pBasicMsg, std::stringstream& ss )
+{
+   ss << setw(30) << setfill('-') << " "
+         << setw(4) << setfill(' ') << enumToString(pBasicMsg->_msgType)
+         << " Msg Contents " << setw(30) << setfill('-') << "-"<< endl;
+
+   ss << "|" << setw(15) << setfill(' ') << "Name"
+         << "|" << setw(6)  << "Id"
+         << "|" << setw(10)  << "Type"
+         << "|" << setw(15) << "Payload"
+         << "|" << setw(15)  << "Progress?"
+         << "|" << setw(10) << "Route"  << "|" << endl;
+
+   ss << "|" << setw(15) << enumToString(pBasicMsg->_msgName)
+         << "|" << setw(6)  << pBasicMsg->_msgID
+         << "|" << setw(10)  << enumToString(pBasicMsg->_msgType)
+         << "|" << setw(15) << enumToString(pBasicMsg->_msgPayload)
+         << "|" << setw(15)  << (pBasicMsg->_msgReqProg == 0 ? "No" : "Yes")
+         << "|" << setw(10)  << enumToString(pBasicMsg->_msgRoute) << "|";
+
+}
+
+/******************************************************************************/
+void LOG_payloadMsgToStream(
+      CBMsgName payloadMsgName,
+      CBPayloadMsgUnion_t *pPayloadUnion,
+      std::stringstream& ss
+)
+{
+
+}
+
+
 /* Private class prototypes --------------------------------------------------*/
 /* Private classes -----------------------------------------------------------*/
 
