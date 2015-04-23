@@ -136,8 +136,21 @@ int CmdlineParser::parse( int argc, char** argv )
 
             if (m_vm.count("help")) {  /* Check for command specific help req */
                string description = m_parsed_cmd + " command sends a request to "
-                     "the DC3 to get its current operating mode. The possible "
-                     "return values are "; //TODO: Get the actual values from enum maps.
+                     "the DC3 to get its current boot mode. The command returns "
+                     "the status of the request and the current boot mode. "
+                     "The possible return for: \n"
+                     "status: 0x00000000 for success or other codes for failure.\n"
+                     "bootmode: \n";
+               /* Yeah, it's a little annoying that you can't just append streams
+                * like the rest of the strings.  I'll eventually figure out how
+                * to properly implement a template + operator in the Enum Maps
+                * but until then, this is how you do it.*/
+               stringstream ss;
+               ss << "[" << enumToString(_CB_NoBootMode) << "|"
+                     << enumToString(_CB_SysRomBoot) << "|"
+                     << enumToString(_CB_Bootloader) << "|"
+                     << enumToString(_CB_Application) << "]";
+               description += ss.str();
                string prototype = appName + " [connection options] --" + m_parsed_cmd;
                string example = appName + " -i 192.168.1.75 --" + m_parsed_cmd;
 
