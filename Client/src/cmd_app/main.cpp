@@ -73,35 +73,9 @@ int main(int argc, char *argv[])
    /* 3. Enable and disable logging for various modules in the library */
    pLogStub->enableLogForAllLibModules();
 
-//   DBG_out << "DBG test before setting ";
-//   LOG_out << "LOG test before setting ";
-//   WRN_out << "WRN test before setting ";
-//   ERR_out << "ERR test before setting ";
-
    LOG_setDbgLvl(DBG); /* Set logging level */
-//   DBG_out << "DBG test after setting ";
-//   LOG_out << "LOG test after setting ";
-//   WRN_out << "WRN test after setting ";
-//   ERR_out << "ERR test after setting ";
-//
-//
-//   MENU_print("Testing menu NEW output 1");
-//   MENU_print("Testing menu NEW output 2");
-//   MENU_print("Testing menu NEW output 3");
-//   MENU_print("Testing menu NEW output 4");
-//   MENU_print("Testing menu NEW output 5");
-//   MENU_print("Testing menu NEW output 6");
 
-   /* 3. Create a new CmdlineParser instance. */
-   CmdlineParser *cmdline = new CmdlineParser();
-
-   /* 4. Attempt to parse the cmdline arguments. */
-   if( 0 != cmdline->parse(argc, argv) ) {
-      ERR_out << "Failed to parse cmdline args. Exiting";
-      EXIT_LOG_FLUSH(1);
-   }
-
-   /* 5. Set up the client api and initialize its logging.  Users can call the
+   /* 4. Set up the client api and initialize its logging.  Users can call the
     * constructor that also sets up the communication at the same time but if
     * something goes wrong and an exception is thrown, the program will log it
     * but attempt to continue since exceptions can't be thrown across dll
@@ -109,7 +83,31 @@ int main(int argc, char *argv[])
     * checking via error codes from class functions. */
    ClientApi *client = new ClientApi( pLogStub );
 
-   /* 6. Set the connection.  This is done separately so that the ClientApi
+   /* 5. Set callbacks for Req, Ack, and Done msg types. */
+   status = client->setReqCallBack(CLI_ReqCallback);
+   if ( CLI_ERR_NONE != status ) {
+      WRN_out << "Failed to set library callback function for Req msgs.";
+   }
+   status = client->setAckCallBack(CLI_AckCallback);
+   if ( CLI_ERR_NONE != status ) {
+      WRN_out << "Failed to set library callback function for Ack msgs.";
+   }
+   status = client->setDoneCallBack(CLI_DoneCallback);
+   if ( CLI_ERR_NONE != status ) {
+      WRN_out << "Failed to set library callback function for Done msgs.";
+   }
+
+
+   /* 6. Create a new CmdlineParser instance. */
+   CmdlineParser *cmdline = new CmdlineParser();
+
+   /* 7. Attempt to parse the cmdline arguments. */
+   if( 0 != cmdline->parse(argc, argv) ) {
+      ERR_out << "Failed to parse cmdline args. Exiting";
+      EXIT_LOG_FLUSH(1);
+   }
+
+   /* 8. Set the connection.  This is done separately so that the ClientApi
     * class can catch any exceptions that happen and convert them to error
     * codes that the functions can return (and constructors can't). */
    if( cmdline->isConnEth() ) {
@@ -150,21 +148,7 @@ int main(int argc, char *argv[])
    }
 
 
-   /* 7. Set callbacks for Req, Ack, and Done msg types. */
-   status = client->setReqCallBack(CLI_ReqCallback);
-   if ( CLI_ERR_NONE != status ) {
-      WRN_out << "Failed to set library callback function for Req msgs.";
-   }
-   status = client->setAckCallBack(CLI_AckCallback);
-   if ( CLI_ERR_NONE != status ) {
-      WRN_out << "Failed to set library callback function for Ack msgs.";
-   }
-   status = client->setDoneCallBack(CLI_DoneCallback);
-   if ( CLI_ERR_NONE != status ) {
-      WRN_out << "Failed to set library callback function for Done msgs.";
-   }
-
-   /* 8. Start the client.  This starts processing and can now accept
+   /* 9. Start the client.  This starts processing and can now accept
     * requests for work to be done as well as the responses from the DC3. */
    client->start(); /* Set the client running */
 
@@ -184,26 +168,6 @@ int main(int argc, char *argv[])
       ERR_out << "Got error " << "0x" << std::hex
             << statusCli << std::dec << " when trying to get boot mode";
    }
-
-//   DBG_out << "Starting a test job.";
-//   client->startJob();
-//
-//   DBG_out << "Waiting for test job to finish...";
-//   client->waitForJobDone();
-
-
-   /* Test regular expressions: */
-//   string str1 = "DBG-01:00:58:069-CommStackMgr_Idle():359:CLI_RECIEVED\n";
-//   string str2 = "DBG-01:00:58:069-CommStackMgr_Idle():385:No payload detected\n";
-//   string str3 = "DBG-01:00:58:069-CommStackMgr_ValidateMsg():563:MSG_PROCESS\n";
-//   string str4 = "DBG-01:00:58:069-CommStackMgr_ValidateMsg():568:_CBGetBootModeMsg decoded, attempting to decode payload (if exists)\n";
-//   string str5 = "DBG-01:00:58:069-CommStackMgr_BusyWithMsg():496:Sending bootMode payload\n";
-//
-//   CLI_DC3LogCallback( str1.c_str() );
-//   CLI_DC3LogCallback( str2.c_str() );
-//   CLI_DC3LogCallback( str3.c_str() );
-//   CLI_DC3LogCallback( str4.c_str() );
-//   CLI_DC3LogCallback( str5.c_str() );
 
 //   DBG_out << "Test job finished. Exiting.";
 //   boost::this_thread::sleep(boost::posix_time::milliseconds(5));
