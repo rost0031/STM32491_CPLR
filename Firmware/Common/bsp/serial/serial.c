@@ -395,7 +395,7 @@ inline void Serial_UART1Callback(void)
          );
          msgEvt->dataLen = a_UARTSettings[SERIAL_UART1].indexRX;
          msgEvt->src = _CB_Serial;
-         msgEvt->dst = _CB_NoRoute;
+         msgEvt->dst = _CB_Serial;
 
          /* 3.Publish the newly created event */
          QF_PUBLISH((QEvent *)msgEvt, AO_SerialMgr);

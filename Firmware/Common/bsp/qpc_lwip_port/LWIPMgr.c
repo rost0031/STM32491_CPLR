@@ -1450,6 +1450,8 @@ static void udp_rx_handler(
     /* 2. Fill the msg payload and get the msg source and length */
     MEMCPY(msgEvt->dataBuf, p->payload, p->len);
     msgEvt->dataLen = p->len;
+    msgEvt->src = _CB_EthCli;
+    msgEvt->dst = _CB_EthCli;
 
 //    DBG_printf("Received %d bytes (%s) on UDP\n", msgEvt->dataLen, msgEvt->dataBuf);
 

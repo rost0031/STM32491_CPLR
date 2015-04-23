@@ -206,10 +206,10 @@ int main(int argc, char *argv[])
 //   CLI_DC3LogCallback( str5.c_str() );
 
    DBG_out << "Test job finished. Exiting.";
-   boost::this_thread::sleep(boost::posix_time::milliseconds(50));
+   boost::this_thread::sleep(boost::posix_time::milliseconds(5));
    client->stop();
    DBG_out<< "Waiting for MainMgr AO to finish";
-   boost::this_thread::sleep(boost::posix_time::milliseconds(50));
+   boost::this_thread::sleep(boost::posix_time::milliseconds(5));
    client->waitForStop();
 
    DBG_out<< "Exiting normally";

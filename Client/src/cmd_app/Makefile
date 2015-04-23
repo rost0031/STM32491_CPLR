@@ -134,7 +134,7 @@ ifeq (rel, $(CONF))       # Release configuration ............................
     DEFINES                += -DNDEBUG
     CFLAGS                  = -c -std=gnu99 -Wall $(INCLUDES) $(DEFINES)
 
-    CPPFLAGS                = -O2 -Wall -std=gnu++0x -c -Wall \
+    CPPFLAGS                = -O2 -Wall -std=gnu++11 -c -Wall \
                               -Wno-write-strings $(INCLUDES) $(DEFINES)
 
 else ifeq (spy, $(CONF))  # Spy configuration ................................
@@ -144,7 +144,7 @@ else ifeq (spy, $(CONF))  # Spy configuration ................................
     CFLAGS                  = -c -std=gnu99 -Wall \
                               -g $(INCLUDES) $(DEFINES)
 
-    CPPFLAGS                = -O0 -g3 -Wall -std=gnu++0x -c -Wall \
+    CPPFLAGS                = -O0 -g3 -Wall -std=gnu++11 -c -Wall \
                               -Wno-write-strings -g $(INCLUDES) $(DEFINES)
 
 else                     # default Debug configuration .......................

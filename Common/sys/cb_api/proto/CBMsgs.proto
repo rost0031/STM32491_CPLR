@@ -242,15 +242,15 @@ enum CBMsgRoute
                         // communicating with the controller. The only reason 
                         // this exists is if at some time in the future, the 
                         // controller decides to use this port.
-    CB_EthLog      = 4; // The message is source/destination is a client that is 
+    CB_EthLog      = 3; // The message is source/destination is a client that is 
                         // communicating the host device to which the CB board 
                         // via the ethernet log port (currently 1501).
 
-    CB_EthCli      = 8; // The message is source/destination is a client that is
+    CB_EthCli      = 4; // The message is source/destination is a client that is
                         // communicating the host device to which the CB board 
                         // via the ethernet cli port (currently 1502). This is 
                         // the preferred port for the client to connect to.
-    CB_MaxRoutes   = 10; // For error checking. This shouldn't be used by users.
+    CB_MaxRoutes   = 5; // For error checking. This shouldn't be used by users.
 }
 
 //------------------------------------------------------------------------------

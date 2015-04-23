@@ -73,6 +73,66 @@ std::map<ModuleSrc_t, std::string> m_ModuleSrc = boost::assign::map_list_of
 template<> char const* enumStrings<DBG_LEVEL_T>::data[] =
    {"DBG", "LOG", "WRN", "ERR", "CON", "ISR"};
 
+/**
+ * @brief String values for CBMsgName enums
+ * String values for consecutive enums can be placed into const char* arrays
+ * and a template will autogenerate the necessary enumToString function based
+ * on the existence of this ::data[] array.
+ * */
+template<> char const* enumStrings<CBMsgName>::data[] =  {
+         "None",                          /**< _CBNoMsg */
+         "StatusPayload",                 /**< _CBStatusPayloadMsg */
+         "GetVersion",                    /**< _CBGetVersionMsg */
+         "VersionPayload",                /**< _CBVersionPayloadMsg */
+         "GetBootMode",                   /**< _CBGetBootModeMsg */
+         "SetBootMode",                   /**< _CBSetBootModeMsg */
+         "BootModePayload"                /**< _CBBootModePayloadMsg */
+};
+
+/**
+ * @brief String values for CBMsgType enums
+ * String values for consecutive enums can be placed into const char* arrays
+ * and a template will autogenerate the necessary enumToString function based
+ * on the existence of this ::data[] array.
+ * */
+template<> char const* enumStrings<CBMsgType>::data[] =  {
+         "None",                          /**< _CB_NoMsgType */
+         "Req",                           /**< _CB_Req */
+         "Ack",                           /**< _CB_Ack */
+         "Prog",                          /**< _CB_Prog */
+         "Done",                          /**< _CB_Done */
+         "Invalid"                        /**< _CB_MaxMsgType */
+};
+
+/**
+ * @brief String values for CBMsgRoute enums
+ * String values for consecutive enums can be placed into const char* arrays
+ * and a template will autogenerate the necessary enumToString function based
+ * on the existence of this ::data[] array.
+ * */
+template<> char const* enumStrings<CBMsgRoute>::data[] =  {
+         "None",                          /**< _CB_NoRoute */
+         "Serial",                        /**< _CB_Serial */
+         "TCPSys",                        /**< _CB_EthSys */
+         "TCPLog",                        /**< _CB_EthLog */
+         "UDPCli",                        /**< _CB_EthCli */
+         "Invalid"                        /**< _CB_MaxRoutes */
+};
+
+/**
+ * @brief String values for CBMsgRoute enums
+ * String values for consecutive enums can be placed into const char* arrays
+ * and a template will autogenerate the necessary enumToString function based
+ * on the existence of this ::data[] array.
+ * */
+template<> char const* enumStrings<CBBootMode>::data[] =  {
+         "Invalid",                       /**< _CB_NoBootMode */
+         "SystemROM",                     /**< _CB_SysRomBoot */
+         "Bootloader",                    /**< _CB_Bootloader */
+         "Application",                   /**< _CB_Application */
+         "Invalid"                        /**< _CB_MaxBootModes */
+};
+
 
 /* Private function prototypes -----------------------------------------------*/
 /* Private functions ---------------------------------------------------------*/
