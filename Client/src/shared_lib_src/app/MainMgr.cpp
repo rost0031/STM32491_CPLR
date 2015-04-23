@@ -98,19 +98,6 @@ static QState MainMgr_initial(MainMgr * const me, QEvt const * const e);
  * machine is going next.
  */
 static QState MainMgr_Active(MainMgr * const me, QEvt const * const e);
-
-/**
- * @brief Wait state before exit.
- *
- * This state is a wait state that pauses long enough to let logging finish
- * before exiting..
- *
- * @param  [in,out] me: Pointer to the state machine
- * @param  [in,out] e:  Pointer to the event being processed.
- * @return status_: QState type that specifies where the state
- * machine is going next.
- */
-static QState MainMgr_CleanupBeforeExit(MainMgr * const me, QEvt const * const e);
 static QState MainMgr_WaitingForJobDone(MainMgr * const me, QEvt const * const e);
 
 /**
@@ -244,13 +231,6 @@ static QState MainMgr_Active(MainMgr * const me, QEvt const * const e) {
             status_ = Q_HANDLED();
             break;
         }
-        /* ${AOs::MainMgr::SM::Active::EXIT} */
-        case EXIT_SIG: {
-            me->errorCode = ((ExitEvt *)e)->errorCode;
-            DBG_printf(me->m_pLog,"Received exit");
-            status_ = Q_TRAN(&MainMgr_CleanupBeforeExit);
-            break;
-        }
         /* ${AOs::MainMgr::SM::Active::TEST_JOB} */
         case TEST_JOB_SIG: {
             DBG_printf(me->m_pLog,"Received TEST_JOB, posting response to the raw queue");
@@ -287,41 +267,7 @@ static QState MainMgr_Active(MainMgr * const me, QEvt const * const e) {
             status_ = Q_TRAN(&MainMgr_WaitForAck);
             break;
         }
-        default: {
-            status_ = Q_SUPER(&QHsm_top);
-            break;
-        }
-    }
-    return status_;
-}
-
-/**
- * @brief Wait state before exit.
- *
- * This state is a wait state that pauses long enough to let logging finish
- * before exiting..
- *
- * @param  [in,out] me: Pointer to the state machine
- * @param  [in,out] e:  Pointer to the event being processed.
- * @return status_: QState type that specifies where the state
- * machine is going next.
- */
-/*${AOs::MainMgr::SM::Active::CleanupBeforeExi~} ...........................*/
-static QState MainMgr_CleanupBeforeExit(MainMgr * const me, QEvt const * const e) {
-    QState status_;
-    switch (e->sig) {
-        /* ${AOs::MainMgr::SM::Active::CleanupBeforeExi~} */
-        case Q_ENTRY_SIG: {
-            /* Arm the first time for a long time.  */
-            QTimeEvt_postIn(
-                &me->exitTimerEvt,
-                (QActive *)me,
-                SEC_TO_TICKS( MAINMGR_MAX_TIME_SEC_EXIT_DELAY )
-            );
-            status_ = Q_HANDLED();
-            break;
-        }
-        /* ${AOs::MainMgr::SM::Active::CleanupBeforeExi~::EXIT} */
+        /* ${AOs::MainMgr::SM::Active::EXIT} */
         case EXIT_SIG: {
             //exit( me->exit_code );
             DBG_printf(me->m_pLog,"Calling QActive_stop");
@@ -331,7 +277,7 @@ static QState MainMgr_CleanupBeforeExit(MainMgr * const me, QEvt const * const e
             break;
         }
         default: {
-            status_ = Q_SUPER(&MainMgr_Active);
+            status_ = Q_SUPER(&QHsm_top);
             break;
         }
     }

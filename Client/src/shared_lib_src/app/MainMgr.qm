@@ -87,13 +87,6 @@ EXIT(me-&gt;errorCode);</action>
        <action box="-14,-2,14,2"/>
       </tran_glyph>
      </tran>
-     <tran trig="EXIT" target="../4">
-      <action>me-&gt;errorCode = ((ExitEvt *)e)-&gt;errorCode;
-DBG_printf(me-&gt;m_pLog,&quot;Received exit&quot;);</action>
-      <tran_glyph conn="3,70,3,3,17">
-       <action box="0,-2,6,2"/>
-      </tran_glyph>
-     </tran>
      <tran trig="TEST_JOB">
       <action>DBG_printf(me-&gt;m_pLog,&quot;Received TEST_JOB, posting response to the raw queue&quot;);
 QEvt* evt = Q_NEW(QEvt, TEST_JOB_DONE_SIG);
@@ -102,7 +95,7 @@ QEQueue_postFIFO(&amp;cliQueue, (QEvt *)evt);</action>
        <action box="0,-2,10,2"/>
       </tran_glyph>
      </tran>
-     <tran trig="MSG_SEND_OUT" target="../5/2">
+     <tran trig="MSG_SEND_OUT" target="../4/2">
       <action>DBG_printf(me-&gt;m_pLog,&quot;Got SEND_MSG, sending msg...&quot;);
 
 me-&gt;m_pComm-&gt;write_some(
@@ -130,37 +123,15 @@ DBG_printf(me-&gt;m_pLog,&quot;Sent msg, waiting for Ack...&quot;);</action>
        <action box="0,-2,12,2"/>
       </tran_glyph>
      </tran>
-     <state name="CleanupBeforeExit">
-      <documentation>/**
- * @brief Wait state before exit.
- *
- * This state is a wait state that pauses long enough to let logging finish
- * before exiting..
- *
- * @param  [in,out] me: Pointer to the state machine
- * @param  [in,out] e:  Pointer to the event being processed.
- * @return status_: QState type that specifies where the state
- * machine is going next.
- */</documentation>
-      <entry>/* Arm the first time for a long time.  */
-QTimeEvt_postIn(
-    &amp;me-&gt;exitTimerEvt,
-    (QActive *)me,
-    SEC_TO_TICKS( MAINMGR_MAX_TIME_SEC_EXIT_DELAY )
-);</entry>
-      <tran trig="EXIT">
-       <action>//exit( me-&gt;exit_code );
+     <tran trig="EXIT">
+      <action>//exit( me-&gt;exit_code );
 DBG_printf(me-&gt;m_pLog,&quot;Calling QActive_stop&quot;);
 QActive_stop(AO_MainMgr);
 QF_stop();</action>
-       <tran_glyph conn="20,74,3,-1,16">
-        <action box="0,-2,6,2"/>
-       </tran_glyph>
-      </tran>
-      <state_glyph node="20,68,23,8">
-       <entry box="1,2,5,2"/>
-      </state_glyph>
-     </state>
+      <tran_glyph conn="3,74,3,-1,14">
+       <action box="0,-2,6,2"/>
+      </tran_glyph>
+     </tran>
      <state name="WaitingForJobDone">
       <exit>QTimeEvt_disarm(&amp;me-&gt;msgTimerEvt);</exit>
       <tran trig="MSG_RESP_TIMEOUT" target="../..">
