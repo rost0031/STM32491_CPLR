@@ -238,27 +238,14 @@ typedef boost::log::sources::severity_logger_mt<DBG_LEVEL_T> logger_t;
 /* Exported functions --------------------------------------------------------*/
 
 /**
- * @brief   Pretty prints the contents of CBBasicMsg struct.
+ * @brief   Pretty prints the contents of a msg to a stream.
  * @param [in] *pBasicMsg: CBBasicMsg pointer to the struct.
- * @param [in,out] ss&: stringstream ref where the data will be output.
- * @return: None.
- */
-void LOG_basicMsgToStream(
-      struct CBBasicMsg *pBasicMsg,
-      std::stringstream& ss
-);
-
-
-/**
- * @brief   Pretty prints the specified contents of CBPayloadMsgUnion_t union.
- * @param [in] payloadMsgName: CBMsgName that specifies which struct in the
- * union to stream.
  * @param [in] *pPayloadUnion: CBPayloadMsgUnion_t pointer to the union.
  * @param [in,out] ss&: stringstream ref where the data will be output.
  * @return: None.
  */
-void LOG_payloadMsgToStream(
-      CBMsgName payloadMsgName,
+void LOG_msgToStream(
+      struct CBBasicMsg *pBasicMsg,
       CBPayloadMsgUnion_t *pPayloadUnion,
       std::stringstream& ss
 );

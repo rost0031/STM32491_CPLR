@@ -36,7 +36,7 @@ void CLI_ReqCallback(
 {
    DBG_out << "Sending Req msg:";
    stringstream ss;
-   LOG_basicMsgToStream(&basicMsgStruct, ss);
+   LOG_msgToStream(&basicMsgStruct, NULL, ss);
    CON_print(ss.str());
 }
 
@@ -47,7 +47,7 @@ void CLI_AckCallback(
 {
    DBG_out << "Received Ack msg:";
    stringstream ss;
-   LOG_basicMsgToStream(&basicMsgStruct, ss);
+   LOG_msgToStream(&basicMsgStruct, NULL, ss);
 
    CON_print(ss.str());
 }
@@ -62,7 +62,7 @@ void CLI_DoneCallback(
 //   cout << "in CLI_DoneCallback "<< endl;
    DBG_out << "Received Done msg:";
    stringstream ss;
-   LOG_basicMsgToStream(&basicMsgStruct, ss);
+   LOG_msgToStream(&basicMsgStruct, &payloadMsgUnion, ss);
 
    CON_print(ss.str());
 }

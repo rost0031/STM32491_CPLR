@@ -487,15 +487,15 @@ static QState CommStackMgr_BusyWithMsg(CommStackMgr * const me, QEvt const * con
                 case _CBVersionPayloadMsg:
                     DBG_printf("Sending version payload\n");
                     evt->dataLen = CBVersionPayloadMsg_write_delimited_to(
-                        (void*)&(me->payloadMsgUnion.statusPayload),
+                        (void*)&(me->payloadMsgUnion.versionPayload),
                         evt->dataBuf,
                         evt->dataLen
                     );
                     break;
                 case _CBBootModePayloadMsg:
-                    DBG_printf("Sending bootMode payload\n");
+                    DBG_printf("Sending bootMode payload with bootmode: %d\n", me->payloadMsgUnion.runmodePayload._bootMode);
                     evt->dataLen = CBRunModePayloadMsg_write_delimited_to(
-                        (void*)&(me->payloadMsgUnion.statusPayload),
+                        (void*)&(me->payloadMsgUnion.runmodePayload),
                         evt->dataBuf,
                         evt->dataLen
                     );
@@ -577,6 +577,7 @@ static QState CommStackMgr_ValidateMsg(CommStackMgr * const me, QEvt const * con
                 me->basicMsg._msgPayload = me->msgPayloadName;
                 me->payloadMsgUnion.runmodePayload._errorCode = me->errorCode;
                 me->payloadMsgUnion.runmodePayload._bootMode  = _CB_Bootloader; // This is the bootloader
+                DBG_printf("Setting bootMode payload with bootmode: %d\n", me->payloadMsgUnion.runmodePayload._bootMode);
                 status_ = Q_TRAN(&CommStackMgr_Idle);
             }
             /* ${AOs::CommStackMgr::SM::Active::BusyWithMsg::ValidateMsg::MSG_PROCESS::[else]} */

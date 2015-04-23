@@ -55,25 +55,54 @@ void LOG_setDbgLvl( DBG_LEVEL_T dbgLvl )
 }
 
 /******************************************************************************/
-void LOG_basicMsgToStream( struct CBBasicMsg *pBasicMsg, std::stringstream& ss )
+void LOG_msgToStream(
+      struct CBBasicMsg *pBasicMsg,
+      CBPayloadMsgUnion_t *pPayloadUnion,
+      std::stringstream& ss
+)
 {
-   ss << setw(30) << setfill('-') << " "
+   ss << setw(25) << setfill('-')
+         << " " << enumToString(pBasicMsg->_msgName)
          << setw(4) << setfill(' ') << enumToString(pBasicMsg->_msgType)
-         << " Msg Contents " << setw(30) << setfill('-') << "-"<< endl;
+         << " Msg Contents " << setw(25) << setfill('-') << "-"<< endl;
 
    ss << "|" << setw(15) << setfill(' ') << "Name"
+         << "|" << setw(15) << "Payload"
          << "|" << setw(6)  << "Id"
          << "|" << setw(10)  << "Type"
-         << "|" << setw(15) << "Payload"
          << "|" << setw(15)  << "Progress?"
          << "|" << setw(10) << "Route"  << "|" << endl;
 
    ss << "|" << setw(15) << enumToString(pBasicMsg->_msgName)
+         << "|" << setw(15) << enumToString(pBasicMsg->_msgPayload)
          << "|" << setw(6)  << pBasicMsg->_msgID
          << "|" << setw(10)  << enumToString(pBasicMsg->_msgType)
-         << "|" << setw(15) << enumToString(pBasicMsg->_msgPayload)
          << "|" << setw(15)  << (pBasicMsg->_msgReqProg == 0 ? "No" : "Yes")
-         << "|" << setw(10)  << enumToString(pBasicMsg->_msgRoute) << "|";
+         << "|" << setw(10)  << enumToString(pBasicMsg->_msgRoute) << "|" << endl;
+
+   if (NULL != pPayloadUnion && _CBNoMsg != pBasicMsg->_msgPayload ) {
+      ss << setw(25) << setfill(' ') << "|" << endl;
+      ss << setw(25) << setfill(' ') << "*" << "---> ";
+      switch( pBasicMsg->_msgPayload ) {
+         case _CBStatusPayloadMsg:
+            ss << "ErrorCode: " << hex << "0x" << setw(8) << setfill('0')
+            << pPayloadUnion->statusPayload._errorCode << dec << endl;
+            break;
+         case _CBVersionPayloadMsg:
+            break;
+         case _CBBootModePayloadMsg:
+            ss << setw(15) << setfill(' ') << "ErrorCode: "
+            << hex << "0x" << setw(8) << setfill('0')
+            << pPayloadUnion->runmodePayload._errorCode << dec << endl;
+            ss << setw(25) << setfill(' ') << "*" << "---> ";
+            ss << setw(15) << setfill(' ') << "Boot Mode: "
+            << enumToString(pPayloadUnion->runmodePayload._bootMode) << endl;
+            break;
+         default:
+            break;
+      }
+   }
+   ss << setw(79) << setfill('-') << "-";
 
 }
 

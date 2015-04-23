@@ -271,7 +271,7 @@ switch( me-&gt;msgPayloadName ) {
     case _CBVersionPayloadMsg:
         DBG_printf(&quot;Sending version payload\n&quot;);
         evt-&gt;dataLen = CBVersionPayloadMsg_write_delimited_to(
-            (void*)&amp;(me-&gt;payloadMsgUnion.statusPayload),
+            (void*)&amp;(me-&gt;payloadMsgUnion.versionPayload),
             evt-&gt;dataBuf,
             evt-&gt;dataLen
         );
@@ -279,7 +279,7 @@ switch( me-&gt;msgPayloadName ) {
     case _CBBootModePayloadMsg:
         DBG_printf(&quot;Sending bootMode payload\n&quot;);
         evt-&gt;dataLen = CBRunModePayloadMsg_write_delimited_to(
-            (void*)&amp;(me-&gt;payloadMsgUnion.statusPayload),
+            (void*)&amp;(me-&gt;payloadMsgUnion.runmodePayload),
             evt-&gt;dataBuf,
             evt-&gt;dataLen
         );
@@ -340,7 +340,8 @@ me-&gt;msgPayloadName = _CBBootModePayloadMsg;
 /* Don't change the basicMsg name since it should be the same in all cases. */
 me-&gt;basicMsg._msgPayload = me-&gt;msgPayloadName;
 me-&gt;payloadMsgUnion.runmodePayload._errorCode = me-&gt;errorCode;
-me-&gt;payloadMsgUnion.runmodePayload._bootMode  = _CB_Bootloader; // This is the bootloader</action>
+me-&gt;payloadMsgUnion.runmodePayload._bootMode  = _CB_Bootloader; // This is the bootloader
+DBG_printf(&quot;Setting bootMode payload with bootmode: %d\n&quot;, me-&gt;payloadMsgUnion.runmodePayload._bootMode);</action>
          <choice_glyph conn="79,27,4,1,3,-45">
           <action box="-11,1,11,2"/>
          </choice_glyph>

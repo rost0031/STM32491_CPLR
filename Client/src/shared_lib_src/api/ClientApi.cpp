@@ -302,9 +302,19 @@ ClientError_t ClientApi::pollForJobDone(
                   break;
                case _CBVersionPayloadMsg:
                   DBG_printf( this->m_pLog, "Version payload detected");
+                  CBVersionPayloadMsg_read_delimited_from(
+                        (void*)((LrgDataEvt const *) evt)->dataBuf,
+                        &(payloadMsgUnion->versionPayload),
+                        offset
+                  );
                   break;
                case _CBBootModePayloadMsg:
                   DBG_printf( this->m_pLog, "BootMode payload detected");
+                  CBRunModePayloadMsg_read_delimited_from(
+                        (void*)((LrgDataEvt const *) evt)->dataBuf,
+                        &(payloadMsgUnion->runmodePayload),
+                        offset
+                  );
                   break;
                default:
                   WRN_printf( this->m_pLog, "Unknown payload detected, this is probably an error");
