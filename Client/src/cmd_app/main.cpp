@@ -84,19 +84,17 @@ int main(int argc, char *argv[])
    ClientApi *client = new ClientApi( pLogStub );
 
    /* 5. Set callbacks for Req, Ack, and Done msg types. */
-   status = client->setReqCallBack(CLI_ReqCallback);
-   if ( CLI_ERR_NONE != status ) {
+   if ( CLI_ERR_NONE != (status = client->setReqCallBack(CLI_ReqCallback)) ) {
       WRN_out << "Failed to set library callback function for Req msgs.";
    }
-   status = client->setAckCallBack(CLI_AckCallback);
-   if ( CLI_ERR_NONE != status ) {
+
+   if ( CLI_ERR_NONE != (status = client->setAckCallBack(CLI_AckCallback)) ) {
       WRN_out << "Failed to set library callback function for Ack msgs.";
    }
-   status = client->setDoneCallBack(CLI_DoneCallback);
-   if ( CLI_ERR_NONE != status ) {
+
+   if ( CLI_ERR_NONE != (status = client->setDoneCallBack(CLI_DoneCallback)) ) {
       WRN_out << "Failed to set library callback function for Done msgs.";
    }
-
 
    /* 6. Create a new CmdlineParser instance. */
    CmdlineParser *cmdline = new CmdlineParser();
