@@ -327,6 +327,7 @@ int main(int argc, char *argv[])
          EXIT_LOG_FLUSH(0);
       }
 
+      /* Now check if the user requested general help */
       if (m_vm.count("help")) {
          stringstream ss;
 
