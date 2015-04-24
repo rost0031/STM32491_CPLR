@@ -201,6 +201,8 @@ void ClientApi::qfSetup( void )
 void ClientApi::start( void )
 {
    this->m_workerThread = boost::thread( runMainMgr );
+   /* Put this thread to sleep to allow QF to start up */
+   boost::this_thread::sleep(boost::posix_time::milliseconds(10));
    DBG_printf(this->m_pLog,"QF Framework started successfully.");
 }
 

@@ -121,7 +121,7 @@ DEFINES                     =
 # C++ source files
 CPP_SRCS                    = main.cpp \
                               Callbacks.cpp \
-                              CmdlineParser.cpp \
+                              Help.cpp \
                               EnumMaps.cpp \
                               Logging.cpp
 

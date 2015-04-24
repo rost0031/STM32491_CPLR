@@ -70,7 +70,7 @@ int CmdlineParser::parse( int argc, char** argv )
    unsigned found = appName.find_last_of("/\\");
    appName = appName.substr(found+1);
 
-   /* Strin vars to use for detailed help */
+   /* String vars to use for detailed help */
    string description;
    string prototype;
    string example;
