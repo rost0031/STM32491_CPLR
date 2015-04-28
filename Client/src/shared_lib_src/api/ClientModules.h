@@ -72,7 +72,7 @@ typedef enum DBG_MODULES {
    MODULE_UDP   = 0x00000004, /**< UDP ethernet module debugging. */
    MODULE_MGR   = 0x00000008, /**< MainMgr AO module debugging. */
    MODULE_LOG   = 0x00000010, /**< LogStub module */
-   MODULE_JOB   = 0x00000020, /**< Job module */
+   MODULE_FWL   = 0x00000020, /**< FW loader module */
    MODULE_API   = 0x00000040, /**< ClientApi module */
    MODULE_COM   = 0x00000080, /**< Comm interface module */
    MODULE_MSG   = 0x00000100, /**< Msg interface module */

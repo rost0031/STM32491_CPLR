@@ -58,8 +58,12 @@ IPADDR3                 = $(IP)
 endif
 
 
+NOW                    := $(shell date +%Y%m%d%H%M%S | tr ' :' '__')
+
+#VER                    :=
+
 # Output file basename (should be the same as the directory name)
-PROJECT_NAME            = CBBootLdr
+PROJECT_NAME            = DC3$(FW)
 
 # This define specifies that the code that's being built is the application code
 # as opposed to the bootloader code.  This is used by some shared code to leave/
@@ -458,7 +462,7 @@ CPP_OBJS     = $(patsubst %.cpp,%.o,$(CPP_SRCS))
 
 TARGET_BIN   = $(BIN_DIR)/$(PROJECT_NAME).hex
 TARGET_ELF   = $(BIN_DIR)/$(PROJECT_NAME).elf
-TARGET_FLSH  = $(BIN_DIR)/$(PROJECT_NAME).bin
+TARGET_FLSH  = $(BIN_DIR)/$(PROJECT_NAME)_v$(MAJOR).$(MINOR)_$(NOW).bin
 ASM_OBJS_EXT = $(addprefix $(BIN_DIR)/, $(ASM_OBJS))
 C_OBJS_EXT   = $(addprefix $(BIN_DIR)/, $(C_OBJS))
 C_DEPS_EXT   = $(patsubst %.o, %.d, $(C_OBJS_EXT))
@@ -475,9 +479,6 @@ DEBUG_VER    = BOOT_$(BOARD)$(SERIES)_0_$(MAINT)_65535
 
 # Default rule:
 all: ver build_IP $(BIN_DIR) build_libs $(TARGET_BIN) showver
-
-# Rule for making a special build
-special: special_ver build_IP $(BIN_DIR) build_libs $(TARGET_BIN) showver
 
 showver:
 	@if [ $(IPADDR0) == 169 ] ; then \
@@ -497,18 +498,8 @@ showver:
 	fi
 
 ver: config.mk
-	@# This format matches what the printer expects so please leave it
-	@if [ $(CONF) == "rel" ] ; then \
-	  echo "#define "FW_VER" \"$(REAL_VER)\"" > $(SRC_DIR)/version.h;\
-	else\
-	  echo "#define "FW_VER" \"$(DEBUG_VER)\"" > $(SRC_DIR)/version.h;\
-	fi
-	@echo "#define "BUILD_DATE" \"$(shell date +"%b %d %Y %T")\"" >> $(SRC_DIR)/version.h
-
-special_ver: config.mk
-	@# This format matches what the printer expects so please leave it
-	@echo "#define "FW_VER" \"$(SPECIAL_VER)\"" > $(SRC_DIR)/version.h
-	@echo "#define "BUILD_DATE" \"$(shell date +"%b %d %Y %T")\"" >> $(SRC_DIR)/version.h
+	@echo "#define "FW_VER" \"v$(MAJOR).$(MINOR)\"" > $(SRC_DIR)/version.h;
+	@echo "#define "BUILD_DATE" \"$(NOW)\"" >> $(SRC_DIR)/version.h
 
 # All the rigamarole below is to avoid building code if the ip address didn't change (normal situation for development)
 build_IP:
@@ -582,7 +573,7 @@ $(BIN_DIR)/%.o : %.cpp
 	$(TRACE_FLAG)$(CPP) $(CPPFLAGS) -c $< -o $@
 
 # Make sure not to generate dependencies when doing cleans
-NODEPS:=clean cleanall cleanlibs cleandirs
+NODEPS:=clean cleanall cleanlibs cleandirs show showvers ver
 ifeq (0, $(words $(findstring $(MAKECMDGOALS), $(NODEPS))))
 -include $(C_DEPS_EXT) $(CPP_DEPS_EXT)
 endif
@@ -603,11 +594,17 @@ cleanall:
 	-$(RM) rel/*.o rel/*.d rel/*.hex rel/*.elf rel/*.map spy
 	
 clean:
+	@echo --- Cleaning all binary files 
 	$(TRACE_FLAG)-$(RM) $(BIN_DIR)/*.o \
 	$(TRACE_FLAG)$(BIN_DIR)/*.d \
 	$(TRACE_FLAG)$(BIN_DIR)/*.hex \
 	$(TRACE_FLAG)$(BIN_DIR)/*.elf \
-	$(TRACE_FLAG)$(BIN_DIR)/*.map
+	$(TRACE_FLAG)$(BIN_DIR)/*.map \
+	$(TRACE_FLAG)$(BIN_DIR)/*.bin
+	
+cleanbin:
+	@echo --- Cleaning only *.bin files 
+	$(TRACE_FLAG)-$(RM) $(BIN_DIR)/*.bin
 	
 clean_with_libs: clean clean_qpc_libs
 	@echo ---------------------------
@@ -636,3 +633,4 @@ show:
 	@echo MFLAGS = $(MFLAGS)
 	@echo CFLAGS = $(CFLAGS)
 	@echo DEFINES = $(DEFINES)
+	@echo NOW = $(NOW)

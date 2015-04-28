@@ -20,6 +20,7 @@
 #include "comm.h"
 #include <boost/thread/thread.hpp>
 #include "msg_utils.h"
+#include "fwLdr.h"
 
 /* Namespaces ----------------------------------------------------------------*/
 using namespace std;
@@ -91,21 +92,21 @@ ClientError_t ClientApi::DC3_getMode(CBErrorCode *status, CBBootMode *mode)
    evt->src = m_msgRoute;
    QACTIVE_POST(AO_MainMgr, (QEvt *)(evt), AO_MainMgr);
 
-   char *tmp = (char *)malloc(sizeof(char) * 1000);
-   uint16_t tmpStrLen;
-   ClientError_t convertStatus = MSG_hexToStr(
-         evt->dataBuf,
-         evt->dataLen,
-         tmp,
-         1000,
-         &tmpStrLen,
-         0,
-         '-',
-         true
-   );
-
-   DBG_printf(this->m_pLog,"ConStatus: 0x%x, sending a buffer with: %s", convertStatus, tmp);
-   free(tmp);
+//   char *tmp = (char *)malloc(sizeof(char) * 1000);
+//   uint16_t tmpStrLen;
+//   ClientError_t convertStatus = MSG_hexToStr(
+//         evt->dataBuf,
+//         evt->dataLen,
+//         tmp,
+//         1000,
+//         &tmpStrLen,
+//         0,
+//         '-',
+//         true
+//   );
+//
+//   DBG_printf(this->m_pLog,"ConStatus: 0x%x, sending a buffer with: %s", convertStatus, tmp);
+//   free(tmp);
 
    CBBasicMsg basicMsg;
    CBMsgName payloadMsgName = _CBNoMsg;
@@ -124,6 +125,32 @@ ClientError_t ClientApi::DC3_getMode(CBErrorCode *status, CBBootMode *mode)
    }
 
    return clientStatus;
+}
+
+/******************************************************************************/
+ClientError_t ClientApi::DC3_flashFW(
+      CBErrorCode *status,
+      CBBootMode type,
+      const char* filename
+)
+{
+   DBG_printf( this->m_pLog,"Creating FWLdr object" );
+   ClientError_t clientStatus = CLI_ERR_NONE;
+   FWLdr *fw = NULL;
+   try {
+      fw = new FWLdr( this->m_pLog );
+   } catch ( exception &e ) {
+      ERR_printf(
+            this->m_pLog,"Exception trying to get a FWLdr object: %s",
+            e.what()
+      );
+   }
+   DBG_printf( this->m_pLog,"FWLdr object created" );
+
+
+   fw->loadFromFile(filename);
+
+   return( clientStatus );
 }
 
 /******************************************************************************/

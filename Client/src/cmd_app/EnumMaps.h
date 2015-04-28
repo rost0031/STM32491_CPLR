@@ -12,6 +12,7 @@
 #ifndef ENUMMAPS_H_
 #define ENUMMAPS_H_
 
+/* Includes ------------------------------------------------------------------*/
 #include <iostream>
 #include <sstream>
 #include <string>
@@ -22,7 +23,7 @@
 
 #include "ClientModules.h"
 #include "Logging.h"
-/* Includes ------------------------------------------------------------------*/
+
 /* Exported defines ----------------------------------------------------------*/
 /* Exported macros -----------------------------------------------------------*/
 /* Exported types ------------------------------------------------------------*/

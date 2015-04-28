@@ -42,6 +42,22 @@ void HELP_printCmdSpecific(
       const std::string& parsed_cmd,
       const std::string& appName
 );
+
+/**
+ * This function breaks apart a string given a set of delimiters
+ *
+ * @param [in] str: string& containing the text to break apart
+ * @param [out] tokens: vector that will contain the tokens
+ * @param [in] delims: a string of one or more delimiters.  Defaults to
+ * whitespace.
+ * @return: None
+ */
+void CMD_tokenize(
+      const std::string& str,
+      std::vector<string>& tokens,
+      const std::string& delims
+);
+
 /* Exported classes ----------------------------------------------------------*/
 
 /**

@@ -17,6 +17,7 @@
 #include <iostream>
 #include <iterator>
 #include <memory>
+#include <fstream>
 #include <sstream>
 #include <string>
 
@@ -49,6 +50,7 @@ MODULE_NAME( MODULE_EXT );
 
 /* Private typedefs ----------------------------------------------------------*/
 /* Private defines -----------------------------------------------------------*/
+#define MAX_FW_IMAGE_SIZE 1500000
 /* Private macros ------------------------------------------------------------*/
 /* Private variables and Local objects ---------------------------------------*/
 /* Private function prototypes -----------------------------------------------*/
@@ -107,56 +109,6 @@ int main(int argc, char *argv[])
       WRN_out << "Failed to set library callback function for Done msgs.";
    }
 
-//   /* 6. Create a new CmdlineParser instance. */
-//   CmdlineParser *cmdline = new CmdlineParser();
-//
-//   /* 7. Attempt to parse the cmdline arguments. */
-//   if( 0 != cmdline->parse(argc, argv) ) {
-//      ERR_out << "Failed to parse cmdline args. Exiting";
-//      EXIT_LOG_FLUSH(1);
-//   }
-//
-//   /* 8. Set the connection.  This is done separately so that the ClientApi
-//    * class can catch any exceptions that happen and convert them to error
-//    * codes that the functions can return (and constructors can't). */
-//   if( cmdline->isConnEth() ) {
-//      string ipAddr, remPort, locPort;
-//      cmdline->getEthConnOpts(ipAddr, remPort, locPort);
-//      DBG_out << "Got " << ipAddr << ", " << remPort << ", " << locPort;
-//
-//      status = client->setNewConnection(
-//            ipAddr.c_str(),
-//            remPort.c_str(),
-//            locPort.c_str()
-//      );
-//
-//      if ( CLI_ERR_NONE != status ) {
-//         ERR_out << "Unable to open UDP connection. Error: 0x"
-//               << setfill('0') << setw(8) << hex << status;
-//         EXIT_LOG_FLUSH(1);
-//      }
-//   } else if ( cmdline->isConnSer() ) {
-//      string serDev;
-//      int baudRate = 0;
-//      bool dfuseFlag = true;
-//      cmdline->getSerConnOpts(serDev, &baudRate, &dfuseFlag);
-//      DBG_out << "Got " << serDev << ", " << baudRate << ", " << dfuseFlag;
-//
-//      status = client->setNewConnection(
-//            serDev.c_str(),
-//            baudRate,
-//            dfuseFlag
-//      );
-//
-//      if ( CLI_ERR_NONE != status ) {
-//         ERR_out << "Unable to open Serial connection. Error: 0x"
-//               << setfill('0') << setw(8) << hex << status;
-//         CON_print("!!! Make sure you're using the correct serial port and nothing else is using it !!!");
-//         EXIT_LOG_FLUSH(1);
-//      }
-//   }
-
-
    bool    m_dfuse = false;         /**< Serial will be used for DFU commands */
 
    std::vector<string> m_command;   /**< Vector that will hold the command along
@@ -201,10 +153,10 @@ int main(int argc, char *argv[])
             "Set the baud rate of the serial device")
 
          /* Options only required if running in non-interactive mode */
-         ("flash_fw", po::value<vector<string>>(&m_command)->multitoken(),
-            "Flash FW on the DC3"
-            "Example: '--flash_fw file=../some/path/DC3Appl.bin fw=DC3Appl'"
-            "Example: '--flash_fw file=../some/path/DC3Boot.bin fw=DC3Boot'")
+         ("flash", po::value<vector<string>>(&m_command)->multitoken(),
+            "Flash FW to the DC3"
+            "Example: '--flash file=../some/path/DC3Appl.bin fw=DC3Appl'"
+            "Example: '--flash file=../some/path/DC3Boot.bin fw=DC3Boot'")
 
          ("get_mode", po::value<vector<string>>(&m_command)->zero_tokens(),
             "Get current operating mode of the DC3. (Bootloader or Application) "
@@ -298,10 +250,10 @@ int main(int argc, char *argv[])
       /* Figure out which command is being specified.  If a command is found,
        * execute and exit.  If no command is found, start the menu thread and
        * go into interactive mode. */
-      if (m_vm.count("get_mode")) {
+      if (m_vm.count("get_mode")) {                /* "get_mode" cmd handling */
          m_parsed_cmd = "get_mode";
 
-         if (m_vm.count("help")) {  /* Check for command specific help req */
+         if (m_vm.count("help")) {     /* Check for command specific help req */
             HELP_printCmdSpecific( m_parsed_cmd, appName );
          }
 
@@ -321,7 +273,114 @@ int main(int argc, char *argv[])
             ERR_out << "Got DC3 error " << "0x" << std::hex
                << status << std::dec << " when trying to get bootmode.";
          }
-      } else { // end of checking for cmdline requested commands.
+      } else if (m_vm.count("flash")) {               /* "flash" cmd handling */
+         m_parsed_cmd = "flash";
+
+         vector<string>::const_iterator begin = m_vm["flash"].as<vector<string>>().begin();
+         vector<string>::const_iterator end = m_vm["flash"].as<vector<string>>().end();
+         vector<string>::const_iterator itr;
+          /* Check for command specific help req */
+         if( find(begin, end, "--help") != end || find(begin, end, "help") != end ) {
+            HELP_printCmdSpecific( m_parsed_cmd, appName );
+         }
+
+//         char *fwBuffer = NULL;
+         CBBootMode type = _CB_NoBootMode;
+         string filename = "";
+         for( itr = begin; itr != end; ++itr ) {
+            if ( (*itr).find("=") ) {
+               vector<string> arg_pair;
+
+               CMD_tokenize( (*itr), arg_pair, "=" );
+               if (2 != arg_pair.size()) {              /* invalid arg format */
+                  ERR_out << "ERROR: found a = sign in argument but wrong number of params";
+                  HELP_printCmdSpecific( m_parsed_cmd, appName );
+               } else if ( 0 == arg_pair.at(0).compare("file")) { /* file arg */
+                  DBG_out << "Attempting to find file: " << arg_pair.at(1);
+
+                  ifstream fw_file (      /* open file stream to read in file */
+                        arg_pair.at(1).c_str(),
+                        ios::in | ios::binary | ios::ate
+                  );
+
+                  if (fw_file) {               /* if the file exists, read it */
+                     DBG_out << "File exists: " << arg_pair.at(1);
+                     filename = arg_pair.at(1);
+//                     size_t fileSize = fw_file.tellg();  /* Get the file size */
+//
+//                     if ( fileSize > MAX_FW_IMAGE_SIZE ) {
+//                        ERR_out << "Attempting to read " << fileSize
+//                           << " bytes from " << arg_pair.at(1)
+//                           << " which is bigger than the max allowed filesize of "
+//                           << MAX_FW_IMAGE_SIZE;
+//                        HELP_printCmdSpecific( m_parsed_cmd, appName );
+//                     }
+//
+//                     fwBuffer = new char[fileSize];        /* Buffer for data */
+//                     fw_file.seekg(0, ios::beg);   /* Go to beginning of file */
+//                     fw_file.read( fwBuffer, fileSize);     /* Read the file  */
+//                     DBG_out << "Successfully read " << fileSize
+//                           << " bytes from " << arg_pair.at(1);
+//
+//
+//                     /* Try and parse the build date from the filename.  File
+//                      * should be name DC3[Appl|Boot]_YYYYMMDDhhmmss.bin */
+
+
+                     fw_file.close();                           /* Close file */
+
+
+                  } else {
+                     ERR_out << "Unable to open file " << arg_pair.at(1);
+                     HELP_printCmdSpecific( m_parsed_cmd, appName );
+                  }
+
+               } else if ( 0 == arg_pair.at(0).compare("type")) { /* type arg */
+                  DBG_out << "FW image type specified as: " << arg_pair.at(1);
+                  if ( 0 == arg_pair.at(1).compare("Bootloader")) {
+                     //TODO: either implement or remove option.
+                     ERR_out << "Bootloader flashing is unimplemented currently";
+                     HELP_printCmdSpecific( m_parsed_cmd, appName );
+                  } else if ( 0 == arg_pair.at(1).compare("Application")) {
+                     type = _CB_Application;
+                  } else {
+                     ERR_out << "Unknown type of FW image specified: " << arg_pair.at(1);
+                     HELP_printCmdSpecific( m_parsed_cmd, appName );
+                  }
+               }
+            }
+         }
+
+         /* Check if everything has been parsed correctly */
+         if ( _CB_NoBootMode == type || 0 == filename.compare("") ) {
+            ERR_out << "Failed to parse args. ";
+            HELP_printCmdSpecific( m_parsed_cmd, appName );
+         }
+
+         /* If we got here, we have a valid filename/path and valid FW image
+          * type. Execute (and block) on this command */
+         status = client->DC3_flashFW(&statusDC3, type, filename.c_str());
+
+         if( CLI_ERR_NONE == status) {
+            ss.clear();
+            ss << "FW flashing of DC3 completed ";
+            if (ERR_NONE == statusDC3) {
+               ss << " successfully.";
+            } else {
+               ss << " with ERROR: 0x" << setw(8) << setfill('0') << hex << statusDC3 << dec;
+            }
+            CON_print(ss.str());
+         } else {
+            ERR_out << "Got client error " << "0x" << std::hex
+               << status << std::dec << " when trying to flash FW.";
+         }
+
+
+
+      }
+
+
+      else { // end of checking for cmdline requested commands.
          /* If we are here, no commands were requested so */
          ERR_out << "TODO: implement menu here";
          EXIT_LOG_FLUSH(0);

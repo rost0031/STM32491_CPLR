@@ -101,61 +101,74 @@
 //   |
 // *Send* [[********CBBasicMsg************]\n]>>>>>>>>>>>>>>>>>>>>>>>*Receive*
 //          < msgName = CBResetCBChipMsg            
-//          < msgID   = 456                          
-//          < msgType = CB_Req                        
+//          < msgID   = [uint]                          
+//          < msgType = CB_Req
+//          < msgRoute = [CBMsgRoute]  
+//          < msgProgReq = [0|1]                        
 //          < msgPayload = CBNoMsg
 // *Rec*  [[********CBBasicMsg************]\n]<<<<<<<<<<<<<<<<<<<<<<<<<<*Send*
 //          < msgName = CBResetCBChipMsg
-//          < msgID   = 456              
-//          < msgType = CB_Ack                        
+//          < msgID   = [uint]              
+//          < msgType = CB_Ack
+//          < msgRoute = [CBMsgRoute]  
+//          < msgProgReq = [0|1]                        
 //          < msgPayload = CBNoMsg
 //
 // (If something went wrong and the result is an error/status to report)
-// *Rec*  [[**********CBBasicMsg************][CBPayloadMsg****]\n]<<<<*Send*
-//          < msgName = CBResetCBChipMsg    
-//          < msgID   = 456                     < errorCode = CB_ERR_RESETTING      
-//          < msgType = CB_Done               < msgPayload = CBNoMsg         
-//          < msgPayload = CBBasicPayloadMsg
+// *Rec*  [[**********CBBasicMsg**********][**CBPayloadMsg****]\n]<<<<*Send*
+//          < msgName = CBResetCBChipMsg     < errorCode = error or status
+//          < msgID   = [uint]                      
+//          < msgType = CB_Done
+//          < msgRoute = [CBMsgRoute]  
+//          < msgProgReq = [0|1]               
+//          < msgPayload = CBStatusPayloadMsg
 //
 //////////////////////// OR ////////////////////////////////////////////////////
 //
 // (If everything went ok and there's no error or no need to report one )
-// *Rec*  [[**********CBBasicMsg*********][CBPayloadMsg****]\n]<<<<<<<*Send*
-//          < msgName = CBResetCBChipMsg    
-//          < msgID   = 456                     < errorCode = CB_ERR_NONE      
-//          < msgType = CB_Done               < msgPayload = CBNoMsg         
-//          < msgPayload = CBBasicPayloadMsg
+// *Rec*  [[**********CBBasicMsg**********][**CBPayloadMsg****]\n]<<<<<<<*Send*
+//          < msgName = CBResetCBChipMsg     < errorCode = error or status
+//          < msgID   = [uint]              
+//          < msgType = CB_Done
+//          < msgRoute = [CBMsgRoute]  
+//          < msgProgReq = [0|1]                        
+//          < msgPayload = CBStatusPayloadMsg
 //
-// 
 // 3). Message naming convention - Message names should follow the following format:
 // CBGetStatusMsg
 // [0][--1---][2]
 // where 
-// field 0: This should always be "CB".  It acts as a namespace and prevents
-//          the possibility that another project is using this name for its msgs.
+// field 0: This should always be "CB".  It acts as a namespace and reduces the
+//          possibility that another project is using this name for its msgs.
 // field 1: Who/what is being referenced/requested/ordered
 // field 2: Should always be "Msg".  This is primarily to differentiate them in 
 //          the code from other similarly named things like events and the 
-//    structures used to extract the info from the messages.
+//          structures used to extract the info from the messages.
 //
 // Example msg exchange with custom payload msgs (with field fill examples):
 //
 // Client                                                             CB Board
 //   |
-// *Send* [[*********CBBasicMsg**********][CBPayloadMsg****]\n]>>>>>Receive*
-//          < msgName = CBCmdLLCommTestMsg            
-//          < msgID   = 0                          < payload = 0xA5A5A5A5
-//          < msgType = CB_Req                   < msgPayload = CBNoMsg
+// *Send* [[*********CBBasicMsg**********][**CBPayloadMsg****]\n]>>>>>Receive*
+//          < msgName = CBCmdLLCommTestMsg  < payload = 0xA5A5A5A5          
+//          < msgID   = [uint]              < errorCode = error or status     
+//          < msgType = CB_Req                   
+//          < msgRoute = [CBMsgRoute]  
+//          < msgProgReq = [0|1]
 //          < msgPayload = CBCommTestPayloadMsg
 // *Rec*  [[CBBasicMsg]\n]<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<*Send*
 //          < msgName = CBCmdLLCommTestMsg
-//          < msgID   = 0              
-//          < msgType = CB_Ack                        
+//          < msgID   = [uint]              
+//          < msgType = CB_Ack
+//          < msgRoute = [CBMsgRoute]  
+//          < msgProgReq = [0|1]                        
 //          < msgPayload = CBNoMsg
-// *Rec*  [[**********CBBasicMsg************][CBPayloadMsg*****]\n]<<<*Send*
-//          < msgName = CBCmdLLCommTestMsg             
-//          < msgID   = 0                           < payload = 0xA5A5A5A5
-//          < msgType = CB_Done                   < msgPayload = CBNoMsg
+// *Rec*  [[**********CBBasicMsg************][**CBPayloadMsg*****]\n]<<<*Send*
+//          < msgName = CBCmdLLCommTestMsg     < payload = 0xA5A5A5A5        
+//          < msgID   = [uint]                 < errorCode = error or status
+//          < msgType = CB_Done                 
+//          < msgRoute = [CBMsgRoute]  
+//          < msgProgReq = [0|1]
 //          < msgPayload = CBCommTestPayloadMsg
 //
 // Author: Harry Rostovtsev 
@@ -182,7 +195,11 @@ enum CBMsgName
                               // Usually used in the CBPayload field of a 
                               // CBBasicMsg
                               
-    CBStatusPayloadMsg   = 1; // CBPayloadMsg - Used to report a status/error
+    CBStatusPayloadMsg   = 1; // CBPayloadMsg - Used to report a status/error 
+                              // by simple messages that don't normally have 
+                              // their own payload msg associated with them. 
+                              // This is useful for requests that require no 
+                              // data other than status to be reported back.
     
     CBGetVersionMsg      = 2; // CBBasicMsg   - Used to get versions and build
                               // dates from the CB board and return 
@@ -202,7 +219,16 @@ enum CBMsgName
     CBBootModePayloadMsg = 6; // CBPayloadMsg - Used to send the current 
                               // BootMode information with GetBootMode and 
                               // SetBootMode msgs.
-
+    CBFlashMsg           = 7; // CBBasicMsg - Used to send and flash the FW
+	CBFlashMetaPayloadMsg = 8;// CBPayloadMsg - Used to as a payload with 
+	                          // CBFlashMsg basic msg to send FW image type, 
+	                          // size, and CRC of the FW image that will follow.
+	                          // Also used to send back status of each packet 
+	                          // to verify 
+    CBFlashDataPayloadMsg = 9; // CBPayloadMsg - Used as a data payload by 
+                              // CBFlashMsg basic msg. Used to send FW image and
+                              // associated meta-data (fw packet number and CRC 
+                              // of data included)
 }
 
 //------------------------------------------------------------------------------
@@ -368,21 +394,23 @@ message CBStatusPayloadMsg
 //          < msgName = CBGetVersionMsg     
 //          < msgID   = [uint32]                         
 //          < msgType = CB_Req                
-//          < msgPayload = CBVersionPayloadMsg
-//                                                   
+//          < msgProgReq = [0|1]
+//          < msgRoute = [CBMsgRoute]                                                   
+//          < msgPayload = CBNoMsg
 // *Rec*  [[CBBasicMsg]\n]<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<*Send*
 //          < msgName = CBGetVersionMsg
 //          < msgID   = [uint32]             
-//          < msgType = CB_Ack                        
+//          < msgType = CB_Ack    
+//          < msgProgReq = [0|1]
+//          < msgRoute = [CBMsgRoute]                    
 //          < msgPayload = CBNoMsg
 // *Rec*  [[**************CBBasicMsg*********][**CBPayloadMsg**]\n]<<<*Send*
-//          < msgName = CBGetVersionMsg          < errorCode = CB_ERR_CODE  
+//          < msgName = CBGetVersionMsg          < errorCode = error or status  
 //          < msgID   = [uint32]                 < fwVersionString = string of data with FW version
 //          < msgType = CB_Done                  < fwDateString = string of data with FW date
+//          < msgProgReq = [0|1]                 < fwVersionStringLen = Number of characters in FW version string.
+//          < msgRoute = [CBMsgRoute]            < fwDateStringLen = Number of characters in FW date string.
 //          < msgPayload = CBVersionPayloadMsg   < dbVersion = version of the settings database
-//                                               < fwVersionStringLen = Number of characters in FW version string.
-//                                               < fwDateStringLen = Number of characters in FW date string.
-//
 // END CBGetVersionMsg
 //------------------------------------------------------------------------------
 
@@ -422,17 +450,23 @@ message CBVersionPayloadMsg
 // *Send* [[**************CBBasicMsg***********]\n]>>>>>>>>>>>>>>>>>>>>*Receive*
 //          < msgName = CBGetBootModeMsg
 //          < msgID   = [uint32]                         
-//          < msgType = CB_Req                       
-//          < msgPayload = CBNoMsg  
+//          < msgType = CB_Req        
+//          < msgProgReq = [0|1]
+//          < msgRoute = [CBMsgRoute]               
+//          < msgPayload = CBNoMsg
 // *Rec*  [[**************CBBasicMsg***********]\n]<<<<<<<<<<<<<<<<<<<<<<<*Send*
 //          < msgName = CBGetBootModeMsg
 //          < msgID   = [uint32]                   
-//          < msgType = CB_Ack                        
+//          < msgType = CB_Ack      
+//          < msgProgReq = [0|1]
+//          < msgRoute = [CBMsgRoute]                  
 //          < msgPayload = CBNoMsg
 // *Rec*  [[************CBBasicMsg**********][**CBPayloadMsg**]\n]<<<<<<<<*Send*
 //          < msgName = CBGetBootModeMsg      < errorCode = CB_ERR_CODE  
 //          < msgID   = [uint32]              < bootmode = [CB_SysRomBoot|CB_Bootloader|CB_Application]         
 //          < msgType = CB_Done                  
+//          < msgProgReq = [0|1]
+//          < msgRoute = [CBMsgRoute]
 //          < msgPayload = CBBootModePayloadMsg   
 // END CBGetBootModeMsg
 //------------------------------------------------------------------------------
@@ -452,18 +486,24 @@ message CBVersionPayloadMsg
 // *Send*  [[************CBBasicMsg**********][**CBPayloadMsg**]\n]>>>>>>>>*Rec*
 //          < msgName = CBSetBootModeMsg         < errorCode = N/A  
 //          < msgID   = [uint32]                 < bootmode = [CB_SysRomBoot|CB_Bootloader|CB_Application]       
-//          < msgType = CB_Done                  
-//          < msgPayload = CBPayloadMsg  
+//          < msgType = CB_Req                  
+//          < msgProgReq = [0|1]
+//          < msgRoute = [CBMsgRoute]
+//          < msgPayload = CBBootModePayloadMsg
 // *Rec*  [[**************CBBasicMsg***********]\n]<<<<<<<<<<<<<<<<<<<<<<<*Send*
 //          < msgName = CBSetBootModeMsg
 //          < msgID   = [uint32]                   
 //          < msgType = CB_Ack                        
-//          < msgPayload = CBBootModePayloadMsg
+//          < msgProgReq = [0|1]
+//          < msgRoute = [CBMsgRoute]
+//          < msgPayload = CBNoMsg
 // *Rec*  [[************CBBasicMsg**********][**CBPayloadMsg**]\n]<<<<<<<<*Send*
 //          < msgName = CBSetBootModeMsg       < errorCode = CB_ERR_CODE  
 //          < msgID   = [uint32]               < bootmode = [CB_SysRomBoot|CB_Bootloader|CB_Application]  
 //          < msgType = CB_Done                  
-//          < msgPayload = CBBootModePayloadMsg   
+//          < msgProgReq = [0|1]
+//          < msgRoute = [CBMsgRoute]
+//          < msgPayload = CBBootModePayloadMsg
 // END CBSetBootModeMsg
 //------------------------------------------------------------------------------
 
@@ -472,20 +512,9 @@ message CBVersionPayloadMsg
 // Msg Tag  - 6
 // Msg Type - CBPayloadMsg.  
 // Msg Desc - Sent appended to the CBGetBootModeMsg CB_Done msg and
-//            CBSetBootModeMsg CB_Req msg. Uses CBBootModePayloadMsg
-//            structure.
+//            CBSetBootModeMsg CB_Req msg.
 //
-// Non-standard Field Description:
-// errorCode - a uint32 number that specifies the error encountered, if any.
-// bootmode  - CBBootMode enum that specifies the boot mode being requested.
-//            Can be one of the following: 
-//                  CB_SysRomBoot  - STM32 system ROM bootmode (not currently 
-//                                   implemented)
-//                  CB_Bootloader  - bootloader mode 
-//                  CB_Application - application mode
-//                  The system boot mode will not respond to messages so the 
-//                  above are the only possible values. 
-//
+// Non-standard Field Description: (see below)
 message CBBootModePayloadMsg 
 {
 	required uint32     errorCode = 1; // a uint32 number that specifies the
@@ -501,4 +530,134 @@ message CBBootModePayloadMsg
                     // above are the only possible values. 
 }
 // END CBBootModePayloadMsg.
+//------------------------------------------------------------------------------
+
+//------------------------------------------------------------------------------
+// START CBFlashMsg
+// Msg Tag  - 7
+// Msg Type - CBBasicMsg.  Uses CBBasicMsg structure. No definition needed
+// Msg Desc - This message is handles flashing new FW to the board.
+//
+// No message definition needed.  Uses CBBasicMsg with CBFlashInitPayloadMsg for
+// initial request, followed by CBFlashDataPayloadMsg for data transmission.
+// Example:
+// 1. Initialize the FW flash procedure (note the msgProgReq being SET)
+// Client                                                             CB Board
+//   |                                                                      |
+// *Send*  [[************CBBasicMsg**********][**CBPayloadMsg**]\n]>>>>>>>>*Rec*
+//          < msgName = CBFlashMsg                < imageCrc 
+//          < msgID   = n (some uint)             < imageSize
+//          < msgType = CB_Req                    < imageType
+//          < msgProgReq = 1 <-- must be SET                  
+//          < msgRoute = [CBMsgRoute]
+//          < msgPayload = CBFlashMetaPayloadMsg
+// *Rec*  [[**************CBBasicMsg***********]\n]<<<<<<<<<<<<<<<<<<<<<<<*Send*
+//          < msgName = CBFlashMsg
+//          < msgID   = [uint32]                   
+//          < msgType = CB_Ack                        
+//          < msgProgReq = 1
+//          < msgRoute = [CBMsgRoute]
+//          < msgPayload = CBNoMsg
+// *Rec*  [[************CBBasicMsg**********][**CBPayloadMsg**]\n]<<<<<<<<*Send*
+//          < msgName = CBFlashMsg             < errorCode = CB_ERR_CODE  
+//          < msgID   = [uint32]                
+//          < msgType = CB_Prog  <--- note that this is a Prog msg, not a Done.                
+//          < msgProgReq = 1
+//          < msgRoute = [CBMsgRoute]
+//          < msgPayload = CBStatusPayloadMsg
+//
+// 2. Send the data packets that will be flashed (loop until out of data)
+//
+// *Send*  [[************CBBasicMsg**********][**CBPayloadMsg**]\n]>>>>>>>>*Rec*
+//          < msgName = CBFlashMsg                < dataCrc 
+//          < msgID   = n + 1                     < dataLen
+//          < msgType = CB_Req                    < dataBuf
+//          < msgProgReq = 1 <-- this must be SET                  
+//          < msgRoute = [CBMsgRoute]
+//          < msgPayload = CBFlashDataPayloadMsg
+// *Rec*  [[**************CBBasicMsg***********]\n]<<<<<<<<<<<<<<<<<<<<<<<*Send*
+//          < msgName = CBFlashMsg
+//          < msgID   = [uint32]                   
+//          < msgType = CB_Ack                        
+//          < msgProgReq = 1
+//          < msgRoute = [CBMsgRoute]
+//          < msgPayload = CBNoMsg
+// *Rec*  [[************CBBasicMsg**********][**CBPayloadMsg**]\n]<<<<<<<<*Send*
+//          < msgName = CBFlashMsg             < errorCode = CB_ERR_CODE  
+//          < msgID   = [uint32]                
+//          < msgType = CB_Prog  <--- note that this is a Prog msg, not a Done.                
+//          < msgProgReq = 1
+//          < msgRoute = [CBMsgRoute]
+//          < msgPayload = CBStatusPayloadMsg
+// 
+// 3.  Repeat until all the data packets have been sent.  If at any point there's
+//     a failure, an error will come back with one of the prog msgs and the 
+//     process should stop.
+//
+// 4.  Send last data packet and wait for a Done msg. 
+//     (note the msgProgReq being RESET for the last packet)
+//
+// *Send*  [[************CBBasicMsg**********][**CBPayloadMsg**]\n]>>>>>>>>*Rec*
+//          < msgName = CBFlashMsg                < dataCrc 
+//          < msgID   = n + 1                     < dataLen
+//          < msgType = CB_Req                    < dataBuf
+//          < msgProgReq = 0 <-- must be RESET                  
+//          < msgRoute = [CBMsgRoute]
+//          < msgPayload = CBFlashDataPayloadMsg
+// *Rec*  [[**************CBBasicMsg***********]\n]<<<<<<<<<<<<<<<<<<<<<<<*Send*
+//          < msgName = CBFlashMsg
+//          < msgID   = [uint32]                   
+//          < msgType = CB_Ack                        
+//          < msgProgReq = 0  
+//          < msgRoute = [CBMsgRoute]
+//          < msgPayload = CBNoMsg
+// *Rec*  [[************CBBasicMsg**********][**CBPayloadMsg**]\n]<<<<<<<<*Send*
+//          < msgName = CBFlashMsg             < errorCode = CB_ERR_CODE  
+//          < msgID   = [uint32]                
+//          < msgType = CB_Done  <-- last packet is a Done msg, not a Prog.                
+//          < msgProgReq = 0
+//          < msgRoute = [CBMsgRoute]
+//          < msgPayload = CBStatusPayloadMsg
+// END CBFlashMsg
+//------------------------------------------------------------------------------
+
+//------------------------------------------------------------------------------
+// START CBFlashMetaPayloadMsg 
+// Msg Tag  - 8
+// Msg Type - CBPayloadMsg.  
+// Msg Desc - Sent appended to the very first CBFlashMsg CB_Req msg.
+//
+// Non-standard Field Description: (see below)
+message CBFlashMetaPayloadMsg 
+{
+    required uint32     imageCrc  = 1; // CRC of the entire FW image. 
+    required uint32     imageSize = 2; // size of the coming FW image (in bytes)
+    required CBBootMode imageType = 3; // CBBootMode enum that specifies the 
+                                       // type this FW image. Can be one of the
+                                       // following: 
+                                       //  -- CB_Bootloader  - bootloader mode 
+                                       //  -- CB_Application - application mode
+                                       // The system boot mode will not respond
+                                       // to messages so the above are the only 
+                                       // possible values.
+}
+// END CBFlashMetaPayloadMsg.
+//------------------------------------------------------------------------------
+
+//------------------------------------------------------------------------------
+// START CBFlashDataPayloadMsg 
+// Msg Tag  - 9
+// Msg Type - CBPayloadMsg.  
+// Msg Desc - Sent appended to the CBFlashMsg CB_Req CBSetBootModeMsg CB_Req 
+//            after the first one.  (See example in description of CBFlashMsg
+//            description).
+//
+// Non-standard Field Description: (see below)
+message CBFlashDataPayloadMsg 
+{
+	required uint32     dataCrc   = 1; // CRC of the data in dataBuf
+    required uint32     dataLen   = 2; // length of data in the buffer
+    required bytes      dataBuf   = 3; // buffer with data
+}
+// END CBFlashDataPayloadMsg.
 //------------------------------------------------------------------------------

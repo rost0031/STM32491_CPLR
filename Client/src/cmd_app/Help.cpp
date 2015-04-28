@@ -13,7 +13,9 @@
 #include "Help.h"
 #include "Logging.h"
 #include "EnumMaps.h"
+
 /* Namespaces ----------------------------------------------------------------*/
+using namespace std;
 
 /* Compile-time called macros ------------------------------------------------*/
 MODULE_NAME( MODULE_EXT );
@@ -58,11 +60,27 @@ void HELP_printCmdSpecific(
             << enumToString(_CB_Application) << "]";
       description += ss_params.str();
       prototype = appName + " [connection options] --" + parsed_cmd;
-      example = appName + " -i 192.168.1.75 --" + parsed_cmd;
+      example = appName + " -i 207.27.0.75 --" + parsed_cmd;
+   } else if (  0 == parsed_cmd.compare("flash") ) {
+      description = parsed_cmd + " command initiates a FW upgrade on the DC3 "
+            "board. You have to specify the location of the FW upgrade *bin "
+            "file and which FW image is going to be upgraded. File can be "
+            "specified using a relative path to " + appName + " or a full path. "
+            "The options for the FW image type are: ";
+      ss_params << "[" << enumToString(_CB_Bootloader) << "|"
+            << enumToString(_CB_Application) << "]";
+      description += ss_params.str();
+
+      prototype = appName + " [connection options] --" + parsed_cmd
+            + " file=<relative path to *.bin file> " + "type=";
+      prototype += ss_params.str();
+
+      example = appName + " -i 207.27.0.75 --" + parsed_cmd +
+            " file=../../DC3Appl.bin " + "type=Application";
+   } else {
+      ERR_out << "Unable to find cmd specific help for " << parsed_cmd;
+      EXIT_LOG_FLUSH(0);
    }
-
-
-
 
    stringstream ss;
    ss << endl << endl;
@@ -91,6 +109,31 @@ void HELP_printCmdSpecific(
    CON_print(ss.str());
    EXIT_LOG_FLUSH(0);
 }
+
+/******************************************************************************/
+void CMD_tokenize(
+      const std::string& str,
+      std::vector<string>& tokens,
+      const std::string& delims
+)
+{
+   // Skip delimiters at beginning.
+   string::size_type lastPos = str.find_first_not_of(delims, 0);
+   // Find first "non-delimiter".
+   string::size_type pos     = str.find_first_of(delims, lastPos);
+
+   while (string::npos != pos || string::npos != lastPos) {
+      // Foundtoken, add to the vector.
+      tokens.push_back(str.substr(lastPos, pos - lastPos));
+
+      // Skip delimiters.
+      lastPos = str.find_first_not_of(delims, pos);
+
+      // Find next "non-delimiter"
+      pos = str.find_first_of(delims, lastPos);
+   }
+}
+
 /* Private class prototypes --------------------------------------------------*/
 /* Private classes -----------------------------------------------------------*/
 

@@ -42,7 +42,7 @@ std::map<ModuleId_t, std::string> m_ModuleId = boost::assign::map_list_of
       ( MODULE_UDP   , "Udp" )
       ( MODULE_MGR   , "Mgr" )
       ( MODULE_LOG   , "Log" )
-      ( MODULE_JOB   , "Job" )
+      ( MODULE_FWL   , "FwL" )
       ( MODULE_API   , "Api" )
       ( MODULE_EXT   , "Ext" )
       ( MODULE_COM   , "Com" )
