@@ -27,7 +27,6 @@
 #include "CBSignals.h"
 #include "bsp.h"
 #include "SerialMgr.h"
-#include "DbgMgr.h"
 
 /* Compile-time called macros ------------------------------------------------*/
 Q_DEFINE_THIS_FILE                  /* For QSPY to know the name of this file */

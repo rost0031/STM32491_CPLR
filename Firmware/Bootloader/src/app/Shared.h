@@ -34,22 +34,16 @@
 enum AO_Priorities {
    NEVER_USE_ZERO_PRIORITY = 0,   /**< Never use this.  It breaks everything. */
 
-   DBG_MGR_PRIORITY,                             /**< Priority of MenuMgr AO. */
-   COMM_MGR_PRIORITY,                       /**< Priority of CommStackMgr AO. */
-
+   COMM_MGR_PRIORITY,                            /**< Priority of CommMgr AO. */
+   FLASH_MGR_PRIORITY,                         /**< Priority of FlashkMgr AO. */
    I2C1DEVMGR_PRIORITY,                       /**< Priority of I2C1DevMgr AO. */
-   SERIAL_MGR_PRIORITY,                        /**< Priority of SerialMgr AO. */
-
-
-   CPLR_PRIORITY,                              /**< Priority of Coupler task. */
-
-
-
    I2CBUS1MGR_PRIORITY,                        /**< Priority of I2CBusMgr AO. */
    /* If more I2C busses are used, make sure that the priorities for them are
     * all together since there's a loop that iterates through them and will
     * take up the next priority if one is not added here.  You will end up with
     * clashing priorities for your AOs.*/
+
+   SERIAL_MGR_PRIORITY,     /**< Priority of SerialMgr AO that handles serial */
 
    ETH_PRIORITY,       /**< Priority of LWIP AO which handles ethernet comms. */
 };

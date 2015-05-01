@@ -12,11 +12,11 @@
 #include "qp_port.h"                                        /* for QP support */
 
 #include "LWIPMgr.h"                               /* for starting LWIPMgr AO */
-#include "CommStackMgr.h"                     /* for starting CommStackMgr AO */
+#include "CommMgr.h"                     /* for starting CommMgr AO */
 #include "SerialMgr.h"                           /* for starting SerialMgr AO */
-#include "DbgMgr.h"                                 /* for starting DbgMgr AO */
 #include "I2CBusMgr.h"                           /* for starting I2CBusMgr AO */
 #include "I2C1DevMgr.h"                         /* for starting I2C1DevMgr AO */
+#include "FlashMgr.h"                             /* for starting FlashMgr AO */
 
 #include "project_includes.h"           /* Includes common to entire project. */
 #include "Shared.h"
@@ -36,13 +36,13 @@ DBG_DEFINE_THIS_MODULE( DBG_MODL_GENERAL ); /* For debug system to ID this modul
 /* Private defines -----------------------------------------------------------*/
 /* Private macros ------------------------------------------------------------*/
 /* Private variables and Local objects ---------------------------------------*/
-static QEvt const    *l_CommStackMgrQueueSto[30];  /**< Storage for CommStackMgr event Queue */
-static QEvt const    *l_LWIPMgrQueueSto[200];       /**< Storage for LWIPMgr event Queue */
-static QEvt const    *l_SerialMgrQueueSto[200];     /**< Storage for SerialMgr event Queue */
+static QEvt const    *l_CommMgrQueueSto[30];          /**< Storage for CommMgr event Queue */
+static QEvt const    *l_LWIPMgrQueueSto[200];         /**< Storage for LWIPMgr event Queue */
+static QEvt const    *l_SerialMgrQueueSto[200];       /**< Storage for SerialMgr event Queue */
 static QEvt const    *l_I2CBusMgrQueueSto[30][MAX_I2C_BUS];    /**< Storage for I2CBusMgr event Queue */
-static QEvt const    *l_I2C1DevMgrQueueSto[30];    /**< Storage for I2C1DevMgr event Queue */
-static QEvt const    *l_DbgMgrQueueSto[30];        /**< Storage for DbgMgr event Queue */
-static QSubscrList   l_subscrSto[MAX_PUB_SIG];      /**< Storage for subscribe/publish event Queue */
+static QEvt const    *l_I2C1DevMgrQueueSto[30];       /**< Storage for I2C1DevMgr event Queue */
+static QEvt const    *l_FlashMgrQueueSto[30];         /**< Storage for FlashMgr event Queue */
+static QSubscrList   l_subscrSto[MAX_PUB_SIG];        /**< Storage for subscribe/publish event Queue */
 
 /**
  * \union Small Events.
@@ -55,6 +55,7 @@ static union SmallEvents {
     uint8_t e3[sizeof(I2CReadReqEvt)];
     uint8_t e4[sizeof(I2CAddrEvt)];
     uint8_t e5[sizeof(I2CReadMemReqEvt)];
+    uint8_t e6[sizeof(FlashStatusEvt)];
 } l_smlPoolSto[50];                     /* storage for the small event pool */
 
 /**
@@ -64,6 +65,7 @@ static union SmallEvents {
 static union MediumEvents {
     void   *e0;                                       /* minimum event size */
     uint8_t e1[sizeof(I2CWriteReqEvt)];
+    uint8_t e2[sizeof(FWMetaEvt)];
 } l_medPoolSto[10];                    /* storage for the medium event pool */
 
 /**
@@ -74,6 +76,7 @@ static union LargeEvents {
     void   *e0;                                       /* minimum event size */
     uint8_t e1[sizeof(EthEvt)];
     uint8_t e2[sizeof(LrgDataEvt)];
+    uint8_t e3[sizeof(FWDataEvt)];
 } l_lrgPoolSto[100];                    /* storage for the large event pool */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -100,9 +103,9 @@ int main(void)
     DBG_ENABLE_DEBUG_FOR_MODULE(DBG_MODL_I2C_DEV);
     DBG_ENABLE_DEBUG_FOR_MODULE(DBG_MODL_NOR);
     DBG_ENABLE_DEBUG_FOR_MODULE(DBG_MODL_SDRAM);
-    DBG_ENABLE_DEBUG_FOR_MODULE(DBG_MODL_DBG);
     DBG_ENABLE_DEBUG_FOR_MODULE(DBG_MODL_COMM);
     DBG_ENABLE_DEBUG_FOR_MODULE(DBG_MODL_CPLR);
+    DBG_ENABLE_DEBUG_FOR_MODULE(DBG_MODL_FLASH);
 
     /* initialize the Board Support Package */
     BSP_init();
@@ -184,8 +187,8 @@ int main(void)
     }
 
     I2C1DevMgr_ctor();
-    CommStackMgr_ctor();
-    DbgMgr_ctor();                           /* This AO should start up last */
+    CommMgr_ctor();
+    FlashMgr_ctor();
 
     dbg_slow_printf("Initializing QF\n");
     QF_init();       /* initialize the framework and the underlying RT kernel */
@@ -199,8 +202,8 @@ int main(void)
     QS_OBJ_DICTIONARY(l_LWIPMgrQueueSto);
     QS_OBJ_DICTIONARY(l_I2CBusMgrQueueSto);
     QS_OBJ_DICTIONARY(l_I2C1DevMgrQueueSto);
-    QS_OBJ_DICTIONARY(l_CommStackMgrQueueSto);
-    QS_OBJ_DICTIONARY(l_DbgMgrQueueSto);
+    QS_OBJ_DICTIONARY(l_CommMgrQueueSto);
+    QS_OBJ_DICTIONARY(l_FlashMgrQueueSto);
 
     QF_psInit(l_subscrSto, Q_DIM(l_subscrSto));     /* init publish-subscribe */
 
@@ -231,14 +234,6 @@ int main(void)
           "LWIPMgr"                                       /* Name of the task */
     );
 
-    QACTIVE_START(AO_DbgMgr,
-          DBG_MGR_PRIORITY,                                       /* priority */
-          l_DbgMgrQueueSto, Q_DIM(l_DbgMgrQueueSto),             /* evt queue */
-          (void *)0, 0,                              /* per-thread stack size */
-          (QEvt *)0,                               /* no initialization event */
-          "DbgMgr"                                        /* Name of the task */
-    );
-
     /* Iterate though the available I2C busses on the system and start an
      * instance of the I2CBusMgr AO for each bus.
      * WARNING!!!: make sure that the priorities for them are all together since
@@ -262,14 +257,21 @@ int main(void)
           "I2CDevMgr"                                     /* Name of the task */
     );
 
-    QACTIVE_START(AO_CommStackMgr,
+    QACTIVE_START(AO_CommMgr,
           COMM_MGR_PRIORITY,                                      /* priority */
-          l_CommStackMgrQueueSto, Q_DIM(l_CommStackMgrQueueSto), /* evt queue */
+          l_CommMgrQueueSto, Q_DIM(l_CommMgrQueueSto),           /* evt queue */
           (void *)0, 0,                              /* per-thread stack size */
           (QEvt *)0,                               /* no initialization event */
           "CommMgr"                                       /* Name of the task */
     );
 
+    QACTIVE_START(AO_FlashMgr,
+          FLASH_MGR_PRIORITY,                                     /* priority */
+          l_FlashMgrQueueSto, Q_DIM(l_FlashMgrQueueSto),         /* evt queue */
+          (void *)0, 0,                              /* per-thread stack size */
+          (QEvt *)0,                               /* no initialization event */
+          "FlashMgr"                                      /* Name of the task */
+    );
     log_slow_printf("Starting QPC. All logging from here on out shouldn't show 'SLOW'!!!\n\n");
     QF_run();                                       /* run the QF application */
 

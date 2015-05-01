@@ -65,7 +65,7 @@
  */
 #define EXIT_LOG_FLUSH( returnValue ) \
    do { \
-      boost::this_thread::sleep(boost::posix_time::milliseconds(5)); \
+      boost::this_thread::sleep(boost::posix_time::milliseconds(25)); \
       exit(returnValue); \
    } while(0)
 

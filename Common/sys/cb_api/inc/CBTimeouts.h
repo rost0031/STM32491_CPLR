@@ -87,10 +87,13 @@
    #define LL_MAX_TIMEOUT_TCP_SEND_SEC                                        3.0
    /*@} ETH Timeout Maximums*/
 
+
+
    /** \name Client Timeouts and Times.
     * These are the timeouts used by the CliMgr AO.
     *@{*/
    #define LL_MAX_TOUT_SEC_CLI_MSG_PROCESS                                    3.0
+   #define LL_MAX_TOUT_SEC_CLI_FW_META_WAIT                                   4.0
    /*@} Client Timeouts and Times.*/
 
 /*@} Coupler Board Timeout Maximums*/

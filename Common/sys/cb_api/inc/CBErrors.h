@@ -40,7 +40,7 @@ typedef enum CBErrors
 {
    ERR_NONE                                                    = 0x00000000,
 
-   /* HW error category.                         0x00000001 - 0x0000FFFF */
+   /* General HW error category.                 0x00000001 - 0x0000FFFF */
    ERR_SERIAL_HW_TIMEOUT                                       = 0x00000001,
    ERR_SERIAL_MSG_TOO_LONG                                     = 0x00000002,
    ERR_SERIAL_MSG_BASE64_ENC_FAILED                            = 0x00000003,
@@ -53,19 +53,31 @@ typedef enum CBErrors
    ERR_PIN_RESET                                               = 0x0000000A,
    ERR_BOR_RESET                                               = 0x0000000B,
 
-   /* Memory error category                      0x00010000 - 0x0001FFFF */
-   ERR_MEM_NULL_VALUE                                          = 0x00010000,
-   ERR_MEM_BUFFER_LEN                                          = 0x00010001,
+   /* Flash error category                       0x00010000 - 0x0001FFFF */
+   ERR_FLASH_IMAGE_TOO_BIG                                     = 0x00010000,
+   ERR_FLASH_IMAGE_TYPE_INVALID                                = 0x00010001,
+   ERR_FLASH_BUSY                                              = 0x00010002,
+   ERR_FLASH_READ                                              = 0x00010003,
+   ERR_FLASH_PGS                                               = 0x00010004,
+   ERR_FLASH_PGP                                               = 0x00010005,
+   ERR_FLASH_PGA                                               = 0x00010006,
+   ERR_FLASH_WRP                                               = 0x00010007,
+   ERR_FLASH_PROGRAM                                           = 0x00010008,
+   ERR_FLASH_OPERATION                                         = 0x00010009,
+   ERR_FLASH_READ_VERIFY_FAILED                                = 0x0001000A,
+   ERR_FLASH_WRITE_INCOMPLETE                                  = 0x0001000B,
+   ERR_FLASH_SECTOR_ADDR_NOT_FOUND                             = 0x0001000C,
 
    /* NOR error category                         0x00030000 - 0x0003FFFF */
    ERR_NOR_ERROR                                               = 0x00030000,
    ERR_NOR_TIMEOUT                                             = 0x00030001,
    ERR_NOR_BUSY                                                = 0x00030002,
 
-   /* COMM error category                        0x00040000 - 0x0004FFFF */
+   /* Bootloader CommMgr error category           0x00040000 - 0x0004FFFF */
    ERR_COMM_UNKNOWN_MSG_SOURCE                                 = 0x00040000,
    ERR_COMM_INVALID_MSG_LEN                                    = 0x00040001,
    ERR_COMM_UNIMPLEMENTED_MSG                                  = 0x00040002,
+   ERR_COMM_FLASHMGR_TIMEOUT                                   = 0x00040003,
 
    /* MENU error category                        0x00050000 - 0x0005FFFF */
    ERR_MENU_NODE_STORAGE_ALLOC_NULL                            = 0x00050000,
@@ -119,6 +131,10 @@ typedef enum CBErrors
    /* Msg device error category                  0x000A0000 - 0x000AFFFF */
    ERR_MSG_ROUTE_INVALID                                       = 0x000A0000,
    ERR_MSG_UNKNOWN_BASIC                                       = 0x000A0001,
+
+   /* Memory error category                      0x000B0000 - 0x000BFFFF */
+   ERR_MEM_NULL_VALUE                                          = 0x000B0000,
+   ERR_MEM_BUFFER_LEN                                          = 0x000B0001,
 
    /* Reserved errors                            0xFFFFFFFE - 0xFFFFFFFF */
    ERR_UNIMPLEMENTED                                           = 0xFFFFFFFE,

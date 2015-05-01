@@ -204,22 +204,10 @@ CB_API_INC_DIR              = $(CB_API_DIR)/inc
 CB_API_LIB_DIR              = $(CB_API_DIR)/arm_lib
 
 #-------------------------------------------------------------------------------
-# APP Directories
-#-------------------------------------------------------------------------------
-
-# Application Comm directory
-APP_COMM_DIR            = $(APP_DIR)/comm
-
-# Application Debug directory
-APP_DBG_DIR             = $(APP_DIR)/debug
-
-#-------------------------------------------------------------------------------
 # Source virtual directories - this is where make will look for all files that
 # it needs to compile.
 #-------------------------------------------------------------------------------
 VPATH                   = $(APP_DIR) \
-                          $(APP_COMM_DIR) \
-                          $(APP_DBG_DIR) \
                           \
                           $(BSP_DIR) \
                           $(ETH_DRV_DIR)/src \
@@ -247,10 +235,8 @@ VPATH                   = $(APP_DIR) \
 INCLUDES                = -I$(SRC_DIR) \
                           -I$(COMMON_FW_SRC_DIR) \
                           -I$(COMMON_CLI_SYS_DIR) \
-                          -I$(APP_DIR) \
                           \
-                          -I$(APP_COMM_DIR) \
-                          -I$(APP_DBG_DIR) \
+                          -I$(APP_DIR) \
                           \
                           -I$(QPC_DIR)/include \
                           -I$(QPC_DIR)/qf/source \
@@ -319,11 +305,11 @@ ASM_SRCS               := \
 C_SRCS                  = \
                           main.c \
                           no_heap.c \
-                          comm.c \
                           \
                           bsp.c \
                           system_stm32f4xx.c \
                           stm32f4xx_it.c \
+                          flash.c \
                           \
                           stm32f4x7_eth.c \
                           stm32f4x7_eth_bsp.c \
@@ -348,8 +334,8 @@ C_SRCS                  = \
                           I2CBusMgr.c \
                           I2C1DevMgr.c \
                           SerialMgr.c \
-                          CommStackMgr.c \
-                          DbgMgr.c \
+                          CommMgr.c \
+                          FlashMgr.c \
                           \
                           misc.c  \
                           stm32f4xx_crc.c \
@@ -517,10 +503,11 @@ $(BIN_DIR):
 	@echo --- Creating directory $@
 	$(TRACE_FLAG)mkdir -p $@
 
-$(TARGET_BIN): $(TARGET_ELF)
-	@echo --- Creating binary $@
+$(TARGET_BIN): $(TARGET_ELF) cleanbin
+	@echo --- Creating hex $@
 	$(TRACE_FLAG)$(OBJCPY) -O binary $< $@
 	$(TRACE_FLAG)mv $(TARGET_BIN) $(TARGET_FLSH)
+	@echo --- Creating bin $(TARGET_FLSH)
 	$(TRACE_FLAG)$(OBJCPY) -O ihex $< $@
 	
 $(TARGET_ELF) : $(ASM_OBJS_EXT) $(C_OBJS_EXT) $(CPP_OBJS_EXT)
@@ -578,7 +565,7 @@ ifeq (0, $(words $(findstring $(MAKECMDGOALS), $(NODEPS))))
 -include $(C_DEPS_EXT) $(CPP_DEPS_EXT)
 endif
 
-.PHONY : clean clean_with_libs
+.PHONY : clean clean_with_libs cleanbin
 cleanall:
 	@echo ---------------------------
 	@echo --- Cleaning EVERYTHING

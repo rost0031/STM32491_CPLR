@@ -343,7 +343,7 @@ me-&gt;payloadMsgUnion.bootmodePayload._errorCode = me-&gt;errorCode;
 me-&gt;payloadMsgUnion.bootmodePayload._bootMode  = _CB_Bootloader; // This is the bootloader
 DBG_printf(&quot;Setting bootMode payload with bootmode: %d\n&quot;, me-&gt;payloadMsgUnion.bootmodePayload._bootMode);</action>
          <choice_glyph conn="79,27,4,1,3,-45">
-          <action box="-11,1,11,2"/>
+          <action box="-11,1,10,2"/>
          </choice_glyph>
         </choice>
         <choice target="../../../../0">
@@ -368,6 +368,26 @@ me-&gt;payloadMsgUnion.statusPayload._errorCode = me-&gt;errorCode;
 </action>
          <choice_glyph conn="79,27,5,1,-45">
           <action box="-8,-2,8,2"/>
+         </choice_glyph>
+        </choice>
+        <choice target="../../../../0">
+         <guard brief="SetBootMode?">_CBSetBootModeMsg == me-&gt;basicMsg._msgName</guard>
+         <action>me-&gt;errorCode = ERR_NONE;
+
+DBG_printf(&quot;_CBSetBootModeMsg decoded, attempting to decode payload (if exists)\n&quot;);
+
+/* Compose Done response.  We can re-use the current structure and it will be used by
+ * the exit action of the parent state to send the msg.  Here, we only set up fields
+ * that are specific to this response. We can also destructively change the payload
+ * name since we are sending a response right after this. */
+me-&gt;msgPayloadName = _CBStatusPayloadMsg;
+
+/* Don't change the basicMsg name since it should be the same in all cases. */
+me-&gt;basicMsg._msgPayload = me-&gt;msgPayloadName;
+me-&gt;payloadMsgUnion.statusPayload._errorCode = me-&gt;errorCode;
+DBG_printf(&quot;Setting status payload with error code: %d\n&quot;, me-&gt;payloadMsgUnion.statusPayload._errorCode);</action>
+         <choice_glyph conn="79,27,4,1,6,-45">
+          <action box="-11,4,10,2"/>
          </choice_glyph>
         </choice>
         <tran_glyph conn="79,22,2,-1,5">

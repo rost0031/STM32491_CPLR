@@ -41,11 +41,13 @@ using namespace std;
 class FWLdr {
 private:
    LogStub *m_pLog;         /**< Pointer to LogStub instance used for logging */
-	char* 	m_buf_FWImage;             /**<buffer to use to store the FW image*/
-	size_t   m_size_FWImage;         /**<size of the fw image that was read in */
+	char* 	m_buffer;                  /**<buffer to use to store the FW image*/
+	size_t   m_size;                 /**<size of the fw image that was read in */
 	unsigned int m_chunk_index;            /**<keep track of chunks of FW image*/
-	uint32_t m_FWImage_CRC;                     /**<CRC of the entire FW image */
+	uint32_t m_CRCImage;                        /**<CRC of the entire FW image */
 	string   m_buildTime;                           /**< parsed build datetime */
+	uint16_t m_major;                              /**< Major version of image */
+	uint16_t m_minor;                              /**< Minor version of image */
 
 	/**
 	 * Prepares the loaded FW image to be read chunk by chunk. Specifically,
@@ -62,7 +64,9 @@ private:
     * @brief   Parse version and build date/time from the filename.
     * @param   filename: const char pointer to buffer containing the relative
     * path and filename to the FW image file.
-    * @return  None
+    * @return: ClientError_t status of the client executing the command.
+    *    @arg  CLI_ERR_NONE: success
+    *    other error codes if failure.
     */
    ClientError_t parseFilename( const char *filename );
 
@@ -74,7 +78,7 @@ public:
     * @param   None
     * @return  m_size_FWImage: Size of FW image.
     */
-   unsigned int getSize(void) {return (m_size_FWImage);}
+   unsigned int getSize(void) {return (m_size);}
 
    /**
     * A getter method that returns the FW image chunk index.
@@ -94,15 +98,39 @@ public:
     * @return  Number of bytes left in the fw image.  If this number is zero,
     * then the packet is the last one that should be sent to the fw upgrade.
     */
-   unsigned int remains(void) {return (m_size_FWImage - m_chunk_index);}
+   unsigned int remains(void) {return (m_size - m_chunk_index);}
 
    /**
-    * Returns the total size of the read in FW Image
+    * @brief Returns the major version parsed from the filename of the FW image.
     *
     * @param   None.
-    * @return  Number of bytes total in the fw image.
+    * @return  uint16_t:  Major version.
     */
-   unsigned int getSize(size_t) {return (m_size_FWImage);}
+   uint16_t getMajVer(void) {return (this->m_major);}
+
+   /**
+    * @brief Returns the minor version parsed from the filename of the FW image.
+    *
+    * @param   None.
+    * @return  uint16_t:  Minor version.
+    */
+   uint16_t getMinVer(void) {return (this->m_minor);}
+
+   /**
+    * Returns the build datetime parsed from the filename of the FW image.
+    *
+    * @param   None.
+    * @return  const char*:  Const char* pointer to the parsed build datetime.
+    */
+   const char* getDatetime(void) {return (this->m_buildTime.c_str());}
+
+   /**
+    * Returns the build datetime length.
+    *
+    * @param   None.
+    * @return  size_t:  size of the datetime.
+    */
+   size_t getDatetimeLen(void) {return (this->m_buildTime.length());}
 
    /**
     * Loads the FW Image from a file, the name of which was passed in to the
@@ -110,10 +138,11 @@ public:
     *
     * @param   filename: const char pointer to buffer containing the relative
     * path and filename to the FW image file.
-    * @return  bytes_in_file: how many bytes were read in from the file
-    *          containing the FW image.
+    * @return: ClientError_t status of the client executing the command.
+    *    @arg  CLI_ERR_NONE: success
+    *    other error codes if failure.
     */
-   size_t loadFromFile( const char *filename );
+   ClientError_t loadFromFile( const char *filename );
 
    /**
     * Gets the next chunk from the loaded FW image.  Uses the user specified
@@ -164,14 +193,20 @@ public:
    void setLogging( LogStub *log );
 
 	/**
-    * @brief Default constructor. Initializes some variables.
+    * @brief Default constructor. Sets logging and reads file
     * @param [in] *log: LogStub pointer to the class that has the proper
     *                   callbacks set up for logging.
     * @param [in] *filename: const char pointer to the path and filename to open.
     */
    FWLdr( LogStub *log, const char* filename );
 
+   /**
+    * @brief Default constructor.  Sets logging.
+    * @param [in] *log: LogStub pointer to the class that has the proper
+    *                   callbacks set up for logging.
+    */
    FWLdr( LogStub *log );
+
    /**
     * @brief Default destructor.
     * Clears all the memory allocated for the FW image

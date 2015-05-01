@@ -49,7 +49,7 @@ QActive_subscribe((QActive *)me, MSG_RECEIVED_SIG);
 QActive_subscribe((QActive *)me, MSG_SEND_OUT_SIG);
 
 DBG_printf(me-&gt;m_pLog,&quot;Started MainMgr AO&quot;);</action>
-     <initial_glyph conn="1,2,4,3,11,2">
+     <initial_glyph conn="1,2,4,3,12,2">
       <action box="0,-2,6,2"/>
      </initial_glyph>
     </initial>
@@ -188,7 +188,19 @@ DBG_printf(me-&gt;m_pLog,&quot;Msg parsed as Prog, continuing...&quot;);
 /* Changed only the signal associated with event and repost it directly to the queue*/
 ((LrgDataEvt *) e)-&gt;super.sig = MSG_PROG_RECVD_SIG;
 QEQueue_postFIFO(&amp;cliQueue, (QEvt *)e);</action>
-         <choice_glyph conn="92,18,4,-1,4,8">
+         <choice target="../../../../3">
+          <guard brief="CBFlashMsg?">_CBFlashMsg == basicMsg._msgName</guard>
+          <choice_glyph conn="85,30,5,1,-39">
+           <action box="-10,0,10,2"/>
+          </choice_glyph>
+         </choice>
+         <choice target="../../..">
+          <guard>else</guard>
+          <choice_glyph conn="85,30,4,1,-8,-7">
+           <action box="-5,-10,5,2"/>
+          </choice_glyph>
+         </choice>
+         <choice_glyph conn="92,18,4,-1,12,-7">
           <action box="1,2,6,2"/>
          </choice_glyph>
         </choice>
@@ -253,8 +265,8 @@ CBBasicMsg_read_delimited_from(
 
 QEvt* evt = Q_NEW(QEvt, MSG_ACK_TIMED_OUT_SIG);
 QEQueue_postFIFO(&amp;cliQueue, (QEvt *)evt);</action>
-         <choice_glyph conn="55,18,4,3,9,-52">
-          <action box="0,2,10,2"/>
+         <choice_glyph conn="55,18,4,3,-6,-52">
+          <action box="0,-6,10,2"/>
          </choice_glyph>
         </choice>
         <choice target="../../../1">
@@ -276,7 +288,57 @@ QEQueue_postFIFO(&amp;cliQueue, (QEvt *)e);
          <action box="0,-2,10,2"/>
         </tran_glyph>
        </tran>
-       <state_glyph node="28,15,14,10">
+       <state_glyph node="28,15,14,8">
+        <entry box="1,2,6,2"/>
+        <exit box="1,4,6,2"/>
+       </state_glyph>
+      </state>
+      <state name="WaitForNextFlashCmd">
+       <documentation>/**
+ * @brief Wait for the next CBFlashMsg to be sent from ClientApi
+ * This state just waits for the next CBFlash Req msg to be sent from ClientApi.
+ *
+ * @param  [in,out] me: Pointer to the state machine
+ * @param  [in,out] e:  Pointer to the event being processed.
+ * @return status_: QState type that specifies where the state
+ * machine is going next.
+ */</documentation>
+       <entry>/* Post a timer on entry */
+QTimeEvt_rearm(
+    &amp;me-&gt;msgTimerEvt,
+    SEC_TO_TICKS( MAINMGR_MAX_TOUT_SEC_DONE_WAIT )
+);
+</entry>
+       <exit>QTimeEvt_disarm(&amp;me-&gt;msgTimerEvt);</exit>
+       <tran trig="MSG_SEND_OUT" target="../../2">
+        <action>DBG_printf(me-&gt;m_pLog,&quot;Got SEND_MSG, sending msg...&quot;);
+
+me-&gt;m_pComm-&gt;write_some(
+    (char *)((LrgDataEvt const *)e)-&gt;dataBuf,
+    ((LrgDataEvt const *)e)-&gt;dataLen
+);
+/*
+char tmp[1000];
+uint16_t tmpStrLen;
+ClientError_t convertStatus = MSG_hexToStr(
+    ((LrgDataEvt const *)e)-&gt;dataBuf,
+    ((LrgDataEvt const *)e)-&gt;dataLen,
+    tmp,
+    1000,
+    &amp;tmpStrLen,
+    0,
+    '-',
+    true
+);
+
+DBG_printf(me-&gt;m_pLog,&quot;ConStatus: 0x%x, sending a buffer with: %s&quot;, convertStatus, tmp);
+*/
+DBG_printf(me-&gt;m_pLog,&quot;Sent msg, waiting for Ack...&quot;);</action>
+        <tran_glyph conn="31,28,0,2,-5">
+         <action box="0,-3,12,2"/>
+        </tran_glyph>
+       </tran>
+       <state_glyph node="28,28,18,8">
         <entry box="1,2,6,2"/>
         <exit box="1,4,6,2"/>
        </state_glyph>

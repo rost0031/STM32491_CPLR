@@ -75,6 +75,8 @@ private:
    struct CBStatusPayloadMsg  m_statusPayloadMsg;
    struct CBVersionPayloadMsg m_versionPayloadMsg;
    struct CBBootModePayloadMsg m_bootmodePayloadMsg;
+   struct CBFlashMetaPayloadMsg m_flashMetaPayloadMsg;
+   struct CBFlashDataPayloadMsg m_flashDataPayloadMsg;
 
    uint8_t dataBuf[1000];
    int dataLen;
@@ -92,7 +94,7 @@ private:
     * @param   None
     * @return: QEvt pointer to the event that is now in the queue.
     */
-   ClientError_t pollForJobDone(
+   ClientError_t pollForResp(
          CBBasicMsg *basicMsg,
          CBMsgName *payloadMsgName,
          CBPayloadMsgUnion_t *payloadMsgUnion
@@ -103,7 +105,7 @@ private:
     * @param:  None
     * @return: QEvt pointer to the event that is now in the queue.
     */
-   ClientError_t waitForJobDone(
+   ClientError_t waitForResp(
          CBBasicMsg *basicMsg,
          CBMsgName *payloadMsgName,
          CBPayloadMsgUnion_t *payloadMsgUnion

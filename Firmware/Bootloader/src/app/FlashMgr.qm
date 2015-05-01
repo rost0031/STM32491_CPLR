@@ -1,0 +1,516 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<model version="3.2.2">
+ <documentation>/**
+ * CommStackMgr Active Object which.  This AO handles all communications work.
+ */</documentation>
+ <framework name="qpc"/>
+ <package name="Events" stereotype="0x01">
+  <class name="FWDataEvt" superclass="qpc::QEvt">
+   <documentation>/**&lt; Event type that allows transport of FW data */</documentation>
+   <attribute name="dataCRC" type="uint32_t" visibility="0x01" properties="0x00">
+    <documentation>/**&lt; FW Data packet CRC */</documentation>
+   </attribute>
+   <attribute name="dataLen" type="uint16_t" visibility="0x01" properties="0x00">
+    <documentation>/**&lt; Length of data buffer */</documentation>
+   </attribute>
+   <attribute name="dataBuf[CB_MAX_MSG_LEN]" type="uint8_t" visibility="0x01" properties="0x00">
+    <documentation>/**&lt; Data buffer */</documentation>
+   </attribute>
+   <attribute name="seqCurr" type="uint16_t" visibility="0x01" properties="0x00">
+    <documentation>/**&lt; FW data packet sequence number */</documentation>
+   </attribute>
+   <attribute name="seqTotal" type="uint16_t" visibility="0x01" properties="0x00">
+    <documentation>/**&lt; Total number of FW data packets expected */</documentation>
+   </attribute>
+  </class>
+  <class name="FWMetaEvt" superclass="qpc::QEvt">
+   <documentation>/**&lt; Event type that transports metadata about the FW upgrade */</documentation>
+   <attribute name="imageCRC" type="uint32_t" visibility="0x01" properties="0x00">
+    <documentation>/**&lt; FW image CRC */</documentation>
+   </attribute>
+   <attribute name="imageSize" type="uint32_t" visibility="0x01" properties="0x00">
+    <documentation>/**&lt; FW image size */</documentation>
+   </attribute>
+   <attribute name="imageType" type="CBBootMode" visibility="0x01" properties="0x00">
+    <documentation>/**&lt; FW image type */</documentation>
+   </attribute>
+   <attribute name="imageMaj" type="uint8_t" visibility="0x01" properties="0x00">
+    <documentation>/**&lt; FW image major version number */</documentation>
+   </attribute>
+   <attribute name="imageMin" type="uint8_t" visibility="0x01" properties="0x00">
+    <documentation>/**&lt; FW image minor version number */</documentation>
+   </attribute>
+   <attribute name="imageDatetime[CB_DATETIME_LEN]" type="uint8_t" visibility="0x01" properties="0x00">
+    <documentation>/**&lt; FW image datetime */</documentation>
+   </attribute>
+   <attribute name="errorCode" type="CBErrorCode" visibility="0x01" properties="0x00">
+    <documentation>/**&lt; Status of the FW flash completion.  Only used when sending back from FlashMgr */</documentation>
+   </attribute>
+  </class>
+  <class name="FlashStatusEvt" superclass="qpc::QEvt">
+   <documentation>/**&lt; Event type that transports metadata about the FW upgrade */</documentation>
+   <attribute name="errorCode" type="CBErrorCode" visibility="0x01" properties="0x00">
+    <documentation>/**&lt; Status of the FlashMgr operation completion. */</documentation>
+   </attribute>
+  </class>
+ </package>
+ <package name="AOs" stereotype="0x02">
+  <class name="FlashMgr" superclass="qpc::QActive">
+   <documentation>/**
+ * \brief FlashMgr &quot;class&quot;
+ */</documentation>
+   <attribute name="msgRoute" type="CBMsgRoute" visibility="0x01" properties="0x00">
+    <documentation>/**&lt; Keeps track of where the message came from */</documentation>
+   </attribute>
+   <attribute name="reqProg" type="bool" visibility="0x01" properties="0x00">
+    <documentation>/**&lt; Keep track of whether Prog responses were requested by the sender of the msg */</documentation>
+   </attribute>
+   <attribute name="errorCode" type="CBErrorCode" visibility="0x01" properties="0x00">
+    <documentation>/**&lt; Keep track of errors that may occur in the AO */</documentation>
+   </attribute>
+   <attribute name="fwFlashMetadata" type="struct CBFlashMetaPayloadMsg" visibility="0x01" properties="0x00">
+    <documentation>/**&lt; Common struct for CBBasicMsg.  This can be re-used in most cases since once the
+ * request has been unwrapped, all the data from that struct has been stored locally */</documentation>
+   </attribute>
+   <attribute name="fwPacketExp" type="uint16_t" visibility="0x01" properties="0x00">
+    <documentation>/**&lt; How many total FW data packets to expect */</documentation>
+   </attribute>
+   <attribute name="fwPacketCurr" type="uint16_t" visibility="0x01" properties="0x00">
+    <documentation>/**&lt; How many total FW data packets to expect */</documentation>
+   </attribute>
+   <attribute name="flashAddrCurr" type="uint32_t" visibility="0x01" properties="0x00">
+    <documentation>/**&lt; Keep track of the current flash address */</documentation>
+   </attribute>
+   <attribute name="retryCurr" type="uint16_t" visibility="0x01" properties="0x00">
+    <documentation>/**&lt; Counter for retries */</documentation>
+   </attribute>
+   <attribute name="flashTimerEvt" type="QTimeEvt" visibility="0x01" properties="0x00">
+    <documentation>/**&lt; Used for timing out events and actions in FlashMgr object. */</documentation>
+   </attribute>
+   <attribute name="flashSectorsToErase[ADDR_FLASH_SECTORS]" type="uint32_t" visibility="0x01" properties="0x00">
+    <documentation>/**&lt; FW flash sectors to erase */</documentation>
+   </attribute>
+   <attribute name="flashSectorsToEraseNum" type="uint8_t" visibility="0x01" properties="0x00">
+    <documentation>/**&lt; How many flash sectors to erase (how many are in the flashSectorsToErase array) */</documentation>
+   </attribute>
+   <statechart>
+    <initial target="../1/0">
+     <action>(void)e;        /* suppress the compiler warning about unused parameter */
+
+QS_OBJ_DICTIONARY(&amp;l_CommMgr);
+QS_FUN_DICTIONARY(&amp;QHsm_top);
+QS_FUN_DICTIONARY(&amp;CommMgr_initial);
+QS_FUN_DICTIONARY(&amp;CommMgr_Active);
+
+QS_FUN_DICTIONARY(&amp;CommMgr_Idle);
+QS_FUN_DICTIONARY(&amp;CommMgr_Busy);
+QS_FUN_DICTIONARY(&amp;CommMgr_PrepFlash);
+QS_FUN_DICTIONARY(&amp;CommMgr_WaitingForFWData);
+QS_FUN_DICTIONARY(&amp;CommMgr_WritingFlash);
+QS_FUN_DICTIONARY(&amp;CommMgr_FinalizingFlash);
+
+QActive_subscribe((QActive *)me, FLASH_OP_START_SIG);
+QActive_subscribe((QActive *)me, FLASH_DATA_SIG);
+QActive_subscribe((QActive *)me, FLASH_DONE_SIG);
+QActive_subscribe((QActive *)me, FLASH_ERROR_SIG);
+QActive_subscribe((QActive *)me, FLASH_TIMEOUT_SIG);</action>
+     <initial_glyph conn="1,2,4,3,9,5">
+      <action box="0,-2,6,2"/>
+     </initial_glyph>
+    </initial>
+    <state name="Active">
+     <documentation>/**
+ * This state is a catch-all Active state.  If any signals need
+ * to be handled that do not cause state transitions and are
+ * common to the entire AO, they should be handled here.
+ *
+ * @param  [in|out] me: Pointer to the state machine
+ * @param  [in|out]  e:  Pointer to the event being processed.
+ * @return status: QState type that specifies where the state
+ * machine is going next.
+ */</documentation>
+     <entry>/* Arm and disarm*/
+QTimeEvt_postIn(
+    &amp;me-&gt;flashTimerEvt,
+    (QActive *)me,
+    SEC_TO_TICKS( LL_MAX_TOUT_SEC_CLI_MSG_PROCESS )
+);
+QTimeEvt_disarm(&amp;me-&gt;flashTimerEvt);</entry>
+     <state name="Idle">
+      <documentation>/**
+ * @brief	Idle state that allows new messages to be received.
+ * The Idle state allows for handling of new incoming msgs. Msgs in other states
+ * will be either deferred or ignored.
+ *
+ * @param  [in|out] me: Pointer to the state machine
+ * @param  [in|out]  e:  Pointer to the event being processed.
+ * @return status: QState type that specifies where the state
+ * machine is going next.
+ */</documentation>
+      <entry>/* Clear out all the variables on entry to Idle state.  By this point, any error
+ * feedback should have already happened. */
+me-&gt;errorCode       = ERR_NONE;
+me-&gt;msgRoute        = _CB_NoRoute;
+me-&gt;reqProg         = false;
+
+memset(&amp;me-&gt;fwFlashMetadata, 0, sizeof(me-&gt;fwFlashMetadata));</entry>
+      <exit>/* Reset all the variables that keep track of FW upgrades */
+me-&gt;fwPacketCurr = 0;
+me-&gt;fwPacketExp  = 0;
+me-&gt;retryCurr    = 0;</exit>
+      <tran trig="FLASH_OP_START" target="../../1/1">
+       <action>DBG_printf(&quot;FLASH_OP_START\n&quot;);
+
+/* Get the metadata and record it.  Ignore the status  */
+me-&gt;fwFlashMetadata._imageCrc  = ((FWMetaEvt const *)e)-&gt;imageCRC;
+me-&gt;fwFlashMetadata._imageMaj  = ((FWMetaEvt const *)e)-&gt;imageMaj;
+me-&gt;fwFlashMetadata._imageMin  = ((FWMetaEvt const *)e)-&gt;imageMin;
+me-&gt;fwFlashMetadata._imageSize = ((FWMetaEvt const *)e)-&gt;imageSize;
+me-&gt;fwFlashMetadata._imageType = ((FWMetaEvt const *)e)-&gt;imageType;
+MEMCPY(
+    me-&gt;fwFlashMetadata._imageDatetime,
+    ((FWMetaEvt const *)e)-&gt;imageDatetime,
+    CB_DATETIME_LEN
+);
+
+LOG_printf(&quot;Extracted FW image metadata:\n&quot;);
+LOG_printf(&quot;CRC: 0x%08x\n&quot;, me-&gt;fwFlashMetadata._imageCrc);
+LOG_printf(&quot;Maj: %02d\n&quot;, me-&gt;fwFlashMetadata._imageMaj);
+LOG_printf(&quot;Min: %02d\n&quot;, me-&gt;fwFlashMetadata._imageMin);
+LOG_printf(&quot;Size: %d\n&quot;, me-&gt;fwFlashMetadata._imageSize);
+LOG_printf(&quot;Type: %d\n&quot;, me-&gt;fwFlashMetadata._imageType);
+LOG_printf(&quot;Datetime: %s\n&quot;, me-&gt;fwFlashMetadata._imageDatetime);
+
+
+DBG_printf(&quot;Finding flash sectors to erase.\n&quot;);
+
+/* Clear out the array and its length */
+memset( me-&gt;flashSectorsToErase, 0, sizeof(me-&gt;flashSectorsToErase) );
+me-&gt;flashSectorsToEraseNum = 0;
+
+me-&gt;errorCode = FLASH_getSectorsToErase(
+    me-&gt;flashSectorsToErase,
+    &amp;(me-&gt;flashSectorsToEraseNum),
+    ADDR_FLASH_SECTORS,
+    me-&gt;fwFlashMetadata._imageType,
+    me-&gt;fwFlashMetadata._imageSize
+);
+LOG_printf(&quot;List of %d sectors (by address) to erase:\n&quot;, me-&gt;flashSectorsToEraseNum);
+for( uint8_t i=0; i &lt; me-&gt;flashSectorsToEraseNum; i++ ) {
+    LOG_printf(&quot;Sector at address at 0x%08x\n&quot;, me-&gt;flashSectorsToErase[i]);
+}
+</action>
+       <tran_glyph conn="6,16,3,3,41">
+        <action box="0,-2,15,2"/>
+       </tran_glyph>
+      </tran>
+      <state_glyph node="6,8,15,64">
+       <entry box="1,2,6,2"/>
+       <exit box="1,4,6,2"/>
+      </state_glyph>
+     </state>
+     <state name="Busy">
+      <documentation>/**
+ * @brief	Busy state for msg processing.
+ * This state handles msg processing and indicates that the system is busy and
+ * cannot process another msg at this time.
+ *
+ * @param  [in|out] me: Pointer to the state machine
+ * @param  [in|out]  e:  Pointer to the event being processed.
+ * @return status: QState type that specifies where the state
+ * machine is going next.
+ */</documentation>
+      <entry>/* Arm the timer so if the message can't be processed for some reason, we can get
+ * back to idle state.  This timer may be re-armed if some messages require more 
+ * time to process than others. */
+QTimeEvt_rearm(
+    &amp;me-&gt;flashTimerEvt,
+    SEC_TO_TICKS( LL_MAX_TOUT_SEC_CLI_MSG_PROCESS )
+);
+
+
+</entry>
+      <exit>/* Disarm timer on exit */
+QTimeEvt_disarm(&amp;me-&gt;flashTimerEvt);</exit>
+      <tran trig="FLASH_TIMEOUT" target="../../0">
+       <action>ERR_printf(&quot;Timeout trying to process flash request, error: 0x%08x\n&quot;, me-&gt;errorCode);</action>
+       <tran_glyph conn="42,69,3,1,-21">
+        <action box="-14,-2,14,2"/>
+       </tran_glyph>
+      </tran>
+      <state name="PrepFlash">
+       <documentation>/**
+ * @brief    Prepares flash memory for flashing
+ * This state is responsible for erasing the appropriate sections of the Flash.
+ *
+ * @param  [in|out] me: Pointer to the state machine
+ * @param  [in|out]  e:  Pointer to the event being processed.
+ * @return status: QState type that specifies where the state
+ * machine is going next.
+ */</documentation>
+       <entry>LOG_printf(&quot;Erasing flash\n&quot;);
+
+</entry>
+       <tran trig="FLASH_DONE" target="../../2">
+        <action>DBG_printf(&quot;FLASH_DONE\n&quot;);</action>
+        <tran_glyph conn="47,19,3,0,12,5">
+         <action box="1,-2,10,2"/>
+        </tran_glyph>
+       </tran>
+       <state_glyph node="47,13,26,8">
+        <entry box="1,2,6,2"/>
+       </state_glyph>
+      </state>
+      <state name="WaitingForFWData">
+       <documentation>/**
+ * @brief    Requests and waits for FW data packets
+ * This state is responsible for:
+ * 1. Requesting a FW data packet from CommMgr.
+ * 2. Waiting (with a timeout) to receive the packet.
+ * 3. Validating the packet
+ *
+ * @param  [in|out] me: Pointer to the state machine
+ * @param  [in|out]  e:  Pointer to the event being processed.
+ * @return status: QState type that specifies where the state
+ * machine is going next.
+ */</documentation>
+       <tran trig="FLASH_DATA">
+        <action>DBG_printf(&quot;FLASH_DATA_RECEIVED\n&quot;);</action>
+        <choice target="../../../3">
+         <guard brief="ValidSeq?">me-&gt;fwPacketCurr + 1 == ((FWDataEvt const *)e)-&gt;seqCurr</guard>
+         <action>DBG_printf(&quot;Valid fw packet sequence number\n&quot;);</action>
+         <choice_glyph conn="59,36,4,0,4">
+          <action box="1,0,10,2"/>
+         </choice_glyph>
+        </choice>
+        <choice target="../../../../0">
+         <guard>else</guard>
+         <action>ERR_printf(&quot;Invalid fw packet sequence number\n&quot;);</action>
+         <choice_glyph conn="59,36,5,1,-38">
+          <action box="-7,-2,5,2"/>
+         </choice_glyph>
+        </choice>
+        <tran_glyph conn="47,30,3,-1,12,6">
+         <action box="0,-2,15,2"/>
+        </tran_glyph>
+       </tran>
+       <state_glyph node="47,24,26,8"/>
+      </state>
+      <state name="WritingFlash">
+       <documentation>/**
+ * @brief    Writes and verifies received flash data packet to Flash memory.
+ * This state is responsible for:
+ * 1. Writing the data packet to flash memory at the location necessary.
+ * 2. Reading back the flash memory and verifying it was written correctly.
+ * 3. Checking if more packets are needed.
+ *
+ * @param  [in|out] me: Pointer to the state machine
+ * @param  [in|out]  e:  Pointer to the event being processed.
+ * @return status: QState type that specifies where the state
+ * machine is going next.
+ */</documentation>
+       <tran trig="FLASH_DONE">
+        <action>DBG_printf(&quot;FLASH_DONE\n&quot;);
+
+/* Increment current packet after we have successfully written */
+me-&gt;fwPacketCurr++;</action>
+        <choice target="../../../2">
+         <guard brief="MorePackets?">me-&gt;fwPacketCurr == me-&gt;fwPacketExp</guard>
+         <action>DBG_printf(&quot;Waiting for next fw packet\n&quot;);</action>
+         <choice_glyph conn="77,45,4,1,-17,-4">
+          <action box="1,-5,10,2"/>
+         </choice_glyph>
+        </choice>
+        <choice target="../../../4">
+         <guard>else</guard>
+         <action>DBG_printf(&quot;No more fw packets expected\n&quot;);</action>
+         <choice_glyph conn="77,45,4,1,14,-4">
+          <action box="1,2,10,2"/>
+         </choice_glyph>
+        </choice>
+        <tran_glyph conn="47,45,3,-1,30">
+         <action box="0,-2,10,2"/>
+        </tran_glyph>
+       </tran>
+       <tran trig="FLASH_ERROR">
+        <action>WRN_printf(&quot;FLASH_ERROR\n&quot;);</action>
+        <choice target="../..">
+         <guard brief="RetriesLeft?">me-&gt;retryCurr &lt; MAX_FLASH_RETRIES</guard>
+         <action>LOG_printf(&quot;Retrying to flash packet, retry %d out of %d max\n&quot;, me-&gt;retryCurr, MAX_FLASH_RETRIES);</action>
+         <choice_glyph conn="59,53,5,2,10,-3">
+          <action box="1,0,10,2"/>
+         </choice_glyph>
+        </choice>
+        <choice target="../../../../0">
+         <guard>else</guard>
+         <action>ERR_printf(&quot;No more retries\n&quot;);</action>
+         <choice_glyph conn="59,53,5,1,-38">
+          <action box="-9,0,10,2"/>
+         </choice_glyph>
+        </choice>
+        <tran_glyph conn="47,48,3,-1,12,5">
+         <action box="0,-2,10,2"/>
+        </tran_glyph>
+       </tran>
+       <state_glyph node="47,40,26,10"/>
+      </state>
+      <state name="FinalizeFlash">
+       <documentation>/**
+ * @brief    Writes FW image size, CRC, versions, and datetime to Flash; locks it.
+ * This state is responsible for:
+ * 1. Writing the FW image CRC, Major/Minor versions, size, and datetime to a special
+ *    sector of the flash memory
+ * 2. Verifying the CRC/size/version/datetime of the written FW image matches what
+ *    was sent down with the initial metadata.
+ * 3. Locking the flash and sending the new metadata (which should match the
+ *    original) to CommMgr to send back to the client.
+ *
+ * @param  [in|out] me: Pointer to the state machine
+ * @param  [in|out]  e:  Pointer to the event being processed.
+ * @return status: QState type that specifies where the state
+ * machine is going next.
+ */</documentation>
+       <tran trig="FLASH_DONE" target="../../../0">
+        <action>DBG_printf(&quot;FLASH_DONE\n&quot;);</action>
+        <tran_glyph conn="73,65,1,1,-52">
+         <action box="-16,-2,10,2"/>
+        </tran_glyph>
+       </tran>
+       <tran trig="FLASH_ERROR" target="../../../0">
+        <action>WRN_printf(&quot;FLASH_ERROR\n&quot;);</action>
+        <tran_glyph conn="73,62,1,1,-52">
+         <action box="-16,-2,10,2"/>
+        </tran_glyph>
+       </tran>
+       <state_glyph node="47,57,26,10"/>
+      </state>
+      <state_glyph node="42,8,49,64">
+       <entry box="1,2,6,2"/>
+       <exit box="1,4,6,2"/>
+      </state_glyph>
+     </state>
+     <state_glyph node="3,3,94,74">
+      <entry box="1,2,5,2"/>
+     </state_glyph>
+    </state>
+    <state_diagram size="163,90"/>
+   </statechart>
+  </class>
+  <attribute name="AO_FlashMgr" type="QActive * const" visibility="0x00" properties="0x00">
+   <documentation>/**&lt; &quot;opaque&quot; pointer to the Active Object */</documentation>
+  </attribute>
+  <operation name="FlashMgr_ctor" type="void" visibility="0x00" properties="0x00">
+   <documentation>/**
+ * @brief C &quot;constructor&quot; for FlashMgr &quot;class&quot;.
+ * Initializes all the timers and queues used by the AO and sets of the
+ * first state.
+ * @param  None
+ * @param  None
+ * @retval None
+ */</documentation>
+   <code>FlashMgr *me = &amp;l_FlashMgr;
+QActive_ctor(&amp;me-&gt;super, (QStateHandler)&amp;FlashMgr_initial);
+QTimeEvt_ctor(&amp;me-&gt;flashTimerEvt, FLASH_TIMEOUT_SIG);</code>
+  </operation>
+ </package>
+ <directory name=".">
+  <file name="FlashMgr_gen.c">
+   <text>/**
+ * @file    FlashMgr.c
+ * Declarations for functions for the FlashMgr AO.  This state
+ * machine handles all FW flashing operations
+ *
+ * Note: If editing this file, please make sure to update the FlashMgr.qm
+ * model.  The generated code from that model should be very similar to the
+ * code in this file.
+ *
+ * @date    04/29/2015
+ * @author  Harry Rostovtsev
+ * @email   harry_rostovtsev@datacard.com
+ * Copyright (C) 2015 Datacard. All rights reserved.
+ *
+ * @addtogroup groupBsp
+ * @{
+ */
+
+/* Includes ------------------------------------------------------------------*/
+#include &quot;FlashMgr.h&quot;
+#include &quot;project_includes.h&quot;           /* Includes common to entire project. */
+#include &quot;bsp_defs.h&quot;                         /* For time to ticks conversion */
+#include &quot;flash.h&quot;
+
+/* Compile-time called macros ------------------------------------------------*/
+Q_DEFINE_THIS_FILE;                 /* For QSPY to know the name of this file */
+DBG_DEFINE_THIS_MODULE( DBG_MODL_FLASH );/* For debug system to ID this module */
+
+/* Private typedefs ----------------------------------------------------------*/
+$declare(AOs::FlashMgr)
+
+/* Private defines -----------------------------------------------------------*/
+#define USER_FLASH_FIRST_PAGE_ADDRESS                                 0x08020000
+#define MAX_FLASH_RETRIES                                                      5
+
+/* Private macros ------------------------------------------------------------*/
+/* Private variables and Local objects ---------------------------------------*/
+static FlashMgr l_FlashMgr; /* the single instance of the Interstage active object */
+
+/* Global-scope objects ----------------------------------------------------*/
+QActive * const AO_FlashMgr = (QActive *)&amp;l_FlashMgr;  /* &quot;opaque&quot; AO pointer */
+
+/* Private function prototypes -----------------------------------------------*/
+/* Private functions ---------------------------------------------------------*/
+$define(AOs::FlashMgr_ctor)
+$define(AOs::FlashMgr)
+
+/**
+ * @} end addtogroup groupBsp
+ */
+
+/******** Copyright (C) 2015 Datacard. All rights reserved *****END OF FILE****/</text>
+  </file>
+  <file name="FlashMgr_gen.h">
+   <text>/**
+ * @file    FlashMgr.h
+ * Declarations for functions for the FlashMgr AO.  This state
+ * machine handles all FW flashing operations
+ *
+ * Note: If editing this file, please make sure to update the FlashMgr.qm
+ * model.  The generated code from that model should be very similar to the
+ * code in this file.
+ *
+ * @date    04/29/2015
+ * @author  Harry Rostovtsev
+ * @email   harry_rostovtsev@datacard.com
+ * Copyright (C) 2015 Datacard. All rights reserved.
+ *
+ * @addtogroup groupBsp
+ * @{
+ */
+
+/* Define to prevent recursive inclusion -------------------------------------*/
+#ifndef FLASHMGR_H_
+#define FLASHMGR_H_
+
+/* Includes ------------------------------------------------------------------*/
+#include &quot;qp_port.h&quot;                                        /* for QP support */
+#include &quot;CBCommApi.h&quot;               /* For API for communicating with client */
+#include &quot;CBSignals.h&quot;              /* For QP signals available to the system */
+
+/* Exported defines ----------------------------------------------------------*/
+/* Exported macros -----------------------------------------------------------*/
+/* Exported types ------------------------------------------------------------*/
+$declare(Events)
+/* Exported constants --------------------------------------------------------*/
+/* Exported functions --------------------------------------------------------*/
+$declare(AOs::FlashMgr_ctor)
+$declare(AOs::AO_FlashMgr)
+
+/**
+ * @} end addtogroup groupBsp
+ */
+
+#endif                                                         /* FLASHMGR_H_ */
+/******** Copyright (C) 2014 Datacard. All rights reserved *****END OF FILE****/</text>
+  </file>
+ </directory>
+</model>

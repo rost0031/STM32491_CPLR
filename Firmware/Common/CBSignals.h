@@ -44,9 +44,9 @@ enum FirstSignal {
 };
 
 /**
- * @enum Signals used by CommStackMgr
+ * @enum Signals used by CommMgr
  */
-enum CommStackSignals {
+enum CommSignals {
    ETH_UDP_SEND_OUT_SIG = FIRST_SIG, /** This signal must start at the previous category max signal */
    ETH_UDP_RECEIVED_SIG,
    SER_RECEIVED_SIG,
@@ -54,14 +54,14 @@ enum CommStackSignals {
    CLI_SEND_DATA_SIG,
    CLI_MSG_TIMEOUT_SIG,
    MSG_PROCESS_SIG,
-   MSG_MAX_SIG,
+   COMM_MAX_SIG,
 };
 
 /**
  * @enum Signals used by SerialMgr
  */
 enum SerialMgrSignals {
-   UART_DMA_START_SIG = MSG_MAX_SIG, /** This signal must start at the previous category max signal */
+   UART_DMA_START_SIG = COMM_MAX_SIG, /** This signal must start at the previous category max signal */
    UART_DMA_DONE_SIG,
    UART_DMA_TIMEOUT_SIG,
    UART_DMA_DBG_TOGGLE_SIG,
@@ -128,10 +128,24 @@ enum I2C1DevMgrSignals {
 };
 
 /**
+ * @enum Signals used by FlashMgr
+ */
+enum FlashMgrSignals {
+   FLASH_OP_START_SIG = I2C1_DEV_MAX_SIG, /** This signal must start at the previous category max signal */
+   FLASH_DATA_SIG,
+   FLASH_DONE_SIG,
+   FLASH_ERROR_SIG,
+   FLASH_TIMEOUT_SIG,
+   FLASH_OP_DONE_SIG,
+   FLASH_FW_DONE_SIG,
+   FLASH_MAX_SIG
+};
+
+/**
  * @enum Signals used by DbgMgr
  */
 enum DbgMgrSignals {
-   DBG_MENU_REQ_SIG = I2C1_DEV_MAX_SIG, /** This signal must start at the previous category max signal */
+   DBG_MENU_REQ_SIG = FLASH_MAX_SIG, /** This signal must start at the previous category max signal */
    DBG_LOG_SIG,
    DBG_MENU_SIG,
    DBG_MAX_SIG

@@ -204,28 +204,35 @@ enum CBMsgName
     CBGetVersionMsg      = 2; // CBBasicMsg   - Used to get versions and build
                               // dates from the CB board and return 
                               // CBVersionPayloadMsg.
+                              
     CBVersionPayloadMsg  = 3; // CBPayloadMsg - Used to send back versions and 
                               // build dates from the CB board.
+                              
     CBGetBootModeMsg     = 4; // CBBasicMsg   - Used to find which boot mode the
                               // CB board in.  Note, system Rom mode will not 
                               // respond to this (or any msgs other than DFU) 
                               // msg.
+                              
     CBSetBootModeMsg     = 5; // CBBasicMsg   - Used to tell the CB board to 
                               // boot to: 
                               // Bootloader  - Used to flash new Application FW.
                               // Application - Main run mode 
                               // System ROM mode - used to flash Bootloader (not
                               //               currently implemented).
+                              
     CBBootModePayloadMsg = 6; // CBPayloadMsg - Used to send the current 
                               // BootMode information with GetBootMode and 
                               // SetBootMode msgs.
+                              
     CBFlashMsg           = 7; // CBBasicMsg - Used to send and flash the FW
+    
 	CBFlashMetaPayloadMsg = 8;// CBPayloadMsg - Used to as a payload with 
 	                          // CBFlashMsg basic msg to send FW image type, 
 	                          // size, and CRC of the FW image that will follow.
 	                          // Also used to send back status of each packet 
-	                          // to verify 
-    CBFlashDataPayloadMsg = 9; // CBPayloadMsg - Used as a data payload by 
+	                          // to verify
+	                           
+    CBFlashDataPayloadMsg = 9;// CBPayloadMsg - Used as a data payload by 
                               // CBFlashMsg basic msg. Used to send FW image and
                               // associated meta-data (fw packet number and CRC 
                               // of data included)
@@ -548,21 +555,21 @@ message CBBootModePayloadMsg
 //          < msgName = CBFlashMsg                < imageCrc 
 //          < msgID   = n (some uint)             < imageSize
 //          < msgType = CB_Req                    < imageType
-//          < msgProgReq = 1 <-- must be SET                  
-//          < msgRoute = [CBMsgRoute]
-//          < msgPayload = CBFlashMetaPayloadMsg
+//          < msgProgReq = [0|1]                  < imageMajor            
+//          < msgRoute = [CBMsgRoute]             < imageMinor
+//          < msgPayload = CBFlashMetaPayloadMsg  < imageDatetime
 // *Rec*  [[**************CBBasicMsg***********]\n]<<<<<<<<<<<<<<<<<<<<<<<*Send*
 //          < msgName = CBFlashMsg
 //          < msgID   = [uint32]                   
 //          < msgType = CB_Ack                        
-//          < msgProgReq = 1
+//          < msgProgReq = [0|1]
 //          < msgRoute = [CBMsgRoute]
 //          < msgPayload = CBNoMsg
 // *Rec*  [[************CBBasicMsg**********][**CBPayloadMsg**]\n]<<<<<<<<*Send*
 //          < msgName = CBFlashMsg             < errorCode = CB_ERR_CODE  
 //          < msgID   = [uint32]                
-//          < msgType = CB_Prog  <--- note that this is a Prog msg, not a Done.                
-//          < msgProgReq = 1
+//          < msgType = CB_Done                
+//          < msgProgReq = [0|1]
 //          < msgRoute = [CBMsgRoute]
 //          < msgPayload = CBStatusPayloadMsg
 //
@@ -572,52 +579,53 @@ message CBBootModePayloadMsg
 //          < msgName = CBFlashMsg                < dataCrc 
 //          < msgID   = n + 1                     < dataLen
 //          < msgType = CB_Req                    < dataBuf
-//          < msgProgReq = 1 <-- this must be SET                  
-//          < msgRoute = [CBMsgRoute]
+//          < msgProgReq = [0|1]                  < seqCurr ( n through n + x ) 
+//          < msgRoute = [CBMsgRoute]             < seqTotal ( n + x )
 //          < msgPayload = CBFlashDataPayloadMsg
 // *Rec*  [[**************CBBasicMsg***********]\n]<<<<<<<<<<<<<<<<<<<<<<<*Send*
 //          < msgName = CBFlashMsg
 //          < msgID   = [uint32]                   
 //          < msgType = CB_Ack                        
-//          < msgProgReq = 1
+//          < msgProgReq = [0|1]
 //          < msgRoute = [CBMsgRoute]
 //          < msgPayload = CBNoMsg
 // *Rec*  [[************CBBasicMsg**********][**CBPayloadMsg**]\n]<<<<<<<<*Send*
 //          < msgName = CBFlashMsg             < errorCode = CB_ERR_CODE  
 //          < msgID   = [uint32]                
-//          < msgType = CB_Prog  <--- note that this is a Prog msg, not a Done.                
-//          < msgProgReq = 1
+//          < msgType = CB_Done                
+//          < msgProgReq = [0|1]
 //          < msgRoute = [CBMsgRoute]
 //          < msgPayload = CBStatusPayloadMsg
 // 
 // 3.  Repeat until all the data packets have been sent.  If at any point there's
-//     a failure, an error will come back with one of the prog msgs and the 
+//     a failure, an error will come back with one of the done msgs and the 
 //     process should stop.
 //
 // 4.  Send last data packet and wait for a Done msg. 
-//     (note the msgProgReq being RESET for the last packet)
+//     (note the last packet has seqCur equal to seqTotal and a 
+//     CBFlashMetaPayloadMsg as a payload in the final Done response.)
 //
 // *Send*  [[************CBBasicMsg**********][**CBPayloadMsg**]\n]>>>>>>>>*Rec*
 //          < msgName = CBFlashMsg                < dataCrc 
 //          < msgID   = n + 1                     < dataLen
 //          < msgType = CB_Req                    < dataBuf
-//          < msgProgReq = 0 <-- must be RESET                  
-//          < msgRoute = [CBMsgRoute]
+//          < msgProgReq = [0|1]                  < seqCurr ( n + x ) 
+//          < msgRoute = [CBMsgRoute]             < seqTotal ( n + x )
 //          < msgPayload = CBFlashDataPayloadMsg
 // *Rec*  [[**************CBBasicMsg***********]\n]<<<<<<<<<<<<<<<<<<<<<<<*Send*
 //          < msgName = CBFlashMsg
 //          < msgID   = [uint32]                   
 //          < msgType = CB_Ack                        
-//          < msgProgReq = 0  
+//          < msgProgReq = [0|1]  
 //          < msgRoute = [CBMsgRoute]
 //          < msgPayload = CBNoMsg
 // *Rec*  [[************CBBasicMsg**********][**CBPayloadMsg**]\n]<<<<<<<<*Send*
-//          < msgName = CBFlashMsg             < errorCode = CB_ERR_CODE  
-//          < msgID   = [uint32]                
-//          < msgType = CB_Done  <-- last packet is a Done msg, not a Prog.                
-//          < msgProgReq = 0
-//          < msgRoute = [CBMsgRoute]
-//          < msgPayload = CBStatusPayloadMsg
+//          < msgName = CBFlashMsg                < imageCrc 
+//          < msgID   = n (some uint)             < imageSize
+//          < msgType = CB_Done                   < imageType
+//          < msgProgReq = [0|1]                  < imageMajor            
+//          < msgRoute = [CBMsgRoute]             < imageMinor
+//          < msgPayload = CBFlashMetaPayloadMsg  < imageDatetime
 // END CBFlashMsg
 //------------------------------------------------------------------------------
 
@@ -630,9 +638,12 @@ message CBBootModePayloadMsg
 // Non-standard Field Description: (see below)
 message CBFlashMetaPayloadMsg 
 {
-    required uint32     imageCrc  = 1; // CRC of the entire FW image. 
-    required uint32     imageSize = 2; // size of the coming FW image (in bytes)
-    required CBBootMode imageType = 3; // CBBootMode enum that specifies the 
+    required uint32 errorCode     = 1; // Status of cmd.  Only used if being 
+                                       // sent back as a payload to a Done or 
+                                       // Prog msg.  Not used for Req. 
+    required uint32 imageCrc      = 2; // CRC of the entire FW image. 
+    required uint32 imageSize     = 3; // size of the coming FW image (in bytes)
+    required CBBootMode imageType = 4; // CBBootMode enum that specifies the 
                                        // type this FW image. Can be one of the
                                        // following: 
                                        //  -- CB_Bootloader  - bootloader mode 
@@ -640,6 +651,10 @@ message CBFlashMetaPayloadMsg
                                        // The system boot mode will not respond
                                        // to messages so the above are the only 
                                        // possible values.
+    required uint32 imageMaj      = 5; // Major version
+    required uint32 imageMin      = 6; // Minor version
+    required string imageDatetime = 7; // Build date and time string
+ 
 }
 // END CBFlashMetaPayloadMsg.
 //------------------------------------------------------------------------------
@@ -658,6 +673,8 @@ message CBFlashDataPayloadMsg
 	required uint32     dataCrc   = 1; // CRC of the data in dataBuf
     required uint32     dataLen   = 2; // length of data in the buffer
     required bytes      dataBuf   = 3; // buffer with data
+    required uint32     seqCurr   = 4; // sequence number of current data packet
+    required uint32     seqTotal  = 5; // total number of sequence packets expected
 }
 // END CBFlashDataPayloadMsg.
 //------------------------------------------------------------------------------

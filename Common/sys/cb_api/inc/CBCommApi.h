@@ -38,6 +38,13 @@ extern "C" {
  * encoded) or UDP from the client. */
 #define CB_MAX_MSG_LEN 300
 
+/**
+ * @brief   Length of a datetime string
+ * The format of this string is always:
+ * YYYYMMDDhhmmss
+ */
+#define CB_DATETIME_LEN 14
+
 /* Exported macros -----------------------------------------------------------*/
 /* Exported types ------------------------------------------------------------*/
 /* These typedefs allow the project to use the enums defined in the
@@ -57,6 +64,8 @@ typedef union CBPayloadMsgs {
    struct CBStatusPayloadMsg  statusPayload;
    struct CBVersionPayloadMsg versionPayload;
    struct CBBootModePayloadMsg bootmodePayload;
+   struct CBFlashMetaPayloadMsg flashMetaPayload;
+   struct CBFlashDataPayloadMsg flashDataPayload;
 } CBPayloadMsgUnion_t;
 
 

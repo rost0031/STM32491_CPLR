@@ -306,30 +306,7 @@ int main(int argc, char *argv[])
                   if (fw_file) {               /* if the file exists, read it */
                      DBG_out << "File exists: " << arg_pair.at(1);
                      filename = arg_pair.at(1);
-//                     size_t fileSize = fw_file.tellg();  /* Get the file size */
-//
-//                     if ( fileSize > MAX_FW_IMAGE_SIZE ) {
-//                        ERR_out << "Attempting to read " << fileSize
-//                           << " bytes from " << arg_pair.at(1)
-//                           << " which is bigger than the max allowed filesize of "
-//                           << MAX_FW_IMAGE_SIZE;
-//                        HELP_printCmdSpecific( m_parsed_cmd, appName );
-//                     }
-//
-//                     fwBuffer = new char[fileSize];        /* Buffer for data */
-//                     fw_file.seekg(0, ios::beg);   /* Go to beginning of file */
-//                     fw_file.read( fwBuffer, fileSize);     /* Read the file  */
-//                     DBG_out << "Successfully read " << fileSize
-//                           << " bytes from " << arg_pair.at(1);
-//
-//
-//                     /* Try and parse the build date from the filename.  File
-//                      * should be name DC3[Appl|Boot]_YYYYMMDDhhmmss.bin */
-
-
                      fw_file.close();                           /* Close file */
-
-
                   } else {
                      ERR_out << "Unable to open file " << arg_pair.at(1);
                      HELP_printCmdSpecific( m_parsed_cmd, appName );

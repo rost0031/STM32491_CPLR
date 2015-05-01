@@ -890,6 +890,7 @@ if (p == NULL) {
     es-&gt;p = p;
 
     if ( LWIPMgr_logPort == tpcb-&gt;local_port ) {
+#if CPLR_APP
         /* This eth port can only receive menu commands */
         MenuEvt *menuEvt = Q_NEW( MenuEvt, DBG_MENU_REQ_SIG );
 
@@ -904,7 +905,11 @@ if (p == NULL) {
 
         /* 3. Publish the newly created event to current AO */
         QF_PUBLISH( (QEvent *)menuEvt, AO_LWIPMgr );
-
+#elif CPLR_BOOT
+        LOG_printf(&quot;Ignoring.\n&quot;);
+#else
+        #error &quot;Invalid build.  CPLR_APP or CPLR_BOOT must be specified&quot;
+#endif
     } else if ( LWIPMgr_sysPort == tpcb-&gt;local_port ) {
         LOG_printf(
             &quot;Received data on SYS port %d.\n&quot;,
@@ -948,6 +953,7 @@ if (p == NULL) {
         es-&gt;p = p;
 
         if ( LWIPMgr_logPort == tpcb-&gt;local_port ) {
+#if CPLR_APP
             /* This eth port can only receive menu commands */
             MenuEvt *menuEvt = Q_NEW( MenuEvt, DBG_MENU_REQ_SIG );
 
@@ -962,7 +968,11 @@ if (p == NULL) {
 
             /* 3. Publish the newly created event to current AO */
             QF_PUBLISH( (QEvent *)menuEvt, AO_LWIPMgr );
-
+#elif CPLR_BOOT
+    LOG_printf(&quot;Ignoring.\n&quot;);
+#else
+    #error &quot;Invalid build.  CPLR_APP or CPLR_BOOT must be specified&quot;
+#endif
         } else if ( LWIPMgr_sysPort == tpcb-&gt;local_port ) {
             DBG_printf(
                 &quot;Received data on SYS port %d.\n&quot;,
@@ -1132,9 +1142,8 @@ return ret_err;</code>
 #include &quot;LWIPMgr.h&quot;
 #include &quot;lwip.h&quot;                                               /* lwIP stack */
 #include &quot;bsp_defs.h&quot;
-#include &quot;DbgMgr.h&quot;                                            /* For MenuEvt */
 #include &quot;project_includes.h&quot;                     /* Projec specific includes */
-#include &quot;CommStackMgr.h&quot;
+#include &quot;CommMgr.h&quot;
 #if CPLR_APP
 #include &quot;cplr.h&quot;
 #elif CPLR_BOOT
@@ -1278,7 +1287,7 @@ static void udp_rx_handler(
 
     /* 3. Directly post event to CommStackMgr */
     QACTIVE_POST(
-            AO_CommStackMgr,
+            AO_CommMgr,
             (QEvt *)(msgEvt),
             AO_LWIPMgr
       );

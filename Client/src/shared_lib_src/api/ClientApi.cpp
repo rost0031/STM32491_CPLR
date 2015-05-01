@@ -75,15 +75,15 @@ void runMainMgr( void )
 /******************************************************************************/
 ClientError_t ClientApi::DC3_getMode(CBErrorCode *status, CBBootMode *mode)
 {
-   /* Settings specific to this message */
-   this->m_basicMsg._msgName     = _CBGetBootModeMsg;
-   this->m_basicMsg._msgPayload  = _CBNoMsg;
-   this->m_basicMsg._msgType     = _CB_Req;
-
    /* Common settings for most messages */
    this->m_basicMsg._msgID       = this->m_msgId;
    this->m_basicMsg._msgReqProg  = (unsigned long)this->m_bRequestProg;
    this->m_basicMsg._msgRoute    = this->m_msgRoute;
+
+   /* Settings specific to this message */
+   this->m_basicMsg._msgType     = _CB_Req;
+   this->m_basicMsg._msgName     = _CBGetBootModeMsg;
+   this->m_basicMsg._msgPayload  = _CBNoMsg;
 
 
    LrgDataEvt *evt = Q_NEW(LrgDataEvt, MSG_SEND_OUT_SIG);
@@ -113,7 +113,7 @@ ClientError_t ClientApi::DC3_getMode(CBErrorCode *status, CBBootMode *mode)
    CBPayloadMsgUnion_t payloadMsgUnion;
    memset(&payloadMsgUnion, 0, sizeof(payloadMsgUnion));
 
-   ClientError_t clientStatus = waitForJobDone(
+   ClientError_t clientStatus = waitForResp(
          &basicMsg,
          &payloadMsgName,
          &payloadMsgUnion
@@ -147,8 +147,64 @@ ClientError_t ClientApi::DC3_flashFW(
    }
    DBG_printf( this->m_pLog,"FWLdr object created" );
 
+   /* Read the file */
+   clientStatus = fw->loadFromFile(filename);
 
-   fw->loadFromFile(filename);
+   /* CBFlashMsg is a little different than other messages:
+    * 1. must request progress msgs.
+    * 2. msgIds must stay sequential */
+
+   /* Common settings for most messages */
+   this->m_basicMsg._msgID       = this->m_msgId;
+   this->m_basicMsg._msgReqProg  = 1;
+   this->m_basicMsg._msgRoute    = this->m_msgRoute;
+
+   /* Settings specific to this message */
+   this->m_basicMsg._msgType     = _CB_Req;
+   this->m_basicMsg._msgName     = _CBFlashMsg;
+   this->m_basicMsg._msgPayload  = _CBFlashMetaPayloadMsg;
+
+   /* Construct the flashMetaPayloadMsg that tells the bootloader about all
+    * the data to expect. */
+   this->m_flashMetaPayloadMsg._imageType = type;
+   this->m_flashMetaPayloadMsg._imageCrc = fw->getImageCRC32();
+   this->m_flashMetaPayloadMsg._imageMaj = fw->getMajVer();
+   this->m_flashMetaPayloadMsg._imageMin = fw->getMinVer();
+   this->m_flashMetaPayloadMsg._imageSize = fw->getSize();
+   this->m_flashMetaPayloadMsg._imageDatetime_len = fw->getDatetimeLen();
+   memcpy(
+         this->m_flashMetaPayloadMsg._imageDatetime,
+         fw->getDatetime(),
+         this->m_flashMetaPayloadMsg._imageDatetime_len
+   );
+
+   DBG_printf(this->m_pLog, "BuildDatetime str len: %d", this->m_flashMetaPayloadMsg._imageDatetime_len);
+   DBG_printf(this->m_pLog, "BuildDatetime is: %s", this->m_flashMetaPayloadMsg._imageDatetime);
+   DBG_printf(this->m_pLog, "CRC  is: 0x%08x", this->m_flashMetaPayloadMsg._imageCrc);
+   DBG_printf(this->m_pLog, "Size is: %d", this->m_flashMetaPayloadMsg._imageSize);
+
+   LrgDataEvt *evt = Q_NEW(LrgDataEvt, MSG_SEND_OUT_SIG);
+   evt->dataLen = CBBasicMsg_write_delimited_to(&m_basicMsg, evt->dataBuf, 0);
+   evt->dataLen = CBFlashMetaPayloadMsg_write_delimited_to(&m_flashMetaPayloadMsg, evt->dataBuf, evt->dataLen);
+   evt->dst = m_msgRoute;
+   evt->src = m_msgRoute;
+   QACTIVE_POST(AO_MainMgr, (QEvt *)(evt), AO_MainMgr);
+
+
+   CBBasicMsg basicMsg;
+   CBMsgName payloadMsgName = _CBNoMsg;
+   CBPayloadMsgUnion_t payloadMsgUnion;
+   memset(&payloadMsgUnion, 0, sizeof(payloadMsgUnion));
+
+   clientStatus = waitForResp(
+         &basicMsg,
+         &payloadMsgName,
+         &payloadMsgUnion
+   );
+
+   if ( CLI_ERR_NONE == clientStatus ) {
+      *status = (CBErrorCode)payloadMsgUnion.statusPayload._errorCode;
+   }
 
    return( clientStatus );
 }
@@ -267,7 +323,7 @@ void ClientApi::startJob( void )
 }
 
 /******************************************************************************/
-ClientError_t ClientApi::pollForJobDone(
+ClientError_t ClientApi::pollForResp(
       CBBasicMsg *basicMsg,
       CBMsgName *payloadMsgName,
       CBPayloadMsgUnion_t *payloadMsgUnion
@@ -305,9 +361,11 @@ ClientError_t ClientApi::pollForJobDone(
                   this->m_pLog,
                   "Got a progress msg but not handler set up for it..."
             );
-            break;
+            /* No break here.  Fall through. We handle both of these the same */
          case MSG_DONE_RECVD_SIG: {
-            DBG_printf(this->m_pLog, "Got MSG_DONE_RECVD_SIG");
+            if ( MSG_DONE_RECVD_SIG == evt->sig ) {
+               DBG_printf(this->m_pLog, "Got MSG_DONE_RECVD_SIG");
+            }
             int offset = CBBasicMsg_read_delimited_from(
                   (void*)((LrgDataEvt const *) evt)->dataBuf,
                   basicMsg,
@@ -350,7 +408,7 @@ ClientError_t ClientApi::pollForJobDone(
                   break;
             }
 
-            if (this->m_pDoneHandlerCBFunction) {
+            if ( MSG_DONE_RECVD_SIG == evt->sig && this->m_pDoneHandlerCBFunction) {
                this->m_pDoneHandlerCBFunction( *basicMsg, *payloadMsgName, *payloadMsgUnion );
             }
             status = CLI_ERR_NONE;
@@ -387,7 +445,7 @@ ClientError_t ClientApi::pollForJobDone(
 }
 
 /******************************************************************************/
-ClientError_t ClientApi::waitForJobDone(
+ClientError_t ClientApi::waitForResp(
       CBBasicMsg *basicMsg,
       CBMsgName *payloadMsgName,
       CBPayloadMsgUnion_t *payloadMsgUnion
@@ -397,7 +455,7 @@ ClientError_t ClientApi::waitForJobDone(
    DBG_printf(this->m_pLog,"Waiting for job to finish.");
    for (;;) {                         /* Beginning of the thread forever loop */
 
-      status = pollForJobDone(basicMsg, payloadMsgName, payloadMsgUnion);
+      status = pollForResp(basicMsg, payloadMsgName, payloadMsgUnion);
       if (CLI_ERR_MSG_WAITING_FOR_RESP != status ) {
          return status;
       }

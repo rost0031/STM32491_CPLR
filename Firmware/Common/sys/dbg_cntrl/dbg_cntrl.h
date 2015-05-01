@@ -167,6 +167,7 @@ typedef enum DBG_MODULES {
    DBG_MODL_COMM     = 0x00000200, /**< COMM module debugging. */
    DBG_MODL_CPLR     = 0x00000400, /**< Coupler module debugging. */
    DBG_MODL_DB       = 0x00000800, /**< Database module debugging. */
+   DBG_MODL_FLASH    = 0x00001000, /**< Flash module debugging (only in bootloader) */
 } DBG_MODL_T;
 
 /* Exported variables --------------------------------------------------------*/

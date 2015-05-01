@@ -122,6 +122,17 @@ static QState MainMgr_WaitForDone(MainMgr * const me, QEvt const * const e);
  */
 static QState MainMgr_WaitForAck(MainMgr * const me, QEvt const * const e);
 
+/**
+ * @brief Wait for the next CBFlashMsg to be sent from ClientApi
+ * This state just waits for the next CBFlash Req msg to be sent from ClientApi.
+ *
+ * @param  [in,out] me: Pointer to the state machine
+ * @param  [in,out] e:  Pointer to the event being processed.
+ * @return status_: QState type that specifies where the state
+ * machine is going next.
+ */
+static QState MainMgr_WaitForNextFlashCmd(MainMgr * const me, QEvt const * const e);
+
 
 /* Private defines -----------------------------------------------------------*/
 /* Private macros ------------------------------------------------------------*/
@@ -369,7 +380,14 @@ static QState MainMgr_WaitForDone(MainMgr * const me, QEvt const * const e) {
                 /* Changed only the signal associated with event and repost it directly to the queue*/
                 ((LrgDataEvt *) e)->super.sig = MSG_PROG_RECVD_SIG;
                 QEQueue_postFIFO(&cliQueue, (QEvt *)e);
-                status_ = Q_HANDLED();
+                /* ${AOs::MainMgr::SM::Active::WaitingForJobDon~::WaitForDone::MSG_RECEIVED::[Prog?]::[CBFlashMsg?]} */
+                if (_CBFlashMsg == basicMsg._msgName) {
+                    status_ = Q_TRAN(&MainMgr_WaitForNextFlashCmd);
+                }
+                /* ${AOs::MainMgr::SM::Active::WaitingForJobDon~::WaitForDone::MSG_RECEIVED::[Prog?]::[else]} */
+                else {
+                    status_ = Q_TRAN(&MainMgr_WaitForDone);
+                }
             }
             /* ${AOs::MainMgr::SM::Active::WaitingForJobDon~::WaitForDone::MSG_RECEIVED::[Done?]} */
             else if (_CB_Done == basicMsg._msgType) {
@@ -463,6 +481,72 @@ static QState MainMgr_WaitForAck(MainMgr * const me, QEvt const * const e) {
                 QEQueue_postFIFO(&cliQueue, (QEvt *)evt);
                 status_ = Q_TRAN(&MainMgr_Active);
             }
+            break;
+        }
+        default: {
+            status_ = Q_SUPER(&MainMgr_WaitingForJobDone);
+            break;
+        }
+    }
+    return status_;
+}
+
+/**
+ * @brief Wait for the next CBFlashMsg to be sent from ClientApi
+ * This state just waits for the next CBFlash Req msg to be sent from ClientApi.
+ *
+ * @param  [in,out] me: Pointer to the state machine
+ * @param  [in,out] e:  Pointer to the event being processed.
+ * @return status_: QState type that specifies where the state
+ * machine is going next.
+ */
+/*${AOs::MainMgr::SM::Active::WaitingForJobDon~::WaitForNextFlash~} ........*/
+static QState MainMgr_WaitForNextFlashCmd(MainMgr * const me, QEvt const * const e) {
+    QState status_;
+    switch (e->sig) {
+        /* ${AOs::MainMgr::SM::Active::WaitingForJobDon~::WaitForNextFlash~} */
+        case Q_ENTRY_SIG: {
+            /* Post a timer on entry */
+            QTimeEvt_rearm(
+                &me->msgTimerEvt,
+                SEC_TO_TICKS( MAINMGR_MAX_TOUT_SEC_DONE_WAIT )
+            );
+
+            status_ = Q_HANDLED();
+            break;
+        }
+        /* ${AOs::MainMgr::SM::Active::WaitingForJobDon~::WaitForNextFlash~} */
+        case Q_EXIT_SIG: {
+            QTimeEvt_disarm(&me->msgTimerEvt);
+            status_ = Q_HANDLED();
+            break;
+        }
+        /* ${AOs::MainMgr::SM::Active::WaitingForJobDon~::WaitForNextFlash~::MSG_SEND_OUT} */
+        case MSG_SEND_OUT_SIG: {
+            DBG_printf(me->m_pLog,"Got SEND_MSG, sending msg...");
+
+            me->m_pComm->write_some(
+                (char *)((LrgDataEvt const *)e)->dataBuf,
+                ((LrgDataEvt const *)e)->dataLen
+            );
+            /*
+            char tmp[1000];
+            uint16_t tmpStrLen;
+            ClientError_t convertStatus = MSG_hexToStr(
+                ((LrgDataEvt const *)e)->dataBuf,
+                ((LrgDataEvt const *)e)->dataLen,
+                tmp,
+                1000,
+                &tmpStrLen,
+                0,
+                '-',
+                true
+            );
+
+            DBG_printf(me->m_pLog,"ConStatus: 0x%x, sending a buffer with: %s", convertStatus, tmp);
+            */
+            DBG_printf(me->m_pLog,"Sent msg, waiting for Ack...");
+            status_ = Q_TRAN(&MainMgr_WaitForAck);
             break;
         }
         default: {

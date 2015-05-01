@@ -82,8 +82,11 @@ typedef enum ClientErrors
    CLI_ERR_MEM_BUFFER_LEN                                      = 0x00050001,
 
    /* FW loader error category                   0x00006000 - 0x0006FFFF */
-   CLI_ERR_INVALID_FW_FILENAME                                 = 0x00060000,
-   CLI_ERR_INVALID_FW_FILENAME_EXT                             = 0x00060001,
+   CLI_ERR_FW_FILENAME_INVALID                                 = 0x00060000,
+   CLI_ERR_FW_FILENAME_INVALID_EXT                             = 0x00060001,
+   CLI_ERR_FW_FILENAME_MISSING_VER                             = 0x00060002,
+   CLI_ERR_FW_FILENAME_MISSING_DATETIME                        = 0x00060003,
+   CLI_ERR_FW_UNABLE_TO_OPEN                                   = 0x00060004,
 
    /* Reserved errors                            0xFFFFFFFE - 0xFFFFFFFF */
    CLI_ERR_UNIMPLEMENTED                                       = 0xFFFFFFFE,
