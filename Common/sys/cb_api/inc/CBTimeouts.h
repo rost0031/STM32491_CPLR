@@ -33,7 +33,7 @@
  * Example:  HL_MAX_TOUT_SEC_QUICK_HEATER_CHECK
  *
  * HL: indicates that this is a high level timeout and is used by a top level
- * Active Object and is visible to the printer.
+ * Active Object.
  * MAX: this is the maximum amount of time that is allowed for the action being
  * timed with this timeout.
  * TIMEOUT: this is a timeout and not simply used to time how long something
@@ -71,7 +71,7 @@
     * These should be based on the LL I2CBusMgr timeouts.
     *@{*/
    #define HL_MAX_TOUT_SEC_I2C_DEV_OP                                         0.3
-   #define HL_MAX_TOUT_SEC_I2C_DEV_REQ                                        10.0
+   #define HL_MAX_TOUT_SEC_I2C_DEV_REQ                                       10.0
    #define HL_MAX_TOUT_SEC_I2C_BUS_CHECK        ( LL_MAX_TOUT_SEC_I2C_BUS_RECOVERY * 1.3 )
    #define HL_MAX_TOUT_SEC_I2C_EV5              ( HL_MAX_TOUT_SEC_I2C_DEV_OP * 1.3 )
    #define HL_MAX_TOUT_SEC_I2C_EV6              ( HL_MAX_TOUT_SEC_I2C_DEV_OP * 1.3 )
@@ -88,12 +88,31 @@
    /*@} ETH Timeout Maximums*/
 
 
+   /** \name FlashMgr Timeouts and Times.
+    * These are the timeouts used by the FlashMgr AO.
+    *@{*/
+   #define HL_MAX_TOUT_SEC_FLASH_FW                                          60.0
+   #define LL_MAX_TOUT_SEC_FLASH_SECTOR_ERASE                                 1.0
+   #define LL_MAX_TOUT_SEC_FLASH_WAIT_FOR_DATA                                4.0
+
+   /*@} FlashMgr Timeouts and Times.*/
+
+
+   /** \name Bootloader CommMgr Timeouts and Times.
+    * These are the timeouts used by the CommMgr AO in Bootloader
+    *@{*/
+   #define HL_MAX_TOUT_SEC_COMM_MSG_PROCESS                                  10.0
+   #define LL_MAX_TOUT_SEC_COMM_MSG_VALIDATE_MSG_OP                           1.0
+   #define LL_MAX_TOUT_SEC_COMM_MSG_FLASH_OP                                  3.0
+
+   /*@} Bootloader CommMgr Timeouts and Times.*/
 
    /** \name Client Timeouts and Times.
     * These are the timeouts used by the CliMgr AO.
     *@{*/
    #define LL_MAX_TOUT_SEC_CLI_MSG_PROCESS                                    3.0
    #define LL_MAX_TOUT_SEC_CLI_FW_META_WAIT                                   4.0
+
    /*@} Client Timeouts and Times.*/
 
 /*@} Coupler Board Timeout Maximums*/

@@ -43,6 +43,9 @@
    <attribute name="imageDatetime[CB_DATETIME_LEN]" type="uint8_t" visibility="0x01" properties="0x00">
     <documentation>/**&lt; FW image datetime */</documentation>
    </attribute>
+   <attribute name="imageDatetimeLen" type="uint8_t" visibility="0x01" properties="0x00">
+    <documentation>/**&lt; FW image datetime length */</documentation>
+   </attribute>
    <attribute name="errorCode" type="CBErrorCode" visibility="0x01" properties="0x00">
     <documentation>/**&lt; Status of the FW flash completion.  Only used when sending back from FlashMgr */</documentation>
    </attribute>
@@ -84,14 +87,20 @@
    <attribute name="retryCurr" type="uint16_t" visibility="0x01" properties="0x00">
     <documentation>/**&lt; Counter for retries */</documentation>
    </attribute>
-   <attribute name="flashTimerEvt" type="QTimeEvt" visibility="0x01" properties="0x00">
-    <documentation>/**&lt; Used for timing out events and actions in FlashMgr object. */</documentation>
-   </attribute>
    <attribute name="flashSectorsToErase[ADDR_FLASH_SECTORS]" type="uint32_t" visibility="0x01" properties="0x00">
     <documentation>/**&lt; FW flash sectors to erase */</documentation>
    </attribute>
    <attribute name="flashSectorsToEraseNum" type="uint8_t" visibility="0x01" properties="0x00">
     <documentation>/**&lt; How many flash sectors to erase (how many are in the flashSectorsToErase array) */</documentation>
+   </attribute>
+   <attribute name="flashSectorsToEraseIndex" type="uint8_t" visibility="0x01" properties="0x00">
+    <documentation>/**&lt; Index into the flashSectorsToErase array for when we are erasing flash */</documentation>
+   </attribute>
+   <attribute name="flashTimerEvt" type="QTimeEvt" visibility="0x01" properties="0x00">
+    <documentation>/**&lt; Used for timing out the entire FW upgrade process in FlashMgr object. */</documentation>
+   </attribute>
+   <attribute name="flashOpTimerEvt" type="QTimeEvt" visibility="0x01" properties="0x00">
+    <documentation>/**&lt; Used for timing out individual operations on flash in FlashMgr object. */</documentation>
    </attribute>
    <statechart>
     <initial target="../1/0">
@@ -133,9 +142,16 @@ QActive_subscribe((QActive *)me, FLASH_TIMEOUT_SIG);</action>
 QTimeEvt_postIn(
     &amp;me-&gt;flashTimerEvt,
     (QActive *)me,
-    SEC_TO_TICKS( LL_MAX_TOUT_SEC_CLI_MSG_PROCESS )
+    SEC_TO_TICKS( HL_MAX_TOUT_SEC_FLASH_FW )
 );
-QTimeEvt_disarm(&amp;me-&gt;flashTimerEvt);</entry>
+QTimeEvt_disarm(&amp;me-&gt;flashTimerEvt);
+
+QTimeEvt_postIn(
+    &amp;me-&gt;flashOpTimerEvt,
+    (QActive *)me,
+    SEC_TO_TICKS( HL_MAX_TOUT_SEC_FLASH_FW )
+);
+QTimeEvt_disarm(&amp;me-&gt;flashOpTimerEvt);</entry>
      <state name="Idle">
       <documentation>/**
  * @brief	Idle state that allows new messages to be received.
@@ -154,11 +170,7 @@ me-&gt;msgRoute        = _CB_NoRoute;
 me-&gt;reqProg         = false;
 
 memset(&amp;me-&gt;fwFlashMetadata, 0, sizeof(me-&gt;fwFlashMetadata));</entry>
-      <exit>/* Reset all the variables that keep track of FW upgrades */
-me-&gt;fwPacketCurr = 0;
-me-&gt;fwPacketExp  = 0;
-me-&gt;retryCurr    = 0;</exit>
-      <tran trig="FLASH_OP_START" target="../../1/1">
+      <tran trig="FLASH_OP_START" target="../../1/2">
        <action>DBG_printf(&quot;FLASH_OP_START\n&quot;);
 
 /* Get the metadata and record it.  Ignore the status  */
@@ -167,46 +179,19 @@ me-&gt;fwFlashMetadata._imageMaj  = ((FWMetaEvt const *)e)-&gt;imageMaj;
 me-&gt;fwFlashMetadata._imageMin  = ((FWMetaEvt const *)e)-&gt;imageMin;
 me-&gt;fwFlashMetadata._imageSize = ((FWMetaEvt const *)e)-&gt;imageSize;
 me-&gt;fwFlashMetadata._imageType = ((FWMetaEvt const *)e)-&gt;imageType;
+me-&gt;fwFlashMetadata._imageDatetime_len = ((FWMetaEvt const *)e)-&gt;imageDatetimeLen;
 MEMCPY(
     me-&gt;fwFlashMetadata._imageDatetime,
     ((FWMetaEvt const *)e)-&gt;imageDatetime,
-    CB_DATETIME_LEN
+    me-&gt;fwFlashMetadata._imageDatetime_len
 );
-
-LOG_printf(&quot;Extracted FW image metadata:\n&quot;);
-LOG_printf(&quot;CRC: 0x%08x\n&quot;, me-&gt;fwFlashMetadata._imageCrc);
-LOG_printf(&quot;Maj: %02d\n&quot;, me-&gt;fwFlashMetadata._imageMaj);
-LOG_printf(&quot;Min: %02d\n&quot;, me-&gt;fwFlashMetadata._imageMin);
-LOG_printf(&quot;Size: %d\n&quot;, me-&gt;fwFlashMetadata._imageSize);
-LOG_printf(&quot;Type: %d\n&quot;, me-&gt;fwFlashMetadata._imageType);
-LOG_printf(&quot;Datetime: %s\n&quot;, me-&gt;fwFlashMetadata._imageDatetime);
-
-
-DBG_printf(&quot;Finding flash sectors to erase.\n&quot;);
-
-/* Clear out the array and its length */
-memset( me-&gt;flashSectorsToErase, 0, sizeof(me-&gt;flashSectorsToErase) );
-me-&gt;flashSectorsToEraseNum = 0;
-
-me-&gt;errorCode = FLASH_getSectorsToErase(
-    me-&gt;flashSectorsToErase,
-    &amp;(me-&gt;flashSectorsToEraseNum),
-    ADDR_FLASH_SECTORS,
-    me-&gt;fwFlashMetadata._imageType,
-    me-&gt;fwFlashMetadata._imageSize
-);
-LOG_printf(&quot;List of %d sectors (by address) to erase:\n&quot;, me-&gt;flashSectorsToEraseNum);
-for( uint8_t i=0; i &lt; me-&gt;flashSectorsToEraseNum; i++ ) {
-    LOG_printf(&quot;Sector at address at 0x%08x\n&quot;, me-&gt;flashSectorsToErase[i]);
-}
 </action>
-       <tran_glyph conn="6,16,3,3,41">
+       <tran_glyph conn="6,16,3,3,40">
         <action box="0,-2,15,2"/>
        </tran_glyph>
       </tran>
-      <state_glyph node="6,8,15,64">
+      <state_glyph node="6,8,15,85">
        <entry box="1,2,6,2"/>
-       <exit box="1,4,6,2"/>
       </state_glyph>
      </state>
      <state name="Busy">
@@ -223,19 +208,40 @@ for( uint8_t i=0; i &lt; me-&gt;flashSectorsToEraseNum; i++ ) {
       <entry>/* Arm the timer so if the message can't be processed for some reason, we can get
  * back to idle state.  This timer may be re-armed if some messages require more 
  * time to process than others. */
-QTimeEvt_rearm(
+QTimeEvt_rearm(                         /* Re-arm timer on entry */
     &amp;me-&gt;flashTimerEvt,
-    SEC_TO_TICKS( LL_MAX_TOUT_SEC_CLI_MSG_PROCESS )
+    SEC_TO_TICKS( HL_MAX_TOUT_SEC_FLASH_FW )
 );
 
+FLASH_Unlock();/* Always unlock the flash on entry since we'll be doing stuff to it */
 
-</entry>
-      <exit>/* Disarm timer on exit */
-QTimeEvt_disarm(&amp;me-&gt;flashTimerEvt);</exit>
+/* Reset all the variables that keep track of FW upgrades on entry so they are 
+ * guaranteed to be cleared when we start any new operation */
+memset( me-&gt;flashSectorsToErase, 0, sizeof(me-&gt;flashSectorsToErase) );
+me-&gt;flashSectorsToEraseIndex = 0;
+me-&gt;flashSectorsToEraseNum = 0;
+me-&gt;fwPacketCurr = 0;
+me-&gt;fwPacketExp  = 0;
+me-&gt;retryCurr    = 0;</entry>
+      <exit>QTimeEvt_disarm(&amp;me-&gt;flashTimerEvt); /* Disarm timer on exit */
+
+FLASH_Lock();     /* Always lock the flash on exit */
+
+/* Always send a flash status event to the CommMgr AO with the current error code */
+FlashStatusEvt *evt = Q_NEW(FlashStatusEvt, FLASH_OP_DONE_SIG);
+evt-&gt;errorCode = me-&gt;errorCode;
+QACTIVE_POST(AO_FlashMgr, (QEvt *)(evt), AO_FlashMgr);</exit>
       <tran trig="FLASH_TIMEOUT" target="../../0">
        <action>ERR_printf(&quot;Timeout trying to process flash request, error: 0x%08x\n&quot;, me-&gt;errorCode);</action>
-       <tran_glyph conn="42,69,3,1,-21">
+       <tran_glyph conn="42,92,3,1,-21">
         <action box="-14,-2,14,2"/>
+       </tran_glyph>
+      </tran>
+      <tran trig="FLASH_ERROR" target="../../0">
+       <action>ERR_printf(&quot;FLASH_ERROR\n&quot;);
+</action>
+       <tran_glyph conn="42,89,3,1,-21">
+        <action box="-14,-2,10,2"/>
        </tran_glyph>
       </tran>
       <state name="PrepFlash">
@@ -248,16 +254,166 @@ QTimeEvt_disarm(&amp;me-&gt;flashTimerEvt);</exit>
  * @return status: QState type that specifies where the state
  * machine is going next.
  */</documentation>
-       <entry>LOG_printf(&quot;Erasing flash\n&quot;);
-
+       <entry>/* Self post an event to keep going.  The reason this is done is so that we can use
+ * common error handling of the parent state to report errors back to CommMgr instead
+ * of having to manually port events whenever an error occurs.*/
+QEvt *evt = Q_NEW(QEvt, FLASH_NEXT_STEP_SIG);
+QACTIVE_POST(AO_FlashMgr, (QEvt *)(evt), AO_FlashMgr);
 </entry>
-       <tran trig="FLASH_DONE" target="../../2">
-        <action>DBG_printf(&quot;FLASH_DONE\n&quot;);</action>
-        <tran_glyph conn="47,19,3,0,12,5">
-         <action box="1,-2,10,2"/>
+       <tran trig="FLASH_NEXT_STEP">
+        <action>DBG_printf(&quot;FLASH_NEXT_STEP\n&quot;);
+
+LOG_printf(&quot;Extracted FW image metadata:\n&quot;);
+LOG_printf(&quot;CRC: 0x%08x\n&quot;, me-&gt;fwFlashMetadata._imageCrc);
+LOG_printf(&quot;Maj: %02d\n&quot;, me-&gt;fwFlashMetadata._imageMaj);
+LOG_printf(&quot;Min: %02d\n&quot;, me-&gt;fwFlashMetadata._imageMin);
+LOG_printf(&quot;Size: %d\n&quot;, me-&gt;fwFlashMetadata._imageSize);
+LOG_printf(&quot;Type: %d\n&quot;, me-&gt;fwFlashMetadata._imageType);
+LOG_printf(&quot;Datetime: %s\n&quot;, me-&gt;fwFlashMetadata._imageDatetime);
+
+/* Do some sanity checking on the FW image metadata */
+me-&gt;errorCode = FLASH_validateMetadata(&amp;(me-&gt;fwFlashMetadata));</action>
+        <choice>
+         <guard brief="MetadataValid?">ERR_NONE == me-&gt;errorCode</guard>
+         <action>DBG_printf(&quot;Finding flash sectors to erase.\n&quot;);
+
+me-&gt;errorCode = FLASH_getSectorsToErase(
+    me-&gt;flashSectorsToErase,
+    &amp;(me-&gt;flashSectorsToEraseNum),
+    ADDR_FLASH_SECTORS,
+    me-&gt;fwFlashMetadata._imageType,
+    me-&gt;fwFlashMetadata._imageSize
+);
+
+
+
+</action>
+         <choice target="../../../2">
+          <guard brief="SectorsValid?">ERR_NONE == me-&gt;errorCode &amp;&amp; me-&gt;flashSectorsToEraseNum &gt; 1</guard>
+          <action>LOG_printf(&quot;List of %d sectors (by address) to erase:\n&quot;, me-&gt;flashSectorsToEraseNum);
+for( uint8_t i=0; i &lt; me-&gt;flashSectorsToEraseNum; i++ ) {
+    LOG_printf(&quot;Sector at address at 0x%08x\n&quot;, me-&gt;flashSectorsToErase[i]);
+}</action>
+          <choice_glyph conn="77,19,5,0,17,2">
+           <action box="1,-2,10,2"/>
+          </choice_glyph>
+         </choice>
+         <choice target="../../../../../0">
+          <guard>else</guard>
+          <action>ERR_printf(&quot;Unable to get a list of sectors to erase. Error: 0x%08x\n&quot;, me-&gt;errorCode);</action>
+          <choice_glyph conn="77,19,4,1,5,-56">
+           <action box="-7,3,6,2"/>
+          </choice_glyph>
+         </choice>
+         <choice_glyph conn="64,19,5,-1,13">
+          <action box="1,-2,10,2"/>
+         </choice_glyph>
+        </choice>
+        <choice target="../../../../0">
+         <guard>else</guard>
+         <action>ERR_printf(&quot;FW image metadata failed validation with error: 0x%08x\n&quot;, me-&gt;errorCode);</action>
+         <choice_glyph conn="64,19,4,1,3,-43">
+          <action box="-6,3,5,2"/>
+         </choice_glyph>
+        </choice>
+        <tran_glyph conn="46,19,3,-1,18">
+         <action box="1,-2,14,2"/>
         </tran_glyph>
        </tran>
-       <state_glyph node="47,13,26,8">
+       <tran trig="FLASH_OP_TIMEOUT" target="../../../0">
+        <action>/* Override whatever error since the timeout interrupted whatever was happening. */
+me-&gt;errorCode = ERR_FLASH_ERASE_TIMEOUT;</action>
+        <tran_glyph conn="46,27,3,1,-25">
+         <action box="-21,-2,16,2"/>
+        </tran_glyph>
+       </tran>
+       <state name="ErasingSector">
+        <documentation>/**
+ * @brief    Waits while a sector of flash is erased
+ * This state is responsible for initializing the erasure of a sector and waiting
+ * until the operation is complete.  A timeout may occur during this time and an 
+ * error will be reported.
+ *
+ * @param  [in|out] me: Pointer to the state machine
+ * @param  [in|out]  e:  Pointer to the event being processed.
+ * @return status: QState type that specifies where the state
+ * machine is going next.
+ */</documentation>
+        <entry>QTimeEvt_rearm(                         /* Re-arm timer on entry */
+    &amp;me-&gt;flashOpTimerEvt,
+    SEC_TO_TICKS( LL_MAX_TOUT_SEC_FLASH_SECTOR_ERASE )
+);
+
+DBG_printf(&quot;Attempting to erase sector addr 0x%08x\n&quot;,
+    me-&gt;flashSectorsToErase[ me-&gt;flashSectorsToEraseIndex ]);
+
+/* Use a separate status variable so if a timeout occurs, the timeout error won't get
+ * overwritten */
+me-&gt;errorCode = FLASH_eraseSector(
+    me-&gt;flashSectorsToErase[ me-&gt;flashSectorsToEraseIndex ]
+);
+
+/* Post event to move to the next step only AFTER the blocking call to 
+ * FLASH_eraseSector() returns */
+QEvt *evt = Q_NEW(QEvt, FLASH_NEXT_STEP_SIG);
+QACTIVE_POST(AO_FlashMgr, (QEvt *)(evt), AO_FlashMgr);</entry>
+        <exit>QTimeEvt_disarm(&amp;me-&gt;flashOpTimerEvt); /* Disarm timer on exit */</exit>
+        <tran trig="FLASH_NEXT_STEP">
+         <choice>
+          <guard brief="EraseOK?">ERR_NONE == me-&gt;errorCode</guard>
+          <action>DBG_printf(&quot;Successfully erased sector addr 0x%08x\n&quot;,
+    me-&gt;flashSectorsToErase[ me-&gt;flashSectorsToEraseIndex ]);
+
+me-&gt;flashSectorsToEraseIndex += 1; /* increment the index into the erase array */
+</action>
+          <choice target="../../..">
+           <guard brief="MoreToErase?">me-&gt;flashSectorsToEraseIndex &lt; me-&gt;flashSectorsToEraseNum</guard>
+           <choice_glyph conn="97,39,5,1,11,-13,-4">
+            <action box="1,0,10,2"/>
+           </choice_glyph>
+          </choice>
+          <choice target="../../../../../3">
+           <guard>else</guard>
+           <choice_glyph conn="97,39,5,0,-42,7">
+            <action box="-8,-2,5,2"/>
+           </choice_glyph>
+          </choice>
+          <choice_glyph conn="97,33,4,-1,6">
+           <action box="0,1,10,2"/>
+          </choice_glyph>
+         </choice>
+         <choice>
+          <guard>else</guard>
+          <action>WRN_printf(&quot;Failed to erase flash sector 0x%08x\n&quot;, me-&gt;flashSectorsToErase[ me-&gt;flashSectorsToEraseIndex ]);</action>
+          <choice target="../../..">
+           <guard brief="retry?">me-&gt;retryCurr &lt; MAX_FLASH_RETRIES</guard>
+           <action>me-&gt;retryCurr += 1; /* Increment retry counter */
+WRN_printf(&quot;Attempting operation again (retry %d out of %d)...\n&quot;, me-&gt;retryCurr, MAX_FLASH_RETRIES);</action>
+           <choice_glyph conn="73,33,4,3,-7,10">
+            <action box="0,-4,7,2"/>
+           </choice_glyph>
+          </choice>
+          <choice target="../../../../../../0">
+           <guard>else</guard>
+           <action>ERR_printf(&quot;No more retries, aborting with error: 0x%08x\n&quot;, me-&gt;errorCode);</action>
+           <choice_glyph conn="73,33,5,1,-52">
+            <action box="-8,0,6,2"/>
+           </choice_glyph>
+          </choice>
+          <choice_glyph conn="97,33,5,-1,-24">
+           <action box="-9,-2,5,2"/>
+          </choice_glyph>
+         </choice>
+         <tran_glyph conn="83,29,3,-1,14,4">
+          <action box="0,-2,14,2"/>
+         </tran_glyph>
+        </tran>
+        <state_glyph node="83,21,21,9">
+         <entry box="1,2,6,2"/>
+         <exit box="1,4,6,2"/>
+        </state_glyph>
+       </state>
+       <state_glyph node="46,13,66,30">
         <entry box="1,2,6,2"/>
        </state_glyph>
       </state>
@@ -274,27 +430,46 @@ QTimeEvt_disarm(&amp;me-&gt;flashTimerEvt);</exit>
  * @return status: QState type that specifies where the state
  * machine is going next.
  */</documentation>
+       <entry>DBG_printf(&quot;Waiting for FW data packets...\n&quot;);
+
+me-&gt;errorCode = ERR_FLASH_WAIT_FOR_DATA_TIMEOUT;
+
+QTimeEvt_rearm(                         /* Re-arm timer on entry */
+    &amp;me-&gt;flashOpTimerEvt,
+    SEC_TO_TICKS( LL_MAX_TOUT_SEC_FLASH_WAIT_FOR_DATA )
+);
+
+
+/* Ok, we are ready to receive FW data and start flashing. Post an event letting
+ * CommMgr know we are ready for a data packet. */
+FlashStatusEvt *evt = Q_NEW(FlashStatusEvt, FLASH_OP_DONE_SIG);
+evt-&gt;errorCode = me-&gt;errorCode;
+QACTIVE_POST(AO_FlashMgr, (QEvt *)(evt), AO_FlashMgr);</entry>
+       <exit>QTimeEvt_disarm(&amp;me-&gt;flashOpTimerEvt); /* Disarm timer on exit */</exit>
        <tran trig="FLASH_DATA">
-        <action>DBG_printf(&quot;FLASH_DATA_RECEIVED\n&quot;);</action>
-        <choice target="../../../3">
+        <action>DBG_printf(&quot;FLASH_DATA received\n&quot;);</action>
+        <choice target="../../../4">
          <guard brief="ValidSeq?">me-&gt;fwPacketCurr + 1 == ((FWDataEvt const *)e)-&gt;seqCurr</guard>
          <action>DBG_printf(&quot;Valid fw packet sequence number\n&quot;);</action>
-         <choice_glyph conn="59,36,4,0,4">
+         <choice_glyph conn="58,58,4,0,3">
           <action box="1,0,10,2"/>
          </choice_glyph>
         </choice>
         <choice target="../../../../0">
          <guard>else</guard>
          <action>ERR_printf(&quot;Invalid fw packet sequence number\n&quot;);</action>
-         <choice_glyph conn="59,36,5,1,-38">
+         <choice_glyph conn="58,58,5,1,-37">
           <action box="-7,-2,5,2"/>
          </choice_glyph>
         </choice>
-        <tran_glyph conn="47,30,3,-1,12,6">
-         <action box="0,-2,15,2"/>
+        <tran_glyph conn="46,54,3,-1,12,4">
+         <action box="0,-2,11,2"/>
         </tran_glyph>
        </tran>
-       <state_glyph node="47,24,26,8"/>
+       <state_glyph node="46,46,26,9">
+        <entry box="1,2,6,2"/>
+        <exit box="1,4,6,2"/>
+       </state_glyph>
       </state>
       <state name="WritingFlash">
        <documentation>/**
@@ -314,21 +489,21 @@ QTimeEvt_disarm(&amp;me-&gt;flashTimerEvt);</exit>
 
 /* Increment current packet after we have successfully written */
 me-&gt;fwPacketCurr++;</action>
-        <choice target="../../../2">
+        <choice target="../../../3">
          <guard brief="MorePackets?">me-&gt;fwPacketCurr == me-&gt;fwPacketExp</guard>
          <action>DBG_printf(&quot;Waiting for next fw packet\n&quot;);</action>
-         <choice_glyph conn="77,45,4,1,-17,-4">
+         <choice_glyph conn="76,66,4,1,-16,-4">
           <action box="1,-5,10,2"/>
          </choice_glyph>
         </choice>
-        <choice target="../../../4">
+        <choice target="../../../5">
          <guard>else</guard>
          <action>DBG_printf(&quot;No more fw packets expected\n&quot;);</action>
-         <choice_glyph conn="77,45,4,1,14,-4">
+         <choice_glyph conn="76,66,4,1,12,-4">
           <action box="1,2,10,2"/>
          </choice_glyph>
         </choice>
-        <tran_glyph conn="47,45,3,-1,30">
+        <tran_glyph conn="46,66,3,-1,30">
          <action box="0,-2,10,2"/>
         </tran_glyph>
        </tran>
@@ -337,22 +512,22 @@ me-&gt;fwPacketCurr++;</action>
         <choice target="../..">
          <guard brief="RetriesLeft?">me-&gt;retryCurr &lt; MAX_FLASH_RETRIES</guard>
          <action>LOG_printf(&quot;Retrying to flash packet, retry %d out of %d max\n&quot;, me-&gt;retryCurr, MAX_FLASH_RETRIES);</action>
-         <choice_glyph conn="59,53,5,2,10,-3">
+         <choice_glyph conn="58,74,5,2,10,-3">
           <action box="1,0,10,2"/>
          </choice_glyph>
         </choice>
         <choice target="../../../../0">
          <guard>else</guard>
          <action>ERR_printf(&quot;No more retries\n&quot;);</action>
-         <choice_glyph conn="59,53,5,1,-38">
+         <choice_glyph conn="58,74,5,1,-37">
           <action box="-9,0,10,2"/>
          </choice_glyph>
         </choice>
-        <tran_glyph conn="47,48,3,-1,12,5">
+        <tran_glyph conn="46,69,3,-1,12,5">
          <action box="0,-2,10,2"/>
         </tran_glyph>
        </tran>
-       <state_glyph node="47,40,26,10"/>
+       <state_glyph node="46,61,26,10"/>
       </state>
       <state name="FinalizeFlash">
        <documentation>/**
@@ -372,28 +547,22 @@ me-&gt;fwPacketCurr++;</action>
  */</documentation>
        <tran trig="FLASH_DONE" target="../../../0">
         <action>DBG_printf(&quot;FLASH_DONE\n&quot;);</action>
-        <tran_glyph conn="73,65,1,1,-52">
+        <tran_glyph conn="72,84,1,1,-51">
          <action box="-16,-2,10,2"/>
         </tran_glyph>
        </tran>
-       <tran trig="FLASH_ERROR" target="../../../0">
-        <action>WRN_printf(&quot;FLASH_ERROR\n&quot;);</action>
-        <tran_glyph conn="73,62,1,1,-52">
-         <action box="-16,-2,10,2"/>
-        </tran_glyph>
-       </tran>
-       <state_glyph node="47,57,26,10"/>
+       <state_glyph node="46,76,26,10"/>
       </state>
-      <state_glyph node="42,8,49,64">
+      <state_glyph node="42,8,84,85">
        <entry box="1,2,6,2"/>
        <exit box="1,4,6,2"/>
       </state_glyph>
      </state>
-     <state_glyph node="3,3,94,74">
+     <state_glyph node="3,3,130,91">
       <entry box="1,2,5,2"/>
      </state_glyph>
     </state>
-    <state_diagram size="163,90"/>
+    <state_diagram size="163,95"/>
    </statechart>
   </class>
   <attribute name="AO_FlashMgr" type="QActive * const" visibility="0x00" properties="0x00">
@@ -410,7 +579,8 @@ me-&gt;fwPacketCurr++;</action>
  */</documentation>
    <code>FlashMgr *me = &amp;l_FlashMgr;
 QActive_ctor(&amp;me-&gt;super, (QStateHandler)&amp;FlashMgr_initial);
-QTimeEvt_ctor(&amp;me-&gt;flashTimerEvt, FLASH_TIMEOUT_SIG);</code>
+QTimeEvt_ctor(&amp;me-&gt;flashTimerEvt, FLASH_TIMEOUT_SIG);
+QTimeEvt_ctor(&amp;me-&gt;flashOpTimerEvt, FLASH_OP_TIMEOUT_SIG);</code>
   </operation>
  </package>
  <directory name=".">

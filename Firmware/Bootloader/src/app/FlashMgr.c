@@ -78,14 +78,20 @@ typedef struct {
     /**< Counter for retries */
     uint16_t retryCurr;
 
-    /**< Used for timing out events and actions in FlashMgr object. */
-    QTimeEvt flashTimerEvt;
-
     /**< FW flash sectors to erase */
     uint32_t flashSectorsToErase[ADDR_FLASH_SECTORS];
 
     /**< How many flash sectors to erase (how many are in the flashSectorsToErase array) */
     uint8_t flashSectorsToEraseNum;
+
+    /**< Index into the flashSectorsToErase array for when we are erasing flash */
+    uint8_t flashSectorsToEraseIndex;
+
+    /**< Used for timing out the entire FW upgrade process in FlashMgr object. */
+    QTimeEvt flashTimerEvt;
+
+    /**< Used for timing out individual operations on flash in FlashMgr object. */
+    QTimeEvt flashOpTimerEvt;
 } FlashMgr;
 
 /* protected: */
@@ -137,6 +143,19 @@ static QState FlashMgr_Busy(FlashMgr * const me, QEvt const * const e);
  * machine is going next.
  */
 static QState FlashMgr_PrepFlash(FlashMgr * const me, QEvt const * const e);
+
+/**
+ * @brief    Waits while a sector of flash is erased
+ * This state is responsible for initializing the erasure of a sector and waiting
+ * until the operation is complete.  A timeout may occur during this time and an
+ * error will be reported.
+ *
+ * @param  [in|out] me: Pointer to the state machine
+ * @param  [in|out]  e:  Pointer to the event being processed.
+ * @return status: QState type that specifies where the state
+ * machine is going next.
+ */
+static QState FlashMgr_ErasingSector(FlashMgr * const me, QEvt const * const e);
 
 /**
  * @brief    Requests and waits for FW data packets
@@ -211,6 +230,7 @@ void FlashMgr_ctor(void) {
     FlashMgr *me = &l_FlashMgr;
     QActive_ctor(&me->super, (QStateHandler)&FlashMgr_initial);
     QTimeEvt_ctor(&me->flashTimerEvt, FLASH_TIMEOUT_SIG);
+    QTimeEvt_ctor(&me->flashOpTimerEvt, FLASH_OP_TIMEOUT_SIG);
 }
 
 /**
@@ -262,9 +282,16 @@ static QState FlashMgr_Active(FlashMgr * const me, QEvt const * const e) {
             QTimeEvt_postIn(
                 &me->flashTimerEvt,
                 (QActive *)me,
-                SEC_TO_TICKS( LL_MAX_TOUT_SEC_CLI_MSG_PROCESS )
+                SEC_TO_TICKS( HL_MAX_TOUT_SEC_FLASH_FW )
             );
             QTimeEvt_disarm(&me->flashTimerEvt);
+
+            QTimeEvt_postIn(
+                &me->flashOpTimerEvt,
+                (QActive *)me,
+                SEC_TO_TICKS( HL_MAX_TOUT_SEC_FLASH_FW )
+            );
+            QTimeEvt_disarm(&me->flashOpTimerEvt);
             status_ = Q_HANDLED();
             break;
         }
@@ -302,15 +329,6 @@ static QState FlashMgr_Idle(FlashMgr * const me, QEvt const * const e) {
             status_ = Q_HANDLED();
             break;
         }
-        /* ${AOs::FlashMgr::SM::Active::Idle} */
-        case Q_EXIT_SIG: {
-            /* Reset all the variables that keep track of FW upgrades */
-            me->fwPacketCurr = 0;
-            me->fwPacketExp  = 0;
-            me->retryCurr    = 0;
-            status_ = Q_HANDLED();
-            break;
-        }
         /* ${AOs::FlashMgr::SM::Active::Idle::FLASH_OP_START} */
         case FLASH_OP_START_SIG: {
             DBG_printf("FLASH_OP_START\n");
@@ -321,38 +339,12 @@ static QState FlashMgr_Idle(FlashMgr * const me, QEvt const * const e) {
             me->fwFlashMetadata._imageMin  = ((FWMetaEvt const *)e)->imageMin;
             me->fwFlashMetadata._imageSize = ((FWMetaEvt const *)e)->imageSize;
             me->fwFlashMetadata._imageType = ((FWMetaEvt const *)e)->imageType;
+            me->fwFlashMetadata._imageDatetime_len = ((FWMetaEvt const *)e)->imageDatetimeLen;
             MEMCPY(
                 me->fwFlashMetadata._imageDatetime,
                 ((FWMetaEvt const *)e)->imageDatetime,
-                CB_DATETIME_LEN
+                me->fwFlashMetadata._imageDatetime_len
             );
-
-            LOG_printf("Extracted FW image metadata:\n");
-            LOG_printf("CRC: 0x%08x\n", me->fwFlashMetadata._imageCrc);
-            LOG_printf("Maj: %02d\n", me->fwFlashMetadata._imageMaj);
-            LOG_printf("Min: %02d\n", me->fwFlashMetadata._imageMin);
-            LOG_printf("Size: %d\n", me->fwFlashMetadata._imageSize);
-            LOG_printf("Type: %d\n", me->fwFlashMetadata._imageType);
-            LOG_printf("Datetime: %s\n", me->fwFlashMetadata._imageDatetime);
-
-
-            DBG_printf("Finding flash sectors to erase.\n");
-
-            /* Clear out the array and its length */
-            memset( me->flashSectorsToErase, 0, sizeof(me->flashSectorsToErase) );
-            me->flashSectorsToEraseNum = 0;
-
-            me->errorCode = FLASH_getSectorsToErase(
-                me->flashSectorsToErase,
-                &(me->flashSectorsToEraseNum),
-                ADDR_FLASH_SECTORS,
-                me->fwFlashMetadata._imageType,
-                me->fwFlashMetadata._imageSize
-            );
-            LOG_printf("List of %d sectors (by address) to erase:\n", me->flashSectorsToEraseNum);
-            for( uint8_t i=0; i < me->flashSectorsToEraseNum; i++ ) {
-                LOG_printf("Sector at address at 0x%08x\n", me->flashSectorsToErase[i]);
-            }
 
             status_ = Q_TRAN(&FlashMgr_PrepFlash);
             break;
@@ -384,26 +376,47 @@ static QState FlashMgr_Busy(FlashMgr * const me, QEvt const * const e) {
             /* Arm the timer so if the message can't be processed for some reason, we can get
              * back to idle state.  This timer may be re-armed if some messages require more
              * time to process than others. */
-            QTimeEvt_rearm(
+            QTimeEvt_rearm(                         /* Re-arm timer on entry */
                 &me->flashTimerEvt,
-                SEC_TO_TICKS( LL_MAX_TOUT_SEC_CLI_MSG_PROCESS )
+                SEC_TO_TICKS( HL_MAX_TOUT_SEC_FLASH_FW )
             );
 
+            FLASH_Unlock();/* Always unlock the flash on entry since we'll be doing stuff to it */
 
-
+            /* Reset all the variables that keep track of FW upgrades on entry so they are
+             * guaranteed to be cleared when we start any new operation */
+            memset( me->flashSectorsToErase, 0, sizeof(me->flashSectorsToErase) );
+            me->flashSectorsToEraseIndex = 0;
+            me->flashSectorsToEraseNum = 0;
+            me->fwPacketCurr = 0;
+            me->fwPacketExp  = 0;
+            me->retryCurr    = 0;
             status_ = Q_HANDLED();
             break;
         }
         /* ${AOs::FlashMgr::SM::Active::Busy} */
         case Q_EXIT_SIG: {
-            /* Disarm timer on exit */
-            QTimeEvt_disarm(&me->flashTimerEvt);
+            QTimeEvt_disarm(&me->flashTimerEvt); /* Disarm timer on exit */
+
+            FLASH_Lock();     /* Always lock the flash on exit */
+
+            /* Always send a flash status event to the CommMgr AO with the current error code */
+            FlashStatusEvt *evt = Q_NEW(FlashStatusEvt, FLASH_OP_DONE_SIG);
+            evt->errorCode = me->errorCode;
+            QACTIVE_POST(AO_FlashMgr, (QEvt *)(evt), AO_FlashMgr);
             status_ = Q_HANDLED();
             break;
         }
         /* ${AOs::FlashMgr::SM::Active::Busy::FLASH_TIMEOUT} */
         case FLASH_TIMEOUT_SIG: {
             ERR_printf("Timeout trying to process flash request, error: 0x%08x\n", me->errorCode);
+            status_ = Q_TRAN(&FlashMgr_Idle);
+            break;
+        }
+        /* ${AOs::FlashMgr::SM::Active::Busy::FLASH_ERROR} */
+        case FLASH_ERROR_SIG: {
+            ERR_printf("FLASH_ERROR\n");
+
             status_ = Q_TRAN(&FlashMgr_Idle);
             break;
         }
@@ -430,20 +443,161 @@ static QState FlashMgr_PrepFlash(FlashMgr * const me, QEvt const * const e) {
     switch (e->sig) {
         /* ${AOs::FlashMgr::SM::Active::Busy::PrepFlash} */
         case Q_ENTRY_SIG: {
-            LOG_printf("Erasing flash\n");
-
+            /* Self post an event to keep going.  The reason this is done is so that we can use
+             * common error handling of the parent state to report errors back to CommMgr instead
+             * of having to manually port events whenever an error occurs.*/
+            QEvt *evt = Q_NEW(QEvt, FLASH_NEXT_STEP_SIG);
+            QACTIVE_POST(AO_FlashMgr, (QEvt *)(evt), AO_FlashMgr);
 
             status_ = Q_HANDLED();
             break;
         }
-        /* ${AOs::FlashMgr::SM::Active::Busy::PrepFlash::FLASH_DONE} */
-        case FLASH_DONE_SIG: {
-            DBG_printf("FLASH_DONE\n");
-            status_ = Q_TRAN(&FlashMgr_WaitingForFWData);
+        /* ${AOs::FlashMgr::SM::Active::Busy::PrepFlash::FLASH_NEXT_STEP} */
+        case FLASH_NEXT_STEP_SIG: {
+            DBG_printf("FLASH_NEXT_STEP\n");
+
+            LOG_printf("Extracted FW image metadata:\n");
+            LOG_printf("CRC: 0x%08x\n", me->fwFlashMetadata._imageCrc);
+            LOG_printf("Maj: %02d\n", me->fwFlashMetadata._imageMaj);
+            LOG_printf("Min: %02d\n", me->fwFlashMetadata._imageMin);
+            LOG_printf("Size: %d\n", me->fwFlashMetadata._imageSize);
+            LOG_printf("Type: %d\n", me->fwFlashMetadata._imageType);
+            LOG_printf("Datetime: %s\n", me->fwFlashMetadata._imageDatetime);
+
+            /* Do some sanity checking on the FW image metadata */
+            me->errorCode = FLASH_validateMetadata(&(me->fwFlashMetadata));
+            /* ${AOs::FlashMgr::SM::Active::Busy::PrepFlash::FLASH_NEXT_STEP::[MetadataValid?]} */
+            if (ERR_NONE == me->errorCode) {
+                DBG_printf("Finding flash sectors to erase.\n");
+
+                me->errorCode = FLASH_getSectorsToErase(
+                    me->flashSectorsToErase,
+                    &(me->flashSectorsToEraseNum),
+                    ADDR_FLASH_SECTORS,
+                    me->fwFlashMetadata._imageType,
+                    me->fwFlashMetadata._imageSize
+                );
+
+
+
+
+                /* ${AOs::FlashMgr::SM::Active::Busy::PrepFlash::FLASH_NEXT_STEP::[MetadataValid?]::[SectorsValid?]} */
+                if (ERR_NONE == me->errorCode && me->flashSectorsToEraseNum > 1) {
+                    LOG_printf("List of %d sectors (by address) to erase:\n", me->flashSectorsToEraseNum);
+                    for( uint8_t i=0; i < me->flashSectorsToEraseNum; i++ ) {
+                        LOG_printf("Sector at address at 0x%08x\n", me->flashSectorsToErase[i]);
+                    }
+                    status_ = Q_TRAN(&FlashMgr_ErasingSector);
+                }
+                /* ${AOs::FlashMgr::SM::Active::Busy::PrepFlash::FLASH_NEXT_STEP::[MetadataValid?]::[else]} */
+                else {
+                    ERR_printf("Unable to get a list of sectors to erase. Error: 0x%08x\n", me->errorCode);
+                    status_ = Q_TRAN(&FlashMgr_Idle);
+                }
+            }
+            /* ${AOs::FlashMgr::SM::Active::Busy::PrepFlash::FLASH_NEXT_STEP::[else]} */
+            else {
+                ERR_printf("FW image metadata failed validation with error: 0x%08x\n", me->errorCode);
+                status_ = Q_TRAN(&FlashMgr_Idle);
+            }
+            break;
+        }
+        /* ${AOs::FlashMgr::SM::Active::Busy::PrepFlash::FLASH_OP_TIMEOUT} */
+        case FLASH_OP_TIMEOUT_SIG: {
+            /* Override whatever error since the timeout interrupted whatever was happening. */
+            me->errorCode = ERR_FLASH_ERASE_TIMEOUT;
+            status_ = Q_TRAN(&FlashMgr_Idle);
             break;
         }
         default: {
             status_ = Q_SUPER(&FlashMgr_Busy);
+            break;
+        }
+    }
+    return status_;
+}
+
+/**
+ * @brief    Waits while a sector of flash is erased
+ * This state is responsible for initializing the erasure of a sector and waiting
+ * until the operation is complete.  A timeout may occur during this time and an
+ * error will be reported.
+ *
+ * @param  [in|out] me: Pointer to the state machine
+ * @param  [in|out]  e:  Pointer to the event being processed.
+ * @return status: QState type that specifies where the state
+ * machine is going next.
+ */
+/*${AOs::FlashMgr::SM::Active::Busy::PrepFlash::ErasingSector} .............*/
+static QState FlashMgr_ErasingSector(FlashMgr * const me, QEvt const * const e) {
+    QState status_;
+    switch (e->sig) {
+        /* ${AOs::FlashMgr::SM::Active::Busy::PrepFlash::ErasingSector} */
+        case Q_ENTRY_SIG: {
+            QTimeEvt_rearm(                         /* Re-arm timer on entry */
+                &me->flashOpTimerEvt,
+                SEC_TO_TICKS( LL_MAX_TOUT_SEC_FLASH_SECTOR_ERASE )
+            );
+
+            DBG_printf("Attempting to erase sector addr 0x%08x\n",
+                me->flashSectorsToErase[ me->flashSectorsToEraseIndex ]);
+
+            /* Use a separate status variable so if a timeout occurs, the timeout error won't get
+             * overwritten */
+            me->errorCode = FLASH_eraseSector(
+                me->flashSectorsToErase[ me->flashSectorsToEraseIndex ]
+            );
+
+            /* Post event to move to the next step only AFTER the blocking call to
+             * FLASH_eraseSector() returns */
+            QEvt *evt = Q_NEW(QEvt, FLASH_NEXT_STEP_SIG);
+            QACTIVE_POST(AO_FlashMgr, (QEvt *)(evt), AO_FlashMgr);
+            status_ = Q_HANDLED();
+            break;
+        }
+        /* ${AOs::FlashMgr::SM::Active::Busy::PrepFlash::ErasingSector} */
+        case Q_EXIT_SIG: {
+            QTimeEvt_disarm(&me->flashOpTimerEvt); /* Disarm timer on exit */
+            status_ = Q_HANDLED();
+            break;
+        }
+        /* ${AOs::FlashMgr::SM::Active::Busy::PrepFlash::ErasingSector::FLASH_NEXT_STEP} */
+        case FLASH_NEXT_STEP_SIG: {
+            /* ${AOs::FlashMgr::SM::Active::Busy::PrepFlash::ErasingSector::FLASH_NEXT_STEP::[EraseOK?]} */
+            if (ERR_NONE == me->errorCode) {
+                DBG_printf("Successfully erased sector addr 0x%08x\n",
+                    me->flashSectorsToErase[ me->flashSectorsToEraseIndex ]);
+
+                me->flashSectorsToEraseIndex += 1; /* increment the index into the erase array */
+
+                /* ${AOs::FlashMgr::SM::Active::Busy::PrepFlash::ErasingSector::FLASH_NEXT_STEP::[EraseOK?]::[MoreToErase?]} */
+                if (me->flashSectorsToEraseIndex < me->flashSectorsToEraseNum) {
+                    status_ = Q_TRAN(&FlashMgr_ErasingSector);
+                }
+                /* ${AOs::FlashMgr::SM::Active::Busy::PrepFlash::ErasingSector::FLASH_NEXT_STEP::[EraseOK?]::[else]} */
+                else {
+                    status_ = Q_TRAN(&FlashMgr_WaitingForFWData);
+                }
+            }
+            /* ${AOs::FlashMgr::SM::Active::Busy::PrepFlash::ErasingSector::FLASH_NEXT_STEP::[else]} */
+            else {
+                WRN_printf("Failed to erase flash sector 0x%08x\n", me->flashSectorsToErase[ me->flashSectorsToEraseIndex ]);
+                /* ${AOs::FlashMgr::SM::Active::Busy::PrepFlash::ErasingSector::FLASH_NEXT_STEP::[else]::[retry?]} */
+                if (me->retryCurr < MAX_FLASH_RETRIES) {
+                    me->retryCurr += 1; /* Increment retry counter */
+                    WRN_printf("Attempting operation again (retry %d out of %d)...\n", me->retryCurr, MAX_FLASH_RETRIES);
+                    status_ = Q_TRAN(&FlashMgr_ErasingSector);
+                }
+                /* ${AOs::FlashMgr::SM::Active::Busy::PrepFlash::ErasingSector::FLASH_NEXT_STEP::[else]::[else]} */
+                else {
+                    ERR_printf("No more retries, aborting with error: 0x%08x\n", me->errorCode);
+                    status_ = Q_TRAN(&FlashMgr_Idle);
+                }
+            }
+            break;
+        }
+        default: {
+            status_ = Q_SUPER(&FlashMgr_PrepFlash);
             break;
         }
     }
@@ -466,9 +620,35 @@ static QState FlashMgr_PrepFlash(FlashMgr * const me, QEvt const * const e) {
 static QState FlashMgr_WaitingForFWData(FlashMgr * const me, QEvt const * const e) {
     QState status_;
     switch (e->sig) {
+        /* ${AOs::FlashMgr::SM::Active::Busy::WaitingForFWData} */
+        case Q_ENTRY_SIG: {
+            DBG_printf("Waiting for FW data packets...\n");
+
+            me->errorCode = ERR_FLASH_WAIT_FOR_DATA_TIMEOUT;
+
+            QTimeEvt_rearm(                         /* Re-arm timer on entry */
+                &me->flashOpTimerEvt,
+                SEC_TO_TICKS( LL_MAX_TOUT_SEC_FLASH_WAIT_FOR_DATA )
+            );
+
+
+            /* Ok, we are ready to receive FW data and start flashing. Post an event letting
+             * CommMgr know we are ready for a data packet. */
+            FlashStatusEvt *evt = Q_NEW(FlashStatusEvt, FLASH_OP_DONE_SIG);
+            evt->errorCode = me->errorCode;
+            QACTIVE_POST(AO_FlashMgr, (QEvt *)(evt), AO_FlashMgr);
+            status_ = Q_HANDLED();
+            break;
+        }
+        /* ${AOs::FlashMgr::SM::Active::Busy::WaitingForFWData} */
+        case Q_EXIT_SIG: {
+            QTimeEvt_disarm(&me->flashOpTimerEvt); /* Disarm timer on exit */
+            status_ = Q_HANDLED();
+            break;
+        }
         /* ${AOs::FlashMgr::SM::Active::Busy::WaitingForFWData::FLASH_DATA} */
         case FLASH_DATA_SIG: {
-            DBG_printf("FLASH_DATA_RECEIVED\n");
+            DBG_printf("FLASH_DATA received\n");
             /* ${AOs::FlashMgr::SM::Active::Busy::WaitingForFWData::FLASH_DATA::[ValidSeq?]} */
             if (me->fwPacketCurr + 1 == ((FWDataEvt const *)e)->seqCurr) {
                 DBG_printf("Valid fw packet sequence number\n");
@@ -568,12 +748,6 @@ static QState FlashMgr_FinalizeFlash(FlashMgr * const me, QEvt const * const e) 
         /* ${AOs::FlashMgr::SM::Active::Busy::FinalizeFlash::FLASH_DONE} */
         case FLASH_DONE_SIG: {
             DBG_printf("FLASH_DONE\n");
-            status_ = Q_TRAN(&FlashMgr_Idle);
-            break;
-        }
-        /* ${AOs::FlashMgr::SM::Active::Busy::FinalizeFlash::FLASH_ERROR} */
-        case FLASH_ERROR_SIG: {
-            WRN_printf("FLASH_ERROR\n");
             status_ = Q_TRAN(&FlashMgr_Idle);
             break;
         }

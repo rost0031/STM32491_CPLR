@@ -14,6 +14,7 @@
 #include "project_includes.h"
 #include <stdio.h>
 #include "version.h"
+#include "CBCommApi.h"
 
 /* Compile-time called macros ------------------------------------------------*/
 DBG_DEFINE_THIS_MODULE( DBG_MODL_FLASH );/* For debug system to ID this module */
@@ -176,12 +177,6 @@ static const uint16_t FLASH_sectorAddrToFlashSect( const uint32_t addr )
 }
 
 /******************************************************************************/
-void FLASH_init(void)
-{
-   FLASH_Unlock();
-}
-
-/******************************************************************************/
 CBErrorCode FLASH_getSectorsToErase(
       uint32_t *sectorArrayLoc,
       uint8_t *nSectors,
@@ -203,13 +198,6 @@ CBErrorCode FLASH_getSectorsToErase(
    if( sectorArraySize < ADDR_FLASH_SECTORS ) {
       status = ERR_MEM_BUFFER_LEN;
       ERR_printf("Sector array is not long enough. Error: 0x%08x\n", status);
-      return( status );
-   }
-
-   /* Make sure that the image is not bigger than the total available flash */
-   if ( flashImageSize > 0x0001FFFFF ) {
-      status = ERR_FLASH_IMAGE_TOO_BIG;
-      ERR_printf("FW image size is bigger than available flash. Error: 0x%08x\n", status);
       return( status );
    }
 
@@ -270,7 +258,7 @@ CBErrorCode FLASH_eraseSector( const uint32_t sectorAddr )
          FLASH_FLAG_WRPERR | FLASH_FLAG_OPERR | FLASH_FLAG_EOP
    );
    //	DBG_printf("Status after clear: %x\n",FLASH->SR );
-   LOG_printf("!!!Erasing Flash.  This is slow so please be patient!!!\n");
+   WRN_printf("*** Erasing Flash sector addr 0x%08x ***\n", sectorAddr);
 
    /*Look up the STM32 value of the sector given the sector address */
    uint16_t sector = FLASH_sectorAddrToFlashSect( sectorAddr );
@@ -290,6 +278,32 @@ CBErrorCode FLASH_eraseSector( const uint32_t sectorAddr )
    }
 
    return( status );
+}
+
+/******************************************************************************/
+CBErrorCode FLASH_validateMetadata(
+      const struct CBFlashMetaPayloadMsg const *fwMetadata
+)
+{
+   CBErrorCode status = ERR_NONE;
+   if ( 0 == fwMetadata->_imageCrc || 0xFFFFFFF == fwMetadata->_imageCrc ) {
+      status = ERR_FLASH_INVALID_IMAGE_CRC;
+   } else if ( fwMetadata->_imageDatetime_len != CB_DATETIME_LEN ) {
+      ERR_printf("Datetime len: %d\n", fwMetadata->_imageDatetime_len);
+      status = ERR_FLASH_INVALID_DATETIME_LEN;
+   } else if ( fwMetadata->_imageDatetime[0] != '2' &&  fwMetadata->_imageDatetime[0] != '0' ) {
+      status = ERR_FLASH_INVALID_DATETIME;
+   } else if ( fwMetadata->_imageType == _CB_Application ) {
+      /* Make sure that the image is not bigger than the total available flash */
+      if ( 0 == fwMetadata->_imageSize ||
+            fwMetadata->_imageSize >= MAX_APPL_FWIMAGE_SIZE ) {
+         status = ERR_FLASH_IMAGE_SIZE_INVALID;
+      }
+   } else {
+      status = ERR_FLASH_IMAGE_TYPE_INVALID;
+   }
+
+   return status;
 }
 
 /******************************************************************************/

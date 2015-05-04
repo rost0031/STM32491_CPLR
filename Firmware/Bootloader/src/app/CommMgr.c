@@ -64,9 +64,6 @@ typedef struct {
 /* protected: */
     QActive super;
 
-    /**< Local timer for timing out msg processing. */
-    QTimeEvt msgTimerEvt;
-
     /**< Local buffer to store incoming msgs */
     uint8_t* dataBuf[CB_MAX_MSG_LEN];
 
@@ -109,6 +106,12 @@ typedef struct {
     /**< Union of all the possible payload msgs.  This gets populated by the recieved msg
      * processing and later reused to send Prog and Done msgs. */
     CBPayloadMsgUnion_t payloadMsgUnion;
+
+    /**< Timer for timing out the Busy state of CommMgr Ao. */
+    QTimeEvt commMgrTimerEvt;
+
+    /**< Timer for timing out the individual operations in CommMgr AO. */
+    QTimeEvt commOpTimerEvt;
 } CommMgr;
 
 /* protected: */
@@ -148,7 +151,7 @@ static QState CommMgr_Idle(CommMgr * const me, QEvt const * const e);
  * @return status: QState type that specifies where the state
  * machine is going next.
  */
-static QState CommMgr_BusyWithMsg(CommMgr * const me, QEvt const * const e);
+static QState CommMgr_Busy(CommMgr * const me, QEvt const * const e);
 
 /**
  * @brief	State that ensures the system stays in the Busy state while processing.
@@ -195,7 +198,8 @@ QActive * const AO_CommMgr = (QActive *)&l_CommMgr;  /* "opaque" AO pointer */
 void CommMgr_ctor(void) {
     CommMgr *me = &l_CommMgr;
     QActive_ctor(&me->super, (QStateHandler)&CommMgr_initial);
-    QTimeEvt_ctor(&me->msgTimerEvt, CLI_MSG_TIMEOUT_SIG);
+    QTimeEvt_ctor(&me->commMgrTimerEvt, COMM_MGR_TIMEOUT_SIG);
+    QTimeEvt_ctor(&me->commOpTimerEvt, COMM_OP_TIMEOUT_SIG);
 }
 
 /**
@@ -285,11 +289,18 @@ static QState CommMgr_Active(CommMgr * const me, QEvt const * const e) {
         case Q_ENTRY_SIG: {
             /* Arm and disarm*/
             QTimeEvt_postIn(
-                &me->msgTimerEvt,
+                &me->commMgrTimerEvt,
                 (QActive *)me,
-                SEC_TO_TICKS( LL_MAX_TOUT_SEC_CLI_MSG_PROCESS )
+                SEC_TO_TICKS( HL_MAX_TOUT_SEC_COMM_MSG_PROCESS )
             );
-            QTimeEvt_disarm(&me->msgTimerEvt);
+            QTimeEvt_disarm(&me->commMgrTimerEvt);
+
+            QTimeEvt_postIn(
+                &me->commOpTimerEvt,
+                (QActive *)me,
+                SEC_TO_TICKS( HL_MAX_TOUT_SEC_COMM_MSG_PROCESS )
+            );
+            QTimeEvt_disarm(&me->commOpTimerEvt);
             status_ = Q_HANDLED();
             break;
         }
@@ -444,18 +455,18 @@ static QState CommMgr_Idle(CommMgr * const me, QEvt const * const e) {
  * @return status: QState type that specifies where the state
  * machine is going next.
  */
-/*${AOs::CommMgr::SM::Active::BusyWithMsg} .................................*/
-static QState CommMgr_BusyWithMsg(CommMgr * const me, QEvt const * const e) {
+/*${AOs::CommMgr::SM::Active::Busy} ........................................*/
+static QState CommMgr_Busy(CommMgr * const me, QEvt const * const e) {
     QState status_;
     switch (e->sig) {
-        /* ${AOs::CommMgr::SM::Active::BusyWithMsg} */
+        /* ${AOs::CommMgr::SM::Active::Busy} */
         case Q_ENTRY_SIG: {
             /* Arm the timer so if the message can't be processed for some reason, we can get
              * back to idle state.  This timer may be re-armed if some messages require more
              * time to process than others. */
             QTimeEvt_rearm(
-                &me->msgTimerEvt,
-                SEC_TO_TICKS( LL_MAX_TOUT_SEC_CLI_MSG_PROCESS )
+                &me->commMgrTimerEvt,
+                SEC_TO_TICKS( HL_MAX_TOUT_SEC_COMM_MSG_PROCESS )
             );
 
             /* Compose and send Ack response.  We can re-use the current structure since only
@@ -479,8 +490,10 @@ static QState CommMgr_BusyWithMsg(CommMgr * const me, QEvt const * const e) {
             status_ = Q_HANDLED();
             break;
         }
-        /* ${AOs::CommMgr::SM::Active::BusyWithMsg} */
+        /* ${AOs::CommMgr::SM::Active::Busy} */
         case Q_EXIT_SIG: {
+            QTimeEvt_disarm(&me->commMgrTimerEvt);                 /* Disarm timer on exit */
+
             /* Set the fields of the msg common for all Done msgs regardless of status or msg */
             me->basicMsg._msgType    = _CB_Done;
             me->basicMsg._msgRoute   = me->msgRoute;
@@ -555,14 +568,13 @@ static QState CommMgr_BusyWithMsg(CommMgr * const me, QEvt const * const e) {
                 WRN_printf("Possible error sending Done, attempting to continue. Error: 0x%08x\n", me->errorCode);
             }
 
-            /* Disarm timer on exit */
-            QTimeEvt_disarm(&me->msgTimerEvt);
             status_ = Q_HANDLED();
             break;
         }
-        /* ${AOs::CommMgr::SM::Active::BusyWithMsg::CLI_MSG_TIMEOUT} */
-        case CLI_MSG_TIMEOUT_SIG: {
-            ERR_printf("Timeout trying to process %d basic msg, error: 0x%08x\n", me->errorCode);
+        /* ${AOs::CommMgr::SM::Active::Busy::COMM_MGR_TIMEOUT} */
+        case COMM_MGR_TIMEOUT_SIG: {
+            ERR_printf("COMM_MGR_TIMEOUT trying to process %d basic msg, error: 0x%08x\n",
+                me->basicMsg._msgName, me->errorCode);
             status_ = Q_TRAN(&CommMgr_Idle);
             break;
         }
@@ -585,22 +597,33 @@ static QState CommMgr_BusyWithMsg(CommMgr * const me, QEvt const * const e) {
  * @return status: QState type that specifies where the state
  * machine is going next.
  */
-/*${AOs::CommMgr::SM::Active::BusyWithMsg::ValidateMsg} ....................*/
+/*${AOs::CommMgr::SM::Active::Busy::ValidateMsg} ...........................*/
 static QState CommMgr_ValidateMsg(CommMgr * const me, QEvt const * const e) {
     QState status_;
     switch (e->sig) {
-        /* ${AOs::CommMgr::SM::Active::BusyWithMsg::ValidateMsg} */
+        /* ${AOs::CommMgr::SM::Active::Busy::ValidateMsg} */
         case Q_ENTRY_SIG: {
+            QTimeEvt_rearm(                                       /* Re-arm timer on entry */
+                &me->commOpTimerEvt,
+                SEC_TO_TICKS( LL_MAX_TOUT_SEC_COMM_MSG_VALIDATE_MSG_OP )
+            );
+
             /* Post to self to leave the state and continue processing the rest of the msg */
             QEvt *evt = Q_NEW(QEvt, MSG_PROCESS_SIG);
             QACTIVE_POST(AO_CommMgr, (QEvt *)(evt), AO_CommMgr);
             status_ = Q_HANDLED();
             break;
         }
-        /* ${AOs::CommMgr::SM::Active::BusyWithMsg::ValidateMsg::MSG_PROCESS} */
+        /* ${AOs::CommMgr::SM::Active::Busy::ValidateMsg} */
+        case Q_EXIT_SIG: {
+            QTimeEvt_disarm(&me->commOpTimerEvt);                  /* Disarm timer on exit */
+            status_ = Q_HANDLED();
+            break;
+        }
+        /* ${AOs::CommMgr::SM::Active::Busy::ValidateMsg::MSG_PROCESS} */
         case MSG_PROCESS_SIG: {
             DBG_printf("MSG_PROCESS\n");
-            /* ${AOs::CommMgr::SM::Active::BusyWithMsg::ValidateMsg::MSG_PROCESS::[GetBootMode?]} */
+            /* ${AOs::CommMgr::SM::Active::Busy::ValidateMsg::MSG_PROCESS::[GetBootMode?]} */
             if (_CBGetBootModeMsg == me->basicMsg._msgName) {
                 me->errorCode = ERR_NONE;
 
@@ -619,7 +642,7 @@ static QState CommMgr_ValidateMsg(CommMgr * const me, QEvt const * const e) {
                 DBG_printf("Setting bootMode payload with bootmode: %d\n", me->payloadMsgUnion.bootmodePayload._bootMode);
                 status_ = Q_TRAN(&CommMgr_Idle);
             }
-            /* ${AOs::CommMgr::SM::Active::BusyWithMsg::ValidateMsg::MSG_PROCESS::[SetBootMode?]} */
+            /* ${AOs::CommMgr::SM::Active::Busy::ValidateMsg::MSG_PROCESS::[SetBootMode?]} */
             else if (_CBSetBootModeMsg == me->basicMsg._msgName) {
                 me->errorCode = ERR_NONE;
 
@@ -637,13 +660,13 @@ static QState CommMgr_ValidateMsg(CommMgr * const me, QEvt const * const e) {
                 DBG_printf("Setting status payload with error code: %d\n", me->payloadMsgUnion.statusPayload._errorCode);
                 status_ = Q_TRAN(&CommMgr_Idle);
             }
-            /* ${AOs::CommMgr::SM::Active::BusyWithMsg::ValidateMsg::MSG_PROCESS::[Flash?]} */
+            /* ${AOs::CommMgr::SM::Active::Busy::ValidateMsg::MSG_PROCESS::[Flash?]} */
             else if (_CBFlashMsg == me->basicMsg._msgName) {
                 me->errorCode = ERR_NONE;
 
                 DBG_printf("_CBFlashMsg decoded, attempting to decode payload (if exists)\n");
 
-                /* ${AOs::CommMgr::SM::Active::BusyWithMsg::ValidateMsg::MSG_PROCESS::[Flash?]::[FlashMetaPayloa~} */
+                /* ${AOs::CommMgr::SM::Active::Busy::ValidateMsg::MSG_PROCESS::[Flash?]::[FlashMetaPayloa~} */
                 if (_CBFlashMetaPayloadMsg == me->msgPayloadName) {
                     /* The flash meta payload is the start of the FW update.  The meta payload contains
                      * all the information about the coming fw data.  We need to store this so it can be
@@ -656,10 +679,11 @@ static QState CommMgr_ValidateMsg(CommMgr * const me, QEvt const * const e) {
                     evt->imageMin  = me->payloadMsgUnion.flashMetaPayload._imageMin;
                     evt->imageSize = me->payloadMsgUnion.flashMetaPayload._imageSize;
                     evt->imageType = me->payloadMsgUnion.flashMetaPayload._imageType;
+                    evt->imageDatetimeLen = me->payloadMsgUnion.flashMetaPayload._imageDatetime_len;
                     MEMCPY(
                         evt->imageDatetime,
                         me->payloadMsgUnion.flashMetaPayload._imageDatetime,
-                        CB_DATETIME_LEN
+                        evt->imageDatetimeLen
                     );
                     QACTIVE_POST(AO_FlashMgr, (QEvt *)(evt), AO_CommMgr);
 
@@ -671,16 +695,9 @@ static QState CommMgr_ValidateMsg(CommMgr * const me, QEvt const * const e) {
 
                     /* Don't change the basicMsg name since it should be the same in all cases. */
                     me->basicMsg._msgPayload = me->msgPayloadName;
-
-                    /* Rearm the timer since this operation is slow */
-                    QTimeEvt_rearm(
-                        &me->msgTimerEvt,
-                        SEC_TO_TICKS( LL_MAX_TOUT_SEC_CLI_FW_META_WAIT )
-                    );
-
                     status_ = Q_TRAN(&CommMgr_WaitForRespFromFlashMgr);
                 }
-                /* ${AOs::CommMgr::SM::Active::BusyWithMsg::ValidateMsg::MSG_PROCESS::[Flash?]::[FlashDataPayloa~} */
+                /* ${AOs::CommMgr::SM::Active::Busy::ValidateMsg::MSG_PROCESS::[Flash?]::[FlashDataPayloa~} */
                 else if (_CBFlashMetaPayloadMsg == me->msgPayloadName) {
                     /* The flash data payload is used to transfer the FW data packets to FlashMgr AO. */
 
@@ -707,19 +724,13 @@ static QState CommMgr_ValidateMsg(CommMgr * const me, QEvt const * const e) {
 
                     /* Don't change the basicMsg name since it should be the same in all cases. */
                     me->basicMsg._msgPayload = me->msgPayloadName;
-
-                    /* Rearm the timer since this operation is slow */
-                    QTimeEvt_rearm(
-                        &me->msgTimerEvt,
-                        SEC_TO_TICKS( LL_MAX_TOUT_SEC_CLI_FW_META_WAIT )
-                    );
                     status_ = Q_TRAN(&CommMgr_WaitForRespFromFlashMgr);
                 }
                 else {
                     status_ = Q_UNHANDLED();
                 }
             }
-            /* ${AOs::CommMgr::SM::Active::BusyWithMsg::ValidateMsg::MSG_PROCESS::[else]} */
+            /* ${AOs::CommMgr::SM::Active::Busy::ValidateMsg::MSG_PROCESS::[else]} */
             else {
                 me->errorCode = ERR_MSG_UNKNOWN_BASIC;
                 ERR_printf(
@@ -744,23 +755,34 @@ static QState CommMgr_ValidateMsg(CommMgr * const me, QEvt const * const e) {
             break;
         }
         default: {
-            status_ = Q_SUPER(&CommMgr_BusyWithMsg);
+            status_ = Q_SUPER(&CommMgr_Busy);
             break;
         }
     }
     return status_;
 }
-/*${AOs::CommMgr::SM::Active::BusyWithMsg::WaitForRespFromF~} ..............*/
+/*${AOs::CommMgr::SM::Active::Busy::WaitForRespFromF~} .....................*/
 static QState CommMgr_WaitForRespFromFlashMgr(CommMgr * const me, QEvt const * const e) {
     QState status_;
     switch (e->sig) {
-        /* ${AOs::CommMgr::SM::Active::BusyWithMsg::WaitForRespFromF~} */
+        /* ${AOs::CommMgr::SM::Active::Busy::WaitForRespFromF~} */
         case Q_ENTRY_SIG: {
+            QTimeEvt_rearm(                                       /* Re-arm timer on entry */
+                &me->commOpTimerEvt,
+                SEC_TO_TICKS( LL_MAX_TOUT_SEC_COMM_MSG_FLASH_OP )
+            );
+
             me->errorCode = ERR_COMM_FLASHMGR_TIMEOUT; /* Set the error in case we timeout */
             status_ = Q_HANDLED();
             break;
         }
-        /* ${AOs::CommMgr::SM::Active::BusyWithMsg::WaitForRespFromF~::FLASH_OP_DONE} */
+        /* ${AOs::CommMgr::SM::Active::Busy::WaitForRespFromF~} */
+        case Q_EXIT_SIG: {
+            QTimeEvt_disarm(&me->commOpTimerEvt);                  /* Disarm timer on exit */
+            status_ = Q_HANDLED();
+            break;
+        }
+        /* ${AOs::CommMgr::SM::Active::Busy::WaitForRespFromF~::FLASH_OP_DONE} */
         case FLASH_OP_DONE_SIG: {
             me->errorCode = ((FlashStatusEvt const *)e)->errorCode;
             DBG_printf("FLASH_OP_DONE with status: 0x%08x\n", me->errorCode);
@@ -771,7 +793,7 @@ static QState CommMgr_WaitForRespFromFlashMgr(CommMgr * const me, QEvt const * c
             status_ = Q_TRAN(&CommMgr_Idle);
             break;
         }
-        /* ${AOs::CommMgr::SM::Active::BusyWithMsg::WaitForRespFromF~::FLASH_FW_DONE} */
+        /* ${AOs::CommMgr::SM::Active::Busy::WaitForRespFromF~::FLASH_FW_DONE} */
         case FLASH_FW_DONE_SIG: {
             me->errorCode = ((FWMetaEvt const *)e)->errorCode;
             DBG_printf("FLASH_FW_DONE with status: 0x%08x\n", me->errorCode);
@@ -803,8 +825,15 @@ static QState CommMgr_WaitForRespFromFlashMgr(CommMgr * const me, QEvt const * c
             status_ = Q_TRAN(&CommMgr_Idle);
             break;
         }
+        /* ${AOs::CommMgr::SM::Active::Busy::WaitForRespFromF~::COMM_OP_TIMEOUT} */
+        case COMM_OP_TIMEOUT_SIG: {
+            ERR_printf("COMM_OP_TIMEOUT trying to process %d basic msg, error: 0x%08x\n",
+                me->basicMsg._msgName, me->errorCode);
+            status_ = Q_TRAN(&CommMgr_Idle);
+            break;
+        }
         default: {
-            status_ = Q_SUPER(&CommMgr_BusyWithMsg);
+            status_ = Q_SUPER(&CommMgr_Busy);
             break;
         }
     }

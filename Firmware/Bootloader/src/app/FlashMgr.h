@@ -92,6 +92,9 @@ typedef struct {
     /**< FW image datetime */
     uint8_t imageDatetime[CB_DATETIME_LEN];
 
+    /**< FW image datetime length */
+    uint8_t imageDatetimeLen;
+
     /**< Status of the FW flash completion.  Only used when sending back from FlashMgr */
     CBErrorCode errorCode;
 } FWMetaEvt;

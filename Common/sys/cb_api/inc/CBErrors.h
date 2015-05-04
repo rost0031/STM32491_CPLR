@@ -54,7 +54,7 @@ typedef enum CBErrors
    ERR_BOR_RESET                                               = 0x0000000B,
 
    /* Flash error category                       0x00010000 - 0x0001FFFF */
-   ERR_FLASH_IMAGE_TOO_BIG                                     = 0x00010000,
+   ERR_FLASH_IMAGE_SIZE_INVALID                                = 0x00010000,
    ERR_FLASH_IMAGE_TYPE_INVALID                                = 0x00010001,
    ERR_FLASH_BUSY                                              = 0x00010002,
    ERR_FLASH_READ                                              = 0x00010003,
@@ -67,6 +67,11 @@ typedef enum CBErrors
    ERR_FLASH_READ_VERIFY_FAILED                                = 0x0001000A,
    ERR_FLASH_WRITE_INCOMPLETE                                  = 0x0001000B,
    ERR_FLASH_SECTOR_ADDR_NOT_FOUND                             = 0x0001000C,
+   ERR_FLASH_ERASE_TIMEOUT                                     = 0x0001000D,
+   ERR_FLASH_INVALID_IMAGE_CRC                                 = 0x0001000E,
+   ERR_FLASH_INVALID_DATETIME_LEN                              = 0x0001000F,
+   ERR_FLASH_INVALID_DATETIME                                  = 0x00010010,
+   ERR_FLASH_WAIT_FOR_DATA_TIMEOUT                             = 0x00010011,
 
    /* NOR error category                         0x00030000 - 0x0003FFFF */
    ERR_NOR_ERROR                                               = 0x00030000,

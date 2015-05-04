@@ -22,8 +22,8 @@
 /* These defines specify where the various flash regions start and end on the
  * STM32F4xx 2MB flash chip that is being used by the DC3 */
 #define FLASH_BOOT_START_ADDRESS          ((uint32_t)0x08000000)
-#define FLASH_BOOT_LAST_ADDRESS           ((uint32_t)0x0801FFFF)
-#define FLASH_APPL_START_ADDRESS          ((uint32_t)0x08020000)
+#define FLASH_BOOT_LAST_ADDRESS           ((uint32_t)0x0803FFFF)
+#define FLASH_APPL_START_ADDRESS          ((uint32_t)0x08040000)
 #define FLASH_LAST_ADDR                   ((uint32_t)0x081FFFFF)
 
 #define FLASH_END_ADDR_SECTOR             ADDR_FLASH_SECTOR_23  /**< End address of user Flash area */
@@ -58,18 +58,12 @@
 #define ADDR_FLASH_SECTOR_23    ((uint32_t)0x081E0000) /**< Addr of Sect 23, 128 KB */
 
 #define ADDR_FLASH_SECTORS       24 /**< Number of sectors in the flash */
+#define MAX_APPL_FWIMAGE_SIZE    0x0001AFFFF /**< Max size of fw image (~1.76 MB) */
 
 /* Exported macros -----------------------------------------------------------*/
 /* Exported types ------------------------------------------------------------*/
 /* Exported constants --------------------------------------------------------*/
 /* Exported functions --------------------------------------------------------*/
-
-/**
- * @brief   Unlocks Flash for write access.
- * @param	None
- * @return	None
- */
-void FLASH_init( void );
 
 /**
  * @brief   Find and fill array of sector base addresses.
@@ -109,6 +103,18 @@ CBErrorCode FLASH_getSectorsToErase(
  * 	@arg  other error codes if error occurred
  */
 CBErrorCode FLASH_eraseSector( const uint32_t sectorAddr );
+
+/**
+ * @brief   Validate FW image metadata.
+ * @param [in] *fwMetadata: const const struct CBFlashMetaPayloadMsg const pointer
+ * to the fw image metadata.
+ * @return  CBErrorCode status:
+ *    @arg  ERR_NONE: success
+ *    @arg  other error codes if error occurred
+ */
+CBErrorCode FLASH_validateMetadata(
+      const struct CBFlashMetaPayloadMsg const *fwMetadata
+);
 
 /**
  * @brief   Writes a buffer of "size" bytes starting from the "startAddr".
