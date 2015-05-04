@@ -50,7 +50,7 @@
  * @param  size:	Size of the buffer.
  * @return crc: uint32_t CRC value calculated for the given buffer and size.
  */
-uint32_t CRC32_Calc( char *buffer, int size );
+uint32_t CRC32_Calc( const uint8_t *buffer, uint32_t size );
 
 /**
  * @brief This function bit reverses and is written in ARM assembly.

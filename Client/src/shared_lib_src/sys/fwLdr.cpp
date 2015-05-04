@@ -54,8 +54,8 @@ ClientError_t FWLdr::loadFromFile( const char *filename )
 	m_size = fw_file.tellg();                       /* Get the total file size */
 	DBG_printf(this->m_pLog, "Size of %s is %d", filename, m_size);
 	fw_file.seekg(0, ios::beg);                     /* Go to beginning of file */
-	m_buffer = new char[m_size];                            /* Allocate buffer */
-	fw_file.read(m_buffer, m_size);                   /* Read file into buffer */
+	m_buffer = new uint8_t[m_size];                         /* Allocate buffer */
+	fw_file.read((char *)m_buffer, m_size);           /* Read file into buffer */
 	fw_file.close();                                             /* Close file */
 
 	status = parseFilename(filename);
@@ -181,7 +181,15 @@ ClientError_t FWLdr::parseFilename( const char *filename )
 }
 
 /******************************************************************************/
-unsigned int FWLdr::getChunk( char* buffer, unsigned int size )
+size_t FWLdr::calcNumberOfPackets( size_t size )
+{
+   uint16_t remainder = m_size % size;
+   size_t nPackets = ( m_size / size ) + (remainder > 0 ? 1 : 0);
+   return nPackets;
+}
+
+/******************************************************************************/
+size_t FWLdr::getChunk( size_t size, uint8_t *buffer )
 {
 	if (m_chunk_index + size <= m_size) {
 		memcpy( buffer, &m_buffer[m_chunk_index], size);
@@ -204,7 +212,15 @@ unsigned int FWLdr::getChunk( char* buffer, unsigned int size )
 }
 
 /******************************************************************************/
-uint32_t FWLdr::calcCRC32(char *buffer, unsigned int size)
+size_t FWLdr::getChunkAndCRC( size_t size, uint8_t *buffer, uint32_t *crc )
+{
+   size_t retSize = getChunk( size, buffer );
+   *crc = calcCRC32( buffer, retSize );
+   return retSize;
+}
+
+/******************************************************************************/
+uint32_t FWLdr::calcCRC32(uint8_t *buffer, size_t size)
 {
 	boost::crc_32_type crc_result;
 	crc_result.reset();

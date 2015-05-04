@@ -63,9 +63,6 @@ typedef struct {
 
     /**< FW data packet sequence number */
     uint16_t seqCurr;
-
-    /**< Total number of FW data packets expected */
-    uint16_t seqTotal;
 } FWDataEvt;
 
 /**< Event type that transports metadata about the FW upgrade */
@@ -97,6 +94,9 @@ typedef struct {
 
     /**< Status of the FW flash completion.  Only used when sending back from FlashMgr */
     CBErrorCode errorCode;
+
+    /**< Total number of FW data packets expected */
+    uint16_t imageNumPackets;
 } FWMetaEvt;
 
 /**< Event type that transports metadata about the FW upgrade */

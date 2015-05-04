@@ -415,8 +415,8 @@ message CBStatusPayloadMsg
 //          < msgName = CBGetVersionMsg          < errorCode = error or status  
 //          < msgID   = [uint32]                 < fwVersionString = string of data with FW version
 //          < msgType = CB_Done                  < fwDateString = string of data with FW date
-//          < msgProgReq = [0|1]                 < fwVersionStringLen = Number of characters in FW version string.
-//          < msgRoute = [CBMsgRoute]            < fwDateStringLen = Number of characters in FW date string.
+//          < msgProgReq = [0|1]                 < fwVersionString_len = Number of characters in FW version string.
+//          < msgRoute = [CBMsgRoute]            < fwDateString_len = Number of characters in FW date string.
 //          < msgPayload = CBVersionPayloadMsg   < dbVersion = version of the settings database
 // END CBGetVersionMsg
 //------------------------------------------------------------------------------
@@ -434,10 +434,8 @@ message CBVersionPayloadMsg
 {
     required uint32 errorCode    = 1; // error code indicating status of the req.
     required bytes  fwVerString  = 2; // CB FW version string
-    required uint32 fwVerStrLen  = 3; // CB FW version string length
-    required bytes  fwDateString = 4; // CB FW date string
-    required uint32 fwDateStrLen = 5; // CB FW date string length
-    required uint32 dbVersion    = 6; // Version of the settings database
+    required bytes  fwDateString = 3; // CB FW date string
+    required uint32 dbVersion    = 4; // Version of the settings database
 }
 // END CBVersionPayloadMsg.
 //------------------------------------------------------------------------------
@@ -558,6 +556,7 @@ message CBBootModePayloadMsg
 //          < msgProgReq = [0|1]                  < imageMajor            
 //          < msgRoute = [CBMsgRoute]             < imageMinor
 //          < msgPayload = CBFlashMetaPayloadMsg  < imageDatetime
+//                                                < imageNumPackets
 // *Rec*  [[**************CBBasicMsg***********]\n]<<<<<<<<<<<<<<<<<<<<<<<*Send*
 //          < msgName = CBFlashMsg
 //          < msgID   = [uint32]                   
@@ -577,10 +576,10 @@ message CBBootModePayloadMsg
 //
 // *Send*  [[************CBBasicMsg**********][**CBPayloadMsg**]\n]>>>>>>>>*Rec*
 //          < msgName = CBFlashMsg                < dataCrc 
-//          < msgID   = n + 1                     < dataLen
+//          < msgID   = n + 1                     < dataBuf_len
 //          < msgType = CB_Req                    < dataBuf
 //          < msgProgReq = [0|1]                  < seqCurr ( n through n + x ) 
-//          < msgRoute = [CBMsgRoute]             < seqTotal ( n + x )
+//          < msgRoute = [CBMsgRoute]             
 //          < msgPayload = CBFlashDataPayloadMsg
 // *Rec*  [[**************CBBasicMsg***********]\n]<<<<<<<<<<<<<<<<<<<<<<<*Send*
 //          < msgName = CBFlashMsg
@@ -607,7 +606,7 @@ message CBBootModePayloadMsg
 //
 // *Send*  [[************CBBasicMsg**********][**CBPayloadMsg**]\n]>>>>>>>>*Rec*
 //          < msgName = CBFlashMsg                < dataCrc 
-//          < msgID   = n + 1                     < dataLen
+//          < msgID   = n + 1                     < dataBuf_len
 //          < msgType = CB_Req                    < dataBuf
 //          < msgProgReq = [0|1]                  < seqCurr ( n + x ) 
 //          < msgRoute = [CBMsgRoute]             < seqTotal ( n + x )
@@ -626,6 +625,7 @@ message CBBootModePayloadMsg
 //          < msgProgReq = [0|1]                  < imageMajor            
 //          < msgRoute = [CBMsgRoute]             < imageMinor
 //          < msgPayload = CBFlashMetaPayloadMsg  < imageDatetime
+//                                                < imageNumPackets
 // END CBFlashMsg
 //------------------------------------------------------------------------------
 
@@ -654,6 +654,8 @@ message CBFlashMetaPayloadMsg
     required uint32 imageMaj      = 5; // Major version
     required uint32 imageMin      = 6; // Minor version
     required string imageDatetime = 7; // Build date and time string
+    required uint32 imageNumPackets = 8; // Number of FW image data packets to 
+                                       // expect.
  
 }
 // END CBFlashMetaPayloadMsg.
@@ -671,10 +673,8 @@ message CBFlashMetaPayloadMsg
 message CBFlashDataPayloadMsg 
 {
 	required uint32     dataCrc   = 1; // CRC of the data in dataBuf
-    required uint32     dataLen   = 2; // length of data in the buffer
-    required bytes      dataBuf   = 3; // buffer with data
-    required uint32     seqCurr   = 4; // sequence number of current data packet
-    required uint32     seqTotal  = 5; // total number of sequence packets expected
+    required bytes      dataBuf   = 2; // buffer with data
+    required uint32     seqCurr   = 3; // sequence number of current data packet
 }
 // END CBFlashDataPayloadMsg.
 //------------------------------------------------------------------------------

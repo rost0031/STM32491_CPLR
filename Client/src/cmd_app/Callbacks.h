@@ -63,8 +63,6 @@ void CLI_AckCallback(
  * from the coupler board. This performs a pretty-print of data in the Done msg.
  *
  * @param [in] basicMsgStruct: CBBasicMsg struct of raw data contained in the Ack msg.
- * @param [in] payloadMsgName: CBMsgName that specifies which payload msg to
- * look up in the union of all payload msgs.
  * @param [in] payloadMsgUnion: CBPayloadMsgUnion_t uniont that contains the union
  * of all possible payload msgs.
  *
@@ -72,7 +70,6 @@ void CLI_AckCallback(
  */
 void CLI_DoneCallback(
       struct CBBasicMsg basicMsgStruct,
-      CBMsgName payloadMsgName,
       CBPayloadMsgUnion_t payloadMsgUnion
 );
 

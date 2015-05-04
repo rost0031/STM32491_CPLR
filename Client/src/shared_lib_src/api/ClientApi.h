@@ -91,24 +91,37 @@ private:
 
    /**
     * @brief   Polls for new events in the queue from MainMgr AO.
-    * @param   None
-    * @return: QEvt pointer to the event that is now in the queue.
+    * @param [out] *basicMsg: CBBasicMsg pointer to the basic msg struct that
+    * will contain the data on output.
+    * @param [out] *payloadMsgUnion: CBPayloadMsgUnion_t pointer to the union
+    * of all the payload msgs that will contain the correct portion of itself
+    * filled on output.  This union is indexed by the contents of the
+    * basicMsg._msgPayload.
+    * @return: ClientError_t status of the client executing the command.
+    *    @arg  CLI_ERR_NONE: success
+    *    other error codes if failure.
     */
    ClientError_t pollForResp(
          CBBasicMsg *basicMsg,
-         CBMsgName *payloadMsgName,
          CBPayloadMsgUnion_t *payloadMsgUnion
    );
 
    /**
     * @brief   Blocks while waiting for new events in queue from MainMgr AO.
-    * @param:  None
-    * @return: QEvt pointer to the event that is now in the queue.
+    * @param [out] *basicMsg: CBBasicMsg pointer to the basic msg struct that
+    * will contain the data on output.
+    * @param [out] *payloadMsgUnion: CBPayloadMsgUnion_t pointer to the union
+    * of all the payload msgs that will contain the correct portion of itself
+    * filled on output.  This union is indexed by the contents of the
+    * basicMsg._msgPayload.
+    * @return: ClientError_t status of the client executing the command.
+    *    @arg  CLI_ERR_NONE: success
+    *    other error codes if failure.
     */
    ClientError_t waitForResp(
          CBBasicMsg *basicMsg,
-         CBMsgName *payloadMsgName,
-         CBPayloadMsgUnion_t *payloadMsgUnion
+         CBPayloadMsgUnion_t *payloadMsgUnion,
+         uint16_t timeoutSecs
    );
 
 public:

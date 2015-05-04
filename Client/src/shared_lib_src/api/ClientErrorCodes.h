@@ -58,8 +58,9 @@ typedef enum ClientErrors
 {
    CLI_ERR_NONE                                                = 0x00000000,
 
-   /* Logger error category.                     0x00000001 - 0x0000FFFF */
+   /* General error category.                     0x00000001 - 0x0000FFFF */
    CLI_ERR_INVALID_CALLBACK                                    = 0x00000001,
+   CLI_ERR_TIMEOUT_WAITING_FOR_RESP                            = 0x00000002,
 
    /* Serial error category.                     0x00010000 - 0x0001FFFF */
    CLI_ERR_SER_EXCEPTION_CAUGHT                                = 0x00010000,

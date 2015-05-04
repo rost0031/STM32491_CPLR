@@ -19,9 +19,6 @@
    <attribute name="seqCurr" type="uint16_t" visibility="0x01" properties="0x00">
     <documentation>/**&lt; FW data packet sequence number */</documentation>
    </attribute>
-   <attribute name="seqTotal" type="uint16_t" visibility="0x01" properties="0x00">
-    <documentation>/**&lt; Total number of FW data packets expected */</documentation>
-   </attribute>
   </class>
   <class name="FWMetaEvt" superclass="qpc::QEvt">
    <documentation>/**&lt; Event type that transports metadata about the FW upgrade */</documentation>
@@ -48,6 +45,9 @@
    </attribute>
    <attribute name="errorCode" type="CBErrorCode" visibility="0x01" properties="0x00">
     <documentation>/**&lt; Status of the FW flash completion.  Only used when sending back from FlashMgr */</documentation>
+   </attribute>
+   <attribute name="imageNumPackets" type="uint16_t" visibility="0x01" properties="0x00">
+    <documentation>/**&lt; Total number of FW data packets expected */</documentation>
    </attribute>
   </class>
   <class name="FlashStatusEvt" superclass="qpc::QEvt">
@@ -101,6 +101,12 @@
    </attribute>
    <attribute name="flashOpTimerEvt" type="QTimeEvt" visibility="0x01" properties="0x00">
     <documentation>/**&lt; Used for timing out individual operations on flash in FlashMgr object. */</documentation>
+   </attribute>
+   <attribute name="fwDataToFlash[112]" type="uint8_t" visibility="0x01" properties="0x00">
+    <documentation>/**&lt; Buffer with FW data to flash */</documentation>
+   </attribute>
+   <attribute name="fwDataToFlashLen" type="uint8_t" visibility="0x01" properties="0x00">
+    <documentation>/**&lt; Length of data in fwDataToFlash buffer */</documentation>
    </attribute>
    <statechart>
     <initial target="../1/0">
@@ -230,7 +236,7 @@ FLASH_Lock();     /* Always lock the flash on exit */
 /* Always send a flash status event to the CommMgr AO with the current error code */
 FlashStatusEvt *evt = Q_NEW(FlashStatusEvt, FLASH_OP_DONE_SIG);
 evt-&gt;errorCode = me-&gt;errorCode;
-QACTIVE_POST(AO_FlashMgr, (QEvt *)(evt), AO_FlashMgr);</exit>
+QACTIVE_POST(AO_CommMgr, (QEvt *)(evt), AO_FlashMgr);</exit>
       <tran trig="FLASH_TIMEOUT" target="../../0">
        <action>ERR_printf(&quot;Timeout trying to process flash request, error: 0x%08x\n&quot;, me-&gt;errorCode);</action>
        <tran_glyph conn="42,92,3,1,-21">
@@ -285,9 +291,16 @@ me-&gt;errorCode = FLASH_getSectorsToErase(
     me-&gt;fwFlashMetadata._imageSize
 );
 
-
-
-</action>
+/* Set the start address which will get used later when the fw packets start coming in*/
+if (me-&gt;fwFlashMetadata._imageType == _CB_Application ) {
+    me-&gt;flashAddrCurr = FLASH_APPL_START_ADDRESS;
+    me-&gt;fwPacketExp   = me-&gt;fwFlashMetadata._imageNumPackets;
+    DBG_printf(&quot;Expecting %d FW data packets\n&quot;, me-&gt;fwPacketExp);
+} else {
+    me-&gt;errorCode = ERR_FLASH_IMAGE_TYPE_INVALID;
+    ERR_printf(&quot;FW image type %d currently not supported for FW upgrades, error: 0x%08x\n&quot;,
+        me-&gt;fwFlashMetadata._imageType, me-&gt;errorCode);
+}</action>
          <choice target="../../../2">
           <guard brief="SectorsValid?">ERR_NONE == me-&gt;errorCode &amp;&amp; me-&gt;flashSectorsToEraseNum &gt; 1</guard>
           <action>LOG_printf(&quot;List of %d sectors (by address) to erase:\n&quot;, me-&gt;flashSectorsToEraseNum);
@@ -430,39 +443,63 @@ WRN_printf(&quot;Attempting operation again (retry %d out of %d)...\n&quot;, me-
  * @return status: QState type that specifies where the state
  * machine is going next.
  */</documentation>
-       <entry>DBG_printf(&quot;Waiting for FW data packets...\n&quot;);
+       <entry>/* Ok, we are ready to receive FW data and start flashing. Post an event letting
+ * CommMgr know we are ready for a data packet. */
+FlashStatusEvt *evt = Q_NEW(FlashStatusEvt, FLASH_OP_DONE_SIG);
+evt-&gt;errorCode = me-&gt;errorCode;
+QACTIVE_POST(AO_CommMgr, (QEvt *)(evt), AO_FlashMgr);
 
-me-&gt;errorCode = ERR_FLASH_WAIT_FOR_DATA_TIMEOUT;
+me-&gt;errorCode = ERR_FLASH_WAIT_FOR_DATA_TIMEOUT; /* Set the timeout error code*/
 
 QTimeEvt_rearm(                         /* Re-arm timer on entry */
     &amp;me-&gt;flashOpTimerEvt,
     SEC_TO_TICKS( LL_MAX_TOUT_SEC_FLASH_WAIT_FOR_DATA )
 );
 
-
-/* Ok, we are ready to receive FW data and start flashing. Post an event letting
- * CommMgr know we are ready for a data packet. */
-FlashStatusEvt *evt = Q_NEW(FlashStatusEvt, FLASH_OP_DONE_SIG);
-evt-&gt;errorCode = me-&gt;errorCode;
-QACTIVE_POST(AO_FlashMgr, (QEvt *)(evt), AO_FlashMgr);</entry>
+</entry>
        <exit>QTimeEvt_disarm(&amp;me-&gt;flashOpTimerEvt); /* Disarm timer on exit */</exit>
        <tran trig="FLASH_DATA">
-        <action>DBG_printf(&quot;FLASH_DATA received\n&quot;);</action>
-        <choice target="../../../4">
+        <choice>
          <guard brief="ValidSeq?">me-&gt;fwPacketCurr + 1 == ((FWDataEvt const *)e)-&gt;seqCurr</guard>
-         <action>DBG_printf(&quot;Valid fw packet sequence number\n&quot;);</action>
-         <choice_glyph conn="58,58,4,0,3">
+         <action>/* Calculate packet data CRC and make sure it matches the one sent over */
+CRC_ResetDR();
+uint32_t CRCValue = CRC32_Calc(((FWDataEvt const *)e)-&gt;dataBuf, ((FWDataEvt const *)e)-&gt;dataLen);
+</action>
+         <choice target="../../../../4">
+          <guard brief="ValidCRC?">CRCValue != ((FWDataEvt const *)e)-&gt;dataCRC</guard>
+          <action>me-&gt;fwDataToFlashLen = ((FWDataEvt const *)e)-&gt;dataLen;
+MEMCPY(
+    me-&gt;fwDataToFlash,
+    ((FWDataEvt const *)e)-&gt;dataBuf,
+    me-&gt;fwDataToFlashLen
+);</action>
+          <choice_glyph conn="58,61,4,0,3">
+           <action box="1,0,10,2"/>
+          </choice_glyph>
+         </choice>
+         <choice target="../../../../../0">
+          <guard>else</guard>
+          <action>me-&gt;errorCode = ERR_FLASH_INVALID_FW_PACKET_CRC;
+ERR_printf(
+    &quot;Sent CRC (0x%08x) doesn't match calculated (0x%08x) for fw packet: %d. Error: 0x%08x\n&quot;,
+    CRCValue, ((FWDataEvt const *)e)-&gt;dataCRC, ((FWDataEvt const *)e)-&gt;seqCurr, me-&gt;errorCode);
+</action>
+          <choice_glyph conn="58,61,5,1,-37">
+           <action box="-7,-2,6,2"/>
+          </choice_glyph>
+         </choice>
+         <choice_glyph conn="58,57,4,-1,4">
           <action box="1,0,10,2"/>
          </choice_glyph>
         </choice>
         <choice target="../../../../0">
          <guard>else</guard>
          <action>ERR_printf(&quot;Invalid fw packet sequence number\n&quot;);</action>
-         <choice_glyph conn="58,58,5,1,-37">
+         <choice_glyph conn="58,57,5,1,-37">
           <action box="-7,-2,5,2"/>
          </choice_glyph>
         </choice>
-        <tran_glyph conn="46,54,3,-1,12,4">
+        <tran_glyph conn="46,54,3,-1,12,3">
          <action box="0,-2,11,2"/>
         </tran_glyph>
        </tran>
@@ -484,26 +521,52 @@ QACTIVE_POST(AO_FlashMgr, (QEvt *)(evt), AO_FlashMgr);</entry>
  * @return status: QState type that specifies where the state
  * machine is going next.
  */</documentation>
-       <tran trig="FLASH_DONE">
-        <action>DBG_printf(&quot;FLASH_DONE\n&quot;);
+       <entry>me-&gt;errorCode = ERR_FLASH_WRITE_TIMEOUT; /* Set the timeout error code*/
+DBG_printf(&quot;Writing for FW data packet %d...\n&quot;, me-&gt;fwPacketCurr + 1);
 
-/* Increment current packet after we have successfully written */
-me-&gt;fwPacketCurr++;</action>
+QTimeEvt_rearm(                         /* Re-arm timer on entry */
+    &amp;me-&gt;flashOpTimerEvt,
+    SEC_TO_TICKS( LL_MAX_TOUT_SEC_FLASH_DATA_WRITE )
+);
+
+uint16_t bytesWritten = 0;
+CBErrorCode err = FLASH_writeBuffer(
+      me-&gt;flashAddrCurr,
+      me-&gt;fwDataToFlash,
+      me-&gt;fwDataToFlashLen,
+      &amp;bytesWritten
+);
+
+me-&gt;errorCode = err;
+
+if( ERR_NONE != err || bytesWritten != me-&gt;fwDataToFlashLen) { /* Error occurred */
+    WRN_printf(&quot;Error flashing data: 0x%08x\n&quot;, me-&gt;errorCode);
+    QEvt *evt = Q_NEW(QEvt, FLASH_ERROR_SIG);
+    QACTIVE_POST(AO_FlashMgr, (QEvt *)(evt), AO_FlashMgr);
+} else {                                                            /* No errors */
+    /* Increment addr and counters */
+    me-&gt;flashAddrCurr += bytesWritten;
+    me-&gt;fwPacketCurr += 1;
+    QEvt *evt = Q_NEW(QEvt, FLASH_DONE_SIG);
+    QACTIVE_POST(AO_FlashMgr, (QEvt *)(evt), AO_FlashMgr);
+}</entry>
+       <tran trig="FLASH_DONE">
+        <action>
+</action>
         <choice target="../../../3">
-         <guard brief="MorePackets?">me-&gt;fwPacketCurr == me-&gt;fwPacketExp</guard>
-         <action>DBG_printf(&quot;Waiting for next fw packet\n&quot;);</action>
-         <choice_glyph conn="76,66,4,1,-16,-4">
+         <guard brief="MorePackets?">me-&gt;fwPacketCurr != me-&gt;fwPacketExp</guard>
+         <choice_glyph conn="76,69,4,1,-19,-4">
           <action box="1,-5,10,2"/>
          </choice_glyph>
         </choice>
         <choice target="../../../5">
          <guard>else</guard>
          <action>DBG_printf(&quot;No more fw packets expected\n&quot;);</action>
-         <choice_glyph conn="76,66,4,1,12,-4">
+         <choice_glyph conn="76,69,4,1,12,-4">
           <action box="1,2,10,2"/>
          </choice_glyph>
         </choice>
-        <tran_glyph conn="46,66,3,-1,30">
+        <tran_glyph conn="46,69,3,-1,30">
          <action box="0,-2,10,2"/>
         </tran_glyph>
        </tran>
@@ -512,22 +575,24 @@ me-&gt;fwPacketCurr++;</action>
         <choice target="../..">
          <guard brief="RetriesLeft?">me-&gt;retryCurr &lt; MAX_FLASH_RETRIES</guard>
          <action>LOG_printf(&quot;Retrying to flash packet, retry %d out of %d max\n&quot;, me-&gt;retryCurr, MAX_FLASH_RETRIES);</action>
-         <choice_glyph conn="58,74,5,2,10,-3">
+         <choice_glyph conn="58,76,5,2,10,-3">
           <action box="1,0,10,2"/>
          </choice_glyph>
         </choice>
         <choice target="../../../../0">
          <guard>else</guard>
          <action>ERR_printf(&quot;No more retries\n&quot;);</action>
-         <choice_glyph conn="58,74,5,1,-37">
+         <choice_glyph conn="58,76,5,1,-37">
           <action box="-9,0,10,2"/>
          </choice_glyph>
         </choice>
-        <tran_glyph conn="46,69,3,-1,12,5">
+        <tran_glyph conn="46,72,3,-1,12,4">
          <action box="0,-2,10,2"/>
         </tran_glyph>
        </tran>
-       <state_glyph node="46,61,26,10"/>
+       <state_glyph node="46,64,26,9">
+        <entry box="1,2,6,2"/>
+       </state_glyph>
       </state>
       <state name="FinalizeFlash">
        <documentation>/**
@@ -545,13 +610,16 @@ me-&gt;fwPacketCurr++;</action>
  * @return status: QState type that specifies where the state
  * machine is going next.
  */</documentation>
+       <entry>DBG_printf(&quot;Finalizing FW update...\n&quot;);</entry>
        <tran trig="FLASH_DONE" target="../../../0">
         <action>DBG_printf(&quot;FLASH_DONE\n&quot;);</action>
         <tran_glyph conn="72,84,1,1,-51">
          <action box="-16,-2,10,2"/>
         </tran_glyph>
        </tran>
-       <state_glyph node="46,76,26,10"/>
+       <state_glyph node="46,79,26,10">
+        <entry box="1,2,6,2"/>
+       </state_glyph>
       </state>
       <state_glyph node="42,8,84,85">
        <entry box="1,2,6,2"/>
@@ -608,6 +676,8 @@ QTimeEvt_ctor(&amp;me-&gt;flashOpTimerEvt, FLASH_OP_TIMEOUT_SIG);</code>
 #include &quot;project_includes.h&quot;           /* Includes common to entire project. */
 #include &quot;bsp_defs.h&quot;                         /* For time to ticks conversion */
 #include &quot;flash.h&quot;
+#include &quot;CommMgr.h&quot;
+#include &quot;crc32compat.h&quot;
 
 /* Compile-time called macros ------------------------------------------------*/
 Q_DEFINE_THIS_FILE;                 /* For QSPY to know the name of this file */

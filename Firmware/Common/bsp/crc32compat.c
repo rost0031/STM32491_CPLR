@@ -40,7 +40,7 @@ static uint32_t revbit(uint32_t data)
 /* Private functions ---------------------------------------------------------*/
 
 /******************************************************************************/
-uint32_t CRC32_Calc(char *buffer, int size)
+uint32_t CRC32_Calc(const uint8_t *buffer, uint32_t size)
 {
    uint32_t i, j;
    uint32_t ui32;

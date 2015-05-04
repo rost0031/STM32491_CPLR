@@ -140,9 +140,7 @@ memset(&amp;me-&gt;basicMsg, 0, sizeof(me-&gt;basicMsg));
 memset(&amp;me-&gt;payloadMsgUnion, 0, sizeof(me-&gt;payloadMsgUnion));
 memset(me-&gt;dataBuf, 0, sizeof(me-&gt;dataBuf));</entry>
       <tran trig="SER_RECEIVED">
-       <action>DBG_printf(&quot;SER_RECIEVED\n&quot;);
-
-LrgDataEvt *cliEvt = Q_NEW(LrgDataEvt, CLI_RECEIVED_SIG);
+       <action>LrgDataEvt *cliEvt = Q_NEW(LrgDataEvt, CLI_RECEIVED_SIG);
 cliEvt-&gt;dataLen = base64_decode(
     (char *)((LrgDataEvt const *) e)-&gt;dataBuf,
     ((LrgDataEvt const *) e)-&gt;dataLen,
@@ -163,9 +161,7 @@ QACTIVE_POST(
        </tran_glyph>
       </tran>
       <tran trig="CLI_RECEIVED" target="../../1/1">
-       <action>DBG_printf(&quot;CLI_RECIEVED\n&quot;);
-
-/* Extract the basicMsg first */
+       <action>/* Extract the basicMsg first */
 memset(&amp;(me-&gt;basicMsg), 0, sizeof(me-&gt;basicMsg));
 me-&gt;basicMsgOffset = CBBasicMsg_read_delimited_from(
     (void*)((LrgDataEvt const *) e)-&gt;dataBuf,
@@ -206,7 +202,6 @@ switch( me-&gt;msgPayloadName ) {
         );
         break;
     case _CBFlashMetaPayloadMsg:
-        DBG_printf(&quot;FlashMeta payload detected\n&quot;);
         CBFlashMetaPayloadMsg_read_delimited_from(
             ((LrgDataEvt *) e)-&gt;dataBuf,
             &amp;(me-&gt;payloadMsgUnion.flashMetaPayload),
@@ -214,7 +209,6 @@ switch( me-&gt;msgPayloadName ) {
         );
         break;
     case _CBFlashDataPayloadMsg:
-        DBG_printf(&quot;FlashData payload detected\n&quot;);
         CBFlashDataPayloadMsg_read_delimited_from(
             ((LrgDataEvt *) e)-&gt;dataBuf,
             &amp;(me-&gt;payloadMsgUnion.flashDataPayload),
@@ -232,7 +226,7 @@ switch( me-&gt;msgPayloadName ) {
         <action box="0,-2,10,2"/>
        </tran_glyph>
       </tran>
-      <state_glyph node="6,8,28,85">
+      <state_glyph node="6,8,28,88">
        <entry box="1,2,6,2"/>
       </state_glyph>
      </state>
@@ -294,7 +288,6 @@ evt-&gt;dataLen = CBBasicMsg_write_delimited_to(&amp;(me-&gt;basicMsg), evt-&gt;
 /* Append payload msg if needed */
 switch( me-&gt;msgPayloadName ) {
     case _CBStatusPayloadMsg:
-        DBG_printf(&quot;Sending status payload\n&quot;);
         evt-&gt;dataLen = CBStatusPayloadMsg_write_delimited_to(
             (void*)&amp;(me-&gt;payloadMsgUnion.statusPayload),
             evt-&gt;dataBuf,
@@ -352,7 +345,7 @@ if ( ERR_NONE != me-&gt;errorCode ) {
       <tran trig="COMM_MGR_TIMEOUT" target="../../0">
        <action>ERR_printf(&quot;COMM_MGR_TIMEOUT trying to process %d basic msg, error: 0x%08x\n&quot;,
     me-&gt;basicMsg._msgName, me-&gt;errorCode);</action>
-       <tran_glyph conn="64,90,3,1,-30">
+       <tran_glyph conn="64,94,3,1,-30">
         <action box="-19,-2,19,2"/>
        </tran_glyph>
       </tran>
@@ -378,7 +371,6 @@ QEvt *evt = Q_NEW(QEvt, MSG_PROCESS_SIG);
 QACTIVE_POST(AO_CommMgr, (QEvt *)(evt), AO_CommMgr);</entry>
        <exit>QTimeEvt_disarm(&amp;me-&gt;commOpTimerEvt);                  /* Disarm timer on exit */</exit>
        <tran trig="MSG_PROCESS">
-        <action>DBG_printf(&quot;MSG_PROCESS\n&quot;);</action>
         <choice target="../../../../0">
          <guard brief="GetBootMode?">_CBGetBootModeMsg == me-&gt;basicMsg._msgName</guard>
          <action>me-&gt;errorCode = ERR_NONE;
@@ -447,8 +439,6 @@ DBG_printf(&quot;Setting status payload with error code: %d\n&quot;, me-&gt;payl
         <choice>
          <guard brief="Flash?">_CBFlashMsg == me-&gt;basicMsg._msgName</guard>
          <action>me-&gt;errorCode = ERR_NONE;
-
-DBG_printf(&quot;_CBFlashMsg decoded, attempting to decode payload (if exists)\n&quot;);
 </action>
          <choice target="../../../../2">
           <guard brief="FlashMetaPayload?">_CBFlashMetaPayloadMsg == me-&gt;msgPayloadName</guard>
@@ -463,6 +453,8 @@ evt-&gt;imageMaj  = me-&gt;payloadMsgUnion.flashMetaPayload._imageMaj;
 evt-&gt;imageMin  = me-&gt;payloadMsgUnion.flashMetaPayload._imageMin;
 evt-&gt;imageSize = me-&gt;payloadMsgUnion.flashMetaPayload._imageSize;
 evt-&gt;imageType = me-&gt;payloadMsgUnion.flashMetaPayload._imageType;
+evt-&gt;imageNumPackets = me-&gt;payloadMsgUnion.flashMetaPayload._imageNumPackets;
+
 evt-&gt;imageDatetimeLen = me-&gt;payloadMsgUnion.flashMetaPayload._imageDatetime_len;
 MEMCPY(
     evt-&gt;imageDatetime,
@@ -484,23 +476,20 @@ me-&gt;basicMsg._msgPayload = me-&gt;msgPayloadName;</action>
           </choice_glyph>
          </choice>
          <choice target="../../../../2">
-          <guard brief="FlashDataPayload?">_CBFlashMetaPayloadMsg == me-&gt;msgPayloadName</guard>
+          <guard brief="FlashDataPayload?">_CBFlashDataPayloadMsg == me-&gt;msgPayloadName</guard>
           <action>/* The flash data payload is used to transfer the FW data packets to FlashMgr AO. */
 
 /* 1. Create a FWMetaEvt and send it along to FlashMgr AO to prep the flash */
 FWDataEvt *evt = Q_NEW(FWDataEvt, FLASH_DATA_SIG);
 evt-&gt;dataCRC  = me-&gt;payloadMsgUnion.flashDataPayload._dataCrc;
-evt-&gt;dataLen  = me-&gt;payloadMsgUnion.flashDataPayload._dataLen;
+evt-&gt;dataLen  = me-&gt;payloadMsgUnion.flashDataPayload._dataBuf_len;
 evt-&gt;seqCurr  = me-&gt;payloadMsgUnion.flashDataPayload._seqCurr;
-evt-&gt;seqTotal = me-&gt;payloadMsgUnion.flashDataPayload._seqTotal;
 MEMCPY(
     evt-&gt;dataBuf,
     me-&gt;payloadMsgUnion.flashDataPayload._dataBuf,
     evt-&gt;dataLen
 );
 QACTIVE_POST(AO_FlashMgr, (QEvt *)(evt), AO_CommMgr);
-
-
 
 /* Compose Done response.  We can re-use the current structure and it will be used by
  * the exit action of the parent state to send the msg.  Here, we only set up fields
@@ -510,8 +499,17 @@ me-&gt;msgPayloadName = _CBStatusPayloadMsg;
 
 /* Don't change the basicMsg name since it should be the same in all cases. */
 me-&gt;basicMsg._msgPayload = me-&gt;msgPayloadName;</action>
-          <choice_glyph conn="102,84,4,1,0,-16">
+          <choice_glyph conn="102,84,5,1,-16">
            <action box="-14,-2,13,2"/>
+          </choice_glyph>
+         </choice>
+         <choice target="../../../../../0">
+          <guard>else</guard>
+          <action>me-&gt;errorCode = ERR_MSG_UNEXPECTED_PAYLOAD;
+WRN_printf(&quot;Unexpected Flash payload %d for FlashMsg. Error: 0x%08x\n&quot;,
+    me-&gt;msgPayloadName, me-&gt;errorCode);</action>
+          <choice_glyph conn="102,84,4,1,6,-68">
+           <action box="-7,4,6,2"/>
           </choice_glyph>
          </choice>
          <choice_glyph conn="112,25,4,-1,59,-10">
@@ -534,13 +532,14 @@ me-&gt;basicMsg._msgPayload = me-&gt;msgPayloadName;</action>
 );
 
 me-&gt;errorCode = ERR_COMM_FLASHMGR_TIMEOUT; /* Set the error in case we timeout */</entry>
-       <exit>QTimeEvt_disarm(&amp;me-&gt;commOpTimerEvt);                  /* Disarm timer on exit */</exit>
+       <exit>QTimeEvt_disarm(&amp;me-&gt;commOpTimerEvt);                  /* Disarm timer on exit */
+
+if ( ERR_NONE != me-&gt;errorCode ) {
+    ERR_printf(&quot;Leaving state with error: 0x%08x\n&quot;, me-&gt;errorCode);
+}</exit>
        <tran trig="FLASH_OP_DONE" target="../../../0">
         <action>me-&gt;errorCode = ((FlashStatusEvt const *)e)-&gt;errorCode;
-DBG_printf(&quot;FLASH_OP_DONE with status: 0x%08x\n&quot;, me-&gt;errorCode);
-
 me-&gt;payloadMsgUnion.statusPayload._errorCode = me-&gt;errorCode;
-DBG_printf(&quot;Setting status payload with error code: %d\n&quot;, me-&gt;payloadMsgUnion.statusPayload._errorCode);
 </action>
         <tran_glyph conn="67,83,3,1,-33">
          <action box="-19,-2,15,2"/>
@@ -548,7 +547,6 @@ DBG_printf(&quot;Setting status payload with error code: %d\n&quot;, me-&gt;payl
        </tran>
        <tran trig="FLASH_FW_DONE" target="../../../0">
         <action>me-&gt;errorCode = ((FWMetaEvt const *)e)-&gt;errorCode;
-DBG_printf(&quot;FLASH_FW_DONE with status: 0x%08x\n&quot;, me-&gt;errorCode);
 
 /* Overwrite the done response since the FW flashing is complete; we have to send the
  * metadata back so the client can be happy that we did things correctly.  We can 
@@ -590,16 +588,16 @@ DBG_printf(&quot;Setting flash meta payload with error code: %d\n&quot;, me-&gt;
         <exit box="1,4,6,2"/>
        </state_glyph>
       </state>
-      <state_glyph node="64,8,92,85">
+      <state_glyph node="64,8,92,88">
        <entry box="1,2,6,2"/>
        <exit box="1,4,6,2"/>
       </state_glyph>
      </state>
-     <state_glyph node="3,3,156,91">
+     <state_glyph node="3,3,156,94">
       <entry box="1,2,5,2"/>
      </state_glyph>
     </state>
-    <state_diagram size="166,95"/>
+    <state_diagram size="166,99"/>
    </statechart>
   </class>
   <attribute name="AO_CommMgr" type="QActive * const" visibility="0x00" properties="0x00">

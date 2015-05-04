@@ -346,8 +346,6 @@ static QState CommMgr_Idle(CommMgr * const me, QEvt const * const e) {
         }
         /* ${AOs::CommMgr::SM::Active::Idle::SER_RECEIVED} */
         case SER_RECEIVED_SIG: {
-            DBG_printf("SER_RECIEVED\n");
-
             LrgDataEvt *cliEvt = Q_NEW(LrgDataEvt, CLI_RECEIVED_SIG);
             cliEvt->dataLen = base64_decode(
                 (char *)((LrgDataEvt const *) e)->dataBuf,
@@ -369,8 +367,6 @@ static QState CommMgr_Idle(CommMgr * const me, QEvt const * const e) {
         }
         /* ${AOs::CommMgr::SM::Active::Idle::CLI_RECEIVED} */
         case CLI_RECEIVED_SIG: {
-            DBG_printf("CLI_RECIEVED\n");
-
             /* Extract the basicMsg first */
             memset(&(me->basicMsg), 0, sizeof(me->basicMsg));
             me->basicMsgOffset = CBBasicMsg_read_delimited_from(
@@ -412,7 +408,6 @@ static QState CommMgr_Idle(CommMgr * const me, QEvt const * const e) {
                     );
                     break;
                 case _CBFlashMetaPayloadMsg:
-                    DBG_printf("FlashMeta payload detected\n");
                     CBFlashMetaPayloadMsg_read_delimited_from(
                         ((LrgDataEvt *) e)->dataBuf,
                         &(me->payloadMsgUnion.flashMetaPayload),
@@ -420,7 +415,6 @@ static QState CommMgr_Idle(CommMgr * const me, QEvt const * const e) {
                     );
                     break;
                 case _CBFlashDataPayloadMsg:
-                    DBG_printf("FlashData payload detected\n");
                     CBFlashDataPayloadMsg_read_delimited_from(
                         ((LrgDataEvt *) e)->dataBuf,
                         &(me->payloadMsgUnion.flashDataPayload),
@@ -513,7 +507,6 @@ static QState CommMgr_Busy(CommMgr * const me, QEvt const * const e) {
             /* Append payload msg if needed */
             switch( me->msgPayloadName ) {
                 case _CBStatusPayloadMsg:
-                    DBG_printf("Sending status payload\n");
                     evt->dataLen = CBStatusPayloadMsg_write_delimited_to(
                         (void*)&(me->payloadMsgUnion.statusPayload),
                         evt->dataBuf,
@@ -622,7 +615,6 @@ static QState CommMgr_ValidateMsg(CommMgr * const me, QEvt const * const e) {
         }
         /* ${AOs::CommMgr::SM::Active::Busy::ValidateMsg::MSG_PROCESS} */
         case MSG_PROCESS_SIG: {
-            DBG_printf("MSG_PROCESS\n");
             /* ${AOs::CommMgr::SM::Active::Busy::ValidateMsg::MSG_PROCESS::[GetBootMode?]} */
             if (_CBGetBootModeMsg == me->basicMsg._msgName) {
                 me->errorCode = ERR_NONE;
@@ -664,8 +656,6 @@ static QState CommMgr_ValidateMsg(CommMgr * const me, QEvt const * const e) {
             else if (_CBFlashMsg == me->basicMsg._msgName) {
                 me->errorCode = ERR_NONE;
 
-                DBG_printf("_CBFlashMsg decoded, attempting to decode payload (if exists)\n");
-
                 /* ${AOs::CommMgr::SM::Active::Busy::ValidateMsg::MSG_PROCESS::[Flash?]::[FlashMetaPayloa~} */
                 if (_CBFlashMetaPayloadMsg == me->msgPayloadName) {
                     /* The flash meta payload is the start of the FW update.  The meta payload contains
@@ -679,6 +669,8 @@ static QState CommMgr_ValidateMsg(CommMgr * const me, QEvt const * const e) {
                     evt->imageMin  = me->payloadMsgUnion.flashMetaPayload._imageMin;
                     evt->imageSize = me->payloadMsgUnion.flashMetaPayload._imageSize;
                     evt->imageType = me->payloadMsgUnion.flashMetaPayload._imageType;
+                    evt->imageNumPackets = me->payloadMsgUnion.flashMetaPayload._imageNumPackets;
+
                     evt->imageDatetimeLen = me->payloadMsgUnion.flashMetaPayload._imageDatetime_len;
                     MEMCPY(
                         evt->imageDatetime,
@@ -698,23 +690,20 @@ static QState CommMgr_ValidateMsg(CommMgr * const me, QEvt const * const e) {
                     status_ = Q_TRAN(&CommMgr_WaitForRespFromFlashMgr);
                 }
                 /* ${AOs::CommMgr::SM::Active::Busy::ValidateMsg::MSG_PROCESS::[Flash?]::[FlashDataPayloa~} */
-                else if (_CBFlashMetaPayloadMsg == me->msgPayloadName) {
+                else if (_CBFlashDataPayloadMsg == me->msgPayloadName) {
                     /* The flash data payload is used to transfer the FW data packets to FlashMgr AO. */
 
                     /* 1. Create a FWMetaEvt and send it along to FlashMgr AO to prep the flash */
                     FWDataEvt *evt = Q_NEW(FWDataEvt, FLASH_DATA_SIG);
                     evt->dataCRC  = me->payloadMsgUnion.flashDataPayload._dataCrc;
-                    evt->dataLen  = me->payloadMsgUnion.flashDataPayload._dataLen;
+                    evt->dataLen  = me->payloadMsgUnion.flashDataPayload._dataBuf_len;
                     evt->seqCurr  = me->payloadMsgUnion.flashDataPayload._seqCurr;
-                    evt->seqTotal = me->payloadMsgUnion.flashDataPayload._seqTotal;
                     MEMCPY(
                         evt->dataBuf,
                         me->payloadMsgUnion.flashDataPayload._dataBuf,
                         evt->dataLen
                     );
                     QACTIVE_POST(AO_FlashMgr, (QEvt *)(evt), AO_CommMgr);
-
-
 
                     /* Compose Done response.  We can re-use the current structure and it will be used by
                      * the exit action of the parent state to send the msg.  Here, we only set up fields
@@ -726,8 +715,12 @@ static QState CommMgr_ValidateMsg(CommMgr * const me, QEvt const * const e) {
                     me->basicMsg._msgPayload = me->msgPayloadName;
                     status_ = Q_TRAN(&CommMgr_WaitForRespFromFlashMgr);
                 }
+                /* ${AOs::CommMgr::SM::Active::Busy::ValidateMsg::MSG_PROCESS::[Flash?]::[else]} */
                 else {
-                    status_ = Q_UNHANDLED();
+                    me->errorCode = ERR_MSG_UNEXPECTED_PAYLOAD;
+                    WRN_printf("Unexpected Flash payload %d for FlashMsg. Error: 0x%08x\n",
+                        me->msgPayloadName, me->errorCode);
+                    status_ = Q_TRAN(&CommMgr_Idle);
                 }
             }
             /* ${AOs::CommMgr::SM::Active::Busy::ValidateMsg::MSG_PROCESS::[else]} */
@@ -779,16 +772,17 @@ static QState CommMgr_WaitForRespFromFlashMgr(CommMgr * const me, QEvt const * c
         /* ${AOs::CommMgr::SM::Active::Busy::WaitForRespFromF~} */
         case Q_EXIT_SIG: {
             QTimeEvt_disarm(&me->commOpTimerEvt);                  /* Disarm timer on exit */
+
+            if ( ERR_NONE != me->errorCode ) {
+                ERR_printf("Leaving state with error: 0x%08x\n", me->errorCode);
+            }
             status_ = Q_HANDLED();
             break;
         }
         /* ${AOs::CommMgr::SM::Active::Busy::WaitForRespFromF~::FLASH_OP_DONE} */
         case FLASH_OP_DONE_SIG: {
             me->errorCode = ((FlashStatusEvt const *)e)->errorCode;
-            DBG_printf("FLASH_OP_DONE with status: 0x%08x\n", me->errorCode);
-
             me->payloadMsgUnion.statusPayload._errorCode = me->errorCode;
-            DBG_printf("Setting status payload with error code: %d\n", me->payloadMsgUnion.statusPayload._errorCode);
 
             status_ = Q_TRAN(&CommMgr_Idle);
             break;
@@ -796,7 +790,6 @@ static QState CommMgr_WaitForRespFromFlashMgr(CommMgr * const me, QEvt const * c
         /* ${AOs::CommMgr::SM::Active::Busy::WaitForRespFromF~::FLASH_FW_DONE} */
         case FLASH_FW_DONE_SIG: {
             me->errorCode = ((FWMetaEvt const *)e)->errorCode;
-            DBG_printf("FLASH_FW_DONE with status: 0x%08x\n", me->errorCode);
 
             /* Overwrite the done response since the FW flashing is complete; we have to send the
              * metadata back so the client can be happy that we did things correctly.  We can

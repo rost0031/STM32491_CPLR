@@ -94,6 +94,7 @@
    #define HL_MAX_TOUT_SEC_FLASH_FW                                          60.0
    #define LL_MAX_TOUT_SEC_FLASH_SECTOR_ERASE                                 1.0
    #define LL_MAX_TOUT_SEC_FLASH_WAIT_FOR_DATA                                4.0
+   #define LL_MAX_TOUT_SEC_FLASH_DATA_WRITE                                   1.0
 
    /*@} FlashMgr Timeouts and Times.*/
 

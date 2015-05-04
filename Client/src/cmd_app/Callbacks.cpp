@@ -55,7 +55,6 @@ void CLI_AckCallback(
 /******************************************************************************/
 void CLI_DoneCallback(
       struct CBBasicMsg basicMsgStruct,
-      CBMsgName payloadMsgName,
       CBPayloadMsgUnion_t payloadMsgUnion
 )
 {

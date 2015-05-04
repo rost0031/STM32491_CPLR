@@ -82,8 +82,6 @@ typedef void (*CB_AckMsgHandler_t)(
  * handling depending if the client is commandline, menu driven, or a a gui.
  *
  * @param [in] basicMsgStruct: CBBasicMsg struct of raw data contained in the Ack msg.
- * @param [in] payloadMsgName: CBMsgName that specifies which payload msg to
- * look up in the union of all payload msgs.
  * @param [in] payloadMsgUnion: CBPayloadMsgUnion_t uniont that contains the union
  * of all possible payload msgs.
  *
@@ -91,7 +89,6 @@ typedef void (*CB_AckMsgHandler_t)(
  */
 typedef void (*CB_DoneMsgHandler_t)(
       struct CBBasicMsg basicMsgStruct,
-      CBMsgName payloadMsgName,
       CBPayloadMsgUnion_t payloadMsgUnion
 );
 

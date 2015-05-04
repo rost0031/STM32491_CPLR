@@ -109,14 +109,13 @@ ClientError_t ClientApi::DC3_getMode(CBErrorCode *status, CBBootMode *mode)
 //   free(tmp);
 
    CBBasicMsg basicMsg;
-   CBMsgName payloadMsgName = _CBNoMsg;
    CBPayloadMsgUnion_t payloadMsgUnion;
    memset(&payloadMsgUnion, 0, sizeof(payloadMsgUnion));
 
    ClientError_t clientStatus = waitForResp(
          &basicMsg,
-         &payloadMsgName,
-         &payloadMsgUnion
+         &payloadMsgUnion,
+         5
    );
 
    if ( CLI_ERR_NONE == clientStatus ) {
@@ -156,7 +155,7 @@ ClientError_t ClientApi::DC3_flashFW(
 
    /* Common settings for most messages */
    this->m_basicMsg._msgID       = this->m_msgId;
-   this->m_basicMsg._msgReqProg  = 1;
+   this->m_basicMsg._msgReqProg  = 0;
    this->m_basicMsg._msgRoute    = this->m_msgRoute;
 
    /* Settings specific to this message */
@@ -171,6 +170,7 @@ ClientError_t ClientApi::DC3_flashFW(
    this->m_flashMetaPayloadMsg._imageMaj = fw->getMajVer();
    this->m_flashMetaPayloadMsg._imageMin = fw->getMinVer();
    this->m_flashMetaPayloadMsg._imageSize = fw->getSize();
+   this->m_flashMetaPayloadMsg._imageNumPackets = fw->calcNumberOfPackets( 112 );
    this->m_flashMetaPayloadMsg._imageDatetime_len = fw->getDatetimeLen();
    memcpy(
          this->m_flashMetaPayloadMsg._imageDatetime,
@@ -192,18 +192,93 @@ ClientError_t ClientApi::DC3_flashFW(
 
 
    CBBasicMsg basicMsg;
-   CBMsgName payloadMsgName = _CBNoMsg;
    CBPayloadMsgUnion_t payloadMsgUnion;
    memset(&payloadMsgUnion, 0, sizeof(payloadMsgUnion));
 
    clientStatus = waitForResp(
          &basicMsg,
-         &payloadMsgName,
-         &payloadMsgUnion
+         &payloadMsgUnion,
+         5
    );
 
    if ( CLI_ERR_NONE == clientStatus ) {
       *status = (CBErrorCode)payloadMsgUnion.statusPayload._errorCode;
+      if ( ERR_NONE != *status ) {
+         WRN_printf(this->m_pLog, "Status from DC3: 0x%08x", *status);
+      }
+   }
+
+   size_t bytesTransferred = 0;
+   uint16_t nPacketSeqNum = 1;
+   while ( bytesTransferred != this->m_flashMetaPayloadMsg._imageSize ) {
+
+      this->m_msgId++; /* Increment msg id for every new send*/
+
+      /* Set up the basic msg */
+      this->m_basicMsg._msgID       = this->m_msgId;
+      this->m_basicMsg._msgReqProg  = 0;
+      this->m_basicMsg._msgRoute    = this->m_msgRoute;
+      this->m_basicMsg._msgType     = _CB_Req;
+      this->m_basicMsg._msgName     = _CBFlashMsg;
+      this->m_basicMsg._msgPayload  = _CBFlashDataPayloadMsg;
+
+      uint8_t *buffer = new uint8_t(112);
+      uint32_t crc = 0;
+      size_t size = fw->getChunkAndCRC( 112, buffer, &crc );
+      DBG_printf(this->m_pLog, "Got FW chunk of size %d with CRC 0x%08x", size, crc);
+
+      /* Set up the payload */
+      memset(&m_flashDataPayloadMsg, 0, sizeof(m_flashDataPayloadMsg));
+      m_flashDataPayloadMsg._dataBuf_len = size;
+      m_flashDataPayloadMsg._dataCrc = crc;
+      m_flashDataPayloadMsg._seqCurr = nPacketSeqNum;
+      memcpy(
+            m_flashDataPayloadMsg._dataBuf,
+            buffer,
+            m_flashDataPayloadMsg._dataBuf_len
+      );
+
+      delete[] buffer;
+
+      /* Send the data and wait for a response */
+      LrgDataEvt *evt = Q_NEW(LrgDataEvt, MSG_SEND_OUT_SIG);
+      evt->dataLen = CBBasicMsg_write_delimited_to(&m_basicMsg, evt->dataBuf, 0);
+      evt->dataLen = CBFlashDataPayloadMsg_write_delimited_to(&m_flashDataPayloadMsg, evt->dataBuf, evt->dataLen);
+      evt->dst = m_msgRoute;
+      evt->src = m_msgRoute;
+      QACTIVE_POST(AO_MainMgr, (QEvt *)(evt), AO_MainMgr);
+
+      CBBasicMsg basicMsg;
+      CBPayloadMsgUnion_t payloadMsgUnion;
+      memset(&payloadMsgUnion, 0, sizeof(payloadMsgUnion));
+
+      clientStatus = waitForResp(
+            &basicMsg,
+            &payloadMsgUnion,
+            5
+      );
+
+      if ( CLI_ERR_NONE == clientStatus ) {
+         if ( nPacketSeqNum == m_flashMetaPayloadMsg._imageNumPackets ) {               /* Last packet */
+            *status = (CBErrorCode)payloadMsgUnion.flashMetaPayload._errorCode;
+            DBG_printf(this->m_pLog, "BuildDatetime str len: %d", payloadMsgUnion.flashMetaPayload._imageDatetime_len);
+            DBG_printf(this->m_pLog, "BuildDatetime is: %s", payloadMsgUnion.flashMetaPayload._imageDatetime);
+            DBG_printf(this->m_pLog, "CRC  is: 0x%08x", payloadMsgUnion.flashMetaPayload._imageCrc);
+            DBG_printf(this->m_pLog, "Size is: %d", payloadMsgUnion.flashMetaPayload._imageSize);
+         } else {
+            *status = (CBErrorCode)payloadMsgUnion.statusPayload._errorCode;
+         }
+
+         if ( ERR_NONE != *status ) {
+            WRN_printf(this->m_pLog, "Status from DC3: 0x%08x", *status);
+         }
+         bytesTransferred += size;
+         nPacketSeqNum++;
+      } else {
+         return( clientStatus );
+      }
+
+
    }
 
    return( clientStatus );
@@ -325,7 +400,6 @@ void ClientApi::startJob( void )
 /******************************************************************************/
 ClientError_t ClientApi::pollForResp(
       CBBasicMsg *basicMsg,
-      CBMsgName *payloadMsgName,
       CBPayloadMsgUnion_t *payloadMsgUnion
 )
 {
@@ -372,10 +446,9 @@ ClientError_t ClientApi::pollForResp(
                   0
             );
 
-            *payloadMsgName = basicMsg->_msgPayload;
             /* Extract the payload (if exists) since this buffer is going away the moment we get
              * into a state.  We'll figure out later if it's valid, right before we send an Ack */
-            switch( *payloadMsgName ) {
+            switch( basicMsg->_msgPayload ) {
                case _CBNoMsg:
                   WRN_printf( this->m_pLog, "No payload detected, this is probably an error" );
                   break;
@@ -409,7 +482,7 @@ ClientError_t ClientApi::pollForResp(
             }
 
             if ( MSG_DONE_RECVD_SIG == evt->sig && this->m_pDoneHandlerCBFunction) {
-               this->m_pDoneHandlerCBFunction( *basicMsg, *payloadMsgName, *payloadMsgUnion );
+               this->m_pDoneHandlerCBFunction( *basicMsg, *payloadMsgUnion );
             }
             status = CLI_ERR_NONE;
             break;
@@ -447,21 +520,24 @@ ClientError_t ClientApi::pollForResp(
 /******************************************************************************/
 ClientError_t ClientApi::waitForResp(
       CBBasicMsg *basicMsg,
-      CBMsgName *payloadMsgName,
-      CBPayloadMsgUnion_t *payloadMsgUnion
+      CBPayloadMsgUnion_t *payloadMsgUnion,
+      uint16_t timeoutSecs
 )
 {
+   int timeout_ms = timeoutSecs * 1000;
    ClientError_t status = CLI_ERR_NONE;
    DBG_printf(this->m_pLog,"Waiting for job to finish.");
-   for (;;) {                         /* Beginning of the thread forever loop */
+   while (timeout_ms > 0) {                         /* Beginning of the thread forever loop */
 
-      status = pollForResp(basicMsg, payloadMsgName, payloadMsgUnion);
+      status = pollForResp(basicMsg, payloadMsgUnion);
       if (CLI_ERR_MSG_WAITING_FOR_RESP != status ) {
          return status;
       }
-      /* Sleep for 5 ms*/
+      /* Sleep for 5 ms and decrement timeout counter. */
       boost::this_thread::sleep(boost::posix_time::milliseconds(5));
+      timeout_ms -= 5;
    }
+   return CLI_ERR_TIMEOUT_WAITING_FOR_RESP;
 }
 
 /******************************************************************************/
@@ -473,24 +549,32 @@ ClientError_t ClientApi::setReqCallBack(
 
    this->m_pReqHandlerCBFunction = pCallbackFunction;
 
+   if ( NULL == this->m_pReqHandlerCBFunction ) {
+      err = CLI_ERR_INVALID_CALLBACK;
+      ERR_printf(this->m_pLog, "Unable to set Req callback, err: 0x%08x\n",err);
+   } else {
+      DBG_printf(this->m_pLog, "Req callback set to addr: 0x%08x\n",
+            this->m_pReqHandlerCBFunction);
+   }
+
    /* This is a potentially dangerous call since the user could have passed in
     * garbage instead of a valid pointer */
-   try {
-      CBBasicMsg basicMsg;
-      memset(&basicMsg, 0, sizeof(basicMsg));
-      basicMsg._msgID = 0;
-      basicMsg._msgName = _CBNoMsg;
-      basicMsg._msgPayload = _CBNoMsg;
-      basicMsg._msgReqProg = 0;
-      basicMsg._msgRoute = _CB_NoRoute;
-      basicMsg._msgType = _CB_Req;
-
-      this->m_pReqHandlerCBFunction( basicMsg );
-   } catch ( ... ) {
-      err = CLI_ERR_INVALID_CALLBACK;
-      cerr << "Invalid callback passed in by user" << endl;
-      this->m_pReqHandlerCBFunction = NULL;
-   }
+//   try {
+//      CBBasicMsg basicMsg;
+//      memset(&basicMsg, 0, sizeof(basicMsg));
+//      basicMsg._msgID = 0;
+//      basicMsg._msgName = _CBNoMsg;
+//      basicMsg._msgPayload = _CBNoMsg;
+//      basicMsg._msgReqProg = 0;
+//      basicMsg._msgRoute = _CB_NoRoute;
+//      basicMsg._msgType = _CB_Req;
+//
+//      this->m_pReqHandlerCBFunction( basicMsg );
+//   } catch ( ... ) {
+//      err = CLI_ERR_INVALID_CALLBACK;
+//      cerr << "Invalid callback passed in by user" << endl;
+//      this->m_pReqHandlerCBFunction = NULL;
+//   }
 
    return( err );
 }
@@ -503,23 +587,31 @@ ClientError_t ClientApi::setAckCallBack(
    ClientError_t err = CLI_ERR_NONE;
    this->m_pAckHandlerCBFunction = pCallbackFunction;
 
+   if ( NULL == this->m_pAckHandlerCBFunction ) {
+      err = CLI_ERR_INVALID_CALLBACK;
+      ERR_printf(this->m_pLog, "Unable to set Ack callback, err: 0x%08x\n",err);
+   } else {
+      DBG_printf(this->m_pLog, "Ack callback set to addr: 0x%08x\n",
+            this->m_pAckHandlerCBFunction);
+   }
+
    /* This is a potentially dangerous call since the user could have passed in
     * garbage instead of a valid pointer */
-   try {
-      CBBasicMsg basicMsg;
-      memset(&basicMsg, 0, sizeof(basicMsg));
-      basicMsg._msgID = 0;
-      basicMsg._msgName = _CBNoMsg;
-      basicMsg._msgPayload = _CBNoMsg;
-      basicMsg._msgReqProg = 0;
-      basicMsg._msgRoute = _CB_NoRoute;
-      basicMsg._msgType = _CB_Ack;
-      this->m_pAckHandlerCBFunction( basicMsg );
-   } catch ( ... ) {
-      err = CLI_ERR_INVALID_CALLBACK;
-      cerr << "Invalid callback passed in by user" << endl;
-      this->m_pReqHandlerCBFunction = NULL;
-   }
+//   try {
+//      CBBasicMsg basicMsg;
+//      memset(&basicMsg, 0, sizeof(basicMsg));
+//      basicMsg._msgID = 0;
+//      basicMsg._msgName = _CBNoMsg;
+//      basicMsg._msgPayload = _CBNoMsg;
+//      basicMsg._msgReqProg = 0;
+//      basicMsg._msgRoute = _CB_NoRoute;
+//      basicMsg._msgType = _CB_Ack;
+//      this->m_pAckHandlerCBFunction( basicMsg );
+//   } catch ( ... ) {
+//      err = CLI_ERR_INVALID_CALLBACK;
+//      cerr << "Invalid callback passed in by user" << endl;
+//      this->m_pReqHandlerCBFunction = NULL;
+//   }
 
    return( err );
 }
@@ -530,29 +622,37 @@ ClientError_t ClientApi::setDoneCallBack(
 )
 {
    ClientError_t err = CLI_ERR_NONE;
+
    this->m_pDoneHandlerCBFunction = pCallbackFunction;
+
+   if ( NULL == this->m_pDoneHandlerCBFunction ) {
+      err = CLI_ERR_INVALID_CALLBACK;
+      ERR_printf(this->m_pLog, "Unable to set Done callback, err: 0x%08x\n",err);
+   } else {
+      DBG_printf(this->m_pLog, "Done callback set to addr: 0x%08x\n",
+            this->m_pDoneHandlerCBFunction);
+   }
 
    /* This is a potentially dangerous call since the user could have passed in
     * garbage instead of a valid pointer */
-   try {
-      CBBasicMsg basicMsg;
-      memset(&basicMsg, 0, sizeof(basicMsg));
-      basicMsg._msgID = 0;
-      basicMsg._msgName = _CBNoMsg;
-      basicMsg._msgPayload = _CBNoMsg;
-      basicMsg._msgReqProg = 0;
-      basicMsg._msgRoute = _CB_NoRoute;
-      basicMsg._msgType = _CB_Ack;
-
-      CBMsgName payloadName = _CBStatusPayloadMsg;
-      CBPayloadMsgUnion_t payloadMsgUnion;
-      payloadMsgUnion.statusPayload._errorCode = ERR_NONE;
-      this->m_pDoneHandlerCBFunction( basicMsg, payloadName, payloadMsgUnion);
-   } catch ( ... ) {
-      err = CLI_ERR_INVALID_CALLBACK;
-      cerr << "Invalid callback passed in by user" << endl;
-      this->m_pReqHandlerCBFunction = NULL;
-   }
+//   try {
+//      CBBasicMsg basicMsg;
+//      memset(&basicMsg, 0, sizeof(basicMsg));
+//      basicMsg._msgID = 0;
+//      basicMsg._msgName = _CBNoMsg;
+//      basicMsg._msgPayload = _CBNoMsg;
+//      basicMsg._msgReqProg = 0;
+//      basicMsg._msgRoute = _CB_NoRoute;
+//      basicMsg._msgType = _CB_Ack;
+//
+//      CBPayloadMsgUnion_t payloadMsgUnion;
+//      payloadMsgUnion.statusPayload._errorCode = ERR_NONE;
+//      this->m_pDoneHandlerCBFunction( basicMsg, payloadMsgUnion);
+//   } catch ( ... ) {
+//      err = CLI_ERR_INVALID_CALLBACK;
+//      cerr << "Invalid callback passed in by user" << endl;
+//      this->m_pReqHandlerCBFunction = NULL;
+//   }
 
    return( err );
 

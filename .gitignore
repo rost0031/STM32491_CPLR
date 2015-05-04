@@ -40,3 +40,4 @@ doc/
 .I2CBusMgr
 .I2C1DevMgr
 .GuiMgr
+.CommMgr

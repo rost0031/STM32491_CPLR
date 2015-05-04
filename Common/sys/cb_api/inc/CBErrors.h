@@ -72,6 +72,8 @@ typedef enum CBErrors
    ERR_FLASH_INVALID_DATETIME_LEN                              = 0x0001000F,
    ERR_FLASH_INVALID_DATETIME                                  = 0x00010010,
    ERR_FLASH_WAIT_FOR_DATA_TIMEOUT                             = 0x00010011,
+   ERR_FLASH_INVALID_FW_PACKET_CRC                             = 0x00010012,
+   ERR_FLASH_WRITE_TIMEOUT                                     = 0x00010013,
 
    /* NOR error category                         0x00030000 - 0x0003FFFF */
    ERR_NOR_ERROR                                               = 0x00030000,
@@ -136,6 +138,7 @@ typedef enum CBErrors
    /* Msg device error category                  0x000A0000 - 0x000AFFFF */
    ERR_MSG_ROUTE_INVALID                                       = 0x000A0000,
    ERR_MSG_UNKNOWN_BASIC                                       = 0x000A0001,
+   ERR_MSG_UNEXPECTED_PAYLOAD                                  = 0x000A0002,
 
    /* Memory error category                      0x000B0000 - 0x000BFFFF */
    ERR_MEM_NULL_VALUE                                          = 0x000B0000,

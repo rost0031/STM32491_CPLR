@@ -329,6 +329,7 @@ C_SRCS                  = \
                           cencode.c \
                           cdecode.c \
                           base64_wrapper.c \
+                          crc32compat.c \
                           \
                           LWIPMgr.c \
                           I2CBusMgr.c \

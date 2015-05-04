@@ -41,9 +41,9 @@ using namespace std;
 class FWLdr {
 private:
    LogStub *m_pLog;         /**< Pointer to LogStub instance used for logging */
-	char* 	m_buffer;                  /**<buffer to use to store the FW image*/
+	uint8_t *m_buffer;                  /**<buffer to use to store the FW image*/
 	size_t   m_size;                 /**<size of the fw image that was read in */
-	unsigned int m_chunk_index;            /**<keep track of chunks of FW image*/
+	uint32_t m_chunk_index;                /**<keep track of chunks of FW image*/
 	uint32_t m_CRCImage;                        /**<CRC of the entire FW image */
 	string   m_buildTime;                           /**< parsed build datetime */
 	uint16_t m_major;                              /**< Major version of image */
@@ -78,7 +78,7 @@ public:
     * @param   None
     * @return  m_size_FWImage: Size of FW image.
     */
-   unsigned int getSize(void) {return (m_size);}
+   size_t getSize(void) {return (m_size);}
 
    /**
     * A getter method that returns the FW image chunk index.
@@ -145,16 +145,37 @@ public:
    ClientError_t loadFromFile( const char *filename );
 
    /**
+    * @brief   Calculates how many packets there will be in the FW image given
+    * chunk size.
+    *
+    * @param [in] size: size_t indicating how big of packets to calc for.
+    * @return  size_t: How many packets there will be.
+    */
+   size_t calcNumberOfPackets( size_t size );
+
+   /**
     * Gets the next chunk from the loaded FW image.  Uses the user specified
     * size to update the internal offset that keeps track of where to get the
     * next chunk of data.
+    * @param[in]  size: how big of a chunk is being requested in bytes.
+    * @param[in,out] buffer: a pointer to the memory location where to store
+    * the retrieved chunk of FWImage is.
+    * @return  number of bytes actually read.
+    */
+   size_t getChunk(size_t size, uint8_t *buffer );
+
+   /**
+    * @brief Gets the next chunk from the loaded FW image and its CRC.
+    * Uses the user specified size to update the internal offset that keeps
+    * track of where to get the next chunk of data.
     *
     * @param[in,out] buffer: a pointer to the memory location where to store
     * the retrieved chunk of FWImage is.
-    * @param[in]  size: how big of a chunk is being requested in bytes.
+    * @param[in]  size: size_t that specifies how big of a chunk is being
+    * requested in bytes.
     * @return  number of bytes actually read.
     */
-   unsigned int getChunk(char* buffer, unsigned int size);
+   size_t getChunkAndCRC( size_t size, uint8_t *buffer, uint32_t *crc );
 
 	/**
 	 * Calculates a CRC given a buffer and buffer size
@@ -164,7 +185,7 @@ public:
 	 * @param[in] 	size: how many bytes in the buffer.
 	 * @return 	CRC checksum.
 	 */
-	uint32_t calcCRC32(char *buffer, unsigned int size);
+	uint32_t calcCRC32(uint8_t *buffer, size_t size);
 
 	/**
 	 * Gets the CRC of the entire FW image that was read in.

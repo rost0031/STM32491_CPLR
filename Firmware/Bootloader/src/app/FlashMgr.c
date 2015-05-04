@@ -38,6 +38,8 @@
 #include "project_includes.h"           /* Includes common to entire project. */
 #include "bsp_defs.h"                         /* For time to ticks conversion */
 #include "flash.h"
+#include "CommMgr.h"
+#include "crc32compat.h"
 
 /* Compile-time called macros ------------------------------------------------*/
 Q_DEFINE_THIS_FILE;                 /* For QSPY to know the name of this file */
@@ -92,6 +94,12 @@ typedef struct {
 
     /**< Used for timing out individual operations on flash in FlashMgr object. */
     QTimeEvt flashOpTimerEvt;
+
+    /**< Buffer with FW data to flash */
+    uint8_t fwDataToFlash[112];
+
+    /**< Length of data in fwDataToFlash buffer */
+    uint8_t fwDataToFlashLen;
 } FlashMgr;
 
 /* protected: */
@@ -403,7 +411,7 @@ static QState FlashMgr_Busy(FlashMgr * const me, QEvt const * const e) {
             /* Always send a flash status event to the CommMgr AO with the current error code */
             FlashStatusEvt *evt = Q_NEW(FlashStatusEvt, FLASH_OP_DONE_SIG);
             evt->errorCode = me->errorCode;
-            QACTIVE_POST(AO_FlashMgr, (QEvt *)(evt), AO_FlashMgr);
+            QACTIVE_POST(AO_CommMgr, (QEvt *)(evt), AO_FlashMgr);
             status_ = Q_HANDLED();
             break;
         }
@@ -478,9 +486,16 @@ static QState FlashMgr_PrepFlash(FlashMgr * const me, QEvt const * const e) {
                     me->fwFlashMetadata._imageSize
                 );
 
-
-
-
+                /* Set the start address which will get used later when the fw packets start coming in*/
+                if (me->fwFlashMetadata._imageType == _CB_Application ) {
+                    me->flashAddrCurr = FLASH_APPL_START_ADDRESS;
+                    me->fwPacketExp   = me->fwFlashMetadata._imageNumPackets;
+                    DBG_printf("Expecting %d FW data packets\n", me->fwPacketExp);
+                } else {
+                    me->errorCode = ERR_FLASH_IMAGE_TYPE_INVALID;
+                    ERR_printf("FW image type %d currently not supported for FW upgrades, error: 0x%08x\n",
+                        me->fwFlashMetadata._imageType, me->errorCode);
+                }
                 /* ${AOs::FlashMgr::SM::Active::Busy::PrepFlash::FLASH_NEXT_STEP::[MetadataValid?]::[SectorsValid?]} */
                 if (ERR_NONE == me->errorCode && me->flashSectorsToEraseNum > 1) {
                     LOG_printf("List of %d sectors (by address) to erase:\n", me->flashSectorsToEraseNum);
@@ -622,9 +637,13 @@ static QState FlashMgr_WaitingForFWData(FlashMgr * const me, QEvt const * const 
     switch (e->sig) {
         /* ${AOs::FlashMgr::SM::Active::Busy::WaitingForFWData} */
         case Q_ENTRY_SIG: {
-            DBG_printf("Waiting for FW data packets...\n");
+            /* Ok, we are ready to receive FW data and start flashing. Post an event letting
+             * CommMgr know we are ready for a data packet. */
+            FlashStatusEvt *evt = Q_NEW(FlashStatusEvt, FLASH_OP_DONE_SIG);
+            evt->errorCode = me->errorCode;
+            QACTIVE_POST(AO_CommMgr, (QEvt *)(evt), AO_FlashMgr);
 
-            me->errorCode = ERR_FLASH_WAIT_FOR_DATA_TIMEOUT;
+            me->errorCode = ERR_FLASH_WAIT_FOR_DATA_TIMEOUT; /* Set the timeout error code*/
 
             QTimeEvt_rearm(                         /* Re-arm timer on entry */
                 &me->flashOpTimerEvt,
@@ -632,11 +651,6 @@ static QState FlashMgr_WaitingForFWData(FlashMgr * const me, QEvt const * const 
             );
 
 
-            /* Ok, we are ready to receive FW data and start flashing. Post an event letting
-             * CommMgr know we are ready for a data packet. */
-            FlashStatusEvt *evt = Q_NEW(FlashStatusEvt, FLASH_OP_DONE_SIG);
-            evt->errorCode = me->errorCode;
-            QACTIVE_POST(AO_FlashMgr, (QEvt *)(evt), AO_FlashMgr);
             status_ = Q_HANDLED();
             break;
         }
@@ -648,11 +662,31 @@ static QState FlashMgr_WaitingForFWData(FlashMgr * const me, QEvt const * const 
         }
         /* ${AOs::FlashMgr::SM::Active::Busy::WaitingForFWData::FLASH_DATA} */
         case FLASH_DATA_SIG: {
-            DBG_printf("FLASH_DATA received\n");
             /* ${AOs::FlashMgr::SM::Active::Busy::WaitingForFWData::FLASH_DATA::[ValidSeq?]} */
             if (me->fwPacketCurr + 1 == ((FWDataEvt const *)e)->seqCurr) {
-                DBG_printf("Valid fw packet sequence number\n");
-                status_ = Q_TRAN(&FlashMgr_WritingFlash);
+                /* Calculate packet data CRC and make sure it matches the one sent over */
+                CRC_ResetDR();
+                uint32_t CRCValue = CRC32_Calc(((FWDataEvt const *)e)->dataBuf, ((FWDataEvt const *)e)->dataLen);
+
+                /* ${AOs::FlashMgr::SM::Active::Busy::WaitingForFWData::FLASH_DATA::[ValidSeq?]::[ValidCRC?]} */
+                if (CRCValue != ((FWDataEvt const *)e)->dataCRC) {
+                    me->fwDataToFlashLen = ((FWDataEvt const *)e)->dataLen;
+                    MEMCPY(
+                        me->fwDataToFlash,
+                        ((FWDataEvt const *)e)->dataBuf,
+                        me->fwDataToFlashLen
+                    );
+                    status_ = Q_TRAN(&FlashMgr_WritingFlash);
+                }
+                /* ${AOs::FlashMgr::SM::Active::Busy::WaitingForFWData::FLASH_DATA::[ValidSeq?]::[else]} */
+                else {
+                    me->errorCode = ERR_FLASH_INVALID_FW_PACKET_CRC;
+                    ERR_printf(
+                        "Sent CRC (0x%08x) doesn't match calculated (0x%08x) for fw packet: %d. Error: 0x%08x\n",
+                        CRCValue, ((FWDataEvt const *)e)->dataCRC, ((FWDataEvt const *)e)->seqCurr, me->errorCode);
+
+                    status_ = Q_TRAN(&FlashMgr_Idle);
+                }
             }
             /* ${AOs::FlashMgr::SM::Active::Busy::WaitingForFWData::FLASH_DATA::[else]} */
             else {
@@ -685,15 +719,46 @@ static QState FlashMgr_WaitingForFWData(FlashMgr * const me, QEvt const * const 
 static QState FlashMgr_WritingFlash(FlashMgr * const me, QEvt const * const e) {
     QState status_;
     switch (e->sig) {
+        /* ${AOs::FlashMgr::SM::Active::Busy::WritingFlash} */
+        case Q_ENTRY_SIG: {
+            me->errorCode = ERR_FLASH_WRITE_TIMEOUT; /* Set the timeout error code*/
+            DBG_printf("Writing for FW data packet %d...\n", me->fwPacketCurr + 1);
+
+            QTimeEvt_rearm(                         /* Re-arm timer on entry */
+                &me->flashOpTimerEvt,
+                SEC_TO_TICKS( LL_MAX_TOUT_SEC_FLASH_DATA_WRITE )
+            );
+
+            uint16_t bytesWritten = 0;
+            CBErrorCode err = FLASH_writeBuffer(
+                  me->flashAddrCurr,
+                  me->fwDataToFlash,
+                  me->fwDataToFlashLen,
+                  &bytesWritten
+            );
+
+            me->errorCode = err;
+
+            if( ERR_NONE != err || bytesWritten != me->fwDataToFlashLen) { /* Error occurred */
+                WRN_printf("Error flashing data: 0x%08x\n", me->errorCode);
+                QEvt *evt = Q_NEW(QEvt, FLASH_ERROR_SIG);
+                QACTIVE_POST(AO_FlashMgr, (QEvt *)(evt), AO_FlashMgr);
+            } else {                                                            /* No errors */
+                /* Increment addr and counters */
+                me->flashAddrCurr += bytesWritten;
+                me->fwPacketCurr += 1;
+                QEvt *evt = Q_NEW(QEvt, FLASH_DONE_SIG);
+                QACTIVE_POST(AO_FlashMgr, (QEvt *)(evt), AO_FlashMgr);
+            }
+            status_ = Q_HANDLED();
+            break;
+        }
         /* ${AOs::FlashMgr::SM::Active::Busy::WritingFlash::FLASH_DONE} */
         case FLASH_DONE_SIG: {
-            DBG_printf("FLASH_DONE\n");
 
-            /* Increment current packet after we have successfully written */
-            me->fwPacketCurr++;
+
             /* ${AOs::FlashMgr::SM::Active::Busy::WritingFlash::FLASH_DONE::[MorePackets?]} */
-            if (me->fwPacketCurr == me->fwPacketExp) {
-                DBG_printf("Waiting for next fw packet\n");
+            if (me->fwPacketCurr != me->fwPacketExp) {
                 status_ = Q_TRAN(&FlashMgr_WaitingForFWData);
             }
             /* ${AOs::FlashMgr::SM::Active::Busy::WritingFlash::FLASH_DONE::[else]} */
@@ -745,6 +810,12 @@ static QState FlashMgr_WritingFlash(FlashMgr * const me, QEvt const * const e) {
 static QState FlashMgr_FinalizeFlash(FlashMgr * const me, QEvt const * const e) {
     QState status_;
     switch (e->sig) {
+        /* ${AOs::FlashMgr::SM::Active::Busy::FinalizeFlash} */
+        case Q_ENTRY_SIG: {
+            DBG_printf("Finalizing FW update...\n");
+            status_ = Q_HANDLED();
+            break;
+        }
         /* ${AOs::FlashMgr::SM::Active::Busy::FinalizeFlash::FLASH_DONE} */
         case FLASH_DONE_SIG: {
             DBG_printf("FLASH_DONE\n");
