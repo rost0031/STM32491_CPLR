@@ -561,6 +561,9 @@ static QState CommMgr_Busy(CommMgr * const me, QEvt const * const e) {
                 WRN_printf("Possible error sending Done, attempting to continue. Error: 0x%08x\n", me->errorCode);
             }
 
+            if ( ERR_NONE != me->errorCode ) {
+                WRN_printf("Send Done msg with status: 0x%08x\n", me->errorCode);
+            }
             status_ = Q_HANDLED();
             break;
         }
@@ -783,7 +786,9 @@ static QState CommMgr_WaitForRespFromFlashMgr(CommMgr * const me, QEvt const * c
         case FLASH_OP_DONE_SIG: {
             me->errorCode = ((FlashStatusEvt const *)e)->errorCode;
             me->payloadMsgUnion.statusPayload._errorCode = me->errorCode;
-
+            if ( ERR_NONE != me->errorCode ) {
+                WRN_printf("Got FLASH_OP_DONE with status: 0x%08x\n", me->errorCode);
+            }
             status_ = Q_TRAN(&CommMgr_Idle);
             break;
         }

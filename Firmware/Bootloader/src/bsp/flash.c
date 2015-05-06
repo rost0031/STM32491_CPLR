@@ -205,9 +205,9 @@ CBErrorCode FLASH_getSectorsToErase(
    uint32_t currAddr = 0;
    /* Check for a valid image type and set the correct starting address */
    if( _CB_Application == flashImageLoc ) {
-      startAddr = FLASH_APPL_START_ADDRESS;
+      startAddr = FLASH_APPL_START_ADDR;
    } else if( _CB_Bootloader == flashImageLoc ) {
-      startAddr = FLASH_BOOT_START_ADDRESS;
+      startAddr = FLASH_BOOT_START_ADDR;
    } else {
       status = ERR_FLASH_IMAGE_TYPE_INVALID;
       return( status );
@@ -359,36 +359,149 @@ CBErrorCode FLASH_writeBuffer(
 /******************************************************************************/
 uint32_t FLASH_readApplCRC( void )
 {
-   return( FLASH_readUint32( FLASH_APPL_CRC_ADDRESS ) );
+   return( FLASH_readUint32( FLASH_APPL_CRC_ADDR ) );
 }
 
 /******************************************************************************/
 CBErrorCode FLASH_writeApplCRC( const uint32_t crc )
 {
-   return(
-         FLASH_statusToErrorCode(
-               FLASH_writeUint32( FLASH_APPL_CRC_ADDRESS, crc )
-         )
-   );
+   return( FLASH_writeUint32( FLASH_APPL_CRC_ADDR, crc ) );
 }
 
 /******************************************************************************/
 uint32_t FLASH_readApplSize( void ) {
-   return( FLASH_readUint32(FLASH_APPL_SIZE_ADDRESS) );
+   return( FLASH_readUint32(FLASH_APPL_SIZE_ADDR) );
 }
 
 /******************************************************************************/
 CBErrorCode FLASH_writeApplSize( const uint32_t size )
 {
-   return(
-         FLASH_statusToErrorCode(
-               FLASH_writeUint32(FLASH_APPL_SIZE_ADDRESS, size)
-         )
-   );
+   return( FLASH_writeUint32(FLASH_APPL_SIZE_ADDR, size) );
 }
 
 /******************************************************************************/
-uint32_t FLASH_readUint32( const uint32_t addr ) {
+uint8_t FLASH_readApplMajVer( void )
+{
+   return( FLASH_readUint8( FLASH_APPL_MAJ_VER_ADDR ) );
+}
+
+/******************************************************************************/
+CBErrorCode FLASH_writeApplMajVer( const uint8_t maj )
+{
+   return( FLASH_writeUint8( FLASH_APPL_MAJ_VER_ADDR, maj ) );
+}
+
+/******************************************************************************/
+uint8_t FLASH_readApplMinVer( void )
+{
+   return( FLASH_readUint8( FLASH_APPL_MIN_VER_ADDR ) );
+}
+
+/******************************************************************************/
+CBErrorCode FLASH_writeApplMinVer( const uint8_t maj )
+{
+   return( FLASH_writeUint8( FLASH_APPL_MIN_VER_ADDR, maj ) );
+}
+
+/******************************************************************************/
+CBErrorCode FLASH_readApplBuildDatetime(
+      uint8_t *buffer,
+      const uint8_t bufferSize
+)
+{
+   if( NULL == buffer ) {
+      return( ERR_MEM_NULL_VALUE );
+   }
+
+   if( bufferSize < FLASH_APPL_BUILD_DATETIME_LEN ) {
+      return( ERR_MEM_BUFFER_LEN );
+   }
+
+   uint32_t addr = FLASH_APPL_BUILD_DATETIME_ADDR;
+   for( uint8_t i = 0; i < FLASH_APPL_BUILD_DATETIME_LEN; i++ ) {
+      buffer[i] = *((uint8_t *)addr);
+   }
+   return( ERR_NONE );
+}
+
+/******************************************************************************/
+CBErrorCode FLASH_writeApplBuildDatetime(
+      const uint8_t *buffer,
+      const uint8_t bufferSize
+)
+{
+   if( NULL == buffer ) {
+      return( ERR_MEM_NULL_VALUE );
+   }
+
+   if( bufferSize < FLASH_APPL_BUILD_DATETIME_LEN ) {
+      return( ERR_MEM_BUFFER_LEN );
+   }
+
+   uint16_t bytesWritten = 0;
+   CBErrorCode status = FLASH_writeBuffer(
+         FLASH_APPL_BUILD_DATETIME_ADDR,
+         buffer,
+         FLASH_APPL_BUILD_DATETIME_LEN,
+         &bytesWritten
+   );
+
+   return( status );
+}
+
+/******************************************************************************/
+uint8_t FLASH_readUint8( const uint32_t addr )
+{
+   uint8_t data_read = 0;
+
+   /* These flags have to be cleared before any operation can be done on the
+    * flash memory */
+   FLASH_ClearFlag(
+         FLASH_FLAG_PGSERR | FLASH_FLAG_PGPERR | FLASH_FLAG_PGAERR |
+         FLASH_FLAG_WRPERR |  FLASH_FLAG_OPERR | FLASH_FLAG_EOP
+   );
+
+   data_read = *((uint8_t *)addr);
+
+   return(data_read);
+}
+
+/******************************************************************************/
+CBErrorCode FLASH_writeUint8( const uint32_t addr, const uint8_t data )
+{
+   uint8_t data_read = 0;
+   FLASH_Status flash_status = FLASH_COMPLETE;
+   CBErrorCode status = ERR_NONE;
+
+   /* These flags have to be cleared before any operation can be done on the
+    * flash memory */
+   FLASH_ClearFlag(
+         FLASH_FLAG_PGSERR | FLASH_FLAG_PGPERR | FLASH_FLAG_PGAERR |
+         FLASH_FLAG_WRPERR |  FLASH_FLAG_OPERR | FLASH_FLAG_EOP
+   );
+
+   flash_status = FLASH_ProgramByte(addr, data);
+   if (FLASH_COMPLETE != flash_status) {
+      status = FLASH_statusToErrorCode( flash_status );
+      ERR_printf("Flash Error %d writing 0x%02x to addr 0x%08x. Error: 0x%08x\n",
+            flash_status, data, addr, status);
+      return( status );
+   } else {
+      data_read = *((uint8_t *)addr);
+      if (data_read != data) {
+         status = ERR_FLASH_READ_VERIFY_FAILED;
+         ERR_printf("Failed to verify write at addr 0x%08x : Wrote 0x%02x and "
+               "read back 0x%02x. Error: 0x%08x\n", addr, data, data_read, status);
+         return( status );
+      }
+   }
+
+   return( status );
+}
+
+/******************************************************************************/
+uint32_t FLASH_readUint32( const uint32_t addr )
+{
    uint32_t data_read = 0;
 
    /* These flags have to be cleared before any operation can be done on the

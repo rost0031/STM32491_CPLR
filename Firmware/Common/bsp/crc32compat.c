@@ -16,7 +16,6 @@
 
 /* Includes ------------------------------------------------------------------*/
 #include "crc32compat.h"
-
 /* Compile-time called macros ------------------------------------------------*/
 /* Private typedefs ----------------------------------------------------------*/
 /* Private defines -----------------------------------------------------------*/
@@ -26,15 +25,17 @@
 
 /******************************************************************************/
 /**
- * @brief This function bit reverses and is written in ARM assembly.
+ * @brief This function bit reverses a 32 bit data value.
  *
  * @param  data:  a 32 bit word of data to be reversed
  * @return uint32_t: reversed 32 bit word of data.
  */
 static uint32_t revbit(uint32_t data)
 {
-   asm("rbit r0,r0");
-   return (data);
+   u32 rev = 0;
+   for( uint32_t i=0; i<32; i++ )
+      rev |= ((data >> i) & 1) << (31 - i);
+   return rev;
 };
 
 /* Private functions ---------------------------------------------------------*/

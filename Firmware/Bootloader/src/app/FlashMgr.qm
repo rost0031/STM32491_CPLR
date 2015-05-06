@@ -185,6 +185,7 @@ me-&gt;fwFlashMetadata._imageMaj  = ((FWMetaEvt const *)e)-&gt;imageMaj;
 me-&gt;fwFlashMetadata._imageMin  = ((FWMetaEvt const *)e)-&gt;imageMin;
 me-&gt;fwFlashMetadata._imageSize = ((FWMetaEvt const *)e)-&gt;imageSize;
 me-&gt;fwFlashMetadata._imageType = ((FWMetaEvt const *)e)-&gt;imageType;
+me-&gt;fwFlashMetadata._imageNumPackets = ((FWMetaEvt const *)e)-&gt;imageNumPackets;
 me-&gt;fwFlashMetadata._imageDatetime_len = ((FWMetaEvt const *)e)-&gt;imageDatetimeLen;
 MEMCPY(
     me-&gt;fwFlashMetadata._imageDatetime,
@@ -196,7 +197,7 @@ MEMCPY(
         <action box="0,-2,15,2"/>
        </tran_glyph>
       </tran>
-      <state_glyph node="6,8,15,85">
+      <state_glyph node="6,8,15,88">
        <entry box="1,2,6,2"/>
       </state_glyph>
      </state>
@@ -239,14 +240,14 @@ evt-&gt;errorCode = me-&gt;errorCode;
 QACTIVE_POST(AO_CommMgr, (QEvt *)(evt), AO_FlashMgr);</exit>
       <tran trig="FLASH_TIMEOUT" target="../../0">
        <action>ERR_printf(&quot;Timeout trying to process flash request, error: 0x%08x\n&quot;, me-&gt;errorCode);</action>
-       <tran_glyph conn="42,92,3,1,-21">
+       <tran_glyph conn="42,86,3,1,-21">
         <action box="-14,-2,14,2"/>
        </tran_glyph>
       </tran>
       <tran trig="FLASH_ERROR" target="../../0">
-       <action>ERR_printf(&quot;FLASH_ERROR\n&quot;);
+       <action>ERR_printf(&quot;Unable to to process flash request. Error: 0x%08x\n&quot;, me-&gt;errorCode);
 </action>
-       <tran_glyph conn="42,89,3,1,-21">
+       <tran_glyph conn="42,83,3,1,-21">
         <action box="-14,-2,10,2"/>
        </tran_glyph>
       </tran>
@@ -276,6 +277,7 @@ LOG_printf(&quot;Min: %02d\n&quot;, me-&gt;fwFlashMetadata._imageMin);
 LOG_printf(&quot;Size: %d\n&quot;, me-&gt;fwFlashMetadata._imageSize);
 LOG_printf(&quot;Type: %d\n&quot;, me-&gt;fwFlashMetadata._imageType);
 LOG_printf(&quot;Datetime: %s\n&quot;, me-&gt;fwFlashMetadata._imageDatetime);
+LOG_printf(&quot;Number of packets: %d\n&quot;, me-&gt;fwFlashMetadata._imageNumPackets);
 
 /* Do some sanity checking on the FW image metadata */
 me-&gt;errorCode = FLASH_validateMetadata(&amp;(me-&gt;fwFlashMetadata));</action>
@@ -293,7 +295,7 @@ me-&gt;errorCode = FLASH_getSectorsToErase(
 
 /* Set the start address which will get used later when the fw packets start coming in*/
 if (me-&gt;fwFlashMetadata._imageType == _CB_Application ) {
-    me-&gt;flashAddrCurr = FLASH_APPL_START_ADDRESS;
+    me-&gt;flashAddrCurr = FLASH_APPL_START_ADDR;
     me-&gt;fwPacketExp   = me-&gt;fwFlashMetadata._imageNumPackets;
     DBG_printf(&quot;Expecting %d FW data packets\n&quot;, me-&gt;fwPacketExp);
 } else {
@@ -335,7 +337,8 @@ for( uint8_t i=0; i &lt; me-&gt;flashSectorsToEraseNum; i++ ) {
        </tran>
        <tran trig="FLASH_OP_TIMEOUT" target="../../../0">
         <action>/* Override whatever error since the timeout interrupted whatever was happening. */
-me-&gt;errorCode = ERR_FLASH_ERASE_TIMEOUT;</action>
+me-&gt;errorCode = ERR_FLASH_ERASE_TIMEOUT;
+ERR_printf(&quot;Timed out while preparing flash for FW update. Error: 0x%08x\n&quot;, me-&gt;errorCode);</action>
         <tran_glyph conn="46,27,3,1,-25">
          <action box="-21,-2,16,2"/>
         </tran_glyph>
@@ -387,7 +390,7 @@ me-&gt;flashSectorsToEraseIndex += 1; /* increment the index into the erase arra
           </choice>
           <choice target="../../../../../3">
            <guard>else</guard>
-           <choice_glyph conn="97,39,5,0,-42,7">
+           <choice_glyph conn="97,39,5,0,-42,8">
             <action box="-8,-2,5,2"/>
            </choice_glyph>
           </choice>
@@ -426,7 +429,7 @@ WRN_printf(&quot;Attempting operation again (retry %d out of %d)...\n&quot;, me-
          <exit box="1,4,6,2"/>
         </state_glyph>
        </state>
-       <state_glyph node="46,13,66,30">
+       <state_glyph node="46,13,66,29">
         <entry box="1,2,6,2"/>
        </state_glyph>
       </state>
@@ -463,17 +466,16 @@ QTimeEvt_rearm(                         /* Re-arm timer on entry */
          <guard brief="ValidSeq?">me-&gt;fwPacketCurr + 1 == ((FWDataEvt const *)e)-&gt;seqCurr</guard>
          <action>/* Calculate packet data CRC and make sure it matches the one sent over */
 CRC_ResetDR();
-uint32_t CRCValue = CRC32_Calc(((FWDataEvt const *)e)-&gt;dataBuf, ((FWDataEvt const *)e)-&gt;dataLen);
-</action>
+uint32_t CRCValue = CRC32_Calc(((FWDataEvt const *)e)-&gt;dataBuf, ((FWDataEvt const *)e)-&gt;dataLen);</action>
          <choice target="../../../../4">
-          <guard brief="ValidCRC?">CRCValue != ((FWDataEvt const *)e)-&gt;dataCRC</guard>
+          <guard brief="ValidCRC?">CRCValue == ((FWDataEvt const *)e)-&gt;dataCRC</guard>
           <action>me-&gt;fwDataToFlashLen = ((FWDataEvt const *)e)-&gt;dataLen;
 MEMCPY(
     me-&gt;fwDataToFlash,
     ((FWDataEvt const *)e)-&gt;dataBuf,
     me-&gt;fwDataToFlashLen
 );</action>
-          <choice_glyph conn="58,61,4,0,3">
+          <choice_glyph conn="58,64,5,3,19,-14,9">
            <action box="1,0,10,2"/>
           </choice_glyph>
          </choice>
@@ -484,26 +486,26 @@ ERR_printf(
     &quot;Sent CRC (0x%08x) doesn't match calculated (0x%08x) for fw packet: %d. Error: 0x%08x\n&quot;,
     CRCValue, ((FWDataEvt const *)e)-&gt;dataCRC, ((FWDataEvt const *)e)-&gt;seqCurr, me-&gt;errorCode);
 </action>
-          <choice_glyph conn="58,61,5,1,-37">
+          <choice_glyph conn="58,64,5,1,-37">
            <action box="-7,-2,6,2"/>
           </choice_glyph>
          </choice>
-         <choice_glyph conn="58,57,4,-1,4">
-          <action box="1,0,10,2"/>
+         <choice_glyph conn="58,59,4,-1,5">
+          <action box="0,1,10,2"/>
          </choice_glyph>
         </choice>
         <choice target="../../../../0">
          <guard>else</guard>
-         <action>ERR_printf(&quot;Invalid fw packet sequence number\n&quot;);</action>
-         <choice_glyph conn="58,57,5,1,-37">
+         <action>ERR_printf(&quot;Invalid fw packet sequence number. Expecting: %d, got %d\n&quot;, me-&gt;fwPacketCurr + 1, ((FWDataEvt const *)e)-&gt;seqCurr);</action>
+         <choice_glyph conn="58,59,5,1,-37">
           <action box="-7,-2,5,2"/>
          </choice_glyph>
         </choice>
-        <tran_glyph conn="46,54,3,-1,12,3">
+        <tran_glyph conn="46,55,3,-1,12,4">
          <action box="0,-2,11,2"/>
         </tran_glyph>
        </tran>
-       <state_glyph node="46,46,26,9">
+       <state_glyph node="46,47,26,9">
         <entry box="1,2,6,2"/>
         <exit box="1,4,6,2"/>
        </state_glyph>
@@ -522,7 +524,9 @@ ERR_printf(
  * machine is going next.
  */</documentation>
        <entry>me-&gt;errorCode = ERR_FLASH_WRITE_TIMEOUT; /* Set the timeout error code*/
-DBG_printf(&quot;Writing for FW data packet %d...\n&quot;, me-&gt;fwPacketCurr + 1);
+if ( (me-&gt;fwPacketCurr + 1) % 100 == 0 ) {
+    DBG_printf(&quot;Writing FW data packet %d of %d total.\n&quot;, me-&gt;fwPacketCurr + 1, me-&gt;fwFlashMetadata._imageNumPackets);
+}
 
 QTimeEvt_rearm(                         /* Re-arm timer on entry */
     &amp;me-&gt;flashOpTimerEvt,
@@ -555,18 +559,115 @@ if( ERR_NONE != err || bytesWritten != me-&gt;fwDataToFlashLen) { /* Error occur
 </action>
         <choice target="../../../3">
          <guard brief="MorePackets?">me-&gt;fwPacketCurr != me-&gt;fwPacketExp</guard>
-         <choice_glyph conn="76,69,4,1,-19,-4">
-          <action box="1,-5,10,2"/>
+         <choice_glyph conn="116,54,4,0,-9,-52,2">
+          <action box="0,-5,10,2"/>
          </choice_glyph>
         </choice>
-        <choice target="../../../5">
+        <choice>
          <guard>else</guard>
-         <action>DBG_printf(&quot;No more fw packets expected\n&quot;);</action>
-         <choice_glyph conn="76,69,4,1,12,-4">
-          <action box="1,2,10,2"/>
+         <action>DBG_printf(&quot;No more fw packets expected\n&quot;);
+/* Do a check of the FW image and compare all the CRCs and sizes */
+CRC_ResetDR();
+uint32_t crcCheck = CRC32_Calc(
+    (uint8_t *)FLASH_APPL_START_ADDR,
+    me-&gt;fwFlashMetadata._imageSize
+);</action>
+         <choice>
+          <guard brief="CRCMatch?">me-&gt;fwFlashMetadata._imageCrc == crcCheck</guard>
+          <action>DBG_printf(&quot;CRCs of the FW image match, writing metadata...\n&quot;);
+me-&gt;errorCode = FLASH_writeApplSize( me-&gt;fwFlashMetadata._imageSize );</action>
+          <choice>
+           <guard brief="NoError?">ERR_NONE == me-&gt;errorCode</guard>
+           <action>me-&gt;errorCode = FLASH_writeApplCRC( me-&gt;fwFlashMetadata._imageCrc );</action>
+           <choice>
+            <guard brief="NoError?">ERR_NONE == me-&gt;errorCode</guard>
+            <action>me-&gt;errorCode = FLASH_writeApplMajVer( me-&gt;fwFlashMetadata._imageMaj );</action>
+            <choice target="../../../../../../../../0">
+             <guard>else</guard>
+             <action>ERR_printf(&quot;Unable to write image Major Version after flashing. Error: 0x%08x.\n&quot;, me-&gt;errorCode);</action>
+             <choice_glyph conn="116,82,5,1,-9,-9,-86">
+              <action box="-5,-2,5,2"/>
+             </choice_glyph>
+            </choice>
+            <choice>
+             <guard brief="NoError?">ERR_NONE == me-&gt;errorCode</guard>
+             <action>me-&gt;errorCode = FLASH_writeApplMinVer( me-&gt;fwFlashMetadata._imageMin );</action>
+             <choice target="../../../../../../../../../0">
+              <guard>else</guard>
+              <action>ERR_printf(&quot;Unable to write image Minor Version after flashing. Error: 0x%08x.\n&quot;, me-&gt;errorCode);</action>
+              <choice_glyph conn="116,86,5,1,-10,-12,-85">
+               <action box="-5,-2,5,2"/>
+              </choice_glyph>
+             </choice>
+             <choice>
+              <guard brief="NoError?">ERR_NONE == me-&gt;errorCode</guard>
+              <action>me-&gt;errorCode = FLASH_writeApplBuildDatetime(
+    (uint8_t *)me-&gt;fwFlashMetadata._imageDatetime,
+    me-&gt;fwFlashMetadata._imageDatetime_len
+);</action>
+              <choice target="../../../../../../../../../../0">
+               <guard>else</guard>
+               <action>ERR_printf(&quot;Unable to write image build datetime after flashing. Error: 0x%08x.\n&quot;, me-&gt;errorCode);</action>
+               <choice_glyph conn="116,90,5,1,-11,-15,-84">
+                <action box="-5,-2,5,2"/>
+               </choice_glyph>
+              </choice>
+              <choice target="../../../../../../../../../../0">
+               <guard brief="NoError?">ERR_NONE == me-&gt;errorCode</guard>
+               <action>LOG_printf(&quot;Successfully finished upgrading FW!\n&quot;);</action>
+               <choice_glyph conn="116,90,4,1,4,-14,-16,-81">
+                <action box="0,0,10,2"/>
+               </choice_glyph>
+              </choice>
+              <choice_glyph conn="116,86,4,-1,4">
+               <action box="0,0,7,2"/>
+              </choice_glyph>
+             </choice>
+             <choice_glyph conn="116,82,4,-1,4">
+              <action box="0,0,7,2"/>
+             </choice_glyph>
+            </choice>
+            <choice_glyph conn="116,78,4,-1,4">
+             <action box="0,0,7,2"/>
+            </choice_glyph>
+           </choice>
+           <choice target="../../../../../../../0">
+            <guard>else</guard>
+            <action>ERR_printf(&quot;Unable to write image CRC after flashing. Error: 0x%08x.\n&quot;, me-&gt;errorCode);</action>
+            <choice_glyph conn="116,78,5,1,-8,-6,-87">
+             <action box="-5,-2,5,2"/>
+            </choice_glyph>
+           </choice>
+           <choice_glyph conn="116,74,4,-1,4">
+            <action box="0,0,8,2"/>
+           </choice_glyph>
+          </choice>
+          <choice target="../../../../../../0">
+           <guard>else</guard>
+           <action>ERR_printf(&quot;Unable to write image size after flashing. Error: 0x%08x.\n&quot;, me-&gt;errorCode);</action>
+           <choice_glyph conn="116,74,5,1,-7,-3,-88">
+            <action box="-5,-2,5,2"/>
+           </choice_glyph>
+          </choice>
+          <choice_glyph conn="116,70,4,-1,4">
+           <action box="0,0,8,2"/>
+          </choice_glyph>
+         </choice>
+         <choice target="../../../../../0">
+          <guard>else</guard>
+          <action>me-&gt;errorCode = ERR_FLASH_INVALID_IMAGE_CRC_AFTER_FLASH;
+ERR_printf(&quot;CRC check failed after flash. Error: 0x%08x.\n&quot;, me-&gt;errorCode);
+ERR_printf(&quot;Expected  : 0x%08x\n&quot;, me-&gt;fwFlashMetadata._imageCrc);
+ERR_printf(&quot;Calculated: 0x%08x\n&quot;, crcCheck);</action>
+          <choice_glyph conn="116,70,5,1,-95">
+           <action box="-5,-2,5,2"/>
+          </choice_glyph>
+         </choice>
+         <choice_glyph conn="116,54,4,-1,16">
+          <action box="0,2,5,2"/>
          </choice_glyph>
         </choice>
-        <tran_glyph conn="46,69,3,-1,30">
+        <tran_glyph conn="86,54,3,-1,30">
          <action box="0,-2,10,2"/>
         </tran_glyph>
        </tran>
@@ -575,62 +676,35 @@ if( ERR_NONE != err || bytesWritten != me-&gt;fwDataToFlashLen) { /* Error occur
         <choice target="../..">
          <guard brief="RetriesLeft?">me-&gt;retryCurr &lt; MAX_FLASH_RETRIES</guard>
          <action>LOG_printf(&quot;Retrying to flash packet, retry %d out of %d max\n&quot;, me-&gt;retryCurr, MAX_FLASH_RETRIES);</action>
-         <choice_glyph conn="58,76,5,2,10,-3">
+         <choice_glyph conn="98,67,5,2,10,-9">
           <action box="1,0,10,2"/>
          </choice_glyph>
         </choice>
         <choice target="../../../../0">
          <guard>else</guard>
          <action>ERR_printf(&quot;No more retries\n&quot;);</action>
-         <choice_glyph conn="58,76,5,1,-37">
+         <choice_glyph conn="98,67,5,1,-77">
           <action box="-9,0,10,2"/>
          </choice_glyph>
         </choice>
-        <tran_glyph conn="46,72,3,-1,12,4">
+        <tran_glyph conn="86,57,3,-1,12,10">
          <action box="0,-2,10,2"/>
         </tran_glyph>
        </tran>
-       <state_glyph node="46,64,26,9">
+       <state_glyph node="86,47,26,11">
         <entry box="1,2,6,2"/>
        </state_glyph>
       </state>
-      <state name="FinalizeFlash">
-       <documentation>/**
- * @brief    Writes FW image size, CRC, versions, and datetime to Flash; locks it.
- * This state is responsible for:
- * 1. Writing the FW image CRC, Major/Minor versions, size, and datetime to a special
- *    sector of the flash memory
- * 2. Verifying the CRC/size/version/datetime of the written FW image matches what
- *    was sent down with the initial metadata.
- * 3. Locking the flash and sending the new metadata (which should match the
- *    original) to CommMgr to send back to the client.
- *
- * @param  [in|out] me: Pointer to the state machine
- * @param  [in|out]  e:  Pointer to the event being processed.
- * @return status: QState type that specifies where the state
- * machine is going next.
- */</documentation>
-       <entry>DBG_printf(&quot;Finalizing FW update...\n&quot;);</entry>
-       <tran trig="FLASH_DONE" target="../../../0">
-        <action>DBG_printf(&quot;FLASH_DONE\n&quot;);</action>
-        <tran_glyph conn="72,84,1,1,-51">
-         <action box="-16,-2,10,2"/>
-        </tran_glyph>
-       </tran>
-       <state_glyph node="46,79,26,10">
-        <entry box="1,2,6,2"/>
-       </state_glyph>
-      </state>
-      <state_glyph node="42,8,84,85">
+      <state_glyph node="42,8,84,88">
        <entry box="1,2,6,2"/>
        <exit box="1,4,6,2"/>
       </state_glyph>
      </state>
-     <state_glyph node="3,3,130,91">
+     <state_glyph node="3,3,130,95">
       <entry box="1,2,5,2"/>
      </state_glyph>
     </state>
-    <state_diagram size="163,95"/>
+    <state_diagram size="163,101"/>
    </statechart>
   </class>
   <attribute name="AO_FlashMgr" type="QActive * const" visibility="0x00" properties="0x00">

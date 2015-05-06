@@ -193,23 +193,6 @@ static QState FlashMgr_WaitingForFWData(FlashMgr * const me, QEvt const * const 
  */
 static QState FlashMgr_WritingFlash(FlashMgr * const me, QEvt const * const e);
 
-/**
- * @brief    Writes FW image size, CRC, versions, and datetime to Flash; locks it.
- * This state is responsible for:
- * 1. Writing the FW image CRC, Major/Minor versions, size, and datetime to a special
- *    sector of the flash memory
- * 2. Verifying the CRC/size/version/datetime of the written FW image matches what
- *    was sent down with the initial metadata.
- * 3. Locking the flash and sending the new metadata (which should match the
- *    original) to CommMgr to send back to the client.
- *
- * @param  [in|out] me: Pointer to the state machine
- * @param  [in|out]  e:  Pointer to the event being processed.
- * @return status: QState type that specifies where the state
- * machine is going next.
- */
-static QState FlashMgr_FinalizeFlash(FlashMgr * const me, QEvt const * const e);
-
 
 /* Private defines -----------------------------------------------------------*/
 #define USER_FLASH_FIRST_PAGE_ADDRESS                                 0x08020000
@@ -347,6 +330,7 @@ static QState FlashMgr_Idle(FlashMgr * const me, QEvt const * const e) {
             me->fwFlashMetadata._imageMin  = ((FWMetaEvt const *)e)->imageMin;
             me->fwFlashMetadata._imageSize = ((FWMetaEvt const *)e)->imageSize;
             me->fwFlashMetadata._imageType = ((FWMetaEvt const *)e)->imageType;
+            me->fwFlashMetadata._imageNumPackets = ((FWMetaEvt const *)e)->imageNumPackets;
             me->fwFlashMetadata._imageDatetime_len = ((FWMetaEvt const *)e)->imageDatetimeLen;
             MEMCPY(
                 me->fwFlashMetadata._imageDatetime,
@@ -423,7 +407,7 @@ static QState FlashMgr_Busy(FlashMgr * const me, QEvt const * const e) {
         }
         /* ${AOs::FlashMgr::SM::Active::Busy::FLASH_ERROR} */
         case FLASH_ERROR_SIG: {
-            ERR_printf("FLASH_ERROR\n");
+            ERR_printf("Unable to to process flash request. Error: 0x%08x\n", me->errorCode);
 
             status_ = Q_TRAN(&FlashMgr_Idle);
             break;
@@ -471,6 +455,7 @@ static QState FlashMgr_PrepFlash(FlashMgr * const me, QEvt const * const e) {
             LOG_printf("Size: %d\n", me->fwFlashMetadata._imageSize);
             LOG_printf("Type: %d\n", me->fwFlashMetadata._imageType);
             LOG_printf("Datetime: %s\n", me->fwFlashMetadata._imageDatetime);
+            LOG_printf("Number of packets: %d\n", me->fwFlashMetadata._imageNumPackets);
 
             /* Do some sanity checking on the FW image metadata */
             me->errorCode = FLASH_validateMetadata(&(me->fwFlashMetadata));
@@ -488,7 +473,7 @@ static QState FlashMgr_PrepFlash(FlashMgr * const me, QEvt const * const e) {
 
                 /* Set the start address which will get used later when the fw packets start coming in*/
                 if (me->fwFlashMetadata._imageType == _CB_Application ) {
-                    me->flashAddrCurr = FLASH_APPL_START_ADDRESS;
+                    me->flashAddrCurr = FLASH_APPL_START_ADDR;
                     me->fwPacketExp   = me->fwFlashMetadata._imageNumPackets;
                     DBG_printf("Expecting %d FW data packets\n", me->fwPacketExp);
                 } else {
@@ -521,6 +506,7 @@ static QState FlashMgr_PrepFlash(FlashMgr * const me, QEvt const * const e) {
         case FLASH_OP_TIMEOUT_SIG: {
             /* Override whatever error since the timeout interrupted whatever was happening. */
             me->errorCode = ERR_FLASH_ERASE_TIMEOUT;
+            ERR_printf("Timed out while preparing flash for FW update. Error: 0x%08x\n", me->errorCode);
             status_ = Q_TRAN(&FlashMgr_Idle);
             break;
         }
@@ -667,9 +653,8 @@ static QState FlashMgr_WaitingForFWData(FlashMgr * const me, QEvt const * const 
                 /* Calculate packet data CRC and make sure it matches the one sent over */
                 CRC_ResetDR();
                 uint32_t CRCValue = CRC32_Calc(((FWDataEvt const *)e)->dataBuf, ((FWDataEvt const *)e)->dataLen);
-
                 /* ${AOs::FlashMgr::SM::Active::Busy::WaitingForFWData::FLASH_DATA::[ValidSeq?]::[ValidCRC?]} */
-                if (CRCValue != ((FWDataEvt const *)e)->dataCRC) {
+                if (CRCValue == ((FWDataEvt const *)e)->dataCRC) {
                     me->fwDataToFlashLen = ((FWDataEvt const *)e)->dataLen;
                     MEMCPY(
                         me->fwDataToFlash,
@@ -690,7 +675,7 @@ static QState FlashMgr_WaitingForFWData(FlashMgr * const me, QEvt const * const 
             }
             /* ${AOs::FlashMgr::SM::Active::Busy::WaitingForFWData::FLASH_DATA::[else]} */
             else {
-                ERR_printf("Invalid fw packet sequence number\n");
+                ERR_printf("Invalid fw packet sequence number. Expecting: %d, got %d\n", me->fwPacketCurr + 1, ((FWDataEvt const *)e)->seqCurr);
                 status_ = Q_TRAN(&FlashMgr_Idle);
             }
             break;
@@ -722,7 +707,9 @@ static QState FlashMgr_WritingFlash(FlashMgr * const me, QEvt const * const e) {
         /* ${AOs::FlashMgr::SM::Active::Busy::WritingFlash} */
         case Q_ENTRY_SIG: {
             me->errorCode = ERR_FLASH_WRITE_TIMEOUT; /* Set the timeout error code*/
-            DBG_printf("Writing for FW data packet %d...\n", me->fwPacketCurr + 1);
+            if ( (me->fwPacketCurr + 1) % 100 == 0 ) {
+                DBG_printf("Writing FW data packet %d of %d total.\n", me->fwPacketCurr + 1, me->fwFlashMetadata._imageNumPackets);
+            }
 
             QTimeEvt_rearm(                         /* Re-arm timer on entry */
                 &me->flashOpTimerEvt,
@@ -764,7 +751,74 @@ static QState FlashMgr_WritingFlash(FlashMgr * const me, QEvt const * const e) {
             /* ${AOs::FlashMgr::SM::Active::Busy::WritingFlash::FLASH_DONE::[else]} */
             else {
                 DBG_printf("No more fw packets expected\n");
-                status_ = Q_TRAN(&FlashMgr_FinalizeFlash);
+                /* Do a check of the FW image and compare all the CRCs and sizes */
+                CRC_ResetDR();
+                uint32_t crcCheck = CRC32_Calc(
+                    (uint8_t *)FLASH_APPL_START_ADDR,
+                    me->fwFlashMetadata._imageSize
+                );
+                /* ${AOs::FlashMgr::SM::Active::Busy::WritingFlash::FLASH_DONE::[else]::[CRCMatch?]} */
+                if (me->fwFlashMetadata._imageCrc == crcCheck) {
+                    DBG_printf("CRCs of the FW image match, writing metadata...\n");
+                    me->errorCode = FLASH_writeApplSize( me->fwFlashMetadata._imageSize );
+                    /* ${AOs::FlashMgr::SM::Active::Busy::WritingFlash::FLASH_DONE::[else]::[CRCMatch?]::[NoError?]} */
+                    if (ERR_NONE == me->errorCode) {
+                        me->errorCode = FLASH_writeApplCRC( me->fwFlashMetadata._imageCrc );
+                        /* ${AOs::FlashMgr::SM::Active::Busy::WritingFlash::FLASH_DONE::[else]::[CRCMatch?]::[NoError?]::[NoError?]} */
+                        if (ERR_NONE == me->errorCode) {
+                            me->errorCode = FLASH_writeApplMajVer( me->fwFlashMetadata._imageMaj );
+                            /* ${AOs::FlashMgr::SM::Active::Busy::WritingFlash::FLASH_DONE::[else]::[CRCMatch?]::[NoError?]::[NoError?]::[NoError?]} */
+                            if (ERR_NONE == me->errorCode) {
+                                me->errorCode = FLASH_writeApplMinVer( me->fwFlashMetadata._imageMin );
+                                /* ${AOs::FlashMgr::SM::Active::Busy::WritingFlash::FLASH_DONE::[else]::[CRCMatch?]::[NoError?]::[NoError?]::[NoError?]::[NoError?]} */
+                                if (ERR_NONE == me->errorCode) {
+                                    me->errorCode = FLASH_writeApplBuildDatetime(
+                                        (uint8_t *)me->fwFlashMetadata._imageDatetime,
+                                        me->fwFlashMetadata._imageDatetime_len
+                                    );
+                                    /* ${AOs::FlashMgr::SM::Active::Busy::WritingFlash::FLASH_DONE::[else]::[CRCMatch?]::[NoError?]::[NoError?]::[NoError?]::[NoError?]::[NoError?]} */
+                                    if (ERR_NONE == me->errorCode) {
+                                        LOG_printf("Successfully finished upgrading FW!\n");
+                                        status_ = Q_TRAN(&FlashMgr_Idle);
+                                    }
+                                    /* ${AOs::FlashMgr::SM::Active::Busy::WritingFlash::FLASH_DONE::[else]::[CRCMatch?]::[NoError?]::[NoError?]::[NoError?]::[NoError?]::[else]} */
+                                    else {
+                                        ERR_printf("Unable to write image build datetime after flashing. Error: 0x%08x.\n", me->errorCode);
+                                        status_ = Q_TRAN(&FlashMgr_Idle);
+                                    }
+                                }
+                                /* ${AOs::FlashMgr::SM::Active::Busy::WritingFlash::FLASH_DONE::[else]::[CRCMatch?]::[NoError?]::[NoError?]::[NoError?]::[else]} */
+                                else {
+                                    ERR_printf("Unable to write image Minor Version after flashing. Error: 0x%08x.\n", me->errorCode);
+                                    status_ = Q_TRAN(&FlashMgr_Idle);
+                                }
+                            }
+                            /* ${AOs::FlashMgr::SM::Active::Busy::WritingFlash::FLASH_DONE::[else]::[CRCMatch?]::[NoError?]::[NoError?]::[else]} */
+                            else {
+                                ERR_printf("Unable to write image Major Version after flashing. Error: 0x%08x.\n", me->errorCode);
+                                status_ = Q_TRAN(&FlashMgr_Idle);
+                            }
+                        }
+                        /* ${AOs::FlashMgr::SM::Active::Busy::WritingFlash::FLASH_DONE::[else]::[CRCMatch?]::[NoError?]::[else]} */
+                        else {
+                            ERR_printf("Unable to write image CRC after flashing. Error: 0x%08x.\n", me->errorCode);
+                            status_ = Q_TRAN(&FlashMgr_Idle);
+                        }
+                    }
+                    /* ${AOs::FlashMgr::SM::Active::Busy::WritingFlash::FLASH_DONE::[else]::[CRCMatch?]::[else]} */
+                    else {
+                        ERR_printf("Unable to write image size after flashing. Error: 0x%08x.\n", me->errorCode);
+                        status_ = Q_TRAN(&FlashMgr_Idle);
+                    }
+                }
+                /* ${AOs::FlashMgr::SM::Active::Busy::WritingFlash::FLASH_DONE::[else]::[else]} */
+                else {
+                    me->errorCode = ERR_FLASH_INVALID_IMAGE_CRC_AFTER_FLASH;
+                    ERR_printf("CRC check failed after flash. Error: 0x%08x.\n", me->errorCode);
+                    ERR_printf("Expected  : 0x%08x\n", me->fwFlashMetadata._imageCrc);
+                    ERR_printf("Calculated: 0x%08x\n", crcCheck);
+                    status_ = Q_TRAN(&FlashMgr_Idle);
+                }
             }
             break;
         }
@@ -781,45 +835,6 @@ static QState FlashMgr_WritingFlash(FlashMgr * const me, QEvt const * const e) {
                 ERR_printf("No more retries\n");
                 status_ = Q_TRAN(&FlashMgr_Idle);
             }
-            break;
-        }
-        default: {
-            status_ = Q_SUPER(&FlashMgr_Busy);
-            break;
-        }
-    }
-    return status_;
-}
-
-/**
- * @brief    Writes FW image size, CRC, versions, and datetime to Flash; locks it.
- * This state is responsible for:
- * 1. Writing the FW image CRC, Major/Minor versions, size, and datetime to a special
- *    sector of the flash memory
- * 2. Verifying the CRC/size/version/datetime of the written FW image matches what
- *    was sent down with the initial metadata.
- * 3. Locking the flash and sending the new metadata (which should match the
- *    original) to CommMgr to send back to the client.
- *
- * @param  [in|out] me: Pointer to the state machine
- * @param  [in|out]  e:  Pointer to the event being processed.
- * @return status: QState type that specifies where the state
- * machine is going next.
- */
-/*${AOs::FlashMgr::SM::Active::Busy::FinalizeFlash} ........................*/
-static QState FlashMgr_FinalizeFlash(FlashMgr * const me, QEvt const * const e) {
-    QState status_;
-    switch (e->sig) {
-        /* ${AOs::FlashMgr::SM::Active::Busy::FinalizeFlash} */
-        case Q_ENTRY_SIG: {
-            DBG_printf("Finalizing FW update...\n");
-            status_ = Q_HANDLED();
-            break;
-        }
-        /* ${AOs::FlashMgr::SM::Active::Busy::FinalizeFlash::FLASH_DONE} */
-        case FLASH_DONE_SIG: {
-            DBG_printf("FLASH_DONE\n");
-            status_ = Q_TRAN(&FlashMgr_Idle);
             break;
         }
         default: {

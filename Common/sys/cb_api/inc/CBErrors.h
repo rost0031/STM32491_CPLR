@@ -74,6 +74,7 @@ typedef enum CBErrors
    ERR_FLASH_WAIT_FOR_DATA_TIMEOUT                             = 0x00010011,
    ERR_FLASH_INVALID_FW_PACKET_CRC                             = 0x00010012,
    ERR_FLASH_WRITE_TIMEOUT                                     = 0x00010013,
+   ERR_FLASH_INVALID_IMAGE_CRC_AFTER_FLASH                     = 0x00010014,
 
    /* NOR error category                         0x00030000 - 0x0003FFFF */
    ERR_NOR_ERROR                                               = 0x00030000,

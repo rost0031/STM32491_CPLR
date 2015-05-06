@@ -21,15 +21,31 @@
 /* Exported defines ----------------------------------------------------------*/
 /* These defines specify where the various flash regions start and end on the
  * STM32F4xx 2MB flash chip that is being used by the DC3 */
-#define FLASH_BOOT_START_ADDRESS          ((uint32_t)0x08000000)
-#define FLASH_BOOT_LAST_ADDRESS           ((uint32_t)0x0803FFFF)
-#define FLASH_APPL_START_ADDRESS          ((uint32_t)0x08040000)
+#define FLASH_BOOT_START_ADDR             ((uint32_t)0x08000000)
+#define FLASH_BOOT_LAST_ADDR              ((uint32_t)0x0803FFFF)
 #define FLASH_LAST_ADDR                   ((uint32_t)0x081FFFFF)
 
 #define FLASH_END_ADDR_SECTOR             ADDR_FLASH_SECTOR_23  /**< End address of user Flash area */
 
-#define FLASH_APPL_CRC_ADDRESS            ((uint32_t)0x080FFFFC)
-#define FLASH_APPL_SIZE_ADDRESS           ((uint32_t)0x080FFFF8)
+/**
+ * @brief   Size of the Application FW image
+ */
+#define FLASH_APPL_START_ADDR             ((uint32_t)0x08040000)
+
+#define FLASH_APPL_SIZE_ADDR              ((uint32_t)0x081FFFE0)
+#define FLASH_APPL_SIZE_LEN               4
+
+#define FLASH_APPL_CRC_ADDR               ((uint32_t)0x081FFFE4)
+#define FLASH_APPL_CRC_LEN                4
+
+#define FLASH_APPL_MAJ_VER_ADDR           ((uint32_t)0x081FFFE8)
+#define FLASH_APPL_MAJ_VER_LEN            1
+
+#define FLASH_APPL_MIN_VER_ADDR           ((uint32_t)0x081FFFEA)
+#define FLASH_APPL_MIN_VER_LEN            1
+
+#define FLASH_APPL_BUILD_DATETIME_ADDR    ((uint32_t)0x081FFFEC)
+#define FLASH_APPL_BUILD_DATETIME_LEN     14
 
 /* Base address of the Flash sectors */
 #define ADDR_FLASH_SECTOR_0     ((uint32_t)0x08000000) /**< Addr of Sect 0,  16  KB */
@@ -168,6 +184,89 @@ uint32_t FLASH_readApplSize( void );
  *    @arg  other error codes if error occurred
  */
 CBErrorCode FLASH_writeApplSize( const uint32_t size );
+
+/**
+ * @brief   Read the major version stored at the very end of the Application flash.
+ * @param   None
+ * @return  maj: uint8_t application major version stored at that address location
+ */
+uint8_t FLASH_readApplMajVer( void );
+
+/**
+ * @brief   Write the application major version to the very end of the
+ * Application flash.
+ * @param [in] maj: const uint8_t major version that is to be written
+ * @return  CBErrorCode status:
+ *    @arg  ERR_NONE: success
+ *    @arg  other error codes if error occurred
+ */
+CBErrorCode FLASH_writeApplMajVer( const uint8_t maj );
+
+/**
+ * @brief   Read the minor version stored at the very end of the Application flash.
+ * @param   None
+ * @return  maj: uint8_t application minor version stored at that address location
+ */
+uint8_t FLASH_readApplMinVer( void );
+
+/**
+ * @brief   Write the application minor version to the very end of the
+ * Application flash.
+ * @param [in] maj: const uint8_t minor version that is to be written
+ * @return  CBErrorCode status:
+ *    @arg  ERR_NONE: success
+ *    @arg  other error codes if error occurred
+ */
+CBErrorCode FLASH_writeApplMinVer( const uint8_t maj );
+
+/**
+ * @brief   Read the build datetime stored at the very end of the Application flash.
+ * @param [out] *buffer: uint8_t pointer to buffer where the data will be stored
+ * on return.
+ * @param [in] bufferSize: const uint8_t size of the buffer.
+ *    @note: This buffer should be at minimum 14 (FLASH_APPL_BUILD_DATETIME_LEN)
+ *    bytes.
+ * @return  CBErrorCode status:
+ *    @arg  ERR_NONE: success
+ *    @arg  other error codes if error occurred
+ */
+CBErrorCode FLASH_readApplBuildDatetime(
+      uint8_t *buffer,
+      const uint8_t bufferSize
+);
+
+/**
+ * @brief   Write the build datetime stored at the very end of the Application flash.
+ * @param [out] *buffer: const uint8_t pointer to buffer where the build
+ * datetime resides.
+ * @param [in] bufferSize: const uint8_t size of the buffer.
+ *    @note: This buffer should be at minimum 14 (FLASH_APPL_BUILD_DATETIME_LEN)
+ *    bytes.
+ * @return  CBErrorCode status:
+ *    @arg  ERR_NONE: success
+ *    @arg  other error codes if error occurred
+ */
+CBErrorCode FLASH_writeApplBuildDatetime(
+      const uint8_t *buffer,
+      const uint8_t bufferSize
+);
+
+/**
+ * @brief   Read a uint8_t from flash
+ * @param [in] addr: const uint32_t address where to read from
+ * @return  data: uint8_t value stored at the specified address
+ */
+uint8_t FLASH_readUint8( const uint32_t addr );
+
+/**
+ * @brief   Write a uint8_t to the flash
+ * @param [in] addr: const uint32_t address where to write data to
+ * @param [in] data: const uint8_t value to write to the specified address
+ * @return  CBErrorCode status:
+ *    @arg  ERR_NONE: success
+ *    @arg  other error codes if error occurred
+ */
+CBErrorCode FLASH_writeUint8( const uint32_t addr, const uint8_t data );
 
 /**
  * @brief   Read a uint32_t from flash

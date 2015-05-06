@@ -341,7 +341,10 @@ me-&gt;errorCode = Comm_sendToClient( evt );
 if ( ERR_NONE != me-&gt;errorCode ) {
     WRN_printf(&quot;Possible error sending Done, attempting to continue. Error: 0x%08x\n&quot;, me-&gt;errorCode);
 }
-</exit>
+
+if ( ERR_NONE != me-&gt;errorCode ) {
+    WRN_printf(&quot;Send Done msg with status: 0x%08x\n&quot;, me-&gt;errorCode);
+}</exit>
       <tran trig="COMM_MGR_TIMEOUT" target="../../0">
        <action>ERR_printf(&quot;COMM_MGR_TIMEOUT trying to process %d basic msg, error: 0x%08x\n&quot;,
     me-&gt;basicMsg._msgName, me-&gt;errorCode);</action>
@@ -540,7 +543,9 @@ if ( ERR_NONE != me-&gt;errorCode ) {
        <tran trig="FLASH_OP_DONE" target="../../../0">
         <action>me-&gt;errorCode = ((FlashStatusEvt const *)e)-&gt;errorCode;
 me-&gt;payloadMsgUnion.statusPayload._errorCode = me-&gt;errorCode;
-</action>
+if ( ERR_NONE != me-&gt;errorCode ) {
+    WRN_printf(&quot;Got FLASH_OP_DONE with status: 0x%08x\n&quot;, me-&gt;errorCode);
+}</action>
         <tran_glyph conn="67,83,3,1,-33">
          <action box="-19,-2,15,2"/>
         </tran_glyph>

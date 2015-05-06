@@ -270,7 +270,8 @@ ClientError_t ClientApi::DC3_flashFW(
          }
 
          if ( ERR_NONE != *status ) {
-            WRN_printf(this->m_pLog, "Status from DC3: 0x%08x", *status);
+            ERR_printf(this->m_pLog, "Status from DC3: 0x%08x", *status);
+            return( clientStatus );
          }
          bytesTransferred += size;
          nPacketSeqNum++;
