@@ -47,7 +47,7 @@ ClientError_t FWLdr::loadFromFile( const char *filename )
 	if (!fw_file) {
 	   status = CLI_ERR_FW_UNABLE_TO_OPEN;
       ERR_printf(this->m_pLog,"Unable to open file %s", filename);
-      goto loadFromFile_ERRHandle;                  /* Jump to tag for return */
+      return status;
 	}
 
 	/* if the file exists, read it */
@@ -59,19 +59,15 @@ ClientError_t FWLdr::loadFromFile( const char *filename )
 	fw_file.close();                                             /* Close file */
 
 	status = parseFilename(filename);
-	if( CLI_ERR_NONE == status ) {
+	if( CLI_ERR_NONE != status ) {
 	   ERR_printf(this->m_pLog,
-	         "Unable correctly parse filename %s for version and build datetime",
-	         filename
+	         "Unable to parse filename %s for version and build datetime. Error: 0x%08x",
+	         filename, status
 	   );
-      goto loadFromFile_ERRHandle;                  /* Jump to tag for return */
+      return status;
 	}
 
-
-
-loadFromFile_ERRHandle:/* Tag to leave with error or naturally for happy path */
-   WRN_IF_ERR_OUTPUT(this->m_pLog, status );
-	return(status);
+	return status;
 }
 
 /******************************************************************************/

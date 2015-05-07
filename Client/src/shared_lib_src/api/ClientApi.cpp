@@ -75,6 +75,8 @@ void runMainMgr( void )
 /******************************************************************************/
 ClientError_t ClientApi::DC3_getMode(CBErrorCode *status, CBBootMode *mode)
 {
+   this->enableMsgCallbacks();
+
    /* Common settings for most messages */
    this->m_basicMsg._msgID       = this->m_msgId;
    this->m_basicMsg._msgReqProg  = (unsigned long)this->m_bRequestProg;
@@ -133,7 +135,9 @@ ClientError_t ClientApi::DC3_flashFW(
       const char* filename
 )
 {
-   DBG_printf( this->m_pLog,"Creating FWLdr object" );
+   this->disableMsgCallbacks(); /* There are too many msgs flying about for us
+   to log all of them so just turn this off */
+
    ClientError_t clientStatus = CLI_ERR_NONE;
    FWLdr *fw = NULL;
    try {
@@ -144,7 +148,6 @@ ClientError_t ClientApi::DC3_flashFW(
             e.what()
       );
    }
-   DBG_printf( this->m_pLog,"FWLdr object created" );
 
    /* Read the file */
    clientStatus = fw->loadFromFile(filename);
@@ -152,6 +155,9 @@ ClientError_t ClientApi::DC3_flashFW(
    /* CBFlashMsg is a little different than other messages:
     * 1. must request progress msgs.
     * 2. msgIds must stay sequential */
+
+
+   uint8_t chunkSize = 112; /* This is the safest amount of data to send */
 
    /* Common settings for most messages */
    this->m_basicMsg._msgID       = this->m_msgId;
@@ -170,7 +176,7 @@ ClientError_t ClientApi::DC3_flashFW(
    this->m_flashMetaPayloadMsg._imageMaj = fw->getMajVer();
    this->m_flashMetaPayloadMsg._imageMin = fw->getMinVer();
    this->m_flashMetaPayloadMsg._imageSize = fw->getSize();
-   this->m_flashMetaPayloadMsg._imageNumPackets = fw->calcNumberOfPackets( 112 );
+   this->m_flashMetaPayloadMsg._imageNumPackets = fw->calcNumberOfPackets( chunkSize );
    this->m_flashMetaPayloadMsg._imageDatetime_len = fw->getDatetimeLen();
    memcpy(
          this->m_flashMetaPayloadMsg._imageDatetime,
@@ -178,10 +184,10 @@ ClientError_t ClientApi::DC3_flashFW(
          this->m_flashMetaPayloadMsg._imageDatetime_len
    );
 
-   DBG_printf(this->m_pLog, "BuildDatetime str len: %d", this->m_flashMetaPayloadMsg._imageDatetime_len);
-   DBG_printf(this->m_pLog, "BuildDatetime is: %s", this->m_flashMetaPayloadMsg._imageDatetime);
-   DBG_printf(this->m_pLog, "CRC  is: 0x%08x", this->m_flashMetaPayloadMsg._imageCrc);
-   DBG_printf(this->m_pLog, "Size is: %d", this->m_flashMetaPayloadMsg._imageSize);
+   LOG_printf(this->m_pLog, "Starting FW flash of DC3");
+   LOG_printf(this->m_pLog, "FW image built on: %s", this->m_flashMetaPayloadMsg._imageDatetime);
+   LOG_printf(this->m_pLog, "FW image CRC is: 0x%08x", this->m_flashMetaPayloadMsg._imageCrc);
+   LOG_printf(this->m_pLog, "FW image size is: %d", this->m_flashMetaPayloadMsg._imageSize);
 
    LrgDataEvt *evt = Q_NEW(LrgDataEvt, MSG_SEND_OUT_SIG);
    evt->dataLen = CBBasicMsg_write_delimited_to(&m_basicMsg, evt->dataBuf, 0);
@@ -204,7 +210,8 @@ ClientError_t ClientApi::DC3_flashFW(
    if ( CLI_ERR_NONE == clientStatus ) {
       *status = (CBErrorCode)payloadMsgUnion.statusPayload._errorCode;
       if ( ERR_NONE != *status ) {
-         WRN_printf(this->m_pLog, "Status from DC3: 0x%08x", *status);
+         ERR_printf(this->m_pLog, "Status from DC3: 0x%08x", *status);
+         return clientStatus;
       }
    }
 
@@ -222,10 +229,10 @@ ClientError_t ClientApi::DC3_flashFW(
       this->m_basicMsg._msgName     = _CBFlashMsg;
       this->m_basicMsg._msgPayload  = _CBFlashDataPayloadMsg;
 
-      uint8_t *buffer = new uint8_t(112);
+      uint8_t *buffer = new uint8_t(chunkSize);
       uint32_t crc = 0;
-      size_t size = fw->getChunkAndCRC( 112, buffer, &crc );
-      DBG_printf(this->m_pLog, "Got FW chunk of size %d with CRC 0x%08x", size, crc);
+      size_t size = fw->getChunkAndCRC( chunkSize, buffer, &crc );
+//      DBG_printf(this->m_pLog, "Got FW chunk of size %d with CRC 0x%08x", size, crc);
 
       /* Set up the payload */
       memset(&m_flashDataPayloadMsg, 0, sizeof(m_flashDataPayloadMsg));
@@ -239,6 +246,10 @@ ClientError_t ClientApi::DC3_flashFW(
       );
 
       delete[] buffer;
+
+      if ( nPacketSeqNum % 100 == 0 ) {
+         LOG_printf(this->m_pLog, "Sending FW data packet %d of %d total...", nPacketSeqNum, this->m_flashMetaPayloadMsg._imageNumPackets);
+      }
 
       /* Send the data and wait for a response */
       LrgDataEvt *evt = Q_NEW(LrgDataEvt, MSG_SEND_OUT_SIG);
@@ -258,30 +269,84 @@ ClientError_t ClientApi::DC3_flashFW(
             5
       );
 
-      if ( CLI_ERR_NONE == clientStatus ) {
-         if ( nPacketSeqNum == m_flashMetaPayloadMsg._imageNumPackets ) {               /* Last packet */
-            *status = (CBErrorCode)payloadMsgUnion.flashMetaPayload._errorCode;
-            DBG_printf(this->m_pLog, "BuildDatetime str len: %d", payloadMsgUnion.flashMetaPayload._imageDatetime_len);
-            DBG_printf(this->m_pLog, "BuildDatetime is: %s", payloadMsgUnion.flashMetaPayload._imageDatetime);
-            DBG_printf(this->m_pLog, "CRC  is: 0x%08x", payloadMsgUnion.flashMetaPayload._imageCrc);
-            DBG_printf(this->m_pLog, "Size is: %d", payloadMsgUnion.flashMetaPayload._imageSize);
-         } else {
-            *status = (CBErrorCode)payloadMsgUnion.statusPayload._errorCode;
-         }
-
-         if ( ERR_NONE != *status ) {
-            ERR_printf(this->m_pLog, "Status from DC3: 0x%08x", *status);
-            return( clientStatus );
-         }
-         bytesTransferred += size;
-         nPacketSeqNum++;
-      } else {
+      /* Make sure there were no intenal client errors. */
+      if ( CLI_ERR_NONE != clientStatus ) {
+         ERR_printf(
+               this->m_pLog,
+               "DC3 client failed with error 0x%08x during FW update while "
+               "trying to send FW data packet %d of %d total with CRC 0x%08x",
+               clientStatus, nPacketSeqNum,
+               m_flashMetaPayloadMsg._imageNumPackets, crc
+         );
          return( clientStatus );
       }
 
+      /* Make sure the status of the done msg has no errors */
+      *status = (CBErrorCode)payloadMsgUnion.statusPayload._errorCode;
+      if ( ERR_NONE != *status ) {
+         ERR_printf(
+               this->m_pLog,
+               "DC3 failed with error 0x%08x during FW update while trying to "
+               "write FW data packet %d of %d total with CRC 0x%08x",
+               *status, nPacketSeqNum,
+               m_flashMetaPayloadMsg._imageNumPackets, crc
+         );
+         return( clientStatus );
+      }
+
+      /* If we got here, everything is ok so far and we can either loop back
+       * around and do the next packet or exit depending if everything has been
+       * transfered. */
+      bytesTransferred += size;
+      nPacketSeqNum++;
+
+      if ( nPacketSeqNum == m_flashMetaPayloadMsg._imageNumPackets ) {               /* Last packet */
+         DBG_printf(
+               this->m_pLog,
+               "This should be the last packet (%d of %d total)...",
+               nPacketSeqNum, this->m_flashMetaPayloadMsg._imageNumPackets
+         );
+      DBG_printf( m_pLog,"1");
+      }
+
+//      if ( CLI_ERR_NONE == clientStatus ) {
+//         if ( nPacketSeqNum == m_flashMetaPayloadMsg._imageNumPackets ) {               /* Last packet */
+////            *status = (CBErrorCode)payloadMsgUnion.flashMetaPayload._errorCode;
+//            *status = (CBErrorCode)payloadMsgUnion.statusPayload._errorCode;
+////            DBG_printf(this->m_pLog, "BuildDatetime str len: %d", payloadMsgUnion.flashMetaPayload._imageDatetime_len);
+////            DBG_printf(this->m_pLog, "BuildDatetime is: %s", payloadMsgUnion.flashMetaPayload._imageDatetime);
+////            DBG_printf(this->m_pLog, "CRC  is: 0x%08x", payloadMsgUnion.flashMetaPayload._imageCrc);
+////            DBG_printf(this->m_pLog, "Size is: %d", payloadMsgUnion.flashMetaPayload._imageSize);
+//         } else {
+//            *status = (CBErrorCode)payloadMsgUnion.statusPayload._errorCode;
+//         }
+//
+//         if ( ERR_NONE != *status ) {
+//            ERR_printf(this->m_pLog, "Status from DC3: 0x%08x", *status);
+//            ERR_printf(
+//               this->m_pLog,
+//               "DC3 failed with error 0x%08x during FW update while trying to "
+//               "write FW data packet %d of %d total with CRC 0x%08x",
+//               *status, nPacketSeqNum,
+//               m_flashMetaPayloadMsg._imageNumPackets, crc
+//            );
+//            return( clientStatus );
+//         }
+//         bytesTransferred += size;
+//         nPacketSeqNum++;
+//      } else {
+//         ERR_printf(
+//               this->m_pLog,
+//               "DC3 client failed with error 0x%08x during FW update while "
+//               "trying to send FW data packet %d of %d total with CRC 0x%08x",
+//               clientStatus, nPacketSeqNum,
+//               m_flashMetaPayloadMsg._imageNumPackets, crc
+//         );
+//         return( clientStatus );
+//      }
 
    }
-
+DBG_printf( m_pLog,"2");
    return( clientStatus );
 }
 
@@ -411,36 +476,32 @@ ClientError_t ClientApi::pollForResp(
    /* Check if there's data in the queue and process it if there. */
    QEvt const *evt = QEQueue_get(&cliQueue);
    if ( evt != (QEvt *)0 ) { /* Check whether an event is present in queue */
-
-      DBG_printf(this->m_pLog,"Job finish found in queue.");
-
       switch( evt->sig ) {        /* Identify the event by its signal enum */
          case TEST_JOB_DONE_SIG:
-            DBG_printf(this->m_pLog, "Got TEST_JOB_DONE_SIG");
             break;
          case MSG_ACK_RECVD_SIG:
-            DBG_printf(this->m_pLog, "Got MSG_ACK_RECVD_SIG");
             CBBasicMsg_read_delimited_from(
                   (void*)((LrgDataEvt const *) evt)->dataBuf,
                   basicMsg,
                   0
             );
-            if (this->m_pAckHandlerCBFunction) {
+            if ( this->m_bAckLogEnable == true && this->m_pAckHandlerCBFunction) {
                this->m_pAckHandlerCBFunction( *basicMsg );
             }
-            DBG_printf(this->m_pLog, "Got an Ack msg");
             break;
          case MSG_PROG_RECVD_SIG:
             DBG_printf(this->m_pLog, "Got MSG_PROG_RECVD_SIG");
-            DBG_printf(
-                  this->m_pLog,
-                  "Got a progress msg but not handler set up for it..."
-            );
+            if (this->m_bAckLogEnable == true ) {
+               WRN_printf(
+                     this->m_pLog,
+                     "Got a progress msg but not handler set up for it..."
+               );
+            }
             /* No break here.  Fall through. We handle both of these the same */
          case MSG_DONE_RECVD_SIG: {
-            if ( MSG_DONE_RECVD_SIG == evt->sig ) {
-               DBG_printf(this->m_pLog, "Got MSG_DONE_RECVD_SIG");
-            }
+//            if ( MSG_DONE_RECVD_SIG == evt->sig ) {
+//               DBG_printf(this->m_pLog, "Got MSG_DONE_RECVD_SIG");
+//            }
             int offset = CBBasicMsg_read_delimited_from(
                   (void*)((LrgDataEvt const *) evt)->dataBuf,
                   basicMsg,
@@ -454,7 +515,7 @@ ClientError_t ClientApi::pollForResp(
                   WRN_printf( this->m_pLog, "No payload detected, this is probably an error" );
                   break;
                case _CBStatusPayloadMsg:
-                  DBG_printf( this->m_pLog, "Status payload detected");
+//                  DBG_printf( this->m_pLog, "Status payload detected");
                   CBStatusPayloadMsg_read_delimited_from(
                         (void*)((LrgDataEvt const *) evt)->dataBuf,
                         &(payloadMsgUnion->statusPayload),
@@ -482,7 +543,9 @@ ClientError_t ClientApi::pollForResp(
                   break;
             }
 
-            if ( MSG_DONE_RECVD_SIG == evt->sig && this->m_pDoneHandlerCBFunction) {
+            if ( MSG_DONE_RECVD_SIG == evt->sig &&
+                  this->m_bDoneLogEnable == true &&
+                  this->m_pDoneHandlerCBFunction ) {
                this->m_pDoneHandlerCBFunction( *basicMsg, *payloadMsgUnion );
             }
             status = CLI_ERR_NONE;
@@ -527,7 +590,6 @@ ClientError_t ClientApi::waitForResp(
 {
    int timeout_ms = timeoutSecs * 1000;
    ClientError_t status = CLI_ERR_NONE;
-   DBG_printf(this->m_pLog,"Waiting for job to finish.");
    while (timeout_ms > 0) {                         /* Beginning of the thread forever loop */
 
       status = pollForResp(basicMsg, payloadMsgUnion);
@@ -556,6 +618,7 @@ ClientError_t ClientApi::setReqCallBack(
    } else {
       DBG_printf(this->m_pLog, "Req callback set to addr: 0x%08x\n",
             this->m_pReqHandlerCBFunction);
+      m_bReqLogEnable = true;
    }
 
    /* This is a potentially dangerous call since the user could have passed in
@@ -594,6 +657,7 @@ ClientError_t ClientApi::setAckCallBack(
    } else {
       DBG_printf(this->m_pLog, "Ack callback set to addr: 0x%08x\n",
             this->m_pAckHandlerCBFunction);
+      m_bAckLogEnable= true;
    }
 
    /* This is a potentially dangerous call since the user could have passed in
@@ -632,6 +696,7 @@ ClientError_t ClientApi::setDoneCallBack(
    } else {
       DBG_printf(this->m_pLog, "Done callback set to addr: 0x%08x\n",
             this->m_pDoneHandlerCBFunction);
+      m_bDoneLogEnable = true;
    }
 
    /* This is a potentially dangerous call since the user could have passed in
@@ -656,8 +721,24 @@ ClientError_t ClientApi::setDoneCallBack(
 //   }
 
    return( err );
+}
 
+/******************************************************************************/
+void ClientApi::enableMsgCallbacks( void )
+{
+   m_bReqLogEnable = true;
+   m_bAckLogEnable = true;
+   m_bProgLogEnable = true;
+   m_bDoneLogEnable = true;
+}
 
+/******************************************************************************/
+void ClientApi::disableMsgCallbacks( void )
+{
+   m_bReqLogEnable = false;
+   m_bAckLogEnable = false;
+   m_bProgLogEnable = false;
+   m_bDoneLogEnable = false;
 }
 
 /******************************************************************************/
@@ -670,6 +751,10 @@ ClientApi::ClientApi(
       m_pReqHandlerCBFunction(NULL),
       m_pAckHandlerCBFunction(NULL),
       m_pDoneHandlerCBFunction(NULL),
+      m_bReqLogEnable(false),
+      m_bAckLogEnable(false),
+      m_bProgLogEnable(false),
+      m_bDoneLogEnable(false),
       m_msgId( 0 ), m_bRequestProg( false ), m_msgRoute( _CB_EthCli )
 {
    this->setLogging(log);
@@ -687,6 +772,10 @@ ClientApi::ClientApi(
       m_pReqHandlerCBFunction(NULL),
       m_pAckHandlerCBFunction(NULL),
       m_pDoneHandlerCBFunction(NULL),
+      m_bReqLogEnable(false),
+      m_bAckLogEnable(false),
+      m_bProgLogEnable(false),
+      m_bDoneLogEnable(false),
       m_msgId( 0 ), m_bRequestProg( false ), m_msgRoute( _CB_Serial )
 {
    this->setLogging(log);
@@ -705,6 +794,10 @@ ClientApi::ClientApi( LogStub *log ) :
       m_pReqHandlerCBFunction(NULL),
       m_pAckHandlerCBFunction(NULL),
       m_pDoneHandlerCBFunction(NULL),
+      m_bReqLogEnable(false),
+      m_bAckLogEnable(false),
+      m_bProgLogEnable(false),
+      m_bDoneLogEnable(false),
       m_msgId( 0 ), m_bRequestProg( false ), m_msgRoute( _CB_NoRoute )
 {
 

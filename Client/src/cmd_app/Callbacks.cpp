@@ -34,7 +34,7 @@ void CLI_ReqCallback(
       struct CBBasicMsg basicMsgStruct
 )
 {
-   DBG_out << "Sending Req msg:";
+//   DBG_out << "Sending Req msg:";
    stringstream ss;
    LOG_msgToStream(&basicMsgStruct, NULL, ss);
    CON_print(ss.str());
@@ -45,10 +45,9 @@ void CLI_AckCallback(
       struct CBBasicMsg basicMsgStruct
 )
 {
-   DBG_out << "Received Ack msg:";
+//   DBG_out << "Received Ack msg with id: " << basicMsgStruct._msgID ;
    stringstream ss;
    LOG_msgToStream(&basicMsgStruct, NULL, ss);
-
    CON_print(ss.str());
 }
 
@@ -58,11 +57,9 @@ void CLI_DoneCallback(
       CBPayloadMsgUnion_t payloadMsgUnion
 )
 {
-//   cout << "in CLI_DoneCallback "<< endl;
-   DBG_out << "Received Done msg:";
+//   DBG_out << "Received Done msg:";
    stringstream ss;
    LOG_msgToStream(&basicMsgStruct, &payloadMsgUnion, ss);
-
    CON_print(ss.str());
 }
 

@@ -85,7 +85,8 @@ int main(int argc, char *argv[])
 
    /* 3. Enable and disable logging for various modules in the library */
    pLogStub->enableLogForAllLibModules();
-
+   pLogStub->disableLogForLibModule(MODULE_SER);    /* Disable serial logging */
+   pLogStub->disableLogForLibModule(MODULE_MGR);   /* Disable MainMgr logging */
    LOG_setDbgLvl(DBG); /* Set logging level */
 
    /* 4. Set up the client api and initialize its logging.  Users can call the
@@ -336,33 +337,34 @@ int main(int argc, char *argv[])
 
          /* If we got here, we have a valid filename/path and valid FW image
           * type. Execute (and block) on this command */
-         status = client->DC3_flashFW(&statusDC3, type, filename.c_str());
+//         status = client->DC3_flashFW(&statusDC3, type, filename.c_str());
+         status = CLI_ERR_NONE;
+         statusDC3 = ERR_NONE;
 
          if( CLI_ERR_NONE == status) {
             ss.clear();
-            ss << "FW flashing of DC3 completed ";
+            ss << "FW flashing of DC3 ";
             if (ERR_NONE == statusDC3) {
-               ss << " successfully.";
+               ss << "completed successfully.";
             } else {
-               ss << " with ERROR: 0x" << setw(8) << setfill('0') << hex << statusDC3 << dec;
+               ss << "FAILED with ERROR: 0x" << setw(8) << setfill('0') << hex << statusDC3 << dec;
             }
             CON_print(ss.str());
+
+            cout << "!!!3!!!" << endl;
          } else {
             ERR_out << "Got client error " << "0x" << std::hex
                << status << std::dec << " when trying to flash FW.";
          }
-
-
-
+         cout << "!!!4!!!" << endl;
       }
-
 
       else { // end of checking for cmdline requested commands.
          /* If we are here, no commands were requested so */
          ERR_out << "TODO: implement menu here";
          EXIT_LOG_FLUSH(0);
       }
-
+   cout << "!!!5!!!" << endl;
       /* Now check if the user requested general help */
       if (m_vm.count("help")) {
          stringstream ss;
@@ -379,7 +381,7 @@ int main(int argc, char *argv[])
          CON_print(ss.str());
          EXIT_LOG_FLUSH(0);
       }
-
+   cout << "!!!6!!!" << endl;
    } catch(po::error& e) {
       string error = e.what();
       ERR_out << "Exception " << e.what() << " while parsing cmdline arguments.";
@@ -390,12 +392,19 @@ int main(int argc, char *argv[])
    }
 
    DBG_out<< "Waiting for MainMgr AO to finish";
+
+
+
+   cout << "!!!7!!!" << endl;
+
    /* Tell the client to stop and wait for it */
    client->stop();
+   cout << "!!!8!!!" << endl;
    client->waitForStop();
-
+   cout << "!!!9!!!" << endl;
    DBG_out << "Exiting with client status 0x"
          << setw(8) << setfill('0') << hex << status << dec;
+      cout << "!!!10!!!" << endl;
    EXIT_LOG_FLUSH( status );
 }
 

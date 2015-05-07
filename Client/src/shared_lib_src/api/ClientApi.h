@@ -64,6 +64,11 @@ private:
    CB_AckMsgHandler_t m_pAckHandlerCBFunction; /**< Callback for handling Ack msgs */
    CB_DoneMsgHandler_t m_pDoneHandlerCBFunction; /**< Callback for handling Done msgs */
 
+   bool m_bReqLogEnable; /**< flag to enable/disable callback call for Req msgs */
+   bool m_bAckLogEnable; /**< flag to enable/disable callback call for Ack msgs */
+   bool m_bProgLogEnable; /**< flag to enable/disable callback call for Prog msgs */
+   bool m_bDoneLogEnable; /**< flag to enable/disable callback call for Done msgs */
+
    unsigned int m_msgId;   /* Msg ID incrementing counter for unique msg ids. */
    bool m_bRequestProg;     /* Flag to see if progress messages are requested */
    CBMsgRoute m_msgRoute; /* This is set based on the connection used (UDP vs Serial) */
@@ -280,6 +285,22 @@ public:
     *    else some error code indicating what went wrong
     */
    ClientError_t setDoneCallBack( CB_DoneMsgHandler_t pCallbackFunction );
+
+   /**
+    * @brief   Enable all the callbacks (if set) for Req, Ack, Prog, and Done msgs.
+    *
+    * @param       None.
+    * @return      None.
+    */
+   void enableMsgCallbacks( void );
+
+   /**
+    * @brief   Disable all the callbacks (if set) for Req, Ack, Prog, and Done msgs.
+    *
+    * @param       None.
+    * @return      None.
+    */
+   void disableMsgCallbacks( void );
 
    /**
     * Constructor that sets up logging and an ethernet connection.

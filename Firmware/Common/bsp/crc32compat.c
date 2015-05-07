@@ -32,10 +32,13 @@
  */
 static uint32_t revbit(uint32_t data)
 {
+//   asm("rbit r0,r0");
    u32 rev = 0;
    for( uint32_t i=0; i<32; i++ )
       rev |= ((data >> i) & 1) << (31 - i);
    return rev;
+
+//   return data;
 };
 
 /* Private functions ---------------------------------------------------------*/
