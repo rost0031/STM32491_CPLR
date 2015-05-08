@@ -32,25 +32,11 @@ using namespace std;
 MODULE_NAME( MODULE_API );
 
 /* Private typedefs ----------------------------------------------------------*/
-///* storage for event pools... */
-//static union SmallEvents {
-//    void   *e0;                                       /* minimum event size */
-//    uint8_t e1[sizeof(QEvent)];
-//    uint8_t e2[sizeof(ExitEvt)];
-//} l_smlPoolSto[10];                     /* storage for the small event pool */
-//
-//static union MediumEvents {
-//    void   *e0;                                       /* minimum event size */
-//    uint8_t *e1[sizeof(LrgDataEvt)];
-//} l_medPoolSto[15];                    /* storage for the medium event pool */
-
 /* Private defines -----------------------------------------------------------*/
+#define TIME_POLLING_MSEC  1  /**< Number of ms to wait between polling queue */
+
 /* Private macros ------------------------------------------------------------*/
 /* Private variables and Local objects ---------------------------------------*/
-//static QEvt const *l_MainMgrQueueSto[10];
-//static QEvt const *l_cliQueueSto[10]; /**< Storage for raw QE queue for
-//                                                 communicating with ClientApi */
-//static QSubscrList l_subscrSto[MAX_PUB_SIG];
 
 static Comm *l_pComm;
 
@@ -86,6 +72,10 @@ ClientError_t ClientApi::DC3_getMode(CBErrorCode *status, CBBootMode *mode)
 {
    this->enableMsgCallbacks();
 
+   /* These will be used for responses */
+   CBBasicMsg basicMsg;
+   CBPayloadMsgUnion_t payloadMsgUnion;
+
    /* Common settings for most messages */
    this->m_basicMsg._msgID       = this->m_msgId;
    this->m_basicMsg._msgReqProg  = (unsigned long)this->m_bRequestProg;
@@ -96,27 +86,27 @@ ClientError_t ClientApi::DC3_getMode(CBErrorCode *status, CBBootMode *mode)
    this->m_basicMsg._msgName     = _CBGetBootModeMsg;
    this->m_basicMsg._msgPayload  = _CBNoMsg;
 
-//   char *buffer = new char(CB_MAX_MSG_LEN);
-   uint8_t buffer[300];
+   size_t size = CB_MAX_MSG_LEN;
+   uint8_t *buffer = new uint8_t(size);                    /* Allocate buffer */
    unsigned int bufferLen = 0;
    bufferLen = CBBasicMsg_write_delimited_to(&m_basicMsg, buffer, 0);
-   l_pComm->write_some((char *)buffer, bufferLen);
+   l_pComm->write_some((char *)buffer, bufferLen);                /* Send Req */
 
-   /* Wait for Ack */
-   CBBasicMsg basicMsg;
-   CBPayloadMsgUnion_t payloadMsgUnion;
+   delete buffer;                                            /* Delete buffer */
+
+   memset(&basicMsg, 0, sizeof(basicMsg));
    memset(&payloadMsgUnion, 0, sizeof(payloadMsgUnion));
-   ClientError_t clientStatus = waitForResp(
+   ClientError_t clientStatus = waitForResp(                  /* Wait for Ack */
          &basicMsg,
          &payloadMsgUnion,
-         5
+         HL_MAX_TOUT_SEC_CLI_WAIT_FOR_ACK
    );
 
-//   LrgDataEvt *evt = Q_NEW(LrgDataEvt, MSG_SEND_OUT_SIG);
-//   evt->dataLen = CBBasicMsg_write_delimited_to(&m_basicMsg, evt->dataBuf, 0);
-//   evt->dst = m_msgRoute;
-//   evt->src = m_msgRoute;
-//   QACTIVE_POST(AO_MainMgr, (QEvt *)(evt), AO_MainMgr);
+   if ( CLI_ERR_NONE != clientStatus ) {                    /* Check response */
+      ERR_printf(m_pLog,
+            "Waiting for Ack received client Error: 0x%08x", clientStatus);
+      return clientStatus;
+   }
 
 //   char *tmp = (char *)malloc(sizeof(char) * 1000);
 //   uint16_t tmpStrLen;
@@ -134,14 +124,18 @@ ClientError_t ClientApi::DC3_getMode(CBErrorCode *status, CBBootMode *mode)
 //   DBG_printf(m_pLog,"ConStatus: 0x%x, sending a buffer with: %s", convertStatus, tmp);
 //   free(tmp);
 
-   /* Wait for Done msg */
-   clientStatus = waitForResp(
+   memset(&basicMsg, 0, sizeof(basicMsg));
+   memset(&payloadMsgUnion, 0, sizeof(payloadMsgUnion));
+   clientStatus = waitForResp(                           /* Wait for Done msg */
          &basicMsg,
          &payloadMsgUnion,
-         5
+         HL_MAX_TOUT_SEC_CLI_WAIT_FOR_SIMPLE_MSG_DONE
    );
-
-   if ( CLI_ERR_NONE == clientStatus ) {
+   if ( CLI_ERR_NONE != clientStatus ) {                    /* Check response */
+      ERR_printf(m_pLog,
+            "Waiting for Done received client Error: 0x%08x", clientStatus);
+      return clientStatus;
+   } else {
       *status = (CBErrorCode)payloadMsgUnion.bootmodePayload._errorCode;
       *mode = payloadMsgUnion.bootmodePayload._bootMode;
    }
@@ -158,6 +152,10 @@ ClientError_t ClientApi::DC3_flashFW(
 {
    this->disableMsgCallbacks(); /* There are too many msgs flying about for us
    to log all of them so just turn this off */
+
+   /* These will be used for responses */
+   CBBasicMsg basicMsg;
+   CBPayloadMsgUnion_t payloadMsgUnion;
 
    ClientError_t clientStatus = CLI_ERR_NONE;
    FWLdr *fw = NULL;
@@ -176,7 +174,6 @@ ClientError_t ClientApi::DC3_flashFW(
    /* CBFlashMsg is a little different than other messages:
     * 1. must request progress msgs.
     * 2. msgIds must stay sequential */
-
 
    uint8_t chunkSize = 112; /* This is the safest amount of data to send */
 
@@ -218,17 +215,48 @@ ClientError_t ClientApi::DC3_flashFW(
 //   QACTIVE_POST(AO_MainMgr, (QEvt *)(evt), AO_MainMgr);
 
 
-   CBBasicMsg basicMsg;
-   CBPayloadMsgUnion_t payloadMsgUnion;
-   memset(&payloadMsgUnion, 0, sizeof(payloadMsgUnion));
+   /* Buffer and counter to use for sending messages. We could allocated when
+    * needed but it's a lot slower */
+   uint8_t buffer[CB_MAX_MSG_LEN];
+   unsigned int bufferLen;
 
-   clientStatus = waitForResp(
+   /* 1. Send the Flashmsg wih FlashMetaPayloadMsg */
+   memset(buffer, 0, sizeof(buffer));
+   bufferLen = 0;
+
+   bufferLen = CBBasicMsg_write_delimited_to(&m_basicMsg, buffer, 0);
+   bufferLen = CBFlashMetaPayloadMsg_write_delimited_to(&m_flashMetaPayloadMsg, buffer, bufferLen);
+   l_pComm->write_some((char *)buffer, bufferLen);                /* Send Req */
+
+   /* 2. Wait for Ack */
+   memset(&basicMsg, 0, sizeof(basicMsg));
+   memset(&payloadMsgUnion, 0, sizeof(payloadMsgUnion));
+   clientStatus = waitForResp(                                /* Wait for Ack */
          &basicMsg,
          &payloadMsgUnion,
-         5
+         HL_MAX_TOUT_SEC_CLI_WAIT_FOR_ACK
    );
 
-   if ( CLI_ERR_NONE == clientStatus ) {
+   if ( CLI_ERR_NONE != clientStatus ) {                    /* Check response */
+      ERR_printf(m_pLog,
+            "Waiting for Ack received client Error: 0x%08x", clientStatus);
+      return clientStatus;
+   }
+
+   /* 3. Wait for Done with status payload */
+   memset(&basicMsg, 0, sizeof(basicMsg));
+   memset(&payloadMsgUnion, 0, sizeof(payloadMsgUnion));
+   clientStatus = waitForResp(                               /* Wait for Done */
+         &basicMsg,
+         &payloadMsgUnion,
+         LL_MAX_TOUT_SEC_CLI_FW_META_WAIT
+   );
+
+   if ( CLI_ERR_NONE != clientStatus ) {                    /* Check response */
+      ERR_printf(m_pLog,
+            "Waiting for Done received client Error: 0x%08x", clientStatus);
+      return clientStatus;
+   } else {
       *status = (CBErrorCode)payloadMsgUnion.statusPayload._errorCode;
       if ( ERR_NONE != *status ) {
          ERR_printf(m_pLog, "Status from DC3: 0x%08x", *status);
@@ -236,11 +264,13 @@ ClientError_t ClientApi::DC3_flashFW(
       }
    }
 
+   /* 4. Cycle through the FW image and send out FW data packets until done. */
    size_t bytesTransferred = 0;
-   uint16_t nPacketSeqNum = 1;
-   while ( bytesTransferred != this->m_flashMetaPayloadMsg._imageSize ) {
+   uint16_t nPacketSeqNum = 0;
+   while ( bytesTransferred < this->m_flashMetaPayloadMsg._imageSize ) {
 
-      this->m_msgId++; /* Increment msg id for every new send*/
+      this->m_msgId++;                  /* Increment msg id for every new send*/
+      nPacketSeqNum++; /* Increment right away so the first packet is 1 not 0 */
 
       /* Set up the basic msg */
       this->m_basicMsg._msgID       = this->m_msgId;
@@ -250,26 +280,29 @@ ClientError_t ClientApi::DC3_flashFW(
       this->m_basicMsg._msgName     = _CBFlashMsg;
       this->m_basicMsg._msgPayload  = _CBFlashDataPayloadMsg;
 
-      uint8_t *buffer = new uint8_t(chunkSize);
+//      uint8_t *bufferFwDataPacket = new uint8_t(chunkSize);
       uint32_t crc = 0;
-      size_t size = fw->getChunkAndCRC( chunkSize, buffer, &crc );
+//      size_t sizeFwDataPacket = fw->getChunkAndCRC( chunkSize, bufferFwDataPacket, &crc );
 //      DBG_printf(m_pLog, "Got FW chunk of size %d with CRC 0x%08x", size, crc);
 
       /* Set up the payload */
       memset(&m_flashDataPayloadMsg, 0, sizeof(m_flashDataPayloadMsg));
-      m_flashDataPayloadMsg._dataBuf_len = size;
+      m_flashDataPayloadMsg._dataBuf_len = fw->getChunkAndCRC( chunkSize, (uint8_t *)(m_flashDataPayloadMsg._dataBuf), &crc );
       m_flashDataPayloadMsg._dataCrc = crc;
       m_flashDataPayloadMsg._seqCurr = nPacketSeqNum;
-      memcpy(
-            m_flashDataPayloadMsg._dataBuf,
-            buffer,
-            m_flashDataPayloadMsg._dataBuf_len
-      );
+//      memcpy(
+//            m_flashDataPayloadMsg._dataBuf,
+//            bufferFwDataPacket,
+//            m_flashDataPayloadMsg._dataBuf_len
+//      );
 
-      delete[] buffer;
+//      delete[] bufferFwDataPacket;
 
+      /* Only log every 100th packet since it gets way too chatty otherwise */
       if ( nPacketSeqNum % 100 == 0 ) {
-         LOG_printf(m_pLog, "Sending FW data packet %d of %d total...", nPacketSeqNum, this->m_flashMetaPayloadMsg._imageNumPackets);
+         LOG_printf(m_pLog,
+               "Sending FW data packet %d of %d total...",
+               nPacketSeqNum, this->m_flashMetaPayloadMsg._imageNumPackets);
       }
 
       /* Send the data and wait for a response */
@@ -280,10 +313,32 @@ ClientError_t ClientApi::DC3_flashFW(
 //      evt->src = m_msgRoute;
 //      QACTIVE_POST(AO_MainMgr, (QEvt *)(evt), AO_MainMgr);
 
-      CBBasicMsg basicMsg;
-      CBPayloadMsgUnion_t payloadMsgUnion;
-      memset(&payloadMsgUnion, 0, sizeof(payloadMsgUnion));
+      /* 5. Send the Flashmsg wih FlashDataPayloadMsg */
+      memset(buffer, 0, sizeof(buffer));
+      bufferLen = 0;
+      bufferLen = CBBasicMsg_write_delimited_to(&m_basicMsg, buffer, 0);
+      bufferLen = CBFlashDataPayloadMsg_write_delimited_to(&m_flashDataPayloadMsg, buffer, bufferLen);
+//      DBG_printf(m_pLog, "BufferLen is %d", bufferLen);
+      l_pComm->write_some((char *)buffer, bufferLen);             /* Send Req */
 
+      /* 6. Wait for Ack */
+      memset(&basicMsg, 0, sizeof(basicMsg));
+      memset(&payloadMsgUnion, 0, sizeof(payloadMsgUnion));
+      clientStatus = waitForResp(                            /* Wait for Done */
+            &basicMsg,
+            &payloadMsgUnion,
+            HL_MAX_TOUT_SEC_CLI_WAIT_FOR_ACK
+      );
+
+      if ( CLI_ERR_NONE != clientStatus ) {                 /* Check response */
+         ERR_printf(m_pLog,
+               "Waiting for Ack received client Error: 0x%08x", clientStatus);
+         return clientStatus;
+      }
+
+      /* 7. Wait for Done */
+      memset(&basicMsg, 0, sizeof(basicMsg));
+      memset(&payloadMsgUnion, 0, sizeof(payloadMsgUnion));
       clientStatus = waitForResp(
             &basicMsg,
             &payloadMsgUnion,
@@ -318,8 +373,7 @@ ClientError_t ClientApi::DC3_flashFW(
       /* If we got here, everything is ok so far and we can either loop back
        * around and do the next packet or exit depending if everything has been
        * transfered. */
-      bytesTransferred += size;
-      nPacketSeqNum++;
+      bytesTransferred += m_flashDataPayloadMsg._dataBuf_len;
 
       if ( nPacketSeqNum == m_flashMetaPayloadMsg._imageNumPackets ) {               /* Last packet */
          DBG_printf(
@@ -327,8 +381,14 @@ ClientError_t ClientApi::DC3_flashFW(
                "This should be the last packet (%d of %d total)...",
                nPacketSeqNum, this->m_flashMetaPayloadMsg._imageNumPackets
          );
-      DBG_printf( m_pLog,"1");
+         DBG_printf(
+               m_pLog,
+               "bytesTransferred: %d (of %d total), nPacketSeqNum %d (of %d total)",
+               bytesTransferred, m_flashMetaPayloadMsg._imageSize,
+               nPacketSeqNum, m_flashMetaPayloadMsg._imageNumPackets
+         );
       }
+
 
 //      if ( CLI_ERR_NONE == clientStatus ) {
 //         if ( nPacketSeqNum == m_flashMetaPayloadMsg._imageNumPackets ) {               /* Last packet */
@@ -367,7 +427,6 @@ ClientError_t ClientApi::DC3_flashFW(
 //      }
 
    }
-DBG_printf( m_pLog,"2");
    return( clientStatus );
 }
 
@@ -691,9 +750,9 @@ ClientError_t ClientApi::waitForResp(
       if (CLI_ERR_MSG_WAITING_FOR_RESP != status ) {
          return status;
       }
-      /* Sleep for 5 ms and decrement timeout counter. */
-      boost::this_thread::sleep(boost::posix_time::milliseconds(50));
-      timeout_ms -= 5;
+      /* Sleep for TIME_POLLING_MSEC ms and decrement timeout counter. */
+      boost::this_thread::sleep(boost::posix_time::milliseconds(TIME_POLLING_MSEC));
+      timeout_ms -= TIME_POLLING_MSEC;
    }
    return CLI_ERR_TIMEOUT_WAITING_FOR_RESP;
 }

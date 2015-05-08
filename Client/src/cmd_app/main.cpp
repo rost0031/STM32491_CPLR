@@ -342,8 +342,14 @@ int main(int argc, char *argv[])
             ss << "FW flashing of DC3 ";
             if (ERR_NONE == statusDC3) {
                ss << "completed successfully.";
+//               EXIT_LOG_FLUSH(0);
             } else {
-               ss << "FAILED with ERROR: 0x" << setw(8) << setfill('0') << hex << statusDC3 << dec;
+               try {
+                  ss << "FAILED with ERROR: 0x" << setw(8) << setfill('0') << hex << statusDC3 << dec;
+               } catch ( exception &e ) {
+                  string error = e.what();
+                  ERR_out << "Exception " << e.what() << " while trying to print out status of DC3";
+               }
             }
             CON_print(ss.str());
          } else {

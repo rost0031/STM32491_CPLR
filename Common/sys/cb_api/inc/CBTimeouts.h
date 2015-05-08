@@ -112,7 +112,9 @@
     * These are the timeouts used by the CliMgr AO.
     *@{*/
    #define LL_MAX_TOUT_SEC_CLI_MSG_PROCESS                                    3.0
-   #define LL_MAX_TOUT_SEC_CLI_FW_META_WAIT                                   4.0
+   #define LL_MAX_TOUT_SEC_CLI_FW_META_WAIT                                  10.0
+   #define HL_MAX_TOUT_SEC_CLI_WAIT_FOR_ACK                                   2.0
+   #define HL_MAX_TOUT_SEC_CLI_WAIT_FOR_SIMPLE_MSG_DONE                       2.0
 
    /*@} Client Timeouts and Times.*/
 
