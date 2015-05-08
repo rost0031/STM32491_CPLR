@@ -388,7 +388,6 @@ ClientError_t ClientApi::setNewConnection(
       return( CLI_ERR_UDP_EXCEPTION_CAUGHT );
    }
 
-//   MainMgr_setConn(l_pComm);
    m_msgRoute = _CB_EthCli;
    return( CLI_ERR_NONE );
 }
@@ -401,7 +400,7 @@ ClientError_t ClientApi::setNewConnection(
 )
 {
    try {
-      l_pComm = new Comm(m_pLog, dev_name, baud_rate, bDFUSEComm);
+      l_pComm = new Comm(m_pLog, dev_name, baud_rate, bDFUSEComm, &queue);
    } catch ( exception &e ) {
       ERR_printf(
             m_pLog,
@@ -411,7 +410,6 @@ ClientError_t ClientApi::setNewConnection(
       return( CLI_ERR_SER_EXCEPTION_CAUGHT );
    }
 
-//   MainMgr_setConn(l_pComm);
    m_msgRoute = _CB_Serial;
    return( CLI_ERR_NONE );
 }

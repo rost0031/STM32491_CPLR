@@ -13,19 +13,22 @@
 #define SERIAL_H
 
 /* Includes ------------------------------------------------------------------*/
-#include "ClientShared.h"
-#include "MainMgrDefs.h"
 #include <unistd.h>
 #include <iostream>
+
 #include <boost/asio.hpp>
 #include <boost/asio/serial_port.hpp>
 #include <boost/system/error_code.hpp>
 #include <boost/system/system_error.hpp>
 #include <boost/bind.hpp>
 #include <boost/thread.hpp>
+#include <boost/lockfree/queue.hpp>
+
+#include "ClientShared.h"
 #include "dfuse.h"
 #include "LogHelper.h"
 #include "LogStub.h"
+#include "msg_utils.h"
 
 /* Exported defines ----------------------------------------------------------*/
 /* Exported macros -----------------------------------------------------------*/
@@ -42,6 +45,8 @@ class Serial {
 
 private:
    LogStub *m_pLog;         /**< Pointer to LogStub instance used for logging */
+   boost::lockfree::queue<MsgData_t> *m_pQueue; /**< Pointer to the queue where
+                                                     to put read data */
    char read_msg_[CB_MAX_MSG_LEN];          /**< buffer to hold incoming msgs */
    char write_msg_[CB_MAX_MSG_LEN];       /**< buffer to hold msgs being sent */
 
@@ -149,16 +154,22 @@ public:
    /**
     * Constructor that sets up serial for regular or DFUSE communication.
     *
-    * @param[in]   dev_name: serial device name.  /dev/ttyS10 or COMX
-    * @param[in]   baud_rate: serial baud rate.
-    * @param[in]   bDFUSEComm: bool that specifies whether to set up serial
+    * @param [in]  dev_name: serial device name.  /dev/ttyS10 or COMX
+    * @param [in]  baud_rate: serial baud rate.
+    * @param [in]  bDFUSEComm: bool that specifies whether to set up serial
     * for DFUSE or regular serial communication.
     *   @arg  TRUE: set up serial for DFUSE
     *   @arg  FALSE: set up serial for regular serial comms.
-    *
+    * @param [in] *pQueue: pointer to boost lockfree queue to insert recvd data
+    * into.
     * @return      None.
     */
-   Serial(const char *dev_name, int baud_rate, bool bDFUSEComm);
+   Serial(
+         const char *dev_name,
+         int baud_rate,
+         bool bDFUSEComm,
+         boost::lockfree::queue<MsgData_t> *pQueue
+   );
 
    /**
     * Destructor that cleans up serial port.

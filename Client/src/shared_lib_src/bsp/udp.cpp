@@ -11,7 +11,6 @@
 /* Includes ------------------------------------------------------------------*/
 #include "udp.h"
 #include "LogHelper.h"
-#include "MainMgr.h"
 
 /* Namespaces ----------------------------------------------------------------*/
 /* Compile-time called macros ------------------------------------------------*/
@@ -32,51 +31,25 @@ void Udp::read_handler(
       size_t bytes_transferred
 )
 {
-   if ( !error ) {
+   if ( !error ) {                             /* Data received with no error */
+
+      /* Construct a new msg event indicating that a msg has been received */
       MsgData_t msg;
       memset(&msg, 0, sizeof(msg));
       msg.src = _CB_EthCli;
       msg.dst = _CB_EthCli;
       msg.dataLen = bytes_transferred;
       memcpy( msg.dataBuf, read_msg_, msg.dataLen );
+
+      /* Put the data into the queue for ClientApi to read */
       if(!this->m_pQueue->push(msg)) {
          ERR_printf( m_pLog, "Unable to push data into queue.");
       }
-
-
-//      /* Construct a new msg event indicating that a msg has been received */
-//      LrgDataEvt *evt;
-//
-//      if (_CB_Ack == basicMsg._msgType) {
-//         evt = Q_NEW(LrgDataEvt, MSG_ACK_RECVD_SIG);
-//
-//      } else if (_CB_Prog == basicMsg._msgType) {
-//
-//         evt = Q_NEW(LrgDataEvt, MSG_PROG_RECVD_SIG);
-//      } else if (_CB_Done == basicMsg._msgType) {
-//
-//         evt = Q_NEW(LrgDataEvt, MSG_DONE_RECVD_SIG);
-//      }
-
-
-      /* Construct a new msg event indicating that a msg has been received */
-//      LrgDataEvt *evt = Q_NEW(LrgDataEvt, MSG_RECEIVED_SIG);
-
-      /* Copy data and set the size and source */
-//      memcpy( evt->dataBuf, read_msg_, bytes_transferred );
-//      evt->dataLen = bytes_transferred;
-//      evt->src = _CB_EthCli;
-
-      /* Directly post the event */
-//      QACTIVE_POST(AO_MainMgr, (QEvt *)(evt), AO_MainMgr);
-
-//      QEQueue_postFIFO(&cliQueue, (QEvt *)evt);
    } else {
       ERR_printf(this->m_pLog, "Unable to read UDP data");
    }
 
-   /* Continue reading */
-   read_some();
+   read_some();                                           /* Continue reading */
 }
 
 /******************************************************************************/
@@ -140,8 +113,8 @@ Udp::Udp(
       const char *ipAddress,
       const char *pRemPort,
       const char *pLocPort,
-      boost::lockfree::queue<MsgData_t> *pQueue)
-   : m_pQueue(NULL),
+      boost::lockfree::queue<MsgData_t> *pQueue
+)  : m_pQueue(NULL),
      m_io(),
      m_socket( m_io ),
      m_rem_endpoint(boost::asio::ip::address::from_string(ipAddress), atoi(pRemPort)),

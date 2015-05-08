@@ -26,7 +26,6 @@
 #include "LogHelper.h"
 #include "LogStub.h"
 #include "ClientShared.h"
-//#include "MainMgrDefs.h"
 #include "msg_utils.h"
 
 /* Exported defines ----------------------------------------------------------*/
@@ -42,7 +41,8 @@ class Udp {
 
 private:
    LogStub *m_pLog;         /**< Pointer to LogStub instance used for logging */
-   boost::lockfree::queue<MsgData_t> *m_pQueue; /**< Pointer to the queue where to put read data */
+   boost::lockfree::queue<MsgData_t> *m_pQueue; /**< Pointer to the queue where
+                                                     to put read data */
    char read_msg_[CB_MAX_MSG_LEN];          /**< buffer to hold incoming msgs */
    char write_msg_[CB_MAX_MSG_LEN];       /**< buffer to hold msgs being sent */
 
@@ -110,7 +110,8 @@ public:
     * @param[in]   *ipAddress: pointer to the remote IP address string.
     * @param[in]   *pRemPort: pointer to the remote port number string.
     * @param[in]   *pLocPort: pointer to the local port number string.
-    *
+    * @param [in] *pQueue: pointer to boost lockfree queue to insert recvd data
+    * into.
     * @return      None.
     */
    Udp(

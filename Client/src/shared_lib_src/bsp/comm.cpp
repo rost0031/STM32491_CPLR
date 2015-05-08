@@ -70,12 +70,13 @@ Comm::Comm(
       LogStub *log,
       const char *dev_name,
       int baud_rate,
-      bool bDFUSEComm
+      bool bDFUSEComm,
+      boost::lockfree::queue<MsgData_t> *pQueue
 ) : m_pLog(NULL), m_pUdp(NULL), m_pSer(NULL)
 {
    this->m_pLog = log;
-   this->m_pSer = new Serial( dev_name, baud_rate, bDFUSEComm);
-   this->m_pSer->setLogging( log);
+   this->m_pSer = new Serial( dev_name, baud_rate, bDFUSEComm, pQueue);
+   this->m_pSer->setLogging( log );
 }
 
 /******************************************************************************/

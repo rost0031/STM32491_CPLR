@@ -14,7 +14,6 @@
 #include <iomanip>
 #include <sstream>
 #include "LogHelper.h"
-#include "MainMgr.h"
 /* Namespaces ----------------------------------------------------------------*/
 using namespace std;
 
@@ -53,24 +52,28 @@ void Serial::read_handler(
           string::npos == line.find("ISR")
     )
     {
+
        /* Construct a new msg event indicating that a msg has been received */
-       LrgDataEvt *evt = Q_NEW(LrgDataEvt, MSG_RECEIVED_SIG);
+       MsgData_t msg;
+       memset(&msg, 0, sizeof(msg));
 
        /* Decode the message from base64 and write it directly to the event. */
-       int decoded_sz = base64_decode(
+       msg.dataLen = base64_decode(
              read_msg_,
              bytes_transferred,
-             (char *)evt->dataBuf,
+             (char *)msg.dataBuf,
              CB_MAX_MSG_LEN
        );
 
        /* Set the size and source */
-       evt->dataLen = decoded_sz;
-       evt->src = _CB_Serial;
-       evt->dst = _CB_Serial;
+       msg.src = _CB_EthCli;
+       msg.dst = _CB_EthCli;
 
-       /* Directly post the event */
-       QACTIVE_POST(AO_MainMgr, (QEvt *)(evt), AO_MainMgr);
+       /* Put the data into the queue for ClientApi to read */
+       if(!this->m_pQueue->push(msg)) {
+          ERR_printf( m_pLog, "Unable to push data into queue.");
+       }
+
     } else {
        DC3_printf(this->m_pLog, read_msg_);
     }
@@ -202,8 +205,15 @@ void Serial::setLogging( LogStub *log )
 }
 
 /******************************************************************************/
-Serial::Serial(const char *dev_name, int baud_rate, bool bDFUSEComm) :
-      m_io(), m_port(m_io, dev_name)
+Serial::Serial(
+      const char *dev_name,
+      int baud_rate,
+      bool bDFUSEComm,
+      boost::lockfree::queue<MsgData_t> *pQueue
+)  :
+      m_pQueue(NULL),
+      m_io(),
+      m_port(m_io, dev_name)
 {
 
    /* Set the bReadNDFUSEBytes to zero so that we don't accidentally quit
@@ -218,6 +228,8 @@ Serial::Serial(const char *dev_name, int baud_rate, bool bDFUSEComm) :
    m_port.set_option( boost::asio::serial_port_base::stop_bits(boost::asio::serial_port::stop_bits::one) );
    m_port.set_option( boost::asio::serial_port_base::baud_rate( baud_rate ) );
    m_port.set_option( boost::asio::serial_port_base::flow_control( boost::asio::serial_port::flow_control::none ) );
+
+   this->m_pQueue = pQueue;                   /* Set the pointer to the queue */
 
    /* These settings depend on whether we are running serial in "regular" or
     * DFUSE mode. */

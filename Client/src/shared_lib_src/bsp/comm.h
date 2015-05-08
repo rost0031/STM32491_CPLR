@@ -72,14 +72,16 @@ public:
     * for DFUSE or regular serial communication.
     *   @arg  TRUE: set up serial for DFUSE
     *   @arg  FALSE: set up serial for regular serial comms.
-    *
+    * @param [in] *pQueue: pointer to boost lockfree queue to insert recvd data
+    * into.
     * @return None.
     */
    Comm(
          LogStub *log,
          const char *dev_name,
          int baud_rate,
-         bool bDFUSEComm
+         bool bDFUSEComm,
+         boost::lockfree::queue<MsgData_t> *pQueue
    );
 
    /**
@@ -89,7 +91,8 @@ public:
     * @param[in]   *ipAddress: pointer to the remote IP address string.
     * @param[in]   *pRemPort: pointer to the remote port number string.
     * @param[in]   *pLocPort: pointer to the local port number string.
-    *
+    * @param [in] *pQueue: pointer to boost lockfree queue to insert recvd data
+    * into.
     * @return None.
     */
    Comm(
