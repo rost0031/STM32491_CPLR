@@ -141,8 +141,7 @@ SYS_DIR                 = $(SRC_DIR)/sys
 COMMON_FW_BSP_DIR       = $(COMMON_FW_SRC_DIR)/bsp
 COMMON_FW_SYS_DIR       = $(COMMON_FW_SRC_DIR)/sys
 
-# app, bsp, and sys directories common between firmware and client
-COMMON_CLI_BSP_DIR       = $(COMMON_CLI_SRC_DIR)/bsp
+# sys directories common between firmware and client
 COMMON_CLI_SYS_DIR       = $(COMMON_CLI_SRC_DIR)/sys
 
 #-------------------------------------------------------------------------------
@@ -172,7 +171,7 @@ STM32F4XX_STD_PERIPH_DIR= $(COMMON_FW_BSP_DIR)/STM32F4xx_StdPeriph_Driver
 # SYS and RTOS Directories
 #-------------------------------------------------------------------------------
 # QPC directories
-QPC_DIR                 = $(COMMON_CLI_SYS_DIR)/qpc_5.3.1
+QPC_DIR                 = $(COMMON_FW_SYS_DIR)/qpc_5.3.1
 QP_PORT_DIR             = $(QPC_DIR)/ports/arm-cm/qk/gnu
 
 # LWIP
