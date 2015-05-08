@@ -93,18 +93,8 @@ COMMON_CLI_SYS_DIR          = $(COMMON_CLI_SRC_DIR)/sys
 
 # app, bsp, sys, dll, and api directories 
 API_DIR                     = $(SRC_DIR)/api
-APP_DIR                     = $(SRC_DIR)/app
 BSP_DIR                     = $(SRC_DIR)/bsp
 SYS_DIR                     = $(SRC_DIR)/sys
-
-# QPC directories
-QPC                         = $(COMMON_CLI_SYS_DIR)/qpc_5.3.1
-QP_PORT_INC_DIR             = $(QPC)/ports/$(TARGET)    
-ifeq (win32, $(TARGET))      
-    QP_PORT_DIR             = $(QPC)/ports/$(TARGET)/mingw
-else
-    QP_PORT_DIR             = $(QPC)/ports/$(TARGET)/gnu
-endif
 
 # Coupler Board API directory
 CB_API_DIR                  = $(COMMON_CLI_SYS_DIR)/cb_api
@@ -124,7 +114,6 @@ BASE64_DIR                  = $(COMMON_CLI_SYS_DIR)/libb64
 # SOURCE VIRTUAL DIRECTORIES
 #-----------------------------------------------------------------------------
 VPATH                       = $(API_DIR) \
-                              $(APP_DIR) \
                               $(BSP_DIR) \
                               $(SYS_DIR) \
                               $(BASE64_DIR)
@@ -134,7 +123,6 @@ VPATH                       = $(API_DIR) \
 #-----------------------------------------------------------------------------
 INCLUDES                    = -I$(SRC_DIR) \
                               -I$(API_DIR) \
-                              -I$(APP_DIR) \
                               -I$(BSP_DIR) \
                               -I$(SYS_DIR) \
                               \
@@ -143,10 +131,6 @@ INCLUDES                    = -I$(SRC_DIR) \
                               -I$(CB_API_GEN_SRC_DIR) \
                               \
                               -I$(BASE64_DIR) \
-                              \
-                              -I$(QPC)/include \
-                              -I$(QP_PORT_DIR) \
-                              -I$(QP_PORT_INC_DIR) \
                               \
                               -I$(BOOST_INC_DIR) \
                               \
@@ -167,13 +151,11 @@ C_SRCS                      = cdecode.c \
                               base64_wrapper.c
 
 # C++ source files
-CPP_SRCS                    = bsp.cpp \
-                              serial.cpp \
+CPP_SRCS                    = serial.cpp \
                               udp.cpp \
                               comm.cpp \
                               fwLdr.cpp \
                               ClientApi.cpp \
-                              MainMgr.cpp \
                               LogStub.cpp \
                               msg_utils.cpp
 
@@ -219,7 +201,6 @@ CPPFLAGS                   += -shared
 
 API_STATIC_LIBS             = $(CB_API_LIB_DIR)/libCBCommApi_$(TARGET).a \
                               $(CB_API_LIB_DIR)/libprotobuf_core_$(TARGET).a \
-                              $(QP_PORT_DIR)/$(CONF)/libqp_$(QPLIBMOD)_cs.a \
                               $(BOOST_LIB_DIR)/libboost_thread$(BOOST_TH_LIBMOD)$(BOOSTLIBMOD).a \
                               $(BOOST_LIB_DIR)/libboost_system$(BOOSTLIBMOD).a
                               
@@ -296,16 +277,10 @@ $(TARGET_DLL):  $(C_OBJS_EXT) $(CPP_OBJS_EXT)
 	cp $(CB_API_GEN_SRC_DIR)/*.h $(BIN_DIR)
 	cp $(CB_API_SRC_DIR)/*.h $(BIN_DIR)
 
-build_libs: build_qpc build_cb_api
+build_libs: build_cb_api
 	@echo -----------------------------------
 	@echo --- Building libraries complete ---
 	@echo -----------------------------------
-
-build_qpc:
-	@echo ------------------------------
-	@echo --- Building QPC libraries ---
-	@echo ------------------------------
-	cd $(QP_PORT_DIR); make CONF=$(CONF)
 
 build_cb_api:
 	@echo ------------------------------------
@@ -334,18 +309,10 @@ cleanall: clean_with_libs
 clean:
 	$(RM) $(BIN_DIR)
 	
-clean_with_libs: clean clean_qpc_libs clean_cb_api_libs
+clean_with_libs: clean clean_cb_api_libs
 	@echo -------------------------
 	@echo --- Cleaned all libs ----
 	@echo -------------------------
-	
-clean_qpc_libs:
-	@echo ----------------------------
-	@echo --- Cleaning QPC library ---
-	@echo ----------------------------
-	cd $(QP_PORT_DIR); make CONF=dbg clean
-	cd $(QP_PORT_DIR); make CONF=spy clean
-	cd $(QP_PORT_DIR); make CONF=rel clean
 
 clean_cb_api_libs:
 	@echo -------------------------------

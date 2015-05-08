@@ -43,12 +43,6 @@ extern "C" {
 /* Exported types ------------------------------------------------------------*/
 /* Exported constants --------------------------------------------------------*/
 /* Exported functions --------------------------------------------------------*/
-
-/**
- * @brief   This function starts the MainMgr AO and the QF framework.
- */
-void runMainMgr( void );
-
 /* Exported classes ----------------------------------------------------------*/
 /**
  * @class ClientApi
@@ -85,14 +79,6 @@ private:
 
    uint8_t dataBuf[1000];
    int dataLen;
-   /**
-    * @brief   Helper function for QF startup.
-    * An intenal helper function that gets called by all constructors to do the
-    * actual setup of QF framework.
-    * @param   None.
-    * @return  None.
-    */
-   void qfSetup( void );
 
    /**
     * @brief   Polls for new events in the queue from MainMgr AO.
@@ -213,42 +199,11 @@ public:
    );
 
    /**
-    * @breif   Starts the client.
-    *
-    * This must be called after a connection has been set up and before any
-    * commands are executed.
-    * @param[in]   None.
-    * @return      None.
-    */
-   void start( void );
-
-   /**
-    * @brief   Waits for the MainMgr AO to finish.
-    * @param   None.
-    * @return  None.
-    */
-   void waitForStop( void );
-
-   /**
     * @brief   Sets a new LogStub pointer.
     * @param [in]  *log: LogStub pointer to a LogStub instance.
     * @return: None.
     */
    void setLogging( LogStub *log );
-
-   /**
-    * @brief   Stops the client api state machine
-    * @param   None.
-    * @return: None.
-    */
-   void stop( void );
-
-   /**
-    * @brief   Starts a new job
-    * @param   None.
-    * @return  None.
-    */
-   void startJob( void );
 
    /**
     * This method sets a callback to handle Req msgs.

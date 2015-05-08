@@ -194,10 +194,6 @@ int main(int argc, char *argv[])
                   << setfill('0') << setw(8) << hex << status;
             EXIT_LOG_FLUSH(1);
          }
-
-         /* Now that the connection has been set, start the client */
-         client->start();
-
       } else if (m_vm.count("serial_dev") && !m_vm.count("ip_address")) {
          LOG_out << "Serial connection on "
                << m_vm["serial_dev"].as<string>()
@@ -218,10 +214,6 @@ int main(int argc, char *argv[])
             CON_print("!!! Make sure you're using the correct serial port and nothing else is using it !!!");
             EXIT_LOG_FLUSH(1);
          }
-
-         /* Now that the connection has been set, start the client */
-         client->start();
-
       } else if (m_vm.count("serial_dev") && m_vm.count("ip_address")) {
          /* User specified specified both connection options. Let's not allow
           * that. */
@@ -342,14 +334,8 @@ int main(int argc, char *argv[])
             ss << "FW flashing of DC3 ";
             if (ERR_NONE == statusDC3) {
                ss << "completed successfully.";
-//               EXIT_LOG_FLUSH(0);
             } else {
-               try {
-                  ss << "FAILED with ERROR: 0x" << setw(8) << setfill('0') << hex << statusDC3 << dec;
-               } catch ( exception &e ) {
-                  string error = e.what();
-                  ERR_out << "Exception " << e.what() << " while trying to print out status of DC3";
-               }
+               ss << "FAILED with ERROR: 0x" << setw(8) << setfill('0') << hex << statusDC3 << dec;
             }
             CON_print(ss.str());
          } else {

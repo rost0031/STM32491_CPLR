@@ -25,7 +25,6 @@
 
 /* This is necessary since C++ code is pulling in a library compiled as C */
 extern "C" {
-#include "qp_port.h"
 #include "CBCommApi.h"
 }
 
