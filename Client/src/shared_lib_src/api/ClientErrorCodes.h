@@ -77,6 +77,10 @@ typedef enum ClientErrors
    CLI_ERR_MSG_INVALID                                         = 0x00040001,
    CLI_ERR_MSG_ACK_WAIT_TIMED_OUT                              = 0x00040002,
    CLI_ERR_MSG_DONE_WAIT_TIMED_OUT                             = 0x00040003,
+   CLI_ERR_MSG_UNEXPECTED_REQ_RECEIVED                         = 0x00040004,
+   CLI_ERR_MSG_MISSING_EXPECTED_PAYLOAD                        = 0x00040005,
+   CLI_ERR_MSG_UNKNOWN_PAYLOAD                                 = 0x00040006,
+   CLI_ERR_MSG_UNABLE_TO_GET_FROM_QUEUE                        = 0x00040007,
 
    /* Memory error category                      0x00005000 - 0x0005FFFF */
    CLI_ERR_MEM_NULL_VALUE                                      = 0x00050000,

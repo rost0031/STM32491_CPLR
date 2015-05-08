@@ -18,6 +18,9 @@
 #include "serial.h"
 #include "udp.h"
 
+#include <boost/lockfree/queue.hpp>
+#include "msg_utils.h"
+
 /* Exported defines ----------------------------------------------------------*/
 /* Exported macros -----------------------------------------------------------*/
 /* Exported types ------------------------------------------------------------*/
@@ -93,7 +96,8 @@ public:
          LogStub *log,
          const char *ipAddress,
          const char *pRemPort,
-         const char *pLocPort
+         const char *pLocPort,
+         boost::lockfree::queue<MsgData_t> *pQueue
    );
 
    /**

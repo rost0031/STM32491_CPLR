@@ -83,11 +83,12 @@ Comm::Comm(
       LogStub *log,
       const char *ipAddress,
       const char *pRemPort,
-      const char *pLocPort
+      const char *pLocPort,
+      boost::lockfree::queue<MsgData_t> *pQueue
 ) : m_pLog(NULL), m_pUdp(NULL), m_pSer(NULL)
 {
    this->m_pLog = log;
-   this->m_pUdp = new Udp( ipAddress, pRemPort, pLocPort);
+   this->m_pUdp = new Udp( ipAddress, pRemPort, pLocPort, pQueue);
    this->m_pUdp->setLogging( log );
 }
 

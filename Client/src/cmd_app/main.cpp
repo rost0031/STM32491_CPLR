@@ -285,7 +285,6 @@ int main(int argc, char *argv[])
             HELP_printCmdSpecific( m_parsed_cmd, appName );
          }
 
-//         char *fwBuffer = NULL;
          CBBootMode type = _CB_NoBootMode;
          string filename = "";
          for( itr = begin; itr != end; ++itr ) {
@@ -337,10 +336,7 @@ int main(int argc, char *argv[])
 
          /* If we got here, we have a valid filename/path and valid FW image
           * type. Execute (and block) on this command */
-//         status = client->DC3_flashFW(&statusDC3, type, filename.c_str());
-         status = CLI_ERR_NONE;
-         statusDC3 = ERR_NONE;
-
+         status = client->DC3_flashFW(&statusDC3, type, filename.c_str());
          if( CLI_ERR_NONE == status) {
             ss.clear();
             ss << "FW flashing of DC3 ";
@@ -350,13 +346,10 @@ int main(int argc, char *argv[])
                ss << "FAILED with ERROR: 0x" << setw(8) << setfill('0') << hex << statusDC3 << dec;
             }
             CON_print(ss.str());
-
-            cout << "!!!3!!!" << endl;
          } else {
             ERR_out << "Got client error " << "0x" << std::hex
                << status << std::dec << " when trying to flash FW.";
          }
-         cout << "!!!4!!!" << endl;
       }
 
       else { // end of checking for cmdline requested commands.
@@ -364,7 +357,6 @@ int main(int argc, char *argv[])
          ERR_out << "TODO: implement menu here";
          EXIT_LOG_FLUSH(0);
       }
-   cout << "!!!5!!!" << endl;
       /* Now check if the user requested general help */
       if (m_vm.count("help")) {
          stringstream ss;
@@ -381,7 +373,7 @@ int main(int argc, char *argv[])
          CON_print(ss.str());
          EXIT_LOG_FLUSH(0);
       }
-   cout << "!!!6!!!" << endl;
+
    } catch(po::error& e) {
       string error = e.what();
       ERR_out << "Exception " << e.what() << " while parsing cmdline arguments.";
@@ -391,20 +383,9 @@ int main(int argc, char *argv[])
       EXIT_LOG_FLUSH(1);
    }
 
-   DBG_out<< "Waiting for MainMgr AO to finish";
-
-
-
-   cout << "!!!7!!!" << endl;
-
    /* Tell the client to stop and wait for it */
-   client->stop();
-   cout << "!!!8!!!" << endl;
-   client->waitForStop();
-   cout << "!!!9!!!" << endl;
    DBG_out << "Exiting with client status 0x"
          << setw(8) << setfill('0') << hex << status << dec;
-      cout << "!!!10!!!" << endl;
    EXIT_LOG_FLUSH( status );
 }
 

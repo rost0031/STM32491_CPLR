@@ -36,10 +36,14 @@ BOOST_LIB_VER               = 1.57.0
 #------------------------------------------------------------------------------
 #  TOOLCHAIN SETUP - Depends on TARGET
 #------------------------------------------------------------------------------
-ifeq (win32, $(TARGET)) # Cross compile for windows from Ubuntu-12.04
+ifeq (posix, $(TARGET)) # Compile natively on Linux and/or Cygwin  
+    CROSS                   = 
+    QPLIBMOD                = posix
+    BOOSTLIBMOD             = -mt-s
+    BOOST_TH_LIBMOD         = 
+    TARGET                  = posix
+else          # Cross compile for win32 from Linux (or from Cygwin64 with Mingw)
 
-   # This will detect whether the linux system is 64 or 32 bit since the mingw 
-    # compiler's name is dependent on it
     LBITS                   = $(shell getconf LONG_BIT)
     ifeq ($(LBITS),64)
         CROSS_PATH          = x86_64-w64-mingw32
@@ -50,16 +54,7 @@ ifeq (win32, $(TARGET)) # Cross compile for windows from Ubuntu-12.04
     endif
  
     QPLIBMOD                = WIN32
-#    BOOSTLIBMOD             = -mt-s
-#    BOOSTLIBMOD             = -mt.dll
-#    BOOST_TH_LIBMOD         = _$(TARGET)
-
-else                    # Compile natively on Linux and/or Cygwin
-    CROSS                   = 
-    QPLIBMOD                = posix
-    BOOSTLIBMOD             = -mt-s
-    BOOST_TH_LIBMOD         = 
-    TARGET                  = posix
+    TARGET                  = win32
 endif
 
 #------------------------------------------------------------------------------
@@ -81,6 +76,7 @@ MKDIR                       = mkdir
 # Top level directories
 SRC_DIR                     = .
 COMMON_CLI_SRC_DIR          = ../../../Common
+CMD_APP_DIR                 = ../cmd_app
 
 # External library includes
 EXT_LIB_DIR                 = ../../lib
@@ -127,7 +123,8 @@ VPATH                       = $(API_DIR) \
                               $(APP_DIR) \
                               $(BSP_DIR) \
                               $(SYS_DIR) \
-                              $(BASE64_DIR)
+                              $(BASE64_DIR) \
+                              $(CMD_APP_DIR)
 
 #-----------------------------------------------------------------------------
 # INCLUDE DIRECTORIES
@@ -175,7 +172,12 @@ CPP_SRCS                    = bsp.cpp \
                               ClientApi.cpp \
                               MainMgr.cpp \
                               LogStub.cpp \
-                              msg_utils.cpp
+                              msg_utils.cpp \
+                              main.cpp \
+                              Callbacks.cpp \
+                              Help.cpp \
+                              EnumMaps.cpp \
+                              Logging.cpp
 
 #-----------------------------------------------------------------------------
 # BUILD OPTIONS FOR VARIOUS CONFIGURATIONS
@@ -227,21 +229,31 @@ LIB_PREFIX                  = lib
                               
 # Modify the INCLUDES to point to the boost libraries compiled for windows
 ifeq (win32, $(TARGET))
-    LINKFLAGS               = -static-libgcc -static-libstdc++ \
-                              -Wl,--out-implib=$(TARGET_DLL).a \
-                              -Wl,--export-all-symbols \
-                              -Wl,--enable-auto-import \
-                              -Wl,--whole-archive $(API_STATIC_LIBS) \
-                              -Wl,--no-whole-archive
   
-    LIBS                   += -lws2_32 # Needed for win32 builds only
+    LIBS                   += -lws2_32 \
+                              -lstdc++ \
+                              -lboost_program_options \
+                              -lboost_date_time$(BOOSTLIBMOD) \
+                              -lboost_log
+                              
     DEFINES                += -DBOOST_THREAD_USE_LIB -DWIN32COMPILE -DBOOST_ALL_NO_LIB -D_SECURE_SCL=0
     DLL_EXT                 = dll
+    DYNAMIC_LINKFLAGS       = -Wl,-Bdynamic 
+    DYNAMIC_LIBS            = -lws2_32
+    
+    STATIC_LINKFLAGS        = -Wl,-Bstatic 
+
+    STATIC_LIBS             = -lstdc++ \
+                              -lboost_program_options \
+                              -lboost_date_time$(BOOSTLIBMOD) \
+                              -lboost_log
+    
+    LIB_LOCATIONS           = -L$(BOOST_LIB_DIR) -L$(BIN_DIR)
+
+    LIBS                   += -static-libgcc -static-libstdc++
+    DEFINES                += -DBOOST_THREAD_USE_LIB -DWIN32COMPILE -DBOOST_ALL_NO_LIB -D_SECURE_SCL=0
 else
-    LINKFLAGS               = -Wl,-soname,$(LIB_PREFIX)$(PROJECT_DLL).$(DLL_EXT) \
-                              -Wl,--whole-archive $(API_STATIC_LIBS) \
-                              -Wl,--no-whole-archive
-                            
+
     LIBS                   += -lpthread  # This is needed on newer Ubuntu systems but doesn't hurt older ones or Cygwin
     DEFINES                += 
     DLL_EXT                 = so
@@ -252,7 +264,8 @@ else
     CPPFLAGS               += -pthread -fPIC
 endif
 
-TARGET_DLL                  = $(BIN_DIR)/$(LIB_PREFIX)$(PROJECT_DLL).$(DLL_EXT)
+
+TARGET_EXE                  = $(BIN_DIR)/$(PROJECT_NAME)
 
 C_OBJS                      = $(patsubst %.c,%.o,$(C_SRCS))
 C_OBJS_EXT                  = $(addprefix $(BIN_DIR)/, $(C_OBJS))
@@ -268,7 +281,7 @@ CPP_DEPS_EXT                = $(patsubst %.o, %.d, $(CPP_OBJS_EXT))
 
 .PHONY: build_libs build_dll all clean clean_with_libs build_qpc build_cb_comm_api $(BIN_DIR)
 
-all: build_dll
+all: $(TARGET_EXE)
 
 $(BIN_DIR):
 	@echo ---------------------------
@@ -276,26 +289,13 @@ $(BIN_DIR):
 	@echo ---------------------------
 	mkdir -p $@
 
-build_dll: $(BIN_DIR) build_libs $(TARGET_DLL)
-
-$(TARGET_DLL):  $(C_OBJS_EXT) $(CPP_OBJS_EXT)
+$(TARGET_EXE): $(BIN_DIR) build_libs $(CPP_OBJS_EXT) $(C_OBJS_EXT)
 	@echo ---------------------------
-	@echo --- Creating a dll      ---
+	@echo --- Building CMD Client ---
 	@echo ---------------------------
-	$(LINK) -shared -o $@ $^ $(LINKFLAGS) $(LIBS)
-	@echo ---------------------------
-	@echo --- Deleting *.o files  ---
-	@echo ---------------------------
+	$(LINK) $(LIBS) -o $(TARGET_EXE) $(CPP_OBJS_EXT) $(LIB_LOCATIONS) $(STATIC_LINKFLAGS) $(STATIC_LIBS) $(DYNAMIC_LINKFLAGS) $(DYNAMIC_LIBS)  
 	$(RM) $(BIN_DIR)/*.o
-	@echo ---------------------------
-	@echo --- Copy libs/headers   ---
-	@echo ---------------------------
-	cp $(API_DIR)/*.h $(BIN_DIR)/.
-	cp $(COMMON_CLI_SYS_DIR)/*.h $(BIN_DIR)/.
-	cp $(CB_API_INC_DIR)/*.h $(BIN_DIR)/.
-	cp $(CB_API_GEN_SRC_DIR)/*.h $(BIN_DIR)
-	cp $(CB_API_SRC_DIR)/*.h $(BIN_DIR)
-
+	
 build_libs: build_qpc build_cb_api
 	@echo -----------------------------------
 	@echo --- Building libraries complete ---

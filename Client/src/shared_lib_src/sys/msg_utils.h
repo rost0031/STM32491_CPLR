@@ -19,6 +19,17 @@
 /* Exported defines ----------------------------------------------------------*/
 /* Exported macros -----------------------------------------------------------*/
 /* Exported types ------------------------------------------------------------*/
+/**
+ * @brief Event type for transferring large data.
+ */
+typedef struct MsgEvtTag {
+/* protected: */
+    CBMsgRoute src;                                   /**< Source of the data */
+    CBMsgRoute dst;                              /**< Destination of the data */
+    uint16_t   dataLen;                    /**< Length of the data in dataBuf */
+    uint8_t    dataBuf[CB_MAX_MSG_LEN];       /**< Buffer that holds the data */
+} MsgData_t;
+
 /* Exported functions --------------------------------------------------------*/
 
 /**

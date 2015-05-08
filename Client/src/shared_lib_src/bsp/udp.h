@@ -13,17 +13,21 @@
 #define UDP_H
 
 /* Includes ------------------------------------------------------------------*/
-#include "ClientShared.h"
-#include "MainMgrDefs.h"
 #include <unistd.h>
 #include <iostream>
+
 #include <boost/asio.hpp>
 #include <boost/system/error_code.hpp>
 #include <boost/system/system_error.hpp>
 #include <boost/bind.hpp>
 #include <boost/thread.hpp>
+#include <boost/lockfree/queue.hpp>
+
 #include "LogHelper.h"
 #include "LogStub.h"
+#include "ClientShared.h"
+//#include "MainMgrDefs.h"
+#include "msg_utils.h"
 
 /* Exported defines ----------------------------------------------------------*/
 /* Exported macros -----------------------------------------------------------*/
@@ -38,6 +42,7 @@ class Udp {
 
 private:
    LogStub *m_pLog;         /**< Pointer to LogStub instance used for logging */
+   boost::lockfree::queue<MsgData_t> *m_pQueue; /**< Pointer to the queue where to put read data */
    char read_msg_[CB_MAX_MSG_LEN];          /**< buffer to hold incoming msgs */
    char write_msg_[CB_MAX_MSG_LEN];       /**< buffer to hold msgs being sent */
 
@@ -108,7 +113,12 @@ public:
     *
     * @return      None.
     */
-   Udp( const char *ipAddress, const char *pRemPort, const char *pLocPort );
+   Udp(
+         const char *ipAddress,
+         const char *pRemPort,
+         const char *pLocPort,
+         boost::lockfree::queue<MsgData_t> *pQueue
+   );
 
    /**
     * @brief Destructor (default) that closes the UDP socket

@@ -1,5 +1,5 @@
 ##############################################################################
-# Product: Makefile for DC3 Coupler Board Client shared dll/so library. 
+# Product: Makefile for DC3 Coupler Board Command Line Client 
 #
 #                             Datacard 
 #                    ---------------------------
@@ -30,15 +30,25 @@ TRACEON                     = $(TRACE:0=@)
 TRACE_FLAG                  = $(TRACEON:1=)
 
 # Output file basename (should be the same as the directory name)
+PROJECT_NAME                = DC3_CmdLineClient$(EXT)
 PROJECT_DLL                 = DC3Client
 BOOST_LIB_VER               = 1.57.0
 
 #------------------------------------------------------------------------------
 #  TOOLCHAIN SETUP - Depends on TARGET
 #------------------------------------------------------------------------------
-ifeq (win32, $(TARGET)) # Cross compile for windows from Ubuntu-12.04
+ifeq (posix, $(TARGET)) # Compile natively on Linux and/or Cygwin  
+    CROSS                   = 
+    EXT                     =                      # Appended to the target name
+    QPLIBMOD                = posix
+    BOOSTLIBMOD             = -mt-s
+    BOOST_TH_LIBMOD         = 
+    TARGET                  = posix
+else          # Cross compile for win32 from Linux (or from Cygwin64 with Mingw)
 
-   # This will detect whether the linux system is 64 or 32 bit since the mingw 
+    # explicitly define target since it's used for naming files
+    TARGET                  = win32
+    # This will detect whether the linux system is 64 or 32 bit since the mingw 
     # compiler's name is dependent on it
     LBITS                   = $(shell getconf LONG_BIT)
     ifeq ($(LBITS),64)
@@ -49,17 +59,10 @@ ifeq (win32, $(TARGET)) # Cross compile for windows from Ubuntu-12.04
         CROSS               = $(CROSS_PATH)-
     endif
  
+    EXT                     = .exe                 # Appended to the target name
     QPLIBMOD                = WIN32
-#    BOOSTLIBMOD             = -mt-s
-#    BOOSTLIBMOD             = -mt.dll
-#    BOOST_TH_LIBMOD         = _$(TARGET)
-
-else                    # Compile natively on Linux and/or Cygwin
-    CROSS                   = 
-    QPLIBMOD                = posix
     BOOSTLIBMOD             = -mt-s
-    BOOST_TH_LIBMOD         = 
-    TARGET                  = posix
+    BOOST_TH_LIBMOD         = _$(TARGET)
 endif
 
 #------------------------------------------------------------------------------
@@ -80,22 +83,31 @@ MKDIR                       = mkdir
 #-----------------------------------------------------------------------------
 # Top level directories
 SRC_DIR                     = .
-COMMON_CLI_SRC_DIR          = ../../../Common
 
 # External library includes
 EXT_LIB_DIR                 = ../../lib
 EXT_LIB_BIN_DIR             = $(EXT_LIB_DIR)/$(TARGET)
 EXT_LIB_INC_DIR             = $(EXT_LIB_DIR)/inc
 
+# Boost library
+BOOST_INC_DIR               = $(EXT_LIB_INC_DIR)
+BOOST_LIB_DIR               = $(EXT_LIB_BIN_DIR)
+
+# Shared Client library directories
+SHARED_LIB_DIR              = ../shared_lib_src
+SHARED_LIB_BIN_DIR          = $(SHARED_LIB_DIR)/$(BIN_DIR)
+
+COMMON_CLI_SRC_DIR          = $(SHARED_LIB_DIR)/Common
+
 # app, bsp, and sys directories common between firmware and client
 COMMON_CLI_BSP_DIR          = $(COMMON_CLI_SRC_DIR)/bsp
 COMMON_CLI_SYS_DIR          = $(COMMON_CLI_SRC_DIR)/sys
 
 # app, bsp, sys, dll, and api directories 
-API_DIR                     = $(SRC_DIR)/api
-APP_DIR                     = $(SRC_DIR)/app
-BSP_DIR                     = $(SRC_DIR)/bsp
-SYS_DIR                     = $(SRC_DIR)/sys
+API_DIR                     = $(SHARED_LIB_DIR)/api
+APP_DIR                     = $(SHARED_LIB_DIR)/app
+BSP_DIR                     = $(SHARED_LIB_DIR)/bsp
+SYS_DIR                     = $(SHARED_LIB_DIR)/sys
 
 # QPC directories
 QPC                         = $(COMMON_CLI_SYS_DIR)/qpc_5.3.1
@@ -127,7 +139,8 @@ VPATH                       = $(API_DIR) \
                               $(APP_DIR) \
                               $(BSP_DIR) \
                               $(SYS_DIR) \
-                              $(BASE64_DIR)
+                              $(BASE64_DIR) \
+                              $(SRC_DIR)
 
 #-----------------------------------------------------------------------------
 # INCLUDE DIRECTORIES
@@ -150,7 +163,9 @@ INCLUDES                    = -I$(SRC_DIR) \
                               \
                               -I$(BOOST_INC_DIR) \
                               \
-                              -I$(COMMON_CLI_SYS_DIR)
+                              -I$(COMMON_CLI_SYS_DIR) \
+                              -I$(SHARED_LIB_DIR) \
+                              -I$(BOOST_INC_DIR)
 
 #-----------------------------------------------------------------------------
 # DEFINES
@@ -175,7 +190,12 @@ CPP_SRCS                    = bsp.cpp \
                               ClientApi.cpp \
                               MainMgr.cpp \
                               LogStub.cpp \
-                              msg_utils.cpp
+                              msg_utils.cpp \
+                              main.cpp \
+                              Callbacks.cpp \
+                              Help.cpp \
+                              EnumMaps.cpp \
+                              Logging.cpp
 
 #-----------------------------------------------------------------------------
 # BUILD OPTIONS FOR VARIOUS CONFIGURATIONS
@@ -184,7 +204,6 @@ ifeq (rel, $(CONF))       # Release configuration ............................
 
     BIN_DIR                := rel_$(TARGET)
     DEFINES                += -DNDEBUG
-    ASFLAGS                 = 
     CFLAGS                  = -c -std=gnu99 -Wall $(INCLUDES) $(DEFINES)
 
     CPPFLAGS                = -O2 -Wall -std=gnu++11 -c -Wall \
@@ -194,7 +213,6 @@ else ifeq (spy, $(CONF))  # Spy configuration ................................
 
     BIN_DIR                := spy_$(TARGET)
     DEFINES                += -DQ_SPY
-    ASFLAGS                 = 
     CFLAGS                  = -c -std=gnu99 -Wall \
                               -g $(INCLUDES) $(DEFINES)
 
@@ -202,56 +220,68 @@ else ifeq (spy, $(CONF))  # Spy configuration ................................
                               -Wno-write-strings -g $(INCLUDES) $(DEFINES)
 
 else                     # default Debug configuration .......................
-
-	CONF                    = dbg
+    
     BIN_DIR                := dbg_$(TARGET)
-    ASFLAGS                 = 
+    CONF                    = dbg # Explicitly set the conf since it's used
     CFLAGS                  = -c -g3 -ggdb -std=gnu99 -Wall \
                                $(INCLUDES) $(DEFINES)
 
     CPPFLAGS                = -O0 -g3 -ggdb  -std=gnu++11 -c -Wall \
                               -Wno-write-strings $(INCLUDES) $(DEFINES)
 endif
+                              
+# Modify the INCLUDES to point to the boost libraries compiled for windows
+ifeq (win32, $(TARGET))
 
-# Both builds need these flags for making a shared library
-CFLAGS                     += -shared
-CPPFLAGS                   += -shared
+    DYNAMIC_LINKFLAGS       = -Wl,-Bdynamic 
+    DYNAMIC_LIBS            = -l$(PROJECT_DLL) -lws2_32
+    
+    STATIC_LINKFLAGS        = -Wl,-Bstatic 
+#    STATIC_LIBS             = -lstdc++ \
+#                              -lboost_program_options$(BOOSTLIBMOD) \
+#                              -lboost_date_time$(BOOSTLIBMOD)
 
-API_STATIC_LIBS             = $(CB_API_LIB_DIR)/libCBCommApi_$(TARGET).a \
+    STATIC_LIBS             = -lstdc++ \
+                              -lboost_program_options \
+                              -lboost_date_time$(BOOSTLIBMOD) \
+                              -lboost_log \
+                              -lCBCommApi_$(TARGET) \
+                              -lprotobuf_core_$(TARET) \
+                              -lqp_$(QPLIBMOD)_cs \
+                              -lboost_thread$(BOOST_TH_LIBMOD)$(BOOSTLIBMOD) \
+                              -lboost_system$(BOOSTLIBMOD)
+    
+    API_STATIC_LIBS             = $(CB_API_LIB_DIR)/libCBCommApi_$(TARGET).a \
                               $(CB_API_LIB_DIR)/libprotobuf_core_$(TARGET).a \
                               $(QP_PORT_DIR)/$(CONF)/libqp_$(QPLIBMOD)_cs.a \
                               $(BOOST_LIB_DIR)/libboost_thread$(BOOST_TH_LIBMOD)$(BOOSTLIBMOD).a \
                               $(BOOST_LIB_DIR)/libboost_system$(BOOSTLIBMOD).a
-                              
-LIB_PREFIX                  = lib
-                              
-# Modify the INCLUDES to point to the boost libraries compiled for windows
-ifeq (win32, $(TARGET))
-    LINKFLAGS               = -static-libgcc -static-libstdc++ \
-                              -Wl,--out-implib=$(TARGET_DLL).a \
-                              -Wl,--export-all-symbols \
-                              -Wl,--enable-auto-import \
-                              -Wl,--whole-archive $(API_STATIC_LIBS) \
-                              -Wl,--no-whole-archive
-  
-    LIBS                   += -lws2_32 # Needed for win32 builds only
+    
+    LIB_LOCATIONS           = -L$(BOOST_LIB_DIR) -L$(BIN_DIR) -L$(CB_API_LIB_DIR) -L$(QP_PORT_DIR)
+
+    LIBS                   += -static-libgcc -static-libstdc++
     DEFINES                += -DBOOST_THREAD_USE_LIB -DWIN32COMPILE -DBOOST_ALL_NO_LIB -D_SECURE_SCL=0
+
     DLL_EXT                 = dll
-else
-    LINKFLAGS               = -Wl,-soname,$(LIB_PREFIX)$(PROJECT_DLL).$(DLL_EXT) \
-                              -Wl,--whole-archive $(API_STATIC_LIBS) \
-                              -Wl,--no-whole-archive
-                            
-    LIBS                   += -lpthread  # This is needed on newer Ubuntu systems but doesn't hurt older ones or Cygwin
-    DEFINES                += 
-    DLL_EXT                 = so
     LIB_PREFIX              = lib
-  
-    # Linux shared libs need these flags 
-    CFLAGS                 += -pthread -fPIC
-    CPPFLAGS               += -pthread -fPIC
+ 
+else
+    DYNAMIC_LINKFLAGS       = -fPIC -Wl,-rpath -Wl,\$$ORIGIN -Wl,-Bdynamic 
+    DYNAMIC_LIBS            = -l$(PROJECT_DLL) 
+    
+    STATIC_LINKFLAGS        = -Wl,-Bstatic 
+    STATIC_LIBS             = -lboost_program_options$(BOOSTLIBMOD) \
+                              -lboost_date_time$(BOOSTLIBMOD)
+
+    LIB_LOCATIONS           = -L$(BOOST_LIB_DIR) -L$(BIN_DIR)
+    LIBS                   += # Nothing needed for posix builds
+                     
+    DLL_EXT                 = so  
+    LIB_PREFIX              = lib
+
 endif
 
+TARGET_EXE                  = $(BIN_DIR)/$(PROJECT_NAME)
 TARGET_DLL                  = $(BIN_DIR)/$(LIB_PREFIX)$(PROJECT_DLL).$(DLL_EXT)
 
 C_OBJS                      = $(patsubst %.c,%.o,$(C_SRCS))
@@ -266,9 +296,9 @@ CPP_DEPS_EXT                = $(patsubst %.o, %.d, $(CPP_OBJS_EXT))
 # BUILD TARGETS
 #-----------------------------------------------------------------------------
 
-.PHONY: build_libs build_dll all clean clean_with_libs build_qpc build_cb_comm_api $(BIN_DIR)
+.PHONY: build_dll all clean clean_with_libs build_qpc build_cb_comm_api $(BIN_DIR)
 
-all: build_dll
+all:  $(TARGET_EXE)
 
 $(BIN_DIR):
 	@echo ---------------------------
@@ -276,43 +306,23 @@ $(BIN_DIR):
 	@echo ---------------------------
 	mkdir -p $@
 
-build_dll: $(BIN_DIR) build_libs $(TARGET_DLL)
-
-$(TARGET_DLL):  $(C_OBJS_EXT) $(CPP_OBJS_EXT)
+$(TARGET_EXE): build_qpc build_cb_comm_api $(CPP_OBJS_EXT) $(C_OBJS_EXT)
 	@echo ---------------------------
-	@echo --- Creating a dll      ---
+	@echo --- Building CMD Client ---
 	@echo ---------------------------
-	$(LINK) -shared -o $@ $^ $(LINKFLAGS) $(LIBS)
-	@echo ---------------------------
-	@echo --- Deleting *.o files  ---
-	@echo ---------------------------
+	$(LINK) $(LIBS) -o $(TARGET_EXE) $(CPP_OBJS_EXT) $(LIB_LOCATIONS) $(STATIC_LINKFLAGS) $(STATIC_LIBS)
 	$(RM) $(BIN_DIR)/*.o
+    
+build_dll: $(BIN_DIR)
 	@echo ---------------------------
-	@echo --- Copy libs/headers   ---
+	@echo --- Building client dll ---
 	@echo ---------------------------
-	cp $(API_DIR)/*.h $(BIN_DIR)/.
-	cp $(COMMON_CLI_SYS_DIR)/*.h $(BIN_DIR)/.
-	cp $(CB_API_INC_DIR)/*.h $(BIN_DIR)/.
-	cp $(CB_API_GEN_SRC_DIR)/*.h $(BIN_DIR)
-	cp $(CB_API_SRC_DIR)/*.h $(BIN_DIR)
-
-build_libs: build_qpc build_cb_api
-	@echo -----------------------------------
-	@echo --- Building libraries complete ---
-	@echo -----------------------------------
-
-build_qpc:
-	@echo ------------------------------
-	@echo --- Building QPC libraries ---
-	@echo ------------------------------
-	cd $(QP_PORT_DIR); make CONF=$(CONF)
-
-build_cb_api:
-	@echo ------------------------------------
-	@echo --- Building CB Comm API library ---
-	@echo ------------------------------------
-	$(TRACE_FLAG)cd $(CB_API_DIR); make TARGET=$(TARGET) CONF=$(CONF) TRACE=$(TRACE) all
-	
+	cd $(SHARED_LIB_DIR); make TARGET=$(TARGET) CONF=$(CONF) TRACE=$(TRACE) all
+	@echo --------------------------------------
+	@echo --- Copying client dll and headers ---
+	@echo --------------------------------------
+	cp $(SHARED_LIB_BIN_DIR)/*.* $(BIN_DIR)/.
+		
 $(BIN_DIR)/%.d : %.c
 	$(CPP) -MM -MT $(@:.d=.o) $(CPPFLAGS) $< > $@
 
@@ -325,33 +335,20 @@ $(BIN_DIR)/%.o : %.c
 $(BIN_DIR)/%.o : %.cpp
 	$(CPP) $(CPPFLAGS) -c $< -o $@
 
-cleanall: clean_with_libs
+cleanall: clean_libs
 	@echo ---------------------------
 	@echo --- Cleaning EVERYTHING
 	@echo ---------------------------
-	$(RM) dbg_posix rel_posix_spy_posix dbg_win32 rel_win32 spy_win32
+	$(RM) dbg_posix dbg_win32 spy_posix spy_win32 rel_posix rel_win32
 	
 clean:
 	$(RM) $(BIN_DIR)
 	
-clean_with_libs: clean clean_qpc_libs clean_cb_api_libs
-	@echo -------------------------
-	@echo --- Cleaned all libs ----
-	@echo -------------------------
-	
-clean_qpc_libs:
+clean_libs:
 	@echo ----------------------------
-	@echo --- Cleaning QPC library ---
+	@echo --- Cleaning DC3 library ---
 	@echo ----------------------------
-	cd $(QP_PORT_DIR); make CONF=dbg clean
-	cd $(QP_PORT_DIR); make CONF=spy clean
-	cd $(QP_PORT_DIR); make CONF=rel clean
-
-clean_cb_api_libs:
-	@echo -------------------------------
-	@echo --- Cleaning CB API library ---
-	@echo -------------------------------
-	$(TRACE_FLAG)cd $(CB_API_DIR); make TARGET=$(TARGET) TRACE=$(TRACE) cleanall
+	cd $(SHARED_LIB_DIR); make TARGET=$(TARGET) CONF=$(CONF) TRACE=$(TRACE) cleanall
 
 show:
 	@echo CONF             = $(CONF)
@@ -360,6 +357,7 @@ show:
 	@echo C_DEPS_EXT       = $(C_DEPS_EXT)
 	@echo CPP_SRCS         = $(CPP_SRCS)
 	@echo CPP_DEPS_EXT     = $(CPP_DEPS_EXT)
+	@echo TARGET_EXE       = $(TARGET_EXE)
 	@echo LIBS             = $(LIBS)
 	@echo LBITS            = $(LBITS)
 	@echo CROSS            = $(CROSS)
