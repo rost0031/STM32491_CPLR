@@ -46,14 +46,12 @@ void HELP_printCmdSpecific(
     * it.*/
    stringstream ss_params;
 
-   if( 0 == parsed_cmd.compare("get_mode") ) {
+   if( 0 == parsed_cmd.compare("get_mode") ) {           /* get_mode cmd help */
       description = parsed_cmd + " command sends a request to the DC3 to get "
             "its current boot mode. The command returns the status of the "
             "request and the current boot mode. The possible return for: "
             "status: 0x00000000 for success or other codes for failure.\n"
             "bootmode: \n";
-
-
       ss_params << "[" << enumToString(_CB_NoBootMode) << "|"
             << enumToString(_CB_SysRomBoot) << "|"
             << enumToString(_CB_Bootloader) << "|"
@@ -61,7 +59,7 @@ void HELP_printCmdSpecific(
       description += ss_params.str();
       prototype = appName + " [connection options] --" + parsed_cmd;
       example = appName + " -i 207.27.0.75 --" + parsed_cmd;
-   } else  if( 0 == parsed_cmd.compare("set_mode") ) {
+   } else  if( 0 == parsed_cmd.compare("set_mode") ) {   /* set_mode cmd help */
       description = parsed_cmd + " command sends a request to the DC3 to set "
             "its current boot mode. Options are:";
       ss_params << "[" << enumToString(_CB_Bootloader) << "|"
@@ -76,7 +74,7 @@ void HELP_printCmdSpecific(
       prototype += ss_params.str();
       example = appName + " -i 207.27.0.75 --" + parsed_cmd + " mode=";
       example += ss_params.str();
-   } else if (  0 == parsed_cmd.compare("flash") ) {
+   } else if (  0 == parsed_cmd.compare("flash") ) {        /* flash cmd help */
       description = parsed_cmd + " command initiates a FW upgrade on the DC3 "
             "board. You have to specify the location of the FW upgrade *bin "
             "file and which FW image is going to be upgraded. File can be "
