@@ -156,12 +156,17 @@ int main(int argc, char *argv[])
          /* Options only required if running in non-interactive mode */
          ("flash", po::value<vector<string>>(&m_command)->multitoken(),
             "Flash FW to the DC3"
-            "Example: '--flash file=../some/path/DC3Appl.bin fw=DC3Appl'"
-            "Example: '--flash file=../some/path/DC3Boot.bin fw=DC3Boot'")
+            "Example: '--flash file=../some/path/DC3Appl.bin type=Application'"
+            "Example: '--flash file=../some/path/DC3Boot.bin type=Bootloader'")
 
          ("get_mode", po::value<vector<string>>(&m_command)->zero_tokens(),
             "Get current operating mode of the DC3. (Bootloader or Application) "
             "Example: '--get_mode' ")
+
+         ("set_mode", po::value<vector<string>>(&m_command),
+            "Set current operating mode of the DC3. (Bootloader or Application) "
+            "Example: '--set_mode Application' "
+            "Example: '--set_mode Bootloader' ")
       ; // End of add_options()
 
       DBG_out << "Parsing cmdline arguments...";
@@ -265,6 +270,54 @@ int main(int argc, char *argv[])
          } else {
             ERR_out << "Got DC3 error " << "0x" << std::hex
                << status << std::dec << " when trying to get bootmode.";
+         }
+      } else if (m_vm.count("set_mode")) {         /* "set_mode" cmd handling */
+         m_parsed_cmd = "set_mode";
+
+         vector<string>::const_iterator begin = m_vm["set_mode"].as<vector<string>>().begin();
+         vector<string>::const_iterator end = m_vm["set_mode"].as<vector<string>>().end();
+         vector<string>::const_iterator itr;
+          /* Check for command specific help req */
+         if( find(begin, end, "--help") != end || find(begin, end, "help") != end ) {
+            HELP_printCmdSpecific( m_parsed_cmd, appName );
+         }
+
+         CBBootMode mode = _CB_NoBootMode;
+         for( itr = begin; itr != end; ++itr ) {
+            if ( (*itr).find("=") ) {
+               vector<string> arg_pair;
+
+               CMD_tokenize( (*itr), arg_pair, "=" );
+               if (2 != arg_pair.size()) {              /* invalid arg format */
+                  ERR_out << "ERROR: found a = sign in argument but wrong number of params";
+                  HELP_printCmdSpecific( m_parsed_cmd, appName );
+               } else if ( 0 == arg_pair.at(0).compare("mode")) { /* type arg */
+                  DBG_out << "Boot mode specified as: " << arg_pair.at(1);
+                  if ( 0 == arg_pair.at(1).compare("Bootloader")) {
+                     mode = _CB_Bootloader;
+                  } else if ( 0 == arg_pair.at(1).compare("Application")) {
+                     mode = _CB_Application;
+                  } else {
+                     ERR_out << "Unsupported mode specified: " << arg_pair.at(1);
+                     HELP_printCmdSpecific( m_parsed_cmd, appName );
+                  }
+               }
+            }
+         }
+
+         /* Execute (and block) on this command */
+         if( CLI_ERR_NONE == (status = client->DC3_setMode(&statusDC3, mode))) {
+            ss.clear();
+            ss << "DC3 bootmode ";
+            if (ERR_NONE == statusDC3) {
+               ss << "was successfully set to " << enumToString(mode) << " with no errors.";
+            } else {
+               ss << "FAILED to be set with ERROR: 0x" << setw(8) << setfill('0') << hex << statusDC3 << dec;
+            }
+            CON_print(ss.str());
+         } else {
+            ERR_out << "Got DC3 error " << "0x" << std::hex
+               << status << std::dec << " when trying to set bootmode.";
          }
       } else if (m_vm.count("flash")) {               /* "flash" cmd handling */
          m_parsed_cmd = "flash";

@@ -136,9 +136,26 @@ public:
     * @return: ClientError_t status of the client executing the command.
     *    @arg  CLI_ERR_NONE: success
     *    other error codes if failure.
-    *
     */
    ClientError_t DC3_getMode( CBErrorCode *status, CBBootMode *mode );
+
+   /**
+    * @brief   Blocking cmd to set the current boot mode of DC3.
+    * @param [out] *status: CBErrorCode pointer to the returned status of from
+    * the DC3 board.
+    *    @arg  ERR_NONE: success.
+    *    other error codes if failure.
+    * @note: unless this variable is set to ERR_NONE at the completion, the
+    * results of other returned data should not be trusted.
+    *
+    * @param [in] mode: CBBootMode to the mode to set the DC3 board to.
+    *    @arg  _CB_Bootloader: the DC3 board is currently in bootloader mode.
+    *    @arg  _CB_Application: the DC3 board is currently in application mode.
+    * @return: ClientError_t status of the client executing the command.
+    *    @arg  CLI_ERR_NONE: success
+    *    other error codes if failure.
+    */
+   ClientError_t DC3_setMode(CBErrorCode *status, CBBootMode mode);
 
    /**
     * @brief   Blocking cmd to get the current boot mode of DC3.

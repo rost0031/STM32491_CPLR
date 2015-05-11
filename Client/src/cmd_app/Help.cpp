@@ -61,6 +61,21 @@ void HELP_printCmdSpecific(
       description += ss_params.str();
       prototype = appName + " [connection options] --" + parsed_cmd;
       example = appName + " -i 207.27.0.75 --" + parsed_cmd;
+   } else  if( 0 == parsed_cmd.compare("set_mode") ) {
+      description = parsed_cmd + " command sends a request to the DC3 to set "
+            "its current boot mode. Options are:";
+      ss_params << "[" << enumToString(_CB_Bootloader) << "|"
+                << enumToString(_CB_Application) << "]. ";
+      description += ss_params.str();
+      description +=
+            "The command returns the status of the "
+            "request. The possible return for: "
+            "status: 0x00000000 for success or other codes for failure.\n";
+
+      prototype = appName + " [connection options] --" + parsed_cmd + " mode=";
+      prototype += ss_params.str();
+      example = appName + " -i 207.27.0.75 --" + parsed_cmd + " mode=";
+      example += ss_params.str();
    } else if (  0 == parsed_cmd.compare("flash") ) {
       description = parsed_cmd + " command initiates a FW upgrade on the DC3 "
             "board. You have to specify the location of the FW upgrade *bin "
