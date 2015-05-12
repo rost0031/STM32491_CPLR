@@ -14,7 +14,6 @@
 /* Includes ------------------------------------------------------------------*/
 #include "qp_port.h"                                        /* for QP support */
 #include "project_includes.h"
-#include "dbg_out_cntrl.h"
 #include "cplr.h"
 #include "LWIPMgr.h"
 #include "i2c_frt.h"                                 /* For I2C functionality */

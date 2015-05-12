@@ -13,9 +13,8 @@
 #include "FreeRTOS.h"                                 /* for FreeRTOS support */
 
 #include "LWIPMgr.h"                               /* for starting LWIPMgr AO */
-#include "CommStackMgr.h"                     /* for starting CommStackMgr AO */
+#include "CommMgr.h"                               /* for starting CommMgr AO */
 #include "SerialMgr.h"                           /* for starting SerialMgr AO */
-#include "DbgMgr.h"                                 /* for starting DbgMgr AO */
 #include "I2CBusMgr.h"                           /* for starting I2CBusMgr AO */
 #include "I2C1DevMgr.h"                         /* for starting I2C1DevMgr AO */
 #include "cplr.h"                               /* for starting the CPLR task */
@@ -40,12 +39,11 @@ DBG_DEFINE_THIS_MODULE( DBG_MODL_GENERAL ); /* For debug system to ID this modul
 
 /* Private macros ------------------------------------------------------------*/
 /* Private variables and Local objects ---------------------------------------*/
-static QEvt const    *l_CommStackMgrQueueSto[30];  /**< Storage for CommStackMgr event Queue */
+static QEvt const    *l_CommMgrQueueSto[30];        /**< Storage for CommStackMgr event Queue */
 static QEvt const    *l_LWIPMgrQueueSto[200];       /**< Storage for LWIPMgr event Queue */
 static QEvt const    *l_SerialMgrQueueSto[200];     /**< Storage for SerialMgr event Queue */
 static QEvt const    *l_I2CBusMgrQueueSto[30][MAX_I2C_BUS];    /**< Storage for I2CBusMgr event Queue */
-static QEvt const    *l_I2C1DevMgrQueueSto[30];    /**< Storage for I2C1DevMgr event Queue */
-static QEvt const    *l_DbgMgrQueueSto[30];        /**< Storage for DbgMgr event Queue */
+static QEvt const    *l_I2C1DevMgrQueueSto[30];     /**< Storage for I2C1DevMgr event Queue */
 static QSubscrList   l_subscrSto[MAX_PUB_SIG];      /**< Storage for subscribe/publish event Queue */
 
 static QEvt const    *l_CPLRQueueSto[10]; /**< Storage for raw QE queue for communicating with CPLR task */
@@ -58,6 +56,8 @@ static union SmallEvents {
     uint8_t e1[sizeof(QEvt)];
     uint8_t e2[sizeof(I2CStatusEvt)];
     uint8_t e3[sizeof(I2CReadReqEvt)];
+    uint8_t e4[sizeof(I2CAddrEvt)];
+    uint8_t e5[sizeof(I2CReadMemReqEvt)];
 } l_smlPoolSto[50];                     /* storage for the small event pool */
 
 /**
@@ -66,10 +66,9 @@ static union SmallEvents {
  */
 static union MediumEvents {
     void   *e0;                                       /* minimum event size */
-    uint8_t e1[sizeof(MenuEvt)];
-    uint8_t e2[sizeof(I2CAddrEvt)];
-    uint8_t e3[sizeof(I2CReadMemReqEvt)];
-} l_medPoolSto[50];                    /* storage for the medium event pool */
+    uint8_t e1[sizeof(I2CWriteReqEvt)];
+    uint8_t e2[sizeof(I2CReadDoneEvt)];
+} l_medPoolSto[10];                    /* storage for the medium event pool */
 
 /**
  * \union Large Events.
@@ -79,8 +78,8 @@ static union LargeEvents {
     void   *e0;                                       /* minimum event size */
     uint8_t e1[sizeof(EthEvt)];
     uint8_t e2[sizeof(LrgDataEvt)];
-    uint8_t e3[sizeof(I2CWriteReqEvt)];
 } l_lrgPoolSto[100];                    /* storage for the large event pool */
+
 
 /* Private function prototypes -----------------------------------------------*/
 /* Private functions ---------------------------------------------------------*/
@@ -190,8 +189,7 @@ int main(void)
     }
 
     I2C1DevMgr_ctor();
-    CommStackMgr_ctor();
-    DbgMgr_ctor();                           /* This AO should start up last */
+    CommMgr_ctor();
 
     dbg_slow_printf("Initializing QF\n");
     QF_init();       /* initialize the framework and the underlying RT kernel */
@@ -205,8 +203,7 @@ int main(void)
     QS_OBJ_DICTIONARY(l_LWIPMgrQueueSto);
     QS_OBJ_DICTIONARY(l_I2CBusMgrQueueSto);
     QS_OBJ_DICTIONARY(l_I2C1DevMgrQueueSto);
-    QS_OBJ_DICTIONARY(l_CommStackMgrQueueSto);
-    QS_OBJ_DICTIONARY(l_DbgMgrQueueSto);
+    QS_OBJ_DICTIONARY(l_CommMgrQueueSto);
 
     QF_psInit(l_subscrSto, Q_DIM(l_subscrSto));     /* init publish-subscribe */
 
@@ -238,14 +235,6 @@ int main(void)
           "LWIPMgr"                                       /* Name of the task */
     );
 
-    QACTIVE_START(AO_DbgMgr,
-          DBG_MGR_PRIORITY,                                       /* priority */
-          l_DbgMgrQueueSto, Q_DIM(l_DbgMgrQueueSto),             /* evt queue */
-          (void *)0, THREAD_STACK_SIZE,         /* per-thread stack size */
-          (QEvt *)0,                               /* no initialization event */
-          "DbgMgr"                                        /* Name of the task */
-    );
-
     /* Iterate though the available I2C busses on the system and start an
      * instance of the I2CBusMgr AO for each bus.
      * WARNING!!!: make sure that the priorities for them are all together since
@@ -269,14 +258,6 @@ int main(void)
           "I2CDevMgr"                                     /* Name of the task */
     );
 
-    QACTIVE_START(AO_CommStackMgr,
-          COMM_MGR_PRIORITY,                                      /* priority */
-          l_CommStackMgrQueueSto, Q_DIM(l_CommStackMgrQueueSto), /* evt queue */
-          (void *)0, THREAD_STACK_SIZE,              /* per-thread stack size */
-          (QEvt *)0,                               /* no initialization event */
-          "CommMgr"                                       /* Name of the task */
-    );
-
     xTaskCreate(
           CPLR_Task,
           ( const char * ) "CPLRTask",                    /* Name of the task */
@@ -285,6 +266,15 @@ int main(void)
           CPLR_PRIORITY,                                          /* priority */
           ( xTaskHandle * ) &xHandle_CPLR                      /* Task handle */
     );
+
+    QACTIVE_START(AO_CommMgr,
+          COMM_MGR_PRIORITY,                                      /* priority */
+          l_CommMgrQueueSto, Q_DIM(l_CommMgrQueueSto),           /* evt queue */
+          (void *)0, THREAD_STACK_SIZE,              /* per-thread stack size */
+          (QEvt *)0,                               /* no initialization event */
+          "CommMgr"                                       /* Name of the task */
+    );
+
 
     log_slow_printf("Starting QPC. All logging from here on out shouldn't show 'SLOW'!!!\n\n");
     QF_run();                                       /* run the QF application */

@@ -157,7 +157,7 @@ ClientError_t ClientApi::DC3_setMode(CBErrorCode *status, CBBootMode mode)
    uint8_t *buffer = new uint8_t(size);                    /* Allocate buffer */
    unsigned int bufferLen = 0;
    bufferLen = CBBasicMsg_write_delimited_to(&m_basicMsg, buffer, 0);
-   bufferLen = CBFlashMetaPayloadMsg_write_delimited_to(&m_flashMetaPayloadMsg, buffer, bufferLen);
+   bufferLen = CBBootModePayloadMsg_write_delimited_to(&m_bootmodePayloadMsg, buffer, bufferLen);
    l_pComm->write_some((char *)buffer, bufferLen);                /* Send Req */
 
    delete buffer;                                            /* Delete buffer */

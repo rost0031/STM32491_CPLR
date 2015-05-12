@@ -86,8 +86,12 @@ typedef enum CBErrors
    ERR_COMM_INVALID_MSG_LEN                                    = 0x00040001,
    ERR_COMM_UNIMPLEMENTED_MSG                                  = 0x00040002,
    ERR_COMM_FLASHMGR_TIMEOUT                                   = 0x00040003,
+   ERR_COMM_INVALID_APPL_CRC                                   = 0x00040004,
+   ERR_COMM_INVALID_APPL_SIZE                                  = 0x00040005,
+   ERR_COMM_INVALID_APPL_CRC_MISMATCH                          = 0x00040006,
+   ERR_COMM_INVALID_BOOTMODE_REQUESTED                         = 0x00040007,
 
-   /* MENU error category                        0x00050000 - 0x0005FFFF */
+   /* Application CommMgr error category          0x00050000 - 0x0005FFFF */
    ERR_MENU_NODE_STORAGE_ALLOC_NULL                            = 0x00050000,
    ERR_MENU_TEXT_STORAGE_ALLOC_NULL                            = 0x00050001,
    ERR_MENU_UNKNOWN_CMD                                        = 0x00050002,
@@ -140,6 +144,8 @@ typedef enum CBErrors
    ERR_MSG_ROUTE_INVALID                                       = 0x000A0000,
    ERR_MSG_UNKNOWN_BASIC                                       = 0x000A0001,
    ERR_MSG_UNEXPECTED_PAYLOAD                                  = 0x000A0002,
+   ERR_MSG_UNSUPPORTED_IN_BOOTLOADER                           = 0x000A0003,
+   ERR_MSG_UNSUPPORTED_IN_APPLICATION                          = 0x000A0004,
 
    /* Memory error category                      0x000B0000 - 0x000BFFFF */
    ERR_MEM_NULL_VALUE                                          = 0x000B0000,

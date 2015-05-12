@@ -193,7 +193,7 @@ BASE64_DIR              = $(COMMON_CLI_SYS_DIR)/libb64
 # these get passed down to LWIP as a string and $(VAR)s won't be evaluated.
 LWIP_PORT_FOR_LWIP      = ../../bsp/qpc_lwip_port
 BSP_DIR_FOR_LWIP        = ../../bsp/runtime
-LWIP_SRC_DIR            = ../../../Application/src
+LWIP_SRC_DIR            = ../../../Bootloader/src
 
 # Coupler Board API directory
 CB_API_DIR                  = $(COMMON_CLI_SYS_DIR)/cb_api
@@ -351,12 +351,7 @@ C_SRCS                  = \
                           stm32f4xx_syscfg.c \
                           stm32f4xx_tim.c \
                           stm32f4xx_usart.c
-			      		
-			      		
-# Temporarily not compiled files.  These will need to be added back in before
-# everything is done but for now, leave out. HR			      		
-#			      		flash_if.c \
-			      		
+
 # Add these back in once that hardware is actually needed. HR.			      		
 #			      		stm32f4xx_adc.c  \
 #			      		stm32f4xx_can.c \
@@ -381,7 +376,6 @@ C_SRCS                  = \
 						
 # C++ source files
 CPP_SRCS 				:=	$(wildcard *.cpp)
-
 
 LD_SCRIPT 				:= $(BSP_DIR)/linkerscript/stm32f439flash.ld
 LDFLAGS  				:= -T$(LDSCRIPT)

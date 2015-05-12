@@ -1077,26 +1077,10 @@ static err_t LWIP_tcpRecv(
         es->p = p;
 
         if ( LWIPMgr_logPort == tpcb->local_port ) {
-    #if CPLR_APP
-            /* This eth port can only receive menu commands */
-            MenuEvt *menuEvt = Q_NEW( MenuEvt, DBG_MENU_REQ_SIG );
-
-            /* 2. Fill the msg payload with payload (the actual received msg)*/
-            MEMCPY(
-                  menuEvt->buffer,
-                  p->payload,
-                  (p->tot_len)-1
+            WRN_printf(
+                "Received data on LOG port %d. Ignoring.\n",
+                tpcb->local_port
             );
-            menuEvt->bufferLen = (p->tot_len)-1;
-            menuEvt->msgSrc = _CB_EthLog;
-
-            /* 3. Publish the newly created event to current AO */
-            QF_PUBLISH( (QEvent *)menuEvt, AO_LWIPMgr );
-    #elif CPLR_BOOT
-            LOG_printf("Ignoring.\n");
-    #else
-            #error "Invalid build.  CPLR_APP or CPLR_BOOT must be specified"
-    #endif
         } else if ( LWIPMgr_sysPort == tpcb->local_port ) {
             LOG_printf(
                 "Received data on SYS port %d.\n",
@@ -1140,26 +1124,10 @@ static err_t LWIP_tcpRecv(
             es->p = p;
 
             if ( LWIPMgr_logPort == tpcb->local_port ) {
-    #if CPLR_APP
-                /* This eth port can only receive menu commands */
-                MenuEvt *menuEvt = Q_NEW( MenuEvt, DBG_MENU_REQ_SIG );
-
-                /* 2. Fill the msg payload with payload (the actual received msg)*/
-                MEMCPY(
-                      menuEvt->buffer,
-                      p->payload,
-                      (p->tot_len)-1
+                 WRN_printf(
+                    "Received data on LOG port %d. Ignoring.\n",
+                    tpcb->local_port
                 );
-                menuEvt->bufferLen = (p->tot_len)-1;
-                menuEvt->msgSrc = _CB_EthLog;
-
-                /* 3. Publish the newly created event to current AO */
-                QF_PUBLISH( (QEvent *)menuEvt, AO_LWIPMgr );
-    #elif CPLR_BOOT
-        LOG_printf("Ignoring.\n");
-    #else
-        #error "Invalid build.  CPLR_APP or CPLR_BOOT must be specified"
-    #endif
             } else if ( LWIPMgr_sysPort == tpcb->local_port ) {
                 DBG_printf(
                     "Received data on SYS port %d.\n",

@@ -117,7 +117,7 @@ QS_OBJS    					=
 # NOTE: the Makefile expects that the FR_PORT environment variable is defined
 # and points to the FREERTOS Port installation directory
 #
-FR_TOP_DIR                  = ../../../../../../Firmware/Application/src/sys/FreeRTOSV8.1.2/FreeRTOS
+FR_TOP_DIR                  = ../../../../../../Application/src/sys/FreeRTOSV8.1.2/FreeRTOS
 FR_SRC_DIR                  = $(FR_TOP_DIR)/Source
 FR_INC_DIR                  = $(FR_SRC_DIR)/include
 FR_MEM_DIR                  = $(FR_SRC_DIR)/portable/MemMang

@@ -46,17 +46,12 @@
 #include "base64_wrapper.h"                            /* For base64 encoding */
 #include "SerialMgr.h"
 #include "LWIPMgr.h"
-#include "FlashMgr.h"
-#include "flash.h"
-#include "crc32compat.h"
 
 /* Compile-time called macros ------------------------------------------------*/
 Q_DEFINE_THIS_FILE;                 /* For QSPY to know the name of this file */
 DBG_DEFINE_THIS_MODULE( DBG_MODL_COMM );/* For debug system to ID this module */
 
 /* Private typedefs ----------------------------------------------------------*/
-typedef void (*pFunction)(void);
-
 
 /**
  * \brief CommMgr "class"
@@ -167,16 +162,11 @@ static QState CommMgr_Busy(CommMgr * const me, QEvt const * const e);
  * machine is going next.
  */
 static QState CommMgr_ValidateMsg(CommMgr * const me, QEvt const * const e);
-static QState CommMgr_WaitForRespFromFlashMgr(CommMgr * const me, QEvt const * const e);
 
 
 /* Private defines -----------------------------------------------------------*/
-#define LWIP_ALLOWED
-
 /* Private macros ------------------------------------------------------------*/
 /* Private variables and Local objects ---------------------------------------*/
-pFunction Jump_To_Application;
-uint32_t JumpAddress;
 
 static CommMgr l_CommMgr; /* the single instance of the Interstage active object */
 
@@ -301,27 +291,6 @@ static QState CommMgr_Active(CommMgr * const me, QEvt const * const e) {
                 SEC_TO_TICKS( HL_MAX_TOUT_SEC_COMM_MSG_PROCESS )
             );
             QTimeEvt_disarm(&me->commOpTimerEvt);
-            status_ = Q_HANDLED();
-            break;
-        }
-        /* ${AOs::CommMgr::SM::Active::BOOT_APPL} */
-        case BOOT_APPL_SIG: {
-            dbg_slow_printf("Got BOOT_APPL sig. Booting Application...\n");
-            /* If we made it here, no errors have been encountered and we
-             * can safely proceed to boot the Application FW image */
-
-            /* Disable the Systick ISR */
-            SysTick->CTRL &= ~(SysTick_CTRL_TICKINT_Msk   | SysTick_CTRL_ENABLE_Msk);
-
-            /* Jump to user application */
-            JumpAddress = *(__IO uint32_t*) (FLASH_APPL_START_ADDR + 4);
-            Jump_To_Application = (pFunction) JumpAddress;
-
-            /* Initialize user application's Stack Pointer */
-            __set_MSP(*(__IO uint32_t*) FLASH_APPL_START_ADDR);
-
-            /* After this call, we are running the Application FW image */
-            Jump_To_Application();
             status_ = Q_HANDLED();
             break;
         }
@@ -654,171 +623,33 @@ static QState CommMgr_ValidateMsg(CommMgr * const me, QEvt const * const e) {
                 /* Don't change the basicMsg name since it should be the same in all cases. */
                 me->basicMsg._msgPayload = me->msgPayloadName;
                 me->payloadMsgUnion.bootmodePayload._errorCode = me->errorCode;
-                me->payloadMsgUnion.bootmodePayload._bootMode  = _CB_Bootloader; // This is the bootloader
+                me->payloadMsgUnion.bootmodePayload._bootMode  = _CB_Application; // This is the bootloader
                 DBG_printf("Setting bootMode payload with bootmode: %d\n", me->payloadMsgUnion.bootmodePayload._bootMode);
                 status_ = Q_TRAN(&CommMgr_Idle);
             }
             /* ${AOs::CommMgr::SM::Active::Busy::ValidateMsg::MSG_PROCESS::[SetBootMode?]} */
             else if (_CBSetBootModeMsg == me->basicMsg._msgName) {
-                DBG_printf("_CBSetBootModeMsg decoded, attempting to decode payload (if exists)\n");
-
-                /* ${AOs::CommMgr::SM::Active::Busy::ValidateMsg::MSG_PROCESS::[SetBootMode?]::[ValidPayload?]} */
-                if (_CBBootModePayloadMsg == me->msgPayloadName) {
-                    /* Has to be set after checking for a valid payload */
-                    me->msgPayloadName = _CBStatusPayloadMsg;
-                    me->basicMsg._msgPayload = me->msgPayloadName;
-                    /* ${AOs::CommMgr::SM::Active::Busy::ValidateMsg::MSG_PROCESS::[SetBootMode?]::[ValidPayload?]::[Application?]} */
-                    if (_CB_Application == me->payloadMsgUnion.bootmodePayload._bootMode) {
-                        /* Read the application CRC */
-                        uint32_t storedCRC = FLASH_readApplCRC();
-                        /* ${AOs::CommMgr::SM::Active::Busy::ValidateMsg::MSG_PROCESS::[SetBootMode?]::[ValidPayload?]::[Application?]::[ValidCRC?]} */
-                        if (storedCRC != 0xFFFFFFFF || storedCRC != 0x00000000) {
-                            /* Read the application size */
-                            uint32_t storedSize = FLASH_readApplSize();
-
-                            /* ${AOs::CommMgr::SM::Active::Busy::ValidateMsg::MSG_PROCESS::[SetBootMode?]::[ValidPayload?]::[Application?]::[ValidCRC?]::[ValidSize?]} */
-                            if (storedSize != 0xFFFFFFFF || storedSize != 0x00000000) {
-                                CRC_ResetDR();
-                                uint32_t crcCheck = CRC32_Calc(
-                                    (uint8_t *)FLASH_APPL_START_ADDR,
-                                    storedSize
-                                );
-                                /* ${AOs::CommMgr::SM::Active::Busy::ValidateMsg::MSG_PROCESS::[SetBootMode?]::[ValidPayload?]::[Application?]::[ValidCRC?]::[ValidSize?]::[CRCmatch?]} */
-                                if (crcCheck == storedCRC) {
-                                    me->errorCode = ERR_NONE;
-                                    DBG_printf("CRC check passed, booting to Application FW image\n");
-
-                                    /* Post to self to boot to application but still have enough time to send a Done */
-                                    QEvt *evt = Q_NEW(QEvt, BOOT_APPL_SIG);
-                                    QACTIVE_POST(AO_CommMgr, (QEvt *)(evt), AO_CommMgr);
-                                    status_ = Q_TRAN(&CommMgr_Idle);
-                                }
-                                /* ${AOs::CommMgr::SM::Active::Busy::ValidateMsg::MSG_PROCESS::[SetBootMode?]::[ValidPayload?]::[Application?]::[ValidCRC?]::[ValidSize?]::[else]} */
-                                else {
-                                    me->errorCode = ERR_COMM_INVALID_APPL_CRC_MISMATCH;
-                                    ERR_printf(
-                                        "Stored Application CRC (0x%08x) doesn't match calculated (0x%08x). Reflash the Application FW image. Error: 0x%08x\n",
-                                        storedCRC, crcCheck, me->errorCode
-                                    );
-                                    status_ = Q_TRAN(&CommMgr_Idle);
-                                }
-                            }
-                            /* ${AOs::CommMgr::SM::Active::Busy::ValidateMsg::MSG_PROCESS::[SetBootMode?]::[ValidPayload?]::[Application?]::[ValidCRC?]::[else]} */
-                            else {
-                                me->errorCode = ERR_COMM_INVALID_APPL_SIZE;
-                                ERR_printf("Invalid stored Application FW image size: 0x%08x. Error: 0x%08x\n",
-                                    storedSize, me->errorCode);
-                                status_ = Q_TRAN(&CommMgr_Idle);
-                            }
-                        }
-                        /* ${AOs::CommMgr::SM::Active::Busy::ValidateMsg::MSG_PROCESS::[SetBootMode?]::[ValidPayload?]::[Application?]::[else]} */
-                        else {
-                            me->errorCode = ERR_COMM_INVALID_APPL_CRC;
-                            me->payloadMsgUnion.statusPayload._errorCode = me->errorCode;
-                            ERR_printf("Invalid stored Application FW image CRC: 0x%08x. Error: 0x%08x\n", storedCRC, me->errorCode);
-                            status_ = Q_TRAN(&CommMgr_Idle);
-                        }
-                    }
-                    /* ${AOs::CommMgr::SM::Active::Busy::ValidateMsg::MSG_PROCESS::[SetBootMode?]::[ValidPayload?]::[Bootloader?]} */
-                    else if (_CB_Bootloader == me->payloadMsgUnion.bootmodePayload._bootMode) {
-                        me->errorCode = ERR_NONE;
-                        DBG_printf("Already in bootloader mode\n");
-                        status_ = Q_TRAN(&CommMgr_Idle);
-                    }
-                    /* ${AOs::CommMgr::SM::Active::Busy::ValidateMsg::MSG_PROCESS::[SetBootMode?]::[ValidPayload?]::[else]} */
-                    else {
-                        me->errorCode = ERR_COMM_INVALID_BOOTMODE_REQUESTED;
-                        ERR_printf("Unsupported bootmode requested (%d). Error: 0x%08x\n",
-                            me->payloadMsgUnion.bootmodePayload._bootMode, me->errorCode
-                        );
-                        status_ = Q_TRAN(&CommMgr_Idle);
-                    }
-                }
-                /* ${AOs::CommMgr::SM::Active::Busy::ValidateMsg::MSG_PROCESS::[SetBootMode?]::[else]} */
-                else {
-                    /* Has to be set after checking for a valid payload */
-                    me->msgPayloadName = _CBStatusPayloadMsg;
-                    me->basicMsg._msgPayload = me->msgPayloadName;
-
-                    me->errorCode = ERR_MSG_UNEXPECTED_PAYLOAD;
-                    ERR_printf(
-                        "Invalid payload for SetBootMode.  Expected BootmodePayload (%d), got (%d). Error: 0x%08x\n",
-                        _CBBootModePayloadMsg, me->msgPayloadName, me->errorCode
-                    );
-
-                    status_ = Q_TRAN(&CommMgr_Idle);
-                }
-            }
-            /* ${AOs::CommMgr::SM::Active::Busy::ValidateMsg::MSG_PROCESS::[Flash?]} */
-            else if (_CBFlashMsg == me->basicMsg._msgName) {
                 me->errorCode = ERR_NONE;
 
-                /* ${AOs::CommMgr::SM::Active::Busy::ValidateMsg::MSG_PROCESS::[Flash?]::[FlashMetaPayloa~} */
-                if (_CBFlashMetaPayloadMsg == me->msgPayloadName) {
-                    /* The flash meta payload is the start of the FW update.  The meta payload contains
-                     * all the information about the coming fw data.  We need to store this so it can be
-                     * used to keep track of the FW flash process. */
+                DBG_printf("_CBSetBootModeMsg decoded, attempting to decode payload (if exists)\n");
 
-                    /* 1. Create a FWMetaEvt and send it along to FlashMgr AO to prep the flash */
-                    FWMetaEvt *evt = Q_NEW(FWMetaEvt, FLASH_OP_START_SIG);
-                    evt->imageCRC  = me->payloadMsgUnion.flashMetaPayload._imageCrc;
-                    evt->imageMaj  = me->payloadMsgUnion.flashMetaPayload._imageMaj;
-                    evt->imageMin  = me->payloadMsgUnion.flashMetaPayload._imageMin;
-                    evt->imageSize = me->payloadMsgUnion.flashMetaPayload._imageSize;
-                    evt->imageType = me->payloadMsgUnion.flashMetaPayload._imageType;
-                    evt->imageNumPackets = me->payloadMsgUnion.flashMetaPayload._imageNumPackets;
+                /* Compose Done response.  We can re-use the current structure and it will be used by
+                 * the exit action of the parent state to send the msg.  Here, we only set up fields
+                 * that are specific to this response. We can also destructively change the payload
+                 * name since we are sending a response right after this. */
+                me->msgPayloadName = _CBStatusPayloadMsg;
 
-                    evt->imageDatetimeLen = me->payloadMsgUnion.flashMetaPayload._imageDatetime_len;
-                    MEMCPY(
-                        evt->imageDatetime,
-                        me->payloadMsgUnion.flashMetaPayload._imageDatetime,
-                        evt->imageDatetimeLen
-                    );
-                    QACTIVE_POST(AO_FlashMgr, (QEvt *)(evt), AO_CommMgr);
+                /* Don't change the basicMsg name since it should be the same in all cases. */
+                me->basicMsg._msgPayload = me->msgPayloadName;
+                me->payloadMsgUnion.statusPayload._errorCode = me->errorCode;
+                DBG_printf("Setting status payload with error code: %d\n", me->payloadMsgUnion.statusPayload._errorCode);
+                status_ = Q_TRAN(&CommMgr_Idle);
+            }
+            /* ${AOs::CommMgr::SM::Active::Busy::ValidateMsg::MSG_PROCESS::[Unsupported?]} */
+            else if (_CBFlashMsg == me->basicMsg._msgName) {
+                me->errorCode = ERR_MSG_UNSUPPORTED_IN_APPLICATION;
 
-                    /* Compose Done response.  We can re-use the current structure and it will be used by
-                     * the exit action of the parent state to send the msg.  Here, we only set up fields
-                     * that are specific to this response. We can also destructively change the payload
-                     * name since we are sending a response right after this. */
-                    me->msgPayloadName = _CBStatusPayloadMsg;
-
-                    /* Don't change the basicMsg name since it should be the same in all cases. */
-                    me->basicMsg._msgPayload = me->msgPayloadName;
-                    status_ = Q_TRAN(&CommMgr_WaitForRespFromFlashMgr);
-                }
-                /* ${AOs::CommMgr::SM::Active::Busy::ValidateMsg::MSG_PROCESS::[Flash?]::[FlashDataPayloa~} */
-                else if (_CBFlashDataPayloadMsg == me->msgPayloadName) {
-                    /* The flash data payload is used to transfer the FW data packets to FlashMgr AO. */
-
-                    /* 1. Create a FWMetaEvt and send it along to FlashMgr AO to prep the flash */
-                    FWDataEvt *evt = Q_NEW(FWDataEvt, FLASH_DATA_SIG);
-                    evt->dataCRC  = me->payloadMsgUnion.flashDataPayload._dataCrc;
-                    evt->dataLen  = me->payloadMsgUnion.flashDataPayload._dataBuf_len;
-                    evt->seqCurr  = me->payloadMsgUnion.flashDataPayload._seqCurr;
-                    MEMCPY(
-                        evt->dataBuf,
-                        me->payloadMsgUnion.flashDataPayload._dataBuf,
-                        evt->dataLen
-                    );
-                    QACTIVE_POST(AO_FlashMgr, (QEvt *)(evt), AO_CommMgr);
-
-                    /* Compose Done response.  We can re-use the current structure and it will be used by
-                     * the exit action of the parent state to send the msg.  Here, we only set up fields
-                     * that are specific to this response. We can also destructively change the payload
-                     * name since we are sending a response right after this. */
-                    me->msgPayloadName = _CBStatusPayloadMsg;
-
-                    /* Don't change the basicMsg name since it should be the same in all cases. */
-                    me->basicMsg._msgPayload = me->msgPayloadName;
-                    status_ = Q_TRAN(&CommMgr_WaitForRespFromFlashMgr);
-                }
-                /* ${AOs::CommMgr::SM::Active::Busy::ValidateMsg::MSG_PROCESS::[Flash?]::[else]} */
-                else {
-                    me->errorCode = ERR_MSG_UNEXPECTED_PAYLOAD;
-                    WRN_printf("Unexpected Flash payload %d for FlashMsg. Error: 0x%08x\n",
-                        me->msgPayloadName, me->errorCode);
-                    status_ = Q_TRAN(&CommMgr_Idle);
-                }
+                status_ = Q_TRAN(&CommMgr_Idle);
             }
             /* ${AOs::CommMgr::SM::Active::Busy::ValidateMsg::MSG_PROCESS::[else]} */
             else {
@@ -842,86 +673,6 @@ static QState CommMgr_ValidateMsg(CommMgr * const me, QEvt const * const e) {
 
                 status_ = Q_TRAN(&CommMgr_Idle);
             }
-            break;
-        }
-        default: {
-            status_ = Q_SUPER(&CommMgr_Busy);
-            break;
-        }
-    }
-    return status_;
-}
-/*${AOs::CommMgr::SM::Active::Busy::WaitForRespFromF~} .....................*/
-static QState CommMgr_WaitForRespFromFlashMgr(CommMgr * const me, QEvt const * const e) {
-    QState status_;
-    switch (e->sig) {
-        /* ${AOs::CommMgr::SM::Active::Busy::WaitForRespFromF~} */
-        case Q_ENTRY_SIG: {
-            QTimeEvt_rearm(                                       /* Re-arm timer on entry */
-                &me->commOpTimerEvt,
-                SEC_TO_TICKS( LL_MAX_TOUT_SEC_COMM_MSG_FLASH_OP )
-            );
-
-            me->errorCode = ERR_COMM_FLASHMGR_TIMEOUT; /* Set the error in case we timeout */
-            status_ = Q_HANDLED();
-            break;
-        }
-        /* ${AOs::CommMgr::SM::Active::Busy::WaitForRespFromF~} */
-        case Q_EXIT_SIG: {
-            QTimeEvt_disarm(&me->commOpTimerEvt);                  /* Disarm timer on exit */
-
-            if ( ERR_NONE != me->errorCode ) {
-                ERR_printf("Leaving state with error: 0x%08x\n", me->errorCode);
-            }
-            status_ = Q_HANDLED();
-            break;
-        }
-        /* ${AOs::CommMgr::SM::Active::Busy::WaitForRespFromF~::FLASH_OP_DONE} */
-        case FLASH_OP_DONE_SIG: {
-            me->errorCode = ((FlashStatusEvt const *)e)->errorCode;
-            me->payloadMsgUnion.statusPayload._errorCode = me->errorCode;
-            if ( ERR_NONE != me->errorCode ) {
-                WRN_printf("Got FLASH_OP_DONE with status: 0x%08x\n", me->errorCode);
-            }
-            status_ = Q_TRAN(&CommMgr_Idle);
-            break;
-        }
-        /* ${AOs::CommMgr::SM::Active::Busy::WaitForRespFromF~::FLASH_FW_DONE} */
-        case FLASH_FW_DONE_SIG: {
-            me->errorCode = ((FWMetaEvt const *)e)->errorCode;
-
-            /* Overwrite the done response since the FW flashing is complete; we have to send the
-             * metadata back so the client can be happy that we did things correctly.  We can
-             * re-use the current structure and it will be used by the exit action of the parent
-             * state to send the msg.  Here, we only set up fields that are specific to this
-             * response. We can also destructively change the payload name since we are sending
-             * a response right after this. */
-            me->msgPayloadName = _CBFlashMetaPayloadMsg;
-            me->basicMsg._msgPayload = me->msgPayloadName;
-
-            /* Set up the payload msg here */
-            me->payloadMsgUnion.flashMetaPayload._errorCode = me->errorCode;
-            me->payloadMsgUnion.flashMetaPayload._imageCrc  = ((FWMetaEvt const *)e)->imageCRC;
-            me->payloadMsgUnion.flashMetaPayload._imageMaj  = ((FWMetaEvt const *)e)->imageMaj;
-            me->payloadMsgUnion.flashMetaPayload._imageMin  = ((FWMetaEvt const *)e)->imageMin;
-            me->payloadMsgUnion.flashMetaPayload._imageSize = ((FWMetaEvt const *)e)->imageSize;
-            me->payloadMsgUnion.flashMetaPayload._imageType = ((FWMetaEvt const *)e)->imageType;
-            MEMCPY(
-                me->payloadMsgUnion.flashMetaPayload._imageDatetime,
-                ((FWMetaEvt const *)e)->imageDatetime,
-                CB_DATETIME_LEN
-            );
-
-            DBG_printf("Setting flash meta payload with error code: %d\n", me->payloadMsgUnion.flashMetaPayload._errorCode);
-
-            status_ = Q_TRAN(&CommMgr_Idle);
-            break;
-        }
-        /* ${AOs::CommMgr::SM::Active::Busy::WaitForRespFromF~::COMM_OP_TIMEOUT} */
-        case COMM_OP_TIMEOUT_SIG: {
-            ERR_printf("COMM_OP_TIMEOUT trying to process %d basic msg, error: 0x%08x\n",
-                me->basicMsg._msgName, me->errorCode);
-            status_ = Q_TRAN(&CommMgr_Idle);
             break;
         }
         default: {

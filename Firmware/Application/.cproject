@@ -42,8 +42,9 @@
 							</tool>
 						</toolChain>
 					</folderInfo>
+					<fileInfo id="cdt.managedbuild.toolchain.gnu.cross.base.897717134.2101209584" name="CommMgr_gen.h" rcbsApplicability="disable" resourcePath="src/app/CommMgr_gen.h" toolsToInvoke=""/>
 					<sourceEntries>
-						<entry excluding="Common/sys/qpc_5.3.1/ports/win32|Common/sys/qpc_5.3.1/ports/80x86|Common/sys/qpc_5.3.1/examples|Common/sys/qpc_5.3.1/ports/posix|Common/sys/qpc_5.3.1/ports/ucos2|Common/sys/qpc_5.3.1/ports/arm-cm|Common/sys/qpc_5.3.1/ports/lint" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
+						<entry excluding="src/app/CommMgr_gen.h|src/app/CommMgr_gen.c|Common/sys/qpc_5.3.1/ports/win32|Common/sys/qpc_5.3.1/ports/80x86|Common/sys/qpc_5.3.1/examples|Common/sys/qpc_5.3.1/ports/posix|Common/sys/qpc_5.3.1/ports/ucos2|Common/sys/qpc_5.3.1/ports/arm-cm|Common/sys/qpc_5.3.1/ports/lint" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
 					</sourceEntries>
 				</configuration>
 			</storageModule>
@@ -57,5 +58,9 @@
 		<project id="CPLR_Application.null.180132196" name="CPLR_Application"/>
 	</storageModule>
 	<storageModule moduleId="org.eclipse.cdt.core.LanguageSettingsProviders"/>
-	<storageModule moduleId="refreshScope"/>
+	<storageModule moduleId="refreshScope" versionNumber="2">
+		<configuration configurationName="Default">
+			<resource resourceType="PROJECT" workspacePath="/CPLR_Application"/>
+		</configuration>
+	</storageModule>
 </cproject>

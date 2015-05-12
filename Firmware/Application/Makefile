@@ -58,8 +58,10 @@ IPADDR2                 = 0
 IPADDR3                 = $(IP)
 endif
 
+NOW                    := $(shell date +%Y%m%d%H%M%S | tr ' :' '__')
+
 # Output file basename (should be the same as the directory name)
-PROJECT_NAME            = CBApp
+PROJECT_NAME            = DC3$(FW)
 
 # This define specifies that the code that's being built is the application code
 # as opposed to the bootloader code.  This is used by some shared code to leave/
@@ -174,7 +176,7 @@ LWIP_SRC_DIR            = ../../../Application/src
 # SYS and RTOS Directories
 #-------------------------------------------------------------------------------
 # QPC directories
-QPC_DIR                 = $(COMMON_CLI_SYS_DIR)/qpc_5.3.1
+QPC_DIR                 = $(COMMON_FW_SYS_DIR)/qpc_5.3.1
 QP_PORT_DIR             = $(QPC_DIR)/ports/freertos/gnu
 QP_FR_CONF_DIR          = $(QPC_DIR)/ports/freertos/conf
 
@@ -259,10 +261,7 @@ MENU_CSRCS              = ktree.c \
 # it needs to compile.
 #-------------------------------------------------------------------------------
 VPATH                   = $(APP_DIR) \
-                          $(APP_COMM_DIR) \
                           $(APP_CPLR_DIR) \
-                          $(APP_DBG_DIR) \
-                          $(APP_MENU_DIRS) \
                           \
                           $(BSP_DIR) \
                           $(COMMON_FW_BSP_DIR) \
@@ -282,7 +281,6 @@ VPATH                   = $(APP_DIR) \
                           $(STM32F4XX_STD_PERIPH_DIR)/src \
                           \
                           $(CON_OUT_DIR) \
-                          $(KTREE_DIR) \
                           $(DBG_CNTRL_DIR) \
                           $(DB_SETTINGS_DIR)
 
@@ -297,9 +295,6 @@ INCLUDES                = -I$(SRC_DIR) \
                           \
                           -I$(APP_COMM_DIR) \
                           -I$(APP_CPLR_DIR) \
-                          -I$(APP_DBG_DIR) \
-                          \
-                          $(APP_MENU_INCLUDES) \
                           \
                           -I$(QPC_DIR)/include \
                           -I$(QPC_DIR)/qf/source \
@@ -331,9 +326,8 @@ INCLUDES                = -I$(SRC_DIR) \
                           -I$(STM32F4XX_STD_PERIPH_DIR)/inc \
                           \
                           -I$(COMMON_FW_SYS_DIR) \
-                          -I$(CON_OUT_DIR) \
-                          -I$(KTREE_DIR) \
                           -I$(DBG_CNTRL_DIR) \
+                          -I$(CON_OUT_DIR) \
                           -I$(DB_SETTINGS_DIR) \
                           \
                           -I$(FR_INC_DIR) \
@@ -359,7 +353,7 @@ INCLUDES                = -I$(SRC_DIR) \
 DEFINES                += -DSTM32F429_439xx \
                           -DUSE_STDPERIPH_DRIVER \
                           -DLWIP_TCP=1 \
-                          -DFLASH_BASE=0x08000000
+                          -DFLASH_BASE=0x08040000
 						  
 #-------------------------------------------------------------------------------
 # All source files that need to be compiled
@@ -375,10 +369,7 @@ ASM_SRCS               := \
 C_SRCS                  = \
                           main.c \
                           no_heap.c \
-                          comm.c \
                           cplr.c \
-                          \
-                          $(MENU_CSRCS) \
                           \
                           bsp.c \
                           system_stm32f4xx.c \
@@ -402,12 +393,15 @@ C_SRCS                  = \
                           dbg_cntrl.c \
                           db.c \
                           \
+                          cencode.c \
+                          cdecode.c \
+                          base64_wrapper.c \
+                          \
                           LWIPMgr.c \
                           I2CBusMgr.c \
                           I2C1DevMgr.c \
                           SerialMgr.c \
-                          CommStackMgr.c \
-                          DbgMgr.c \
+                          CommMgr.c \
                           \
                           misc.c  \
                           stm32f4xx_crc.c \
@@ -520,7 +514,8 @@ CPP_OBJS     = $(patsubst %.cpp,%.o,$(CPP_SRCS))
 
 TARGET_BIN   = $(BIN_DIR)/$(PROJECT_NAME).hex
 TARGET_ELF   = $(BIN_DIR)/$(PROJECT_NAME).elf
-TARGET_FLSH  = $(BIN_DIR)/$(PROJECT_NAME).bin
+TARGET_FLSH  = $(BIN_DIR)/$(PROJECT_NAME)_v$(MAJOR).$(MINOR)_$(NOW).bin
+
 ASM_OBJS_EXT = $(addprefix $(BIN_DIR)/, $(ASM_OBJS))
 C_OBJS_EXT   = $(addprefix $(BIN_DIR)/, $(C_OBJS))
 C_DEPS_EXT   = $(patsubst %.o, %.d, $(C_OBJS_EXT))
@@ -537,9 +532,6 @@ DEBUG_VER    = APP_$(BOARD)$(SERIES)_0_$(MAINT)_65535
 
 # Default rule:
 all: ver build_IP $(BIN_DIR) build_libs $(TARGET_BIN) showver
-
-# Rule for making a special build
-special: special_ver build_IP $(BIN_DIR) build_libs $(TARGET_BIN) showver
 
 showver:
 	@if [ $(IPADDR0) == 169 ] ; then \
@@ -559,18 +551,8 @@ showver:
 	fi
 
 ver: config.mk
-	@# This format matches what the printer expects so please leave it
-	@if [ $(CONF) == "rel" ] ; then \
-	  echo "#define "FW_VER" \"$(REAL_VER)\"" > $(SRC_DIR)/version.h;\
-	else\
-	  echo "#define "FW_VER" \"$(DEBUG_VER)\"" > $(SRC_DIR)/version.h;\
-	fi
-	@echo "#define "BUILD_DATE" \"$(shell date +"%b %d %Y %T")\"" >> $(SRC_DIR)/version.h
-
-special_ver: config.mk
-	@# This format matches what the printer expects so please leave it
-	@echo "#define "FW_VER" \"$(SPECIAL_VER)\"" > $(SRC_DIR)/version.h
-	@echo "#define "BUILD_DATE" \"$(shell date +"%b %d %Y %T")\"" >> $(SRC_DIR)/version.h
+	@echo "#define "FW_VER" \"v$(MAJOR).$(MINOR)\"" > $(SRC_DIR)/version.h;
+	@echo "#define "BUILD_DATE" \"$(NOW)\"" >> $(SRC_DIR)/version.h
 
 # All the rigamarole below is to avoid building code if the ip address didn't change (normal situation for development)
 build_IP:
@@ -588,13 +570,13 @@ $(BIN_DIR):
 	@echo --- Creating directory $@
 	$(TRACE_FLAG)mkdir -p $@
 
-$(TARGET_BIN): $(TARGET_ELF)
-	@echo --- Creating binary $@
+$(TARGET_BIN): $(TARGET_ELF) cleanbin
+	@echo --- Creating hex $@
 	$(TRACE_FLAG)$(OBJCPY) -O binary $< $@
 	$(TRACE_FLAG)mv $(TARGET_BIN) $(TARGET_FLSH)
+	@echo --- Creating bin $(TARGET_FLSH)
 	$(TRACE_FLAG)$(OBJCPY) -O ihex $< $@
 	
-
 $(TARGET_ELF) : $(ASM_OBJS_EXT) $(C_OBJS_EXT) $(CPP_OBJS_EXT)
 	@echo --- Linking libraries
 	$(TRACE_FLAG)$(LINK) -T$(LD_SCRIPT) $(LINKFLAGS) $(LIB_PATHS) -o $@ $^ $(LIBS)
@@ -650,7 +632,7 @@ ifeq (0, $(words $(findstring $(MAKECMDGOALS), $(NODEPS))))
 -include $(C_DEPS_EXT) $(CPP_DEPS_EXT)
 endif
 
-.PHONY : clean clean_with_libs
+.PHONY : clean clean_with_libs cleanbin
 cleanall:
 	@echo ---------------------------
 	@echo --- Cleaning EVERYTHING
@@ -671,6 +653,10 @@ clean:
 	$(TRACE_FLAG)$(BIN_DIR)/*.hex \
 	$(TRACE_FLAG)$(BIN_DIR)/*.elf \
 	$(TRACE_FLAG)$(BIN_DIR)/*.map
+
+cleanbin:
+	@echo --- Cleaning only *.bin files 
+	$(TRACE_FLAG)-$(RM) $(BIN_DIR)/*.bin
 	
 clean_with_libs: clean clean_qpc_libs
 	@echo ---------------------------
@@ -702,3 +688,4 @@ show:
 	@echo COMMON_FW_SYS_DIR = $(COMMON_FW_SYS_DIR)
 	@echo I2C_FRT_DIR = $(I2C_FRT_DIR)
 	@echo BSP_DIR = $(BSP_DIR)
+	@echo NOW = $(NOW)
