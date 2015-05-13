@@ -219,7 +219,7 @@ const CBErrorCode I2C_calcPageWriteSizes(
  * @return CBErrorCode: status of the read operation
  *    @arg ERR_NONE: if no errors occurred
  */
-CBErrorCode I2C_readDevMemEVT(
+const CBErrorCode I2C_readDevMemEVT(
       const I2C_Dev_t iDev,
       const uint16_t offset,
       const uint16_t bytesToRead,
@@ -250,7 +250,7 @@ CBErrorCode I2C_readDevMemEVT(
  * @return CBErrorCode: status of the read operation
  *    @arg ERR_NONE: if no errors occurred
  */
-CBErrorCode I2C_writeDevMemEVT(
+const CBErrorCode I2C_writeDevMemEVT(
       const I2C_Dev_t iDev,
       const uint16_t offset,
       const uint16_t bytesToWrite,
@@ -290,7 +290,7 @@ CBErrorCode I2C_writeDevMemEVT(
  * @return CBErrorCode: status of the read operation
  *    @arg ERR_NONE: if no errors occurred
  */
-CBErrorCode I2C_readDevMemBLK(
+const CBErrorCode I2C_readDevMemBLK(
       const I2C_Dev_t iDev,
       const uint16_t offset,
       const uint16_t bytesToRead,
@@ -325,7 +325,7 @@ CBErrorCode I2C_readDevMemBLK(
  * @return CBErrorCode: status of the read operation
  *    @arg ERR_NONE: if no errors occurred
  */
-CBErrorCode I2C_writeDevMemBLK(
+const CBErrorCode I2C_writeDevMemBLK(
       const I2C_Dev_t iDev,
       const uint16_t offset,
       const uint16_t bytesToWrite,
