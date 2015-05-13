@@ -58,13 +58,13 @@ extern "C" {
  * @return CBErrorCode: status of the read operation
  *    @arg ERR_NONE: if no errors occurred
  */
-CBErrorCode I2C_readDevMemFRT(
-      I2C_Dev_t iDev,
-      uint16_t offset,
-      uint8_t *pBuffer,
-      uint16_t nBufferSize,
-      uint16_t *pBytesRead,
-      uint16_t nBytesToRead
+const CBErrorCode I2C_readDevMemFRT(
+      const I2C_Dev_t iDev,
+      const uint16_t offset,
+      uint8_t* const pBuffer,
+      const uint16_t nBufferSize,
+      uint16_t* pBytesRead,
+      const uint16_t nBytesToRead
 );
 
 /**
@@ -91,13 +91,13 @@ CBErrorCode I2C_readDevMemFRT(
  * @return CBErrorCode: status of the write operation
  *    @arg ERR_NONE: if no errors occurred
  */
-CBErrorCode I2C_writeDevMemFRT(
-      I2C_Dev_t iDev,
-      uint16_t offset,
-      uint8_t *pBuffer,
-      uint16_t nBufferSize,
-      uint16_t *pBytesWritten,
-      uint16_t nBytesToWrite
+const CBErrorCode I2C_writeDevMemFRT(
+      const I2C_Dev_t iDev,
+      const uint16_t offset,
+      const uint8_t* const pBuffer,
+      const uint16_t nBufferSize,
+      uint16_t* pBytesWritten,
+      const uint16_t nBytesToWrite
 );
 
 /**
