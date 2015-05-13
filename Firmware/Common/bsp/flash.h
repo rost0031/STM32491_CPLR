@@ -17,6 +17,8 @@
 #include "stm32f4xx_flash.h"
 #include "Shared.h"
 #include "project_includes.h"
+//#include "flash_info.h"
+#include "CBCommApi.h"
 
 /* Exported defines ----------------------------------------------------------*/
 /* These defines specify where the various flash regions start and end on the
@@ -32,12 +34,6 @@
  */
 #define FLASH_APPL_START_ADDR             ((uint32_t)0x08040000)
 
-#define FLASH_APPL_SIZE_ADDR              ((uint32_t)0x081FFFE0)
-#define FLASH_APPL_SIZE_LEN               4
-
-#define FLASH_APPL_CRC_ADDR               ((uint32_t)0x081FFFE4)
-#define FLASH_APPL_CRC_LEN                4
-
 #define FLASH_APPL_MAJ_VER_ADDR           ((uint32_t)0x081FFFE8)
 #define FLASH_APPL_MAJ_VER_LEN            1
 
@@ -45,7 +41,13 @@
 #define FLASH_APPL_MIN_VER_LEN            1
 
 #define FLASH_APPL_BUILD_DATETIME_ADDR    ((uint32_t)0x081FFFEC)
-#define FLASH_APPL_BUILD_DATETIME_LEN     14
+#define FLASH_APPL_BUILD_DATETIME_LEN     CB_DATETIME_LEN
+
+#define FLASH_APPL_SIZE_ADDR              ((uint32_t)0x081FFFE0)
+#define FLASH_APPL_SIZE_LEN               4
+
+#define FLASH_APPL_CRC_ADDR               ((uint32_t)0x081FFFE4)
+#define FLASH_APPL_CRC_LEN                4
 
 /* Base address of the Flash sectors */
 #define ADDR_FLASH_SECTOR_0     ((uint32_t)0x08000000) /**< Addr of Sect 0,  16  KB */
@@ -102,7 +104,7 @@
  *    @arg  ERR_NONE: success
  *    @arg  other error codes if error occurred
  */
-CBErrorCode FLASH_getSectorsToErase(
+const CBErrorCode FLASH_getSectorsToErase(
       uint32_t *sectorArrayLoc,
       uint8_t *nSectors,
       const uint8_t sectorArraySize,
@@ -118,7 +120,7 @@ CBErrorCode FLASH_getSectorsToErase(
  *    @arg  ERR_NONE: success
  * 	@arg  other error codes if error occurred
  */
-CBErrorCode FLASH_eraseSector( const uint32_t sectorAddr );
+const CBErrorCode FLASH_eraseSector( const uint32_t sectorAddr );
 
 /**
  * @brief   Validate FW image metadata.
@@ -128,7 +130,7 @@ CBErrorCode FLASH_eraseSector( const uint32_t sectorAddr );
  *    @arg  ERR_NONE: success
  *    @arg  other error codes if error occurred
  */
-CBErrorCode FLASH_validateMetadata(
+const CBErrorCode FLASH_validateMetadata(
       const struct CBFlashMetaPayloadMsg const *fwMetadata
 );
 
@@ -145,7 +147,7 @@ CBErrorCode FLASH_validateMetadata(
  *    @arg  ERR_NONE: success
  *    @arg  other error codes if error occurred
  */
-CBErrorCode FLASH_writeBuffer(
+const CBErrorCode FLASH_writeBuffer(
       const uint32_t startAddr,
       const uint8_t *buffer,
       const uint16_t size,
@@ -158,7 +160,7 @@ CBErrorCode FLASH_writeBuffer(
  * @param	None
  * @return	crc: uint32_t CRC stored at that address location
  */
-uint32_t FLASH_readApplCRC( void );
+const uint32_t FLASH_readApplCRC( void );
 
 /**
  * @brief   Write the application CRC to the very end of the Application flash.
@@ -167,14 +169,14 @@ uint32_t FLASH_readApplCRC( void );
  *    @arg  ERR_NONE: success
  *    @arg  other error codes if error occurred
  */
-CBErrorCode FLASH_writeApplCRC( const uint32_t crc );
+const CBErrorCode FLASH_writeApplCRC( const uint32_t crc );
 
 /**
  * @brief   Read the size stored at the very end of the Application flash.
  * @param   None
  * @return	size: uint32_t application size stored at that address location
  */
-uint32_t FLASH_readApplSize( void );
+const uint32_t FLASH_readApplSize( void );
 
 /**
  * @brief   Write the application size to the very end of the Application flash.
@@ -183,14 +185,14 @@ uint32_t FLASH_readApplSize( void );
  *    @arg  ERR_NONE: success
  *    @arg  other error codes if error occurred
  */
-CBErrorCode FLASH_writeApplSize( const uint32_t size );
+const CBErrorCode FLASH_writeApplSize( const uint32_t size );
 
 /**
  * @brief   Read the major version stored at the very end of the Application flash.
  * @param   None
  * @return  maj: uint8_t application major version stored at that address location
  */
-uint8_t FLASH_readApplMajVer( void );
+const uint8_t FLASH_readApplMajVer( void );
 
 /**
  * @brief   Write the application major version to the very end of the
@@ -200,14 +202,14 @@ uint8_t FLASH_readApplMajVer( void );
  *    @arg  ERR_NONE: success
  *    @arg  other error codes if error occurred
  */
-CBErrorCode FLASH_writeApplMajVer( const uint8_t maj );
+const CBErrorCode FLASH_writeApplMajVer( const uint8_t maj );
 
 /**
  * @brief   Read the minor version stored at the very end of the Application flash.
  * @param   None
  * @return  maj: uint8_t application minor version stored at that address location
  */
-uint8_t FLASH_readApplMinVer( void );
+const uint8_t FLASH_readApplMinVer( void );
 
 /**
  * @brief   Write the application minor version to the very end of the
@@ -217,7 +219,7 @@ uint8_t FLASH_readApplMinVer( void );
  *    @arg  ERR_NONE: success
  *    @arg  other error codes if error occurred
  */
-CBErrorCode FLASH_writeApplMinVer( const uint8_t maj );
+const CBErrorCode FLASH_writeApplMinVer( const uint8_t maj );
 
 /**
  * @brief   Read the build datetime stored at the very end of the Application flash.
@@ -230,7 +232,7 @@ CBErrorCode FLASH_writeApplMinVer( const uint8_t maj );
  *    @arg  ERR_NONE: success
  *    @arg  other error codes if error occurred
  */
-CBErrorCode FLASH_readApplBuildDatetime(
+const CBErrorCode FLASH_readApplBuildDatetime(
       uint8_t *buffer,
       const uint8_t bufferSize
 );
@@ -246,44 +248,10 @@ CBErrorCode FLASH_readApplBuildDatetime(
  *    @arg  ERR_NONE: success
  *    @arg  other error codes if error occurred
  */
-CBErrorCode FLASH_writeApplBuildDatetime(
+const CBErrorCode FLASH_writeApplBuildDatetime(
       const uint8_t *buffer,
       const uint8_t bufferSize
 );
-
-/**
- * @brief   Read a uint8_t from flash
- * @param [in] addr: const uint32_t address where to read from
- * @return  data: uint8_t value stored at the specified address
- */
-uint8_t FLASH_readUint8( const uint32_t addr );
-
-/**
- * @brief   Write a uint8_t to the flash
- * @param [in] addr: const uint32_t address where to write data to
- * @param [in] data: const uint8_t value to write to the specified address
- * @return  CBErrorCode status:
- *    @arg  ERR_NONE: success
- *    @arg  other error codes if error occurred
- */
-CBErrorCode FLASH_writeUint8( const uint32_t addr, const uint8_t data );
-
-/**
- * @brief   Read a uint32_t from flash
- * @param [in] addr: const uint32_t address where to read from
- * @return	data: uint32_t value stored at the specified address
- */
-uint32_t FLASH_readUint32( const uint32_t addr );
-
-/**
- * @brief   Write a uint32_t to the flash
- * @param [in] addr: const uint32_t address where to write data to
- * @param [in] data: const uint32_t value to write to the specified address
- * @return  CBErrorCode status:
- *    @arg  ERR_NONE: success
- *    @arg  other error codes if error occurred
- */
-CBErrorCode FLASH_writeUint32( const uint32_t addr, const uint32_t data );
 
 #endif                                                            /* FLASH_H_ */
 /******** Copyright (C) 2015 Datacard. All rights reserved *****END OF FILE****/

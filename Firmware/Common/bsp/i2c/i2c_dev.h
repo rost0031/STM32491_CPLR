@@ -57,7 +57,7 @@ extern "C" {
  *    @arg UIE_ROM: get the UIE_ROM device address
  * @return: uint8_t device address size of the requested device.
  */
-uint8_t I2C_getDevAddrSize( I2C_Dev_t iDev );
+const uint8_t I2C_getDevAddrSize( const I2C_Dev_t iDev );
 
 /**
  * @brief   Get the device address for the specified I2CBus1 device.
@@ -68,7 +68,7 @@ uint8_t I2C_getDevAddrSize( I2C_Dev_t iDev );
  *    @arg UIE_ROM: get the UIE_ROM device address
  * @return: uint16_t device address on the I2C Bus.
  */
-uint16_t I2C_getDevAddr( I2C_Dev_t iDev );
+const uint16_t I2C_getDevAddr( const I2C_Dev_t iDev );
 
 /**
  * @brief   Get the internal memory address size for the specified I2CBus1 device.
@@ -79,7 +79,7 @@ uint16_t I2C_getDevAddr( I2C_Dev_t iDev );
  *    @arg UIE_ROM: get the UIE_ROM device address
  * @return: uint8_t internal memory address size of the requested device.
  */
-uint8_t I2C_getMemAddrSize( I2C_Dev_t iDev );
+const uint8_t I2C_getMemAddrSize( const I2C_Dev_t iDev );
 
 /**
  * @brief   Get the last accessed internal memory address for the specified
@@ -91,7 +91,7 @@ uint8_t I2C_getMemAddrSize( I2C_Dev_t iDev );
  *    @arg UIE_ROM: get the UIE_ROM device address
  * @return: uint16_t memory address on the I2C Device.
  */
-uint16_t I2C_getMemAddr( I2C_Dev_t iDev );
+const uint16_t I2C_getMemAddr( const I2C_Dev_t iDev );
 
 
 /**
@@ -109,7 +109,7 @@ uint16_t I2C_getMemAddr( I2C_Dev_t iDev );
  * @param [in]  addr: uint16_t last accessed memory address.
  * @return: None
  */
-void I2C_setI2CMemAddr( I2C_Dev_t iDev, uint16_t addr );
+void I2C_setI2CMemAddr( const I2C_Dev_t iDev, const uint16_t addr );
 
 /**
  * @brief   Get the first accessible internal memory address for the specified
@@ -121,7 +121,7 @@ void I2C_setI2CMemAddr( I2C_Dev_t iDev, uint16_t addr );
  *    @arg UIE_ROM: get the UIE_ROM device address
  * @return: uint16_t first memory address on the I2C device.
  */
-uint16_t I2C_getMinMemAddr( I2C_Dev_t iDev );
+const uint16_t I2C_getMinMemAddr( const I2C_Dev_t iDev );
 
 /**
  * @brief   Get the last accessible internal memory address for the specified
@@ -133,7 +133,7 @@ uint16_t I2C_getMinMemAddr( I2C_Dev_t iDev );
  *    @arg UIE_ROM: get the UIE_ROM device address
  * @return: uint16_t last memory address on the I2C device.
  */
-uint16_t I2C_getMaxMemAddr( I2C_Dev_t iDev );
+const uint16_t I2C_getMaxMemAddr( const I2C_Dev_t iDev );
 
 /**
  * @brief   Get the page size for memory for the specified I2C device.
@@ -144,7 +144,7 @@ uint16_t I2C_getMaxMemAddr( I2C_Dev_t iDev );
  *    @arg UIE_ROM: get the UIE_ROM device address
  * @return: uint16_t memory page size on the I2C device.
  */
-uint8_t I2C_getPageSize( I2C_Dev_t iDev );
+const uint8_t I2C_getPageSize( const I2C_Dev_t iDev );
 
 /**
  * @brief   Get the I2C bus of specified I2C device.
@@ -155,7 +155,7 @@ uint8_t I2C_getPageSize( I2C_Dev_t iDev );
  *    @arg UIE_ROM: get the UIE_ROM device address
  * @return: uint16_t memory page size on the I2C device.
  */
-I2C_Bus_t I2C_getBus( I2C_Dev_t iDev );
+const I2C_Bus_t I2C_getBus( const I2C_Dev_t iDev );
 
 /**
  * @brief   Get the string representation of the I2C device.
@@ -166,7 +166,7 @@ I2C_Bus_t I2C_getBus( I2C_Dev_t iDev );
  *    @arg UIE_ROM: get the UIE_ROM device address
  * @return: string representation of the I2C device.
  */
-char* I2C_devToStr( I2C_Dev_t iDev );
+const char* const I2C_devToStr( const I2C_Dev_t iDev );
 
 /**
  * @brief   Calculate how to properly write large data over page boundaries in EEPROM.
@@ -187,13 +187,13 @@ char* I2C_devToStr( I2C_Dev_t iDev );
  * @return CBErrorCode: status of the write operation
  *    @arg ERR_NONE: if no errors occurred
  */
-CBErrorCode I2C_calcPageWriteSizes(
-      uint8_t *writeSizeFirstPage,
-      uint8_t *writeSizeLastPage,
-      uint8_t *writeTotalPages,
-      uint16_t i2cMemAddr,
-      uint16_t bytesToWrite,
-      uint16_t pageSize
+const CBErrorCode I2C_calcPageWriteSizes(
+      uint8_t* const writeSizeFirstPage,
+      uint8_t* const writeSizeLastPage,
+      uint8_t* const writeTotalPages,
+      const uint16_t i2cMemAddr,
+      const uint16_t bytesToWrite,
+      const uint16_t pageSize
 );
 
 /**
@@ -220,11 +220,11 @@ CBErrorCode I2C_calcPageWriteSizes(
  *    @arg ERR_NONE: if no errors occurred
  */
 CBErrorCode I2C_readDevMemEVT(
-      I2C_Dev_t iDev,
-      uint16_t offset,
-      uint16_t bytesToRead,
-      AccessType_t accType,
-      QActive* callingAO
+      const I2C_Dev_t iDev,
+      const uint16_t offset,
+      const uint16_t bytesToRead,
+      const AccessType_t accType,
+      const QActive* const callingAO
 );
 
 /**
@@ -251,12 +251,12 @@ CBErrorCode I2C_readDevMemEVT(
  *    @arg ERR_NONE: if no errors occurred
  */
 CBErrorCode I2C_writeDevMemEVT(
-      I2C_Dev_t iDev,
-      uint16_t offset,
-      uint16_t bytesToWrite,
-      AccessType_t accType,
-      QActive* callingAO,
-      uint8_t *pBuffer
+      const I2C_Dev_t iDev,
+      const uint16_t offset,
+      const uint16_t bytesToWrite,
+      const AccessType_t accType,
+      const QActive* const callingAO,
+      const uint8_t* const pBuffer
 );
 
 /******************************************************************************/
@@ -291,12 +291,12 @@ CBErrorCode I2C_writeDevMemEVT(
  *    @arg ERR_NONE: if no errors occurred
  */
 CBErrorCode I2C_readDevMemBLK(
-      I2C_Dev_t iDev,
-      uint16_t offset,
-      uint16_t bytesToRead,
-      AccessType_t accType,
+      const I2C_Dev_t iDev,
+      const uint16_t offset,
+      const uint16_t bytesToRead,
+      const AccessType_t accType,
       uint8_t* pBuffer,
-      uint8_t  bufSize
+      const uint8_t  bufSize
 );
 
 /**
@@ -326,12 +326,12 @@ CBErrorCode I2C_readDevMemBLK(
  *    @arg ERR_NONE: if no errors occurred
  */
 CBErrorCode I2C_writeDevMemBLK(
-      I2C_Dev_t iDev,
-      uint16_t offset,
-      uint16_t bytesToWrite,
-      AccessType_t accType,
-      uint8_t* pBuffer,
-      uint8_t  bufSize
+      const I2C_Dev_t iDev,
+      const uint16_t offset,
+      const uint16_t bytesToWrite,
+      const AccessType_t accType,
+      const uint8_t* pBuffer,
+      const uint8_t  bufSize
 );
 
 /**

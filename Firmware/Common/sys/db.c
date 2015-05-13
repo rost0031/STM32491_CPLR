@@ -20,6 +20,8 @@
 #include "i2c_dev.h"                               /* for I2C device mappings */
 #include "db.h"
 #include "ipAndMac.h"                                  /* for default IP addr */
+#include "flash.h"
+#include <stdio.h>
 
 /* Compile-time called macros ------------------------------------------------*/
 Q_DEFINE_THIS_FILE                  /* For QSPY to know the name of this file */
@@ -47,7 +49,7 @@ typedef struct {
    DB_Elem_t    elem;  /**< Specifies which settings element is being described */
    DB_ElemLoc_t  loc;  /**< Specifies how the db element is stored */
    size_t       size;  /**< Specifies the size of the db element */
-   uint16_t    offset; /**< Specifies the offset from beginning of EEPROM memory
+   uint32_t    offset; /**< Specifies the offset from beginning of EEPROM memory
                             where the element is stored */
 } SettingsDB_Desc_t;
 
@@ -60,6 +62,14 @@ typedef struct {
                               in EEPROM memory to some default.*/
    uint16_t dbVersion;   /**< Version of the database */
    uint8_t ipAddr[4];  /**< 4 values of the 111.222.333.444 ip address in hex */
+   uint8_t bootMajVer; /**< Major version byte of the bootloader FW image */
+   uint8_t bootMinVer; /**< Major version byte of the bootloader FW image */
+   uint8_t bootBuildDT[CB_DATETIME_LEN]; /**< Build datetime of the bootloader
+                                              FW image */
+   uint8_t fpgaMajVer; /**< Major version byte of the FPGA FW image */
+   uint8_t fpgaMinVer; /**< Major version byte of the FPGA FW image */
+   uint8_t fpgaBuildDT[CB_DATETIME_LEN]; /**< Build datetime of the FPGA FW
+                                              image */
 } SettingsDB_t;
 
 
@@ -86,11 +96,20 @@ typedef struct {
 
 /**< Array to specify where all the DB elements reside */
 static const SettingsDB_Desc_t settingsDB[DB_MAX_ELEM] = {
-      { DB_MAGIC_WORD,  DB_EEPROM,  DB_SIZE_OF_ELEM(SettingsDB_t, dbMagicWord), DB_LOC_OF_ELEM(SettingsDB_t, dbMagicWord)},
-      { DB_VERSION,     DB_EEPROM,  DB_SIZE_OF_ELEM(SettingsDB_t, dbVersion)  , DB_LOC_OF_ELEM(SettingsDB_t, dbVersion)  },
-      { DB_MAC_ADDR,    DB_UI_ROM,  6                                         , 2                                        },
-      { DB_IP_ADDR,     DB_EEPROM,  DB_SIZE_OF_ELEM(SettingsDB_t, ipAddr)     , DB_LOC_OF_ELEM(SettingsDB_t, ipAddr)     },
-      { DB_SN,          DB_SN_ROM,  16                                        , 0                                        },
+      { DB_MAGIC_WORD,          DB_EEPROM,  DB_SIZE_OF_ELEM(SettingsDB_t, dbMagicWord), DB_LOC_OF_ELEM(SettingsDB_t, dbMagicWord)},
+      { DB_VERSION,             DB_EEPROM,  DB_SIZE_OF_ELEM(SettingsDB_t, dbVersion)  , DB_LOC_OF_ELEM(SettingsDB_t, dbVersion)  },
+      { DB_MAC_ADDR,            DB_UI_ROM,  6                                         , 2                                        },
+      { DB_IP_ADDR,             DB_EEPROM,  DB_SIZE_OF_ELEM(SettingsDB_t, ipAddr)     , DB_LOC_OF_ELEM(SettingsDB_t, ipAddr)     },
+      { DB_SN,                  DB_SN_ROM,  16                                        , 0                                        },
+      { DB_BOOT_MAJ,            DB_EEPROM,  DB_SIZE_OF_ELEM(SettingsDB_t, bootMajVer) , DB_LOC_OF_ELEM(SettingsDB_t, bootMajVer) },
+      { DB_BOOT_MIN,            DB_EEPROM,  DB_SIZE_OF_ELEM(SettingsDB_t, bootMinVer) , DB_LOC_OF_ELEM(SettingsDB_t, bootMinVer) },
+      { DB_BOOT_BUILD_DATETIME, DB_EEPROM,  DB_SIZE_OF_ELEM(SettingsDB_t, bootBuildDT), DB_LOC_OF_ELEM(SettingsDB_t, bootBuildDT)},
+      { DB_APPL_MAJ,            DB_FLASH ,  FLASH_APPL_MAJ_VER_LEN                    , FLASH_APPL_MAJ_VER_ADDR                  },
+      { DB_APPL_MIN,            DB_FLASH ,  FLASH_APPL_MIN_VER_LEN                    , FLASH_APPL_MIN_VER_ADDR                  },
+      { DB_APPL_BUILD_DATETIME, DB_FLASH ,  FLASH_APPL_BUILD_DATETIME_LEN             , FLASH_APPL_BUILD_DATETIME_ADDR           },
+      { DB_FPGA_MAJ,            DB_EEPROM,  DB_SIZE_OF_ELEM(SettingsDB_t, fpgaMajVer) , DB_LOC_OF_ELEM(SettingsDB_t, fpgaMajVer) },
+      { DB_FPGA_MIN,            DB_EEPROM,  DB_SIZE_OF_ELEM(SettingsDB_t, fpgaMinVer) , DB_LOC_OF_ELEM(SettingsDB_t, fpgaMinVer) },
+      { DB_FPGA_BUILD_DATETIME, DB_EEPROM,  DB_SIZE_OF_ELEM(SettingsDB_t, fpgaBuildDT), DB_LOC_OF_ELEM(SettingsDB_t, fpgaBuildDT)},
 };
 
 /**
@@ -111,10 +130,37 @@ static const SettingsDB_t DB_defaultEeepromSettings = {
 };
 
 /* Private function prototypes -----------------------------------------------*/
+
+/**
+ * @brief   Get an element stored in the FLASH section of settings DB.
+ *
+ * This function retrieves an element from the database portion of DB that is
+ * stored exclusively in FLASH (and is read only).
+ *
+ * @param  [in] elem: DB_Elem_t that specifies what element to retrieve.
+ *    @arg DB_APPL_MAJ_VER: Major version of the Application FW image.
+ *    @arg DB_APPL_MIN_VER: Minor version of the Application FW image.
+ *    @arg DB_APPL_BUILD_DATETIME: Build datetime of the application FW image.
+ *
+ * @param  [in] bufSize: size of the pBuffer.
+ * @param  [out] *pBuffer: uint8_t pointer to a buffer where to store the
+ *                         retrieved element.
+ * @param  [out] resultLen: uint8_t pointer to the length of data stored in the
+ *                         buffer on return.
+ * @return CBErrorCode: status of the read operation
+ *    @arg ERR_NONE: if no errors occurred
+ *    other errors if found.
+ */
+static const CBErrorCode DB_readEEPROM(
+      const DB_Elem_t elem,
+      const uint8_t bufferSize,
+      uint8_t* const buffer,
+      uint8_t* resultLen
+);
 /* Private functions ---------------------------------------------------------*/
 
 /******************************************************************************/
-char* DB_elemToStr( DB_Elem_t elem )
+const char* const DB_elemToStr( const DB_Elem_t elem )
 {
    switch ( elem ) {
       case DB_MAGIC_WORD:  return("DB_MAGIC_WORD");   break;
@@ -127,7 +173,7 @@ char* DB_elemToStr( DB_Elem_t elem )
 }
 
 /******************************************************************************/
-CBErrorCode DB_isValid( AccessType_t accessType )
+const CBErrorCode DB_isValid( const AccessType_t accessType )
 {
    CBErrorCode status = ERR_NONE;            /* keep track of success/failure */
 
@@ -174,7 +220,7 @@ CBErrorCode DB_isValid( AccessType_t accessType )
       }
    }
 
-DB_isValid_ERR_HANDLE:      /* Handle any error that may have occurred. */
+DB_isValid_ERR_HANDLE:            /* Handle any error that may have occurred. */
    ERR_COND_OUTPUT(
          status,
          accessType,
@@ -185,7 +231,7 @@ DB_isValid_ERR_HANDLE:      /* Handle any error that may have occurred. */
 }
 
 /******************************************************************************/
-CBErrorCode DB_initToDefault( AccessType_t accessType )
+const CBErrorCode DB_initToDefault( const AccessType_t accessType )
 {
    CBErrorCode status = ERR_NONE;            /* keep track of success/failure */
 
@@ -251,11 +297,11 @@ DB_initToDefault_ERR_HANDLE:      /* Handle any error that may have occurred. */
 }
 
 /******************************************************************************/
-CBErrorCode DB_getElemBLK(
-      DB_Elem_t elem,
+const CBErrorCode DB_getElemBLK(
+      const DB_Elem_t elem,
       uint8_t* pBuffer,
-      size_t bufSize,
-      AccessType_t accessType
+      const size_t bufSize,
+      const AccessType_t accessType
 )
 {
    CBErrorCode status = ERR_NONE;            /* keep track of success/failure */
@@ -294,7 +340,13 @@ CBErrorCode DB_getElemBLK(
          break;
       case DB_FLASH:
          status = ERR_UNIMPLEMENTED;
-         goto DB_getElemBLK_ERR_HANDLE;    /* Stop and jump to error handling */
+         uint8_t resultLen = 0;
+         status = DB_readEEPROM(
+               elem,
+               bufSize,
+               pBuffer,
+               &resultLen
+         );
          break;
          /* Add more locations here. Anything that fails will go to the default
           * case and get logged as an error. */
@@ -317,11 +369,11 @@ DB_getElemBLK_ERR_HANDLE:         /* Handle any error that may have occurred. */
 }
 
 /******************************************************************************/
-CBErrorCode DB_setElemBLK(
-      DB_Elem_t elem,
-      uint8_t* pBuffer,
-      size_t bufSize,
-      AccessType_t accessType
+const CBErrorCode DB_setElemBLK(
+      const DB_Elem_t elem,
+      const uint8_t* const pBuffer,
+      const size_t bufSize,
+      const AccessType_t accessType
 )
 {
    CBErrorCode status = ERR_NONE; /* keep track of success/failure of operations. */
@@ -376,6 +428,46 @@ DB_getElemBLK_ERR_HANDLE:         /* Handle any error that may have occurred. */
          elem,
          status
    );
+   return( status );
+}
+
+/******************************************************************************/
+static const CBErrorCode DB_readEEPROM(
+      const DB_Elem_t elem,
+      const uint8_t bufferSize,
+      uint8_t* const buffer,
+      uint8_t* resultLen
+)
+{
+   if( NULL == buffer ) {
+      return( ERR_MEM_NULL_VALUE );
+   }
+
+   CBErrorCode status = ERR_NONE;
+
+   switch( elem ) {
+      case DB_APPL_MAJ:
+         buffer[0] = FLASH_readApplMajVer();
+         *resultLen = 1;
+         break;
+      case DB_APPL_MIN:
+         buffer[0] = FLASH_readApplMinVer();
+         *resultLen = 1;
+         break;
+      case DB_APPL_BUILD_DATETIME:
+         status = FLASH_readApplBuildDatetime( buffer, bufferSize );
+         if ( ERR_NONE == status ) {
+            *resultLen = CB_DATETIME_LEN;
+         } else {
+            *resultLen = 0;
+         }
+         break;
+      default:
+         status = ERR_DB_ELEM_IS_NOT_IN_EEPROM;
+         *resultLen = 0;
+         break;
+   }
+
    return( status );
 }
 

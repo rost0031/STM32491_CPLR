@@ -87,7 +87,7 @@ I2C_DevSettings_t s_I2C_Dev[MAX_I2C_DEV] =
 /* Private functions ---------------------------------------------------------*/
 
 /******************************************************************************/
-uint8_t I2C_getDevAddrSize( I2C_Dev_t iDev )
+const uint8_t I2C_getDevAddrSize( const I2C_Dev_t iDev )
 {
    /* Check inputs */
    assert_param( IS_I2C_DEVICE( iDev ) );
@@ -96,7 +96,7 @@ uint8_t I2C_getDevAddrSize( I2C_Dev_t iDev )
 }
 
 /******************************************************************************/
-uint16_t I2C_getDevAddr( I2C_Dev_t iDev )
+const uint16_t I2C_getDevAddr( const I2C_Dev_t iDev )
 {
    /* Check inputs */
    assert_param( IS_I2C_DEVICE( iDev ) );
@@ -105,7 +105,7 @@ uint16_t I2C_getDevAddr( I2C_Dev_t iDev )
 }
 
 /******************************************************************************/
-uint8_t I2C_getMemAddrSize( I2C_Dev_t iDev )
+const uint8_t I2C_getMemAddrSize( const I2C_Dev_t iDev )
 {
    /* Check inputs */
    assert_param( IS_I2C_DEVICE( iDev ) );
@@ -114,7 +114,7 @@ uint8_t I2C_getMemAddrSize( I2C_Dev_t iDev )
 }
 
 /******************************************************************************/
-uint16_t I2C_getMemAddr( I2C_Dev_t iDev )
+const uint16_t I2C_getMemAddr( const I2C_Dev_t iDev )
 {
    /* Check inputs */
    assert_param( IS_I2C_DEVICE( iDev ) );
@@ -123,7 +123,7 @@ uint16_t I2C_getMemAddr( I2C_Dev_t iDev )
 }
 
 /******************************************************************************/
-void I2C_setI2CMemAddr( I2C_Dev_t iDev, uint16_t addr )
+void I2C_setI2CMemAddr( const I2C_Dev_t iDev, const uint16_t addr )
 {
    /* Check inputs */
    assert_param( IS_I2C_DEVICE( iDev ) );
@@ -132,7 +132,7 @@ void I2C_setI2CMemAddr( I2C_Dev_t iDev, uint16_t addr )
 }
 
 /******************************************************************************/
-uint16_t I2C_getMinMemAddr( I2C_Dev_t iDev )
+const uint16_t I2C_getMinMemAddr( const I2C_Dev_t iDev )
 {
    /* Check inputs */
    assert_param( IS_I2C_DEVICE( iDev ) );
@@ -141,7 +141,7 @@ uint16_t I2C_getMinMemAddr( I2C_Dev_t iDev )
 }
 
 /******************************************************************************/
-uint16_t I2C_getMaxMemAddr( I2C_Dev_t iDev )
+const uint16_t I2C_getMaxMemAddr( const I2C_Dev_t iDev )
 {
    /* Check inputs */
    assert_param( IS_I2C_DEVICE( iDev ) );
@@ -150,7 +150,7 @@ uint16_t I2C_getMaxMemAddr( I2C_Dev_t iDev )
 }
 
 /******************************************************************************/
-uint8_t I2C_getPageSize( I2C_Dev_t iDev )
+const uint8_t I2C_getPageSize( const I2C_Dev_t iDev )
 {
    /* Check inputs */
    assert_param( IS_I2C_DEVICE( iDev ) );
@@ -159,7 +159,7 @@ uint8_t I2C_getPageSize( I2C_Dev_t iDev )
 }
 
 /******************************************************************************/
-I2C_Bus_t I2C_getBus( I2C_Dev_t iDev )
+const I2C_Bus_t I2C_getBus( const I2C_Dev_t iDev )
 {
    /* Check inputs */
    assert_param( IS_I2C_DEVICE( iDev ) );
@@ -168,7 +168,7 @@ I2C_Bus_t I2C_getBus( I2C_Dev_t iDev )
 }
 
 /******************************************************************************/
-char* I2C_devToStr( I2C_Dev_t iDev )
+const char* const I2C_devToStr( const I2C_Dev_t iDev )
 {
    /* Check inputs */
    assert_param( IS_I2C_DEVICE( iDev ) );
@@ -182,13 +182,13 @@ char* I2C_devToStr( I2C_Dev_t iDev )
 }
 
 /******************************************************************************/
-CBErrorCode I2C_calcPageWriteSizes(
-      uint8_t *writeSizeFirstPage,
-      uint8_t *writeSizeLastPage,
-      uint8_t *writeTotalPages,
-      uint16_t i2cMemAddr,
-      uint16_t bytesToWrite,
-      uint16_t pageSize
+const CBErrorCode I2C_calcPageWriteSizes(
+      uint8_t* const writeSizeFirstPage,
+      uint8_t* const writeSizeLastPage,
+      uint8_t* const writeTotalPages,
+      const uint16_t i2cMemAddr,
+      const uint16_t bytesToWrite,
+      const uint16_t pageSize
 )
 {
    /* Check if we are going to write over the end of the eeprom */
@@ -217,11 +217,11 @@ CBErrorCode I2C_calcPageWriteSizes(
 
 /******************************************************************************/
 CBErrorCode I2C_readDevMemEVT(
-      I2C_Dev_t iDev,
-      uint16_t offset,
-      uint16_t bytesToRead,
-      AccessType_t accType,
-      QActive* callingAO
+      const I2C_Dev_t iDev,
+      const uint16_t offset,
+      const uint16_t bytesToRead,
+      const AccessType_t accType,
+      const QActive* const callingAO
 )
 {
    CBErrorCode status = ERR_NONE; /* Keep track of the errors that may occur.
@@ -281,12 +281,12 @@ I2C_readDevMemEVT_ERR_HANDLER:    /* Handle any error that may have occurred. */
 
 /******************************************************************************/
 CBErrorCode I2C_writeDevMemEVT(
-      I2C_Dev_t iDev,
-      uint16_t offset,
-      uint16_t bytesToWrite,
-      AccessType_t accType,
-      QActive* callingAO,
-      uint8_t *pBuffer
+      const I2C_Dev_t iDev,
+      const uint16_t offset,
+      const uint16_t bytesToWrite,
+      const AccessType_t accType,
+      const QActive* const callingAO,
+      const uint8_t* const pBuffer
 )
 {
    CBErrorCode status = ERR_NONE; /* Keep track of the errors that may occur.
@@ -360,12 +360,12 @@ I2C_writeDevMemEVT_ERR_HANDLER:   /* Handle any error that may have occurred. */
 
 /******************************************************************************/
 CBErrorCode I2C_readDevMemBLK(
-      I2C_Dev_t iDev,
-      uint16_t offset,
-      uint16_t bytesToRead,
-      AccessType_t accType,
+      const I2C_Dev_t iDev,
+      const uint16_t offset,
+      const uint16_t bytesToRead,
+      const AccessType_t accType,
       uint8_t* pBuffer,
-      uint8_t  bufSize
+      const uint8_t  bufSize
 )
 {
    CBErrorCode status = ERR_NONE; /* Keep track of the errors that may occur.
@@ -421,12 +421,12 @@ I2C_readDevMemBLK_ERR_HANDLER:    /* Handle any error that may have occurred. */
 
 /******************************************************************************/
 CBErrorCode I2C_writeDevMemBLK(
-      I2C_Dev_t iDev,
-      uint16_t offset,
-      uint16_t bytesToWrite,
-      AccessType_t accType,
-      uint8_t* pBuffer,
-      uint8_t  bufSize
+      const I2C_Dev_t iDev,
+      const uint16_t offset,
+      const uint16_t bytesToWrite,
+      const AccessType_t accType,
+      const uint8_t* const pBuffer,
+      const uint8_t  bufSize
 )
 {
    CBErrorCode status = ERR_NONE; /* Keep track of the errors that may occur.

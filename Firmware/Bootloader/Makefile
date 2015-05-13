@@ -177,15 +177,6 @@ QP_PORT_DIR             = $(QPC_DIR)/ports/arm-cm/qk/gnu
 # LWIP
 LWIP_DIR                = $(COMMON_FW_SYS_DIR)/lwip
 
-# Console output directory
-CON_OUT_DIR             = $(COMMON_FW_SYS_DIR)/con_out
-
-# Debug control directory
-DBG_CNTRL_DIR           = $(COMMON_FW_SYS_DIR)/dbg_cntrl
-
-# Settings Database directory 
-DB_SETTINGS_DIR	        = $(COMMON_FW_SYS_DIR)/settings
-
 # Base64 encoding module
 BASE64_DIR              = $(COMMON_CLI_SYS_DIR)/libb64
 
@@ -223,9 +214,7 @@ VPATH                   = $(APP_DIR) \
                           \
                           $(STM32F4XX_STD_PERIPH_DIR)/src \
                           \
-                          $(CON_OUT_DIR) \
-                          $(DBG_CNTRL_DIR) \
-                          $(DB_SETTINGS_DIR)
+                          $(COMMON_FW_SYS_DIR)
 
 #-------------------------------------------------------------------------------
 # Include directories - this is where make will look for all header files that
@@ -265,9 +254,6 @@ INCLUDES                = -I$(SRC_DIR) \
                           -I$(STM32F4XX_STD_PERIPH_DIR)/inc \
                           \
                           -I$(COMMON_FW_SYS_DIR) \
-                          -I$(CON_OUT_DIR) \
-                          -I$(DBG_CNTRL_DIR) \
-                          -I$(DB_SETTINGS_DIR) \
                           \
                           -I$(CB_API_SRC_DIR) \
                           -I$(CB_API_INC_DIR) \

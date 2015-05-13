@@ -52,6 +52,15 @@ typedef enum DB_Elements {
    DB_IP_ADDR,             /**< IP address stored in main EEPROM */
    DB_SN,                  /**< Serial number stored in the special SN section
                                 of RO EEPROM */
+   DB_BOOT_MAJ,            /**< Major version of bootloader FW image */
+   DB_BOOT_MIN,            /**< Minor version of bootloader FW image */
+   DB_BOOT_BUILD_DATETIME, /**< Build datetime of the bootloader FW image */
+   DB_APPL_MAJ,            /**< Major version of application FW image */
+   DB_APPL_MIN,            /**< Minor version of application FW image */
+   DB_APPL_BUILD_DATETIME, /**< Build datetime of the application FW image */
+   DB_FPGA_MAJ,            /**< Major version of FPGA FW image */
+   DB_FPGA_MIN,            /**< Minor version of FPGA FW image */
+   DB_FPGA_BUILD_DATETIME, /**< Build datetime of the FPGA FW image */
 
    /* Add more elements here.  If adding elements after code is released, bump
     * the DB_VERSION up. */
@@ -73,7 +82,7 @@ typedef enum DB_Elements {
  * @return str: char* representation of DB element if found,
  *             "" if not found.
  */
-char* DB_elemToStr( DB_Elem_t elem );
+const char* const DB_elemToStr( const DB_Elem_t elem );
 
 /**
  * @brief   Check if Settings DB in EEPROM is valid.
@@ -91,7 +100,7 @@ char* DB_elemToStr( DB_Elem_t elem );
  *    @arg ERR_NONE: if no errors occurred
  *    other errors if found.
  */
-CBErrorCode DB_isValid( AccessType_t accessType );
+const CBErrorCode DB_isValid( const AccessType_t accessType );
 
 /**
  * @brief   Initialize the settings DB in EEPROM to a stored default.
@@ -109,7 +118,7 @@ CBErrorCode DB_isValid( AccessType_t accessType );
  *    @arg ERR_NONE: if no errors occurred
  *    other errors if found.
  */
-CBErrorCode DB_initToDefault( AccessType_t accessType  );
+const CBErrorCode DB_initToDefault( const AccessType_t accessType  );
 
 /**
  * @brief   Get an element from the settings DB.
@@ -136,11 +145,11 @@ CBErrorCode DB_initToDefault( AccessType_t accessType  );
  *    @arg ERR_NONE: if no errors occurred
  *    other errors if found.
  */
-CBErrorCode DB_getElemBLK(
-      DB_Elem_t elem,
+const CBErrorCode DB_getElemBLK(
+      const DB_Elem_t elem,
       uint8_t* pBuffer,
-      size_t bufSize,
-      AccessType_t accessType
+      const size_t bufSize,
+      const AccessType_t accessType
 );
 
 /**
@@ -169,11 +178,11 @@ CBErrorCode DB_getElemBLK(
  *    @arg ERR_NONE: if no errors occurred
  *    other errors if found.
  */
-CBErrorCode DB_setElemBLK(
-      DB_Elem_t elem,
-      uint8_t* pBuffer,
-      size_t bufSize,
-      AccessType_t accessType
+const CBErrorCode DB_setElemBLK(
+      const DB_Elem_t elem,
+      const uint8_t* const pBuffer,
+      const size_t bufSize,
+      const AccessType_t accessType
 );
 
 #ifdef __cplusplus

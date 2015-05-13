@@ -189,10 +189,10 @@ char* I2C_busToStr( I2C_Bus_t iBus );
  *    @arg ERR_NONE: if no errors occurred
  */
 CBErrorCode I2C_readBufferBLK(
-      I2C_Bus_t iBus,
-      uint8_t i2cDevAddr,
-      uint16_t i2cMemAddr,
-      uint8_t i2cMemAddrSize,
+      const I2C_Bus_t iBus,
+      const uint8_t i2cDevAddr,
+      const uint16_t i2cMemAddr,
+      const uint8_t i2cMemAddrSize,
       uint8_t* pBuffer,
       uint16_t bytesToRead
 );
@@ -224,13 +224,13 @@ CBErrorCode I2C_readBufferBLK(
  *    @arg ERR_NONE: if no errors occurred
  */
 CBErrorCode I2C_writeBufferBLK( /* TODO: does this belong in i2c_dev? */
-      I2C_Bus_t iBus,
-      uint8_t i2cDevAddr,
-      uint16_t i2cMemAddr,
-      uint8_t i2cMemAddrSize,
-      uint8_t* pBuffer,
-      uint16_t bytesToWrite,
-      uint16_t pageSize
+      const I2C_Bus_t iBus,
+      const uint8_t i2cDevAddr,
+      const uint16_t i2cMemAddr,
+      const uint8_t i2cMemAddrSize,
+      const uint8_t* const pBuffer,
+      const uint16_t bytesToWrite,
+      const uint16_t pageSize
 );
 
 /******************************************************************************/
