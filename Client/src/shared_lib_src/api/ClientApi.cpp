@@ -75,12 +75,12 @@ ClientError_t ClientApi::DC3_getMode(CBErrorCode *status, CBBootMode *mode)
    this->m_basicMsg._msgPayload  = _CBNoMsg;
 
    size_t size = CB_MAX_MSG_LEN;
-   uint8_t *buffer = new uint8_t(size);                    /* Allocate buffer */
+   uint8_t *buffer = new uint8_t[size];                    /* Allocate buffer */
    unsigned int bufferLen = 0;
    bufferLen = CBBasicMsg_write_delimited_to(&m_basicMsg, buffer, 0);
    l_pComm->write_some((char *)buffer, bufferLen);                /* Send Req */
 
-   delete buffer;                                            /* Delete buffer */
+   delete[] buffer;                                          /* Delete buffer */
 
    memset(&basicMsg, 0, sizeof(basicMsg));
    memset(&payloadMsgUnion, 0, sizeof(payloadMsgUnion));
@@ -154,13 +154,13 @@ ClientError_t ClientApi::DC3_setMode(CBErrorCode *status, CBBootMode mode)
    this->m_bootmodePayloadMsg._errorCode = ERR_NONE; // This field is ignored in Req msgs.
 
    size_t size = CB_MAX_MSG_LEN;
-   uint8_t *buffer = new uint8_t(size);                    /* Allocate buffer */
+   uint8_t *buffer = new uint8_t[size];                    /* Allocate buffer */
    unsigned int bufferLen = 0;
    bufferLen = CBBasicMsg_write_delimited_to(&m_basicMsg, buffer, 0);
    bufferLen = CBBootModePayloadMsg_write_delimited_to(&m_bootmodePayloadMsg, buffer, bufferLen);
    l_pComm->write_some((char *)buffer, bufferLen);                /* Send Req */
 
-   delete buffer;                                            /* Delete buffer */
+   delete[] buffer;                                          /* Delete buffer */
 
    memset(&basicMsg, 0, sizeof(basicMsg));
    memset(&payloadMsgUnion, 0, sizeof(payloadMsgUnion));
@@ -207,8 +207,43 @@ ClientError_t ClientApi::DC3_flashFW(
    /* These will be used for responses */
    CBBasicMsg basicMsg;
    CBPayloadMsgUnion_t payloadMsgUnion;
-
    ClientError_t clientStatus = CLI_ERR_NONE;
+
+
+   /* First, check if DC3 is in bootloader mode and if not, send a SetMode cmd
+    * so that the user doesn't have to worry about doing it */
+   CBBootMode currentBootMode = _CB_NoBootMode;
+   int curRetry   = 0;
+   int maxRetries = 3;
+   while ( currentBootMode != _CB_Bootloader && curRetry++ <= maxRetries ) {
+      DBG_printf(m_pLog, "Sending %d out of %d max possible get_mode to see if DC3 is in Bootloader mode", curRetry, maxRetries);
+      clientStatus = this->DC3_getMode(status, &currentBootMode);
+      if ( clientStatus != CLI_ERR_NONE ) {
+         ERR_printf(m_pLog, "Unable to get current DC3 bootmode. Client Error: 0x%08x", clientStatus);
+         return clientStatus;
+      }
+      if ( *status != ERR_NONE ) {
+         ERR_printf(m_pLog, "DC3 returned error 0x%08x when attempting to get current bootmode", *status);
+         return clientStatus;
+      }
+
+      /* If the DC3 is not in bootloader mode, reset it */
+      if ( currentBootMode != _CB_Bootloader ) {
+         clientStatus = this->DC3_setMode(status, _CB_Bootloader);
+         if ( clientStatus != CLI_ERR_NONE ) {
+            ERR_printf(m_pLog, "Unable to set DC3 to Bootloader mode. Client Error: 0x%08x", clientStatus);
+            return clientStatus;
+         }
+         if ( *status != ERR_NONE ) {
+            ERR_printf(m_pLog, "DC3 returned error 0x%08x when attempting to set DC3 to Bootloader mode", *status);
+            return clientStatus;
+         }
+         /* Give DC3 a chance to boot */
+         DBG_printf(m_pLog, "Waiting for DC3 to boot...");
+         boost::this_thread::sleep(boost::posix_time::milliseconds(2700));
+      }
+   }
+
    FWLdr *fw = NULL;
    try {
       fw = new FWLdr( m_pLog );
