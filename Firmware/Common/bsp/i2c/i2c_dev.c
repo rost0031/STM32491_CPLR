@@ -364,7 +364,7 @@ const CBErrorCode I2C_readDevMemBLK(
       const uint16_t offset,
       const uint16_t bytesToRead,
       const AccessType_t accType,
-      uint8_t* pBuffer,
+      uint8_t* const pBuffer,
       const uint8_t  bufSize
 )
 {
