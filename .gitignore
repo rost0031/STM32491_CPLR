@@ -41,3 +41,4 @@ doc/
 .I2C1DevMgr
 .GuiMgr
 .CommMgr
+.FlashMgr

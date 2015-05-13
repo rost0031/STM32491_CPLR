@@ -81,7 +81,7 @@ typedef enum CBErrors
    ERR_NOR_TIMEOUT                                             = 0x00030001,
    ERR_NOR_BUSY                                                = 0x00030002,
 
-   /* Bootloader CommMgr error category           0x00040000 - 0x0004FFFF */
+   /* CommMgr error category                     0x00040000 - 0x0004FFFF */
    ERR_COMM_UNKNOWN_MSG_SOURCE                                 = 0x00040000,
    ERR_COMM_INVALID_MSG_LEN                                    = 0x00040001,
    ERR_COMM_UNIMPLEMENTED_MSG                                  = 0x00040002,

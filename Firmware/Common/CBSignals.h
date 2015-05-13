@@ -56,6 +56,7 @@ enum CommSignals {
    COMM_OP_TIMEOUT_SIG,
    MSG_PROCESS_SIG,
    BOOT_APPL_SIG,
+   BOOT_RESET_SIG,
    COMM_MAX_SIG,
 };
 

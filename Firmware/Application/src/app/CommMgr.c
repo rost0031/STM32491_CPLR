@@ -294,6 +294,13 @@ static QState CommMgr_Active(CommMgr * const me, QEvt const * const e) {
             status_ = Q_HANDLED();
             break;
         }
+        /* ${AOs::CommMgr::SM::Active::BOOT_RESET} */
+        case BOOT_RESET_SIG: {
+            /* Perform Reset */
+            NVIC_SystemReset();
+            status_ = Q_HANDLED();
+            break;
+        }
         default: {
             status_ = Q_SUPER(&QHsm_top);
             break;
@@ -627,29 +634,60 @@ static QState CommMgr_ValidateMsg(CommMgr * const me, QEvt const * const e) {
                 DBG_printf("Setting bootMode payload with bootmode: %d\n", me->payloadMsgUnion.bootmodePayload._bootMode);
                 status_ = Q_TRAN(&CommMgr_Idle);
             }
-            /* ${AOs::CommMgr::SM::Active::Busy::ValidateMsg::MSG_PROCESS::[SetBootMode?]} */
-            else if (_CBSetBootModeMsg == me->basicMsg._msgName) {
-                me->errorCode = ERR_NONE;
-
-                DBG_printf("_CBSetBootModeMsg decoded, attempting to decode payload (if exists)\n");
-
-                /* Compose Done response.  We can re-use the current structure and it will be used by
-                 * the exit action of the parent state to send the msg.  Here, we only set up fields
-                 * that are specific to this response. We can also destructively change the payload
-                 * name since we are sending a response right after this. */
-                me->msgPayloadName = _CBStatusPayloadMsg;
-
-                /* Don't change the basicMsg name since it should be the same in all cases. */
-                me->basicMsg._msgPayload = me->msgPayloadName;
-                me->payloadMsgUnion.statusPayload._errorCode = me->errorCode;
-                DBG_printf("Setting status payload with error code: %d\n", me->payloadMsgUnion.statusPayload._errorCode);
-                status_ = Q_TRAN(&CommMgr_Idle);
-            }
             /* ${AOs::CommMgr::SM::Active::Busy::ValidateMsg::MSG_PROCESS::[Unsupported?]} */
             else if (_CBFlashMsg == me->basicMsg._msgName) {
                 me->errorCode = ERR_MSG_UNSUPPORTED_IN_APPLICATION;
 
                 status_ = Q_TRAN(&CommMgr_Idle);
+            }
+            /* ${AOs::CommMgr::SM::Active::Busy::ValidateMsg::MSG_PROCESS::[SetBootMode?]} */
+            else if (_CBSetBootModeMsg == me->basicMsg._msgName) {
+                DBG_printf("_CBSetBootModeMsg decoded, attempting to decode payload (if exists)\n");
+
+                /* ${AOs::CommMgr::SM::Active::Busy::ValidateMsg::MSG_PROCESS::[SetBootMode?]::[ValidPayload?]} */
+                if (_CBBootModePayloadMsg == me->msgPayloadName) {
+                    /* Has to be set after checking for a valid payload */
+                    me->msgPayloadName = _CBStatusPayloadMsg;
+                    me->basicMsg._msgPayload = me->msgPayloadName;
+                    /* ${AOs::CommMgr::SM::Active::Busy::ValidateMsg::MSG_PROCESS::[SetBootMode?]::[ValidPayload?]::[Application?]} */
+                    if (_CB_Application == me->payloadMsgUnion.bootmodePayload._bootMode) {
+                        me->errorCode = ERR_NONE;
+                        DBG_printf("Already in Application mode\n");
+                        status_ = Q_TRAN(&CommMgr_Idle);
+                    }
+                    /* ${AOs::CommMgr::SM::Active::Busy::ValidateMsg::MSG_PROCESS::[SetBootMode?]::[ValidPayload?]::[Bootloader?]} */
+                    else if (_CB_Bootloader == me->payloadMsgUnion.bootmodePayload._bootMode) {
+                        me->errorCode = ERR_NONE;
+                        DBG_printf("Resetting system to get back to bootloader mode\n");
+
+                        /* Post to self to boot to application but still have enough time to send a Done */
+                        QEvt *evt = Q_NEW(QEvt, BOOT_RESET_SIG);
+                        QACTIVE_POST(AO_CommMgr, (QEvt *)(evt), AO_CommMgr);
+                        status_ = Q_TRAN(&CommMgr_Idle);
+                    }
+                    /* ${AOs::CommMgr::SM::Active::Busy::ValidateMsg::MSG_PROCESS::[SetBootMode?]::[ValidPayload?]::[else]} */
+                    else {
+                        me->errorCode = ERR_COMM_INVALID_BOOTMODE_REQUESTED;
+                        ERR_printf("Unsupported bootmode requested (%d). Error: 0x%08x\n",
+                            me->payloadMsgUnion.bootmodePayload._bootMode, me->errorCode
+                        );
+                        status_ = Q_TRAN(&CommMgr_Idle);
+                    }
+                }
+                /* ${AOs::CommMgr::SM::Active::Busy::ValidateMsg::MSG_PROCESS::[SetBootMode?]::[else]} */
+                else {
+                    /* Has to be set after checking for a valid payload */
+                    me->msgPayloadName = _CBStatusPayloadMsg;
+                    me->basicMsg._msgPayload = me->msgPayloadName;
+
+                    me->errorCode = ERR_MSG_UNEXPECTED_PAYLOAD;
+                    ERR_printf(
+                        "Invalid payload for SetBootMode.  Expected BootmodePayload (%d), got (%d). Error: 0x%08x\n",
+                        _CBBootModePayloadMsg, me->msgPayloadName, me->errorCode
+                    );
+
+                    status_ = Q_TRAN(&CommMgr_Idle);
+                }
             }
             /* ${AOs::CommMgr::SM::Active::Busy::ValidateMsg::MSG_PROCESS::[else]} */
             else {
