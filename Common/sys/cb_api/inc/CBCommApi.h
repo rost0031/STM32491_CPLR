@@ -30,6 +30,7 @@ extern "C" {
 #include "CBTimeouts.h"
 #include "dfuse.h"
 #include "util.h"
+#include "CBSharedDBElements.h"
 
 /* Exported defines ----------------------------------------------------------*/
 /**

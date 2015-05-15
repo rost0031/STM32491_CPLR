@@ -287,7 +287,7 @@ int main(void)
     QACTIVE_START(AO_SysMgr,
           SYS_MGR_PRIORITY,                                       /* priority */
           l_SysMgrQueueSto, Q_DIM(l_SysMgrQueueSto),             /* evt queue */
-          (void *)0, 0,                              /* per-thread stack size */
+          (void *)0, THREAD_STACK_SIZE,              /* per-thread stack size */
           (QEvt *)0,                               /* no initialization event */
           "SysMgr"                                        /* Name of the task */
     );

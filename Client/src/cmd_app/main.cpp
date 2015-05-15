@@ -126,6 +126,11 @@ int main(int argc, char *argv[])
    string  m_local_port;                         /**< IP port to connect from */
    string  m_serial_dev;                     /**< serial device to connect to */
    int     m_serial_baud;                  /**< serial device baudrate to use */
+   bool    m_conn_set = false;  /* A flag to make sure that user set the
+                                 connection.  This is used to allow you to ask
+                                 for command specific help without specifying
+                                 connection options.  It's a bit of a hack but
+                                 I can't think of a better way of doing this */
    po::options_description desc("Global options");
 
    stringstream ss;        /**< Stream for some helpful comments to help user */
@@ -199,6 +204,7 @@ int main(int argc, char *argv[])
                   << setfill('0') << setw(8) << hex << status;
             EXIT_LOG_FLUSH(1);
          }
+         m_conn_set = true;
       } else if (m_vm.count("serial_dev") && !m_vm.count("ip_address")) {
          LOG_out << "Serial connection on "
                << m_vm["serial_dev"].as<string>()
@@ -219,6 +225,7 @@ int main(int argc, char *argv[])
             CON_print("!!! Make sure you're using the correct serial port and nothing else is using it !!!");
             EXIT_LOG_FLUSH(1);
          }
+         m_conn_set = true;
       } else if (m_vm.count("serial_dev") && m_vm.count("ip_address")) {
          /* User specified specified both connection options. Let's not allow
           * that. */
@@ -228,16 +235,6 @@ int main(int argc, char *argv[])
                "command." << endl;
          ss << "You only get ethernet OR serial device. Not both. Specify via: "
                "-i <ip address> OR -s <COMx>.  (See help above)";
-         CON_print(ss.str());
-         EXIT_LOG_FLUSH(1);
-      } else  {
-         /* User didn't specify any connection options. */
-         ss.clear();
-         ss << desc << endl;
-         ss << "To get detailed help for any command, add a --help after the "
-               "command." << endl;
-         ss << "No IP address or serial device specified.  Please specify using"
-               "-i <ip address> or -s <COMx>.  (See help above)";
          CON_print(ss.str());
          EXIT_LOG_FLUSH(1);
       }
@@ -251,7 +248,7 @@ int main(int argc, char *argv[])
       if (m_vm.count("get_mode")) {                /* "get_mode" cmd handling */
          m_parsed_cmd = "get_mode";
 
-         if (m_vm.count("help")) {     /* Check for command specific help req */
+         if (m_vm.count("help") || !m_conn_set) {  /* Check for command specific help req */
             HELP_printCmdSpecific( m_parsed_cmd, appName );
          }
 
@@ -278,7 +275,7 @@ int main(int argc, char *argv[])
          vector<string>::const_iterator end = m_vm["set_mode"].as<vector<string>>().end();
          vector<string>::const_iterator itr;
           /* Check for command specific help req */
-         if( find(begin, end, "--help") != end || find(begin, end, "help") != end ) {
+         if( find(begin, end, "--help") != end || find(begin, end, "help") != end  || !m_conn_set ) {
             HELP_printCmdSpecific( m_parsed_cmd, appName );
          }
 
@@ -326,7 +323,7 @@ int main(int argc, char *argv[])
          vector<string>::const_iterator end = m_vm["flash"].as<vector<string>>().end();
          vector<string>::const_iterator itr;
           /* Check for command specific help req */
-         if( find(begin, end, "--help") != end || find(begin, end, "help") != end ) {
+         if( find(begin, end, "--help") != end || find(begin, end, "help") != end  || !m_conn_set) {
             HELP_printCmdSpecific( m_parsed_cmd, appName );
          }
 
@@ -397,13 +394,10 @@ int main(int argc, char *argv[])
          }
       }
 
-      else { // end of checking for cmdline requested commands.
-         /* If we are here, no commands were requested so */
-         ERR_out << "TODO: implement menu here";
-         EXIT_LOG_FLUSH(0);
-      }
-      /* Now check if the user requested general help */
-      if (m_vm.count("help")) {
+      /* Now check if the user requested general help.  This has to be done
+       * after checking for commands.  This allows checking for user requesting
+       * help for a specific command and this general help won't override. */
+      else if (m_vm.count("help")) {
          stringstream ss;
 
          ss << desc << endl;
@@ -416,6 +410,11 @@ int main(int argc, char *argv[])
          ss << "CmdLine Client Lib version: " << "TODO" << endl;
          ss << "Boost Library version: " << BOOST_LIB_VERSION << endl;
          CON_print(ss.str());
+         EXIT_LOG_FLUSH(0);
+      }
+      else { // end of checking for cmdline requested commands.
+         /* If we are here, no commands were requested so */
+         ERR_out << "TODO: implement menu here";
          EXIT_LOG_FLUSH(0);
       }
 
