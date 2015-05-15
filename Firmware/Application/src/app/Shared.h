@@ -33,7 +33,7 @@
 enum AO_Priorities {
    NEVER_USE_ZERO_PRIORITY = 0,   /**< Never use this.  It breaks everything. */
 
-   DBG_MGR_PRIORITY,                             /**< Priority of MenuMgr AO. */
+   SYS_MGR_PRIORITY,                             /**< Priority of MenuMgr AO. */
    COMM_MGR_PRIORITY,                       /**< Priority of CommStackMgr AO. */
 
    I2C1DEVMGR_PRIORITY,                       /**< Priority of I2C1DevMgr AO. */
@@ -64,15 +64,17 @@ enum AO_Priorities {
  * the blocking kind.
  */
 typedef enum AccessType {
-   ACCESS_BARE_METAL = 0,  /**< Blocking access where no RTOS services are
+   ACCESS_NONE       = 0,  /**< No access type.  Used as a default value  */
+   ACCESS_BARE_METAL,      /**< Blocking access where no RTOS services are
                                 running. All returns are done via passed in
                                 buffer */
    ACCESS_QPC,             /**< Non-blocking access performed from QPC Active
                                 Objects. All returns are done via events that
                                 requesting AO should know how to handle */
-   ACCESS_FREERTOS         /**< Non-blocking access performed from a FreeRTOS
+   ACCESS_FREERTOS,        /**< Non-blocking access performed from a FreeRTOS
                                 thread.  All returns are done via a QEQueue that
                                 the requesting thread should wait on */
+   ACCESS_MAX              /**< Max value in the type */
 } AccessType_t;
 
 /* Exported constants --------------------------------------------------------*/

@@ -36,9 +36,26 @@
 #endif
 
 /* Includes ------------------------------------------------------------------*/
-/* Exported defines ----------------------------------------------------------*/
+#include "Shared.h"
+#include "i2c_defs.h"                                /* for I2C functionality */
+
+ /* Exported defines ----------------------------------------------------------*/
+#define MAX_DB_ELEM_SIZE   20               /**< Max size of an element in DB */
+
 /* Exported macros -----------------------------------------------------------*/
 /* Exported types ------------------------------------------------------------*/
+
+/**
+* I2C Operations available on the system.
+*/
+typedef enum DB_Operations {
+   DB_OP_NONE  = 0,                                 /**< No current operation */
+   DB_OP_READ,                                  /**< Reading from settings DB */
+   DB_OP_WRITE,                                   /**< Writing to settings DB */
+   /* Insert more I2C operations here... */
+   DB_OP_MAX
+} DB_Operation_t;
+
 /**
  * All the different settings that can exist in the settings database
  */
@@ -67,6 +84,50 @@ typedef enum DB_Elements {
 
    DB_MAX_ELEM   /**< Max number of elements that can be stored.  ALWAYS LAST */
 } DB_Elem_t;
+
+/**
+ * DB elements that can be retrieved.
+ */
+typedef enum {
+   DB_EEPROM = 0,           /**< Setting is located in the main EEPROM memory */
+   DB_SN_ROM,         /**< Setting is located in the RO SNR section of EEPROM */
+   DB_UI_ROM,        /**< Setting is located in the RO UI64 section of EEPROM */
+
+   /* .. insert more I2C devices before GPIO so they are all together .. */
+
+   DB_GPIO,                          /**< Setting is specified via a GPIO pin */
+   DB_FLASH                  /**< Setting is located in the main FLASH memory */
+} DB_ElemLoc_t;
+
+/**
+ * Description type of each DB element (location, etc).
+ */
+typedef struct {
+   DB_Elem_t    elem;  /**< Specifies which settings element is being described */
+   DB_ElemLoc_t  loc;  /**< Specifies how the db element is stored */
+   size_t       size;  /**< Specifies the size of the db element */
+   uint32_t    offset; /**< Specifies the offset from beginning of EEPROM memory
+                            where the element is stored */
+} SettingsDB_Desc_t;
+
+/**
+ * DB element structure mapping that resides in the main memory of the EEPROM
+ */
+typedef struct {
+   uint32_t dbMagicWord; /**< Magic word that specifies whether a DB exists.  If
+                              this is not present, we have to initialize the DB
+                              in EEPROM memory to some default.*/
+   uint16_t dbVersion;   /**< Version of the database */
+   uint8_t ipAddr[4];  /**< 4 values of the 111.222.333.444 ip address in hex */
+   uint8_t bootMajVer; /**< Major version byte of the bootloader FW image */
+   uint8_t bootMinVer; /**< Major version byte of the bootloader FW image */
+   uint8_t bootBuildDT[CB_DATETIME_LEN]; /**< Build datetime of the bootloader
+                                              FW image */
+   uint8_t fpgaMajVer; /**< Major version byte of the FPGA FW image */
+   uint8_t fpgaMinVer; /**< Major version byte of the FPGA FW image */
+   uint8_t fpgaBuildDT[CB_DATETIME_LEN]; /**< Build datetime of the FPGA FW
+                                              image */
+} SettingsDB_t;
 
 /* Exported constants --------------------------------------------------------*/
 /* Exported functions --------------------------------------------------------*/
@@ -183,6 +244,78 @@ const CBErrorCode DB_setElemBLK(
       const uint8_t* const pBuffer,
       const size_t bufSize,
       const AccessType_t accessType
+);
+
+/**
+ * @brief   Get the DB element location in the DB
+ *
+ * @param [in] elem: DB_Elem_t that specifies the DB element
+ * @return DB_ElemLoc_t:
+ *    @arg DB_EEPROM: element lives in the R/W EEPROM
+ *    @arg DB_SN_ROM: element lives in the R/O SNR section of EEPROM
+ *    @arg DB_UI_ROM: element lives in the R/O UI64 section of EEPROM
+ *    @arg DB_GPIO:   element is specified via a GPIO pin
+ *    @arg DB_FLASH:  element lives in the main FLASH memory
+ */
+const DB_ElemLoc_t DB_getElemLoc( const DB_Elem_t elem );
+
+/**
+ * @brief   Get the DB element offset from the beginnging of its device
+ *
+ * @param [in] elem: DB_Elem_t that specifies the DB element
+ * @return uint32_t: offset from beginning of the element's device
+ */
+const uint32_t DB_getElemOffset( const DB_Elem_t elem );
+
+/**
+ * @brief   Get the DB element size in DB
+ *
+ * @param [in] elem: DB_Elem_t that specifies the DB element
+ * @return size_t: size of the element in DB
+ */
+const size_t DB_getElemSize( const DB_Elem_t elem );
+
+/**
+ * @brief   Get the specific I2C device on which a specified DB element is
+ *          stored.
+ *
+ * @note:   This should only be used only after checking if the DB element lives
+ *          on I2C and not anywhere else.
+ *
+ * @param [in] loc: DB_ElemLoc_t that specifies location where the DB element
+ * lives.
+ * @return I2C_Dev_t:
+ *    @arg EEPROM: eeprom device
+ *    @arg SN_ROM: R/O SN eeprom section
+ *    @arg EUI_ROM: R/O EUI eeprom section
+ */
+const I2C_Dev_t DB_getI2CDev( const DB_ElemLoc_t loc );
+
+/**
+ * @brief   Get an element stored in the FLASH section of settings DB.
+ *
+ * This function retrieves an element from the database portion of DB that is
+ * stored exclusively in FLASH (and is read only).
+ *
+ * @param  [in] elem: DB_Elem_t that specifies what element to retrieve.
+ *    @arg DB_APPL_MAJ_VER: Major version of the Application FW image.
+ *    @arg DB_APPL_MIN_VER: Minor version of the Application FW image.
+ *    @arg DB_APPL_BUILD_DATETIME: Build datetime of the application FW image.
+ *
+ * @param  [in] bufSize: size of the pBuffer.
+ * @param  [out] *pBuffer: uint8_t pointer to a buffer where to store the
+ *                         retrieved element.
+ * @param  [out] resultLen: uint8_t pointer to the length of data stored in the
+ *                         buffer on return.
+ * @return CBErrorCode: status of the read operation
+ *    @arg ERR_NONE: if no errors occurred
+ *    other errors if found.
+ */
+const CBErrorCode DB_readEEPROM(
+      const DB_Elem_t elem,
+      const uint8_t bufferSize,
+      uint8_t* const buffer,
+      uint8_t* resultLen
 );
 
 #ifdef __cplusplus

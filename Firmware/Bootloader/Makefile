@@ -322,6 +322,7 @@ C_SRCS                  = \
                           SerialMgr.c \
                           CommMgr.c \
                           FlashMgr.c \
+                          SysMgr.c \
                           \
                           misc.c  \
                           stm32f4xx_crc.c \

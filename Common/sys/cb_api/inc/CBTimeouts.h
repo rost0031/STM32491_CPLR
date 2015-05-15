@@ -108,6 +108,15 @@
 
    /*@} Bootloader CommMgr Timeouts and Times.*/
 
+
+   /** \name SysMgr Timeouts and Times.
+    * These are the timeouts used by the SysMgr AO
+    *@{*/
+   #define HL_MAX_TOUT_SEC_SYS_MGR                                           60.0
+   #define LL_MAX_TOUT_SEC_DB_ACCESS                                          3.0
+
+   /*@} SysMgr Timeouts and Times.*/
+
    /** \name Client Timeouts and Times.
     * These are the timeouts used by the CliMgr AO.
     *@{*/

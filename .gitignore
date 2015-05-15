@@ -42,3 +42,4 @@ doc/
 .GuiMgr
 .CommMgr
 .FlashMgr
+.SysMgr

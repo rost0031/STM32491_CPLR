@@ -1,0 +1,618 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<model version="3.2.2">
+ <documentation>/**
+ * CommStackMgr Active Object which.  This AO handles all communications work.
+ */</documentation>
+ <framework name="qpc"/>
+ <package name="Events" stereotype="0x01">
+  <class name="DBReadReqEvt" superclass="qpc::QEvt">
+   <documentation>/**
+ * @brief Event struct type for specifying a DB read request.
+ */</documentation>
+   <attribute name="accessType" type="AccessType_t" visibility="0x01" properties="0x00">
+    <documentation>/**&lt; Specifies whether the request came from FreeRTOS thread or another AO */</documentation>
+   </attribute>
+   <attribute name="dbElem" type="DB_Elem_t" visibility="0x01" properties="0x00">
+    <documentation>/**&lt; DB element */</documentation>
+   </attribute>
+  </class>
+  <class name="DBWriteReqEvt" superclass="qpc::QEvt">
+   <documentation>/**
+ * @brief Event struct type for specifying a DB read request.
+ */</documentation>
+   <attribute name="accessType" type="AccessType_t" visibility="0x01" properties="0x00">
+    <documentation>/**&lt; Specifies whether the request came from FreeRTOS thread or another AO */</documentation>
+   </attribute>
+   <attribute name="dbElem" type="DB_Elem_t" visibility="0x01" properties="0x00">
+    <documentation>/**&lt; DB element */</documentation>
+   </attribute>
+   <attribute name="dataBuf[MAX_DB_ELEM_SIZE]" type="uint8_t" visibility="0x01" properties="0x00">
+    <documentation>/**&lt; Buffer that holds the data to write */</documentation>
+   </attribute>
+   <attribute name="dataLen" type="uint8_t" visibility="0x01" properties="0x00">
+    <documentation>/**&lt; Length of data in dataBuf */</documentation>
+   </attribute>
+  </class>
+  <class name="DBReadDoneEvt" superclass="qpc::QEvt">
+   <documentation>/**
+ * @brief Event struct type for specifying a DB read request.
+ */</documentation>
+   <attribute name="dbElem" type="DB_Elem_t" visibility="0x01" properties="0x00">
+    <documentation>/**&lt; DB element */</documentation>
+   </attribute>
+   <attribute name="dataBuf[MAX_DB_ELEM_SIZE]" type="uint8_t" visibility="0x01" properties="0x00">
+    <documentation>/**&lt; Buffer that holds the data read from DB */</documentation>
+   </attribute>
+   <attribute name="dataLen" type="uint8_t" visibility="0x01" properties="0x00">
+    <documentation>/**&lt; Length of data in dataBuf */</documentation>
+   </attribute>
+   <attribute name="status" type="CBErrorCode" visibility="0x01" properties="0x00">
+    <documentation>/**&lt; Status of the operation */</documentation>
+   </attribute>
+  </class>
+  <class name="DBWriteDoneEvt" superclass="qpc::QEvt">
+   <documentation>/**
+ * @brief Event struct type for specifying a DB read request.
+ */</documentation>
+   <attribute name="dbElem" type="DB_Elem_t" visibility="0x01" properties="0x00">
+    <documentation>/**&lt; DB element */</documentation>
+   </attribute>
+   <attribute name="status" type="CBErrorCode" visibility="0x01" properties="0x00">
+    <documentation>/**&lt; Status of the operation */</documentation>
+   </attribute>
+  </class>
+ </package>
+ <package name="AOs" stereotype="0x02">
+  <class name="SysMgr" superclass="qpc::QActive">
+   <documentation>/**
+ * \brief SysMgr &quot;class&quot;
+ */</documentation>
+   <attribute name="errorCode" type="CBErrorCode" visibility="0x01" properties="0x00">
+    <documentation>/**&lt; Keep track of errors that may occur in the AO */</documentation>
+   </attribute>
+   <attribute name="deferredEvtQueue" type="QEQueue" visibility="0x01" properties="0x00">
+    <documentation>/**&lt; Native QF queue for deferred request events. */</documentation>
+   </attribute>
+   <attribute name="deferredEvtQSto[10]" type="QTimeEvt const *" visibility="0x01" properties="0x00">
+    <documentation>/**&lt; Storage for deferred event queue. */</documentation>
+   </attribute>
+   <attribute name="sysTimerEvt" type="QTimeEvt" visibility="0x01" properties="0x00">
+    <documentation>/**&lt; QPC timer Used to timeout overall SysMgr interactions. */</documentation>
+   </attribute>
+   <attribute name="dbTimerEvt" type="QTimeEvt" visibility="0x01" properties="0x00">
+    <documentation>/**&lt; QPC timer Used to timeout DB accesses. */</documentation>
+   </attribute>
+   <attribute name="accessType" type="AccessType_t" visibility="0x01" properties="0x00">
+    <documentation>/**&lt; Access type of current request (used for DB access) */</documentation>
+   </attribute>
+   <attribute name="dbCmd" type="DB_Operation_t" visibility="0x01" properties="0x00">
+    <documentation>/**&lt; DB command of current request (used for DB access to guarantee a reply) */</documentation>
+   </attribute>
+   <attribute name="dataBuf[MAX_DB_ELEM_SIZE]" type="uint8_t" visibility="0x01" properties="0x00">
+    <documentation>/**&lt; Buffer that holds the data for read results from any device we have to wait for */</documentation>
+   </attribute>
+   <attribute name="dataLen" type="uint8_t" visibility="0x01" properties="0x00">
+    <documentation>/**&lt; Length of data in dataBuf */</documentation>
+   </attribute>
+   <attribute name="dbElem" type="DB_Elem_t" visibility="0x01" properties="0x00">
+    <documentation>/**&lt; DB element to get or set with the current request (used for DB access to guarantee a reply) */</documentation>
+   </attribute>
+   <statechart>
+    <initial target="../1/0">
+     <action>(void)e;        /* suppress the compiler warning about unused parameter */
+
+QS_OBJ_DICTIONARY(&amp;l_CommMgr);
+QS_FUN_DICTIONARY(&amp;QHsm_top);
+QS_FUN_DICTIONARY(&amp;CommMgr_initial);
+QS_FUN_DICTIONARY(&amp;CommMgr_Active);
+
+/* Subscribe to I2C read and write done signals since it will be publishing them */
+QActive_subscribe((QActive *)me, I2C1_DEV_READ_DONE_SIG);
+QActive_subscribe((QActive *)me, I2C1_DEV_WRITE_DONE_SIG);
+QActive_subscribe((QActive *)me, DB_GET_ELEM_SIG);
+QActive_subscribe((QActive *)me, DB_SET_ELEM_SIG);</action>
+     <initial_glyph conn="1,2,4,3,9,5">
+      <action box="0,-2,6,2"/>
+     </initial_glyph>
+    </initial>
+    <state name="Active">
+     <documentation>/**
+ * This state is a catch-all Active state.  If any signals need
+ * to be handled that do not cause state transitions and are
+ * common to the entire AO, they should be handled here.
+ *
+ * @param  [in|out] me: Pointer to the state machine
+ * @param  [in|out]  e:  Pointer to the event being processed.
+ * @return status: QState type that specifies where the state
+ * machine is going next.
+ */</documentation>
+     <entry>/* Post and disarm all the timer events so they can be rearmed at any time */
+QTimeEvt_postIn(
+    &amp;me-&gt;sysTimerEvt,
+    (QActive *)me,
+    SEC_TO_TICKS( HL_MAX_TOUT_SEC_SYS_MGR )
+);
+QTimeEvt_disarm(&amp;me-&gt;sysTimerEvt);
+
+QTimeEvt_postIn(
+    &amp;me-&gt;dbTimerEvt,
+    (QActive *)me,
+    SEC_TO_TICKS( HL_MAX_TOUT_SEC_SYS_MGR )
+);
+QTimeEvt_disarm(&amp;me-&gt;dbTimerEvt);</entry>
+     <state name="Idle">
+      <documentation>/**
+ * @brief	Idle state that allows new messages to be received.
+ * The Idle state allows for handling of new incoming msgs. Msgs in other states
+ * will be either deferred or ignored.
+ *
+ * @param  [in|out] me: Pointer to the state machine
+ * @param  [in|out]  e:  Pointer to the event being processed.
+ * @return status: QState type that specifies where the state
+ * machine is going next.
+ */</documentation>
+      <entry>/* Clear out all the variables on entry to Idle state.  By this point, any error
+ * feedback should have already happened. */
+me-&gt;errorCode       = ERR_NONE;
+me-&gt;accessType      = ACCESS_NONE;
+me-&gt;dbCmd           = DB_OP_NONE;
+me-&gt;dataLen         = 0;
+memset(me-&gt;dataBuf, 0, sizeof(me-&gt;dataBuf));
+</entry>
+      <tran trig="DB_GET_ELEM" target="../../1/2">
+       <action>DBG_printf(&quot;DB_GET_ELEM, posting DB_READ\n&quot;);
+
+me-&gt;dbCmd = DB_OP_READ;
+me-&gt;accessType = ((DBReadReqEvt const *)e)-&gt;accessType;
+me-&gt;dbElem = ((DBReadReqEvt const *)e)-&gt;dbElem;
+
+/* Change the signal associated with event and re post to self so it gets handled
+ * in the AccessingDB state without having to recopy all the data in the event. */
+((DBReadReqEvt *)e)-&gt;super.sig = DB_READ_SIG;
+QACTIVE_POST(AO_SysMgr, (QEvt *)e, me);</action>
+       <tran_glyph conn="6,18,3,3,55">
+        <action box="0,-2,10,2"/>
+       </tran_glyph>
+      </tran>
+      <tran trig="DB_SET_ELEM" target="../../1/2">
+       <action>DBG_printf(&quot;DB_SET_ELEM, posting DB_WRITE\n&quot;);
+
+me-&gt;dbCmd = DB_OP_WRITE;
+me-&gt;accessType = ((DBReadReqEvt const *)e)-&gt;accessType;
+me-&gt;dbElem = ((DBReadReqEvt const *)e)-&gt;dbElem;
+
+/* Change the signal associated with event and re post to self so it gets handled
+ * in the AccessingDB state without having to recopy all the data in the event. */
+((DBWriteReqEvt *)e)-&gt;super.sig = DB_WRITE_SIG;
+QACTIVE_POST(AO_SysMgr, (QEvt *)e, me);</action>
+       <tran_glyph conn="6,21,3,3,55">
+        <action box="0,-2,10,2"/>
+       </tran_glyph>
+      </tran>
+      <state_glyph node="6,8,28,88">
+       <entry box="1,2,6,2"/>
+      </state_glyph>
+     </state>
+     <state name="Busy">
+      <documentation>/**
+ * @brief	Busy state for msg processing.
+ * This state handles msg processing and indicates that the system is busy and
+ * cannot process another msg at this time.
+ *
+ * @param  [in|out] me: Pointer to the state machine
+ * @param  [in|out]  e:  Pointer to the event being processed.
+ * @return status: QState type that specifies where the state
+ * machine is going next.
+ */</documentation>
+      <entry>/* Arm the timer so if the message can't be processed for some reason, we can get
+ * back to idle state.  This timer may be re-armed if some messages require more 
+ * time to process than others. */
+QTimeEvt_rearm(
+    &amp;me-&gt;sysTimerEvt,
+    SEC_TO_TICKS( LL_MAX_TOUT_SEC_DB_ACCESS )
+);
+</entry>
+      <exit>QTimeEvt_disarm(&amp;me-&gt;sysTimerEvt);                 /* Disarm timer on exit */
+</exit>
+      <tran trig="SYS_MGR_TIMEOUT" target="../../0">
+       <tran_glyph conn="58,94,3,1,-24">
+        <action box="-19,-2,19,2"/>
+       </tran_glyph>
+      </tran>
+      <tran trig="DB_SET_ELEM, DB_GET_ELEM">
+       <action>if (QEQueue_getNFree(&amp;me-&gt;deferredEvtQueue) &gt; 0) {
+   /* defer the request - this event will be handled
+    * when the state machine goes back to Idle state */
+   QActive_defer((QActive *)me, &amp;me-&gt;deferredEvtQueue, e);
+   DBG_printf(&quot;Deferring DB request until current is done\n&quot;);
+} else {
+   /* notify the request sender that the request was ignored.. */
+   ERR_printf(&quot;Unable to defer DB request\n&quot;);
+}</action>
+       <tran_glyph conn="58,77,3,-1,32">
+        <action box="0,-4,10,4"/>
+       </tran_glyph>
+      </tran>
+      <state name="AccessingDB">
+       <documentation>/**
+ * @brief    State that waits for DB access to complete.
+ * This state handles DB access requests and indicates that the system is busy and
+ * cannot process another msg at this time.  It is also used to timeout requests that
+ * may have hung.
+ *
+ * @param  [in|out] me: Pointer to the state machine
+ * @param  [in|out]  e:  Pointer to the event being processed.
+ * @return status: QState type that specifies where the state
+ * machine is going next.
+ */</documentation>
+       <entry>/* Set the error code in case of timeout */
+me-&gt;errorCode = ERR_DB_ACCESS_TIMEOUT;
+
+/* Arm the timer so if DB access is broken, the system can properly return an error */
+QTimeEvt_rearm(
+    &amp;me-&gt;dbTimerEvt,
+    SEC_TO_TICKS( LL_MAX_TOUT_SEC_DB_ACCESS )
+);
+</entry>
+       <exit>QTimeEvt_disarm(&amp;me-&gt;dbTimerEvt);                 /* Disarm timer on exit */
+
+if ( me-&gt;dbCmd == DB_OP_READ ) {
+    DBReadDoneEvt *evt = Q_NEW(DBReadDoneEvt, DB_GET_ELEM_DONE_SIG);
+    evt-&gt;status = me-&gt;errorCode;
+    evt-&gt;dbElem  = me-&gt;dbElem;
+    evt-&gt;dataLen = me-&gt;dataLen;
+    MEMCPY(evt-&gt;dataBuf, me-&gt;dataBuf, evt-&gt;dataLen);
+    DBG_printf(&quot;Publishing DB_GET_ELEM_DONE_SIG with %d len and error 0x%08x\n&quot;,evt-&gt;dataLen, evt-&gt;status);
+
+    if ( ACCESS_FREERTOS == me-&gt;accessType ) {
+#if CPLR_APP
+        /* Post directly to the &quot;raw&quot; queue for FreeRTOS task to read */
+        QEQueue_postFIFO(&amp;CPLR_evtQueue, (QEvt *)evt);
+        vTaskResume( xHandle_CPLR );
+#elif CPLR_BOOT
+        /* Publish the event so other AOs can get it if they want */
+        QF_PUBLISH((QEvt *)evt, AO_SysMgr);
+#else
+    #error &quot;Invalid build.  CPLR_APP or CPLR_BOOT must be specified&quot;
+#endif
+
+    } else {
+        /* Publish the event so other AOs can get it if they want */
+        QF_PUBLISH((QEvt *)evt, AO_SysMgr);
+    }
+
+} else if ( me-&gt;dbCmd == DB_OP_WRITE ) {
+    DBWriteDoneEvt *evt = Q_NEW(DBWriteDoneEvt, DB_SET_ELEM_DONE_SIG);
+    evt-&gt;status = me-&gt;errorCode;
+    evt-&gt;dbElem  = me-&gt;dbElem;
+
+    if ( ACCESS_FREERTOS == me-&gt;accessType ) {
+#if CPLR_APP
+        /* Post directly to the &quot;raw&quot; queue for FreeRTOS task to read */
+        QEQueue_postFIFO(&amp;CPLR_evtQueue, (QEvt *)evt);
+        vTaskResume( xHandle_CPLR );
+#elif CPLR_BOOT
+        /* Publish the event so other AOs can get it if they want */
+        QF_PUBLISH((QEvt *)evt, AO_SysMgr);
+#else
+    #error &quot;Invalid build.  CPLR_APP or CPLR_BOOT must be specified&quot;
+#endif
+
+    } else {
+        /* Publish the event so other AOs can get it if they want */
+        QF_PUBLISH((QEvt *)evt, AO_SysMgr);
+    }
+} else {
+    me-&gt;errorCode = ERR_DB_ELEM_SIZE_OVERFLOW;
+    ERR_printf(&quot;Invalid DB operation (%d) specified somehow\n&quot;, me-&gt;dbCmd);
+    DBWriteDoneEvt *evt = Q_NEW(DBWriteDoneEvt, DB_ERROR_SIG);
+    evt-&gt;status = me-&gt;errorCode;
+    evt-&gt;dbElem  = me-&gt;dbElem;
+
+    if ( ACCESS_FREERTOS == me-&gt;accessType ) {
+#if CPLR_APP
+        /* Post directly to the &quot;raw&quot; queue for FreeRTOS task to read */
+        QEQueue_postFIFO(&amp;CPLR_evtQueue, (QEvt *)evt);
+        vTaskResume( xHandle_CPLR );
+#elif CPLR_BOOT
+        /* Publish the event so other AOs can get it if they want */
+        QF_PUBLISH((QEvt *)evt, AO_SysMgr);
+#else
+    #error &quot;Invalid build.  CPLR_APP or CPLR_BOOT must be specified&quot;
+#endif
+    } else {
+        /* Publish the event so other AOs can get it if they want */
+        QF_PUBLISH((QEvt *)evt, AO_SysMgr);
+    }
+
+}</exit>
+       <tran trig="DB_ACCESS_TIMEOUT" target="../../../0">
+        <tran_glyph conn="61,31,3,1,-27">
+         <action box="-19,-2,19,2"/>
+        </tran_glyph>
+       </tran>
+       <tran trig="DB_READ">
+        <action>DBG_printf(&quot;DB_READ with accType %d and dbElem %d\n&quot;, 
+    ((DBReadReqEvt const *)e)-&gt;accessType,
+    ((DBReadReqEvt const *)e)-&gt;dbElem
+);
+
+/* Find where the element lives */
+DB_ElemLoc_t loc = DB_getElemLoc( ((DBReadReqEvt const *)e)-&gt;dbElem );
+
+   /* 3. Call the location dependent functions to retrieve the data from DB */
+switch( loc ) {
+    case DB_EEPROM:                           /* Intentionally fall through */
+    case DB_SN_ROM:                           /* Intentionally fall through */
+    case DB_UI_ROM:
+        ;
+        /* Create the event and directly post it to the right AO. */
+        I2CReadReqEvt *i2cReadReqEvt  = Q_NEW(I2CReadReqEvt, I2C1_DEV_RAW_MEM_READ_SIG);
+        i2cReadReqEvt-&gt;i2cDev         = DB_getI2CDev(loc);
+        i2cReadReqEvt-&gt;addr           = I2C_getMemAddr( i2cReadReqEvt-&gt;i2cDev ) + DB_getElemOffset(((DBReadReqEvt const *)e)-&gt;dbElem);
+        i2cReadReqEvt-&gt;bytes          = DB_getElemSize(((DBReadReqEvt const *)e)-&gt;dbElem);
+        i2cReadReqEvt-&gt;accessType     = me-&gt;accessType;
+        QACTIVE_POST(AO_I2C1DevMgr, (QEvt *)(i2cReadReqEvt), me);
+        DBG_printf(&quot;Posting a read req to I2C1DevMgr\n&quot;);
+        break;
+    case DB_GPIO:
+        me-&gt;errorCode = ERR_UNIMPLEMENTED;
+        QEvt *evtGPIO = Q_NEW(QEvt, DB_OP_DONE_SIG);
+        QACTIVE_POST(AO_SysMgr, evtGPIO, me);
+        break;
+    case DB_FLASH:
+        ;
+        me-&gt;errorCode = DB_readEEPROM(
+            ((DBReadReqEvt const *)e)-&gt;dbElem,
+            MAX_DB_ELEM_SIZE,
+            me-&gt;dataBuf,
+            &amp;(me-&gt;dataLen)
+        );
+        QEvt *evtFlash = Q_NEW(QEvt, DB_OP_DONE_SIG);
+        QACTIVE_POST(AO_SysMgr, evtFlash, me);
+        break;
+        /* Add more locations here. Anything that fails will go to the default
+         * case and get logged as an error. */
+    default:
+        me-&gt;errorCode  = ERR_DB_ELEM_NOT_FOUND;
+        QEvt *evtNotFound = Q_NEW(QEvt, DB_OP_DONE_SIG);
+        QACTIVE_POST(AO_SysMgr, evtNotFound, me);
+        break;
+}</action>
+        <tran_glyph conn="61,24,3,-1,10">
+         <action box="0,-2,8,2"/>
+        </tran_glyph>
+       </tran>
+       <tran trig="DB_WRITE">
+        <action>DBG_printf(&quot;DB_WRITE with accType %d and dbElem %d\n&quot;,
+    ((DBWriteReqEvt const *)e)-&gt;accessType,
+    ((DBWriteReqEvt const *)e)-&gt;dbElem
+);
+
+/* Find where the element lives */
+DB_ElemLoc_t loc = DB_getElemLoc( ((DBWriteReqEvt const *)e)-&gt;dbElem );
+
+   /* 3. Call the location dependent functions to retrieve the data from DB */
+switch( loc ) {
+    case DB_EEPROM:
+        ;
+        /* Create the event and directly post it to the right AO. */
+        I2CWriteReqEvt *i2cWriteReqEvt  = Q_NEW(I2CWriteReqEvt, I2C1_DEV_RAW_MEM_WRITE_SIG);
+        i2cWriteReqEvt-&gt;i2cDev         = DB_getI2CDev(loc);
+        i2cWriteReqEvt-&gt;addr           = I2C_getMemAddr( i2cWriteReqEvt-&gt;i2cDev ) + DB_getElemOffset(((DBWriteReqEvt const *)e)-&gt;dbElem);
+        i2cWriteReqEvt-&gt;bytes          = DB_getElemSize(((DBWriteReqEvt const *)e)-&gt;dbElem);
+        i2cWriteReqEvt-&gt;accessType     = me-&gt;accessType;
+        QACTIVE_POST(AO_I2C1DevMgr, (QEvt *)(i2cWriteReqEvt), me);
+        DBG_printf(&quot;Posting a write req to I2C1DevMgr\n&quot;);
+        break;
+    case DB_GPIO:                             /* Intentionally fall through */
+    case DB_SN_ROM:                           /* Intentionally fall through */
+    case DB_UI_ROM:                           /* Intentionally fall through */
+    case DB_FLASH:
+        me-&gt;errorCode = ERR_DB_ELEM_IS_READ_ONLY;
+        QEvt *evt = Q_NEW(QEvt, DB_OP_DONE_SIG);
+        QACTIVE_POST(AO_SysMgr, evt, me);
+        break;
+        /* Add more locations here. Anything that fails will go to the default
+         * case and get logged as an error. */
+    default:
+        me-&gt;errorCode  = ERR_DB_ELEM_NOT_FOUND;
+        QEvt *evtNotFound = Q_NEW(QEvt, DB_OP_DONE_SIG);
+        QACTIVE_POST(AO_SysMgr, evtNotFound, me);
+        break;
+}</action>
+        <tran_glyph conn="61,27,3,-1,10">
+         <action box="0,-2,8,2"/>
+        </tran_glyph>
+       </tran>
+       <tran trig="DB_OP_DONE" target="../../../0">
+        <tran_glyph conn="61,29,3,1,-27">
+         <action box="-19,-2,10,2"/>
+        </tran_glyph>
+       </tran>
+       <tran trig="I2C1_DEV_READ_DONE">
+        <action>DBG_printf(&quot;Got a read done from I2C1DevMgr\n&quot;);
+
+me-&gt;errorCode = ((I2CReadDoneEvt const *) e)-&gt;status;
+if ( ERR_NONE == me-&gt;errorCode ) {
+    me-&gt;dataLen = ((I2CReadDoneEvt const *) e)-&gt;bytes;
+    if ( me-&gt;dataLen &gt; MAX_DB_ELEM_SIZE ) {
+        me-&gt;errorCode = ERR_DB_ELEM_SIZE_OVERFLOW;
+    } else {
+        MEMCPY(me-&gt;dataBuf, ((I2CReadDoneEvt const *) e)-&gt;dataBuf, me-&gt;dataLen);
+    }
+}
+
+/* Self post to let the exit condition handle the sending back to requester */
+QEvt *evt = Q_NEW(QEvt, DB_OP_DONE_SIG);
+QACTIVE_POST(AO_SysMgr, evt, me);</action>
+        <tran_glyph conn="99,24,1,-1,-21">
+         <action box="-20,-2,18,2"/>
+        </tran_glyph>
+       </tran>
+       <tran trig="I2C1_DEV_WRITE_DONE">
+        <action>DBG_printf(&quot;Got a write done from I2C1DevMgr\n&quot;);
+
+me-&gt;errorCode = ((I2CWriteDoneEvt const *) e)-&gt;status;
+
+/* Self post to let the exit condition handle the sending back to requester */
+QEvt *evt = Q_NEW(QEvt, DB_OP_DONE_SIG);
+QACTIVE_POST(AO_SysMgr, evt, me);</action>
+        <tran_glyph conn="99,27,1,-1,-21">
+         <action box="-20,-2,18,2"/>
+        </tran_glyph>
+       </tran>
+       <state_glyph node="61,14,38,19">
+        <entry box="1,2,6,2"/>
+        <exit box="1,4,6,2"/>
+       </state_glyph>
+      </state>
+      <state_glyph node="58,8,55,88">
+       <entry box="1,2,6,2"/>
+       <exit box="1,4,6,2"/>
+      </state_glyph>
+     </state>
+     <state_glyph node="3,3,117,97">
+      <entry box="1,2,5,2"/>
+     </state_glyph>
+    </state>
+    <state_diagram size="124,102"/>
+   </statechart>
+  </class>
+  <attribute name="AO_SysMgr" type="QActive * const" visibility="0x00" properties="0x00">
+   <documentation>/**&lt; &quot;opaque&quot; pointer to the Active Object */</documentation>
+  </attribute>
+  <operation name="SysMgr_ctor" type="void" visibility="0x00" properties="0x00">
+   <documentation>/**
+ * @brief C &quot;constructor&quot; for SysMgr &quot;class&quot;.
+ * Initializes all the timers and queues used by the AO and sets of the
+ * first state.
+ * @param  None
+ * @param  None
+ * @retval None
+ */</documentation>
+   <code>SysMgr *me = &amp;l_SysMgr;
+QActive_ctor(&amp;me-&gt;super, (QStateHandler)&amp;SysMgr_initial);
+
+/* Initialize the deferred event queue and storage for it */
+QEQueue_init(
+    &amp;me-&gt;deferredEvtQueue,
+    (QEvt const **)( me-&gt;deferredEvtQSto ),
+    Q_DIM(me-&gt;deferredEvtQSto)
+);
+
+QTimeEvt_ctor( &amp;me-&gt;sysTimerEvt, SYS_MGR_TIMEOUT_SIG );
+QTimeEvt_ctor( &amp;me-&gt;dbTimerEvt, DB_ACCESS_TIMEOUT_SIG );</code>
+  </operation>
+ </package>
+ <directory name=".">
+  <file name="SysMgr_gen.c">
+   <text>/**
+ * @file    SysMgr.c
+ * Declarations for functions for the SysMgr AO.  This state
+ * machine handles various system level requests.
+ *
+ * Note: If editing this file, please make sure to update the SysMgr.qm
+ * model.  The generated code from that model should be very similar to the
+ * code in this file.
+ *
+ * @date    05/13/2015
+ * @author  Harry Rostovtsev
+ * @email   harry_rostovtsev@datacard.com
+ * Copyright (C) 2015 Datacard. All rights reserved.
+ *
+ * @addtogroup groupSys
+ * @{
+ */
+
+/* Includes ------------------------------------------------------------------*/
+#include &quot;SysMgr.h&quot;
+#include &quot;project_includes.h&quot;           /* Includes common to entire project. */
+#include &quot;bsp_defs.h&quot;     /* For seconds to bsp tick conversion (SEC_TO_TICK) */
+#include &quot;I2C1DevMgr.h&quot;                         /* For accessing I2C1 devices */
+#include &quot;Shared.h&quot;
+#include &quot;i2c_dev.h&quot;
+#if CPLR_APP
+#include &quot;cplr.h&quot;
+#elif CPLR_BOOT
+
+#else
+    #error &quot;Invalid build.  CPLR_APP or CPLR_BOOT must be specified&quot;
+#endif
+
+/* Compile-time called macros ------------------------------------------------*/
+Q_DEFINE_THIS_FILE;                 /* For QSPY to know the name of this file */
+DBG_DEFINE_THIS_MODULE( DBG_MODL_SYS ); /* For debug system to ID this module */
+
+/* Private typedefs ----------------------------------------------------------*/
+$declare(AOs::SysMgr)
+
+/* Private defines -----------------------------------------------------------*/
+/* Private macros ------------------------------------------------------------*/
+/* Private variables and Local objects ---------------------------------------*/
+static SysMgr l_SysMgr;          /* the single instance of the Active object */
+
+/* Global-scope objects ------------------------------------------------------*/
+QActive * const AO_SysMgr = (QActive *)&amp;l_SysMgr;      /* &quot;opaque&quot; AO pointer */
+
+/* Private function prototypes -----------------------------------------------*/
+/* Private functions ---------------------------------------------------------*/
+$define(AOs::SysMgr_ctor)
+
+$define(AOs::SysMgr)
+
+/**
+ * @} end addtogroup groupSys
+ */
+
+/******** Copyright (C) 2015 Datacard. All rights reserved *****END OF FILE****/</text>
+  </file>
+  <file name="SysMgr_gen.h">
+   <text>/**
+ * @file    SysMgr.h
+ * Declarations for functions for the SysMgr AO.  This state
+ * machine handles various system level requests.
+ *
+ * Note: If editing this file, please make sure to update the SysMgr.qm
+ * model.  The generated code from that model should be very similar to the
+ * code in this file.
+ *
+ * @date    05/13/2015
+ * @author  Harry Rostovtsev
+ * @email   harry_rostovtsev@datacard.com
+ * Copyright (C) 2015 Datacard. All rights reserved.
+ *
+ * @addtogroup groupSys
+ * @{
+ */
+
+/* Define to prevent recursive inclusion -------------------------------------*/
+#ifndef SYSMGR_H_
+#define SYSMGR_H_
+
+/* Includes ------------------------------------------------------------------*/
+#include &quot;qp_port.h&quot;                                        /* for QP support */
+#include &quot;CBCommApi.h&quot;               /* For API for communicating with client */
+#include &quot;CBSignals.h&quot;              /* For QP signals available to the system */
+#include &quot;db.h&quot;                                    /* For DB access and types */
+
+/* Exported defines ----------------------------------------------------------*/
+/* Exported macros -----------------------------------------------------------*/
+/* Exported types ------------------------------------------------------------*/
+$declare(Events)
+
+/* Exported constants --------------------------------------------------------*/
+/* Exported functions --------------------------------------------------------*/
+$declare(AOs::SysMgr_ctor)
+
+$declare(AOs::AO_SysMgr)
+
+/**
+ * @} end addtogroup groupSys
+ */
+
+#endif                                                           /* SYSMGR_H_ */
+/******** Copyright (C) 2015 Datacard. All rights reserved *****END OF FILE****/</text>
+  </file>
+ </directory>
+</model>

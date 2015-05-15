@@ -135,6 +135,8 @@ typedef enum CBErrors
    ERR_DB_ELEM_NOT_FOUND                                       = 0x00080002,
    ERR_DB_ELEM_IS_READ_ONLY                                    = 0x00080003,
    ERR_DB_ELEM_IS_NOT_IN_EEPROM                                = 0x00080004,
+   ERR_DB_ACCESS_TIMEOUT                                       = 0x00080005,
+   ERR_DB_ELEM_SIZE_OVERFLOW                                   = 0x00080006,
 
    /* I2C Device general error category          0x00090000 - 0x0009FFFF */
    ERR_I2C_DEV_INVALID_DEVICE                                  = 0x00090000,

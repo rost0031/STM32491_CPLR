@@ -147,13 +147,22 @@ enum FlashMgrSignals {
 };
 
 /**
- * @enum Signals used by DbgMgr
+ * @enum Signals used by SysMgr
  */
-enum DbgMgrSignals {
-   DBG_MENU_REQ_SIG = FLASH_MAX_SIG, /** This signal must start at the previous category max signal */
-   DBG_LOG_SIG,
+enum SysMgrSignals {
+   DB_GET_ELEM_SIG = FLASH_MAX_SIG, /** This signal must start at the previous category max signal */
+   DB_SET_ELEM_SIG,
+   DB_GET_ELEM_DONE_SIG,
+   DB_SET_ELEM_DONE_SIG,
+   DB_ERROR_SIG,
+   DB_READ_SIG,
+   DB_WRITE_SIG,
+   DB_OP_DONE_SIG,
+   DB_ACCESS_TIMEOUT_SIG,
+   SYS_MGR_TIMEOUT_SIG,
    DBG_MENU_SIG,
-   DBG_MAX_SIG
+   DBG_LOG_SIG,
+   SYS_MGR_MAX_SIG
 };
 
 /**
@@ -161,7 +170,7 @@ enum DbgMgrSignals {
  */
 enum CplrSignals {
    /* Signals that use the EthEvt type event tag - start */
-   CPLR_ETH_SYS_TEST_SIG = DBG_MAX_SIG, /** This signal must start at the previous category max signal */
+   CPLR_ETH_SYS_TEST_SIG = SYS_MGR_MAX_SIG, /** This signal must start at the previous category max signal */
 
    /* ... insert signals here */
    /* Signals that use the EthEvt type event tag - end */

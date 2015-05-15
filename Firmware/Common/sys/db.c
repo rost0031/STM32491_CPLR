@@ -16,7 +16,6 @@
 #include "project_includes.h"
 #include "dbg_cntrl.h"
 #include <stddef.h>
-#include "i2c_defs.h"                                /* for I2C functionality */
 #include "i2c_dev.h"                               /* for I2C device mappings */
 #include "db.h"
 #include "ipAndMac.h"                                  /* for default IP addr */
@@ -28,51 +27,6 @@ Q_DEFINE_THIS_FILE                  /* For QSPY to know the name of this file */
 DBG_DEFINE_THIS_MODULE( DBG_MODL_DB );  /* For debug system to ID this module */
 
 /* Private typedefs ----------------------------------------------------------*/
-/**
- * DB elements that can be retrieved.
- */
-typedef enum {
-   DB_EEPROM = 0,           /**< Setting is located in the main EEPROM memory */
-   DB_SN_ROM,         /**< Setting is located in the RO SNR section of EEPROM */
-   DB_UI_ROM,        /**< Setting is located in the RO UI64 section of EEPROM */
-
-   /* .. insert more I2C devices before GPIO so they are all together .. */
-
-   DB_GPIO,                          /**< Setting is specified via a GPIO pin */
-   DB_FLASH                  /**< Setting is located in the main FLASH memory */
-} DB_ElemLoc_t;
-
-/**
- * Description type of each DB element (location, etc).
- */
-typedef struct {
-   DB_Elem_t    elem;  /**< Specifies which settings element is being described */
-   DB_ElemLoc_t  loc;  /**< Specifies how the db element is stored */
-   size_t       size;  /**< Specifies the size of the db element */
-   uint32_t    offset; /**< Specifies the offset from beginning of EEPROM memory
-                            where the element is stored */
-} SettingsDB_Desc_t;
-
-/**
- * DB element structure mapping that resides in the main memory of the EEPROM
- */
-typedef struct {
-   uint32_t dbMagicWord; /**< Magic word that specifies whether a DB exists.  If
-                              this is not present, we have to initialize the DB
-                              in EEPROM memory to some default.*/
-   uint16_t dbVersion;   /**< Version of the database */
-   uint8_t ipAddr[4];  /**< 4 values of the 111.222.333.444 ip address in hex */
-   uint8_t bootMajVer; /**< Major version byte of the bootloader FW image */
-   uint8_t bootMinVer; /**< Major version byte of the bootloader FW image */
-   uint8_t bootBuildDT[CB_DATETIME_LEN]; /**< Build datetime of the bootloader
-                                              FW image */
-   uint8_t fpgaMajVer; /**< Major version byte of the FPGA FW image */
-   uint8_t fpgaMinVer; /**< Major version byte of the FPGA FW image */
-   uint8_t fpgaBuildDT[CB_DATETIME_LEN]; /**< Build datetime of the FPGA FW
-                                              image */
-} SettingsDB_t;
-
-
 /* Private defines -----------------------------------------------------------*/
 
 /**< Magic word that will be stored at the head of the DB.  If this is not
@@ -119,7 +73,7 @@ static const SettingsDB_Desc_t settingsDB[DB_MAX_ELEM] = {
 static const I2C_Dev_t DB_I2C_devices[] = {
       EEPROM,
       SN_ROM,
-      EUI_ROM
+      EUI_ROM,
 };
 
 /**< Default settings that belong in the main memory of the EEPROM */
@@ -130,33 +84,6 @@ static const SettingsDB_t DB_defaultEeepromSettings = {
 };
 
 /* Private function prototypes -----------------------------------------------*/
-
-/**
- * @brief   Get an element stored in the FLASH section of settings DB.
- *
- * This function retrieves an element from the database portion of DB that is
- * stored exclusively in FLASH (and is read only).
- *
- * @param  [in] elem: DB_Elem_t that specifies what element to retrieve.
- *    @arg DB_APPL_MAJ_VER: Major version of the Application FW image.
- *    @arg DB_APPL_MIN_VER: Minor version of the Application FW image.
- *    @arg DB_APPL_BUILD_DATETIME: Build datetime of the application FW image.
- *
- * @param  [in] bufSize: size of the pBuffer.
- * @param  [out] *pBuffer: uint8_t pointer to a buffer where to store the
- *                         retrieved element.
- * @param  [out] resultLen: uint8_t pointer to the length of data stored in the
- *                         buffer on return.
- * @return CBErrorCode: status of the read operation
- *    @arg ERR_NONE: if no errors occurred
- *    other errors if found.
- */
-static const CBErrorCode DB_readEEPROM(
-      const DB_Elem_t elem,
-      const uint8_t bufferSize,
-      uint8_t* const buffer,
-      uint8_t* resultLen
-);
 /* Private functions ---------------------------------------------------------*/
 
 /******************************************************************************/
@@ -339,7 +266,8 @@ const CBErrorCode DB_getElemBLK(
          goto DB_getElemBLK_ERR_HANDLE;    /* Stop and jump to error handling */
          break;
       case DB_FLASH:
-         status = ERR_UNIMPLEMENTED;
+         ; // need this or we get "a label can only be part of a statement and
+           // a declaration is not a statement" compile error
          uint8_t resultLen = 0;
          status = DB_readEEPROM(
                elem,
@@ -432,7 +360,31 @@ DB_getElemBLK_ERR_HANDLE:         /* Handle any error that may have occurred. */
 }
 
 /******************************************************************************/
-static const CBErrorCode DB_readEEPROM(
+const DB_ElemLoc_t DB_getElemLoc( const DB_Elem_t elem )
+{
+   return( settingsDB[elem].loc );
+}
+
+/******************************************************************************/
+const uint32_t DB_getElemOffset( const DB_Elem_t elem )
+{
+   return( settingsDB[elem].offset );
+}
+
+/******************************************************************************/
+const size_t DB_getElemSize( const DB_Elem_t elem )
+{
+   return( settingsDB[elem].size );
+}
+
+/******************************************************************************/
+const I2C_Dev_t DB_getI2CDev( const DB_ElemLoc_t loc )
+{
+   return( DB_I2C_devices[loc] );
+}
+
+/******************************************************************************/
+const CBErrorCode DB_readEEPROM(
       const DB_Elem_t elem,
       const uint8_t bufferSize,
       uint8_t* const buffer,

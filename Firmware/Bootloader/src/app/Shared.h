@@ -34,8 +34,9 @@
 enum AO_Priorities {
    NEVER_USE_ZERO_PRIORITY = 0,   /**< Never use this.  It breaks everything. */
 
+   SYS_MGR_PRIORITY,                              /**< Priority of SysMgr AO. */
    COMM_MGR_PRIORITY,                            /**< Priority of CommMgr AO. */
-   FLASH_MGR_PRIORITY,                         /**< Priority of FlashkMgr AO. */
+   FLASH_MGR_PRIORITY,                          /**< Priority of FlashMgr AO. */
    I2C1DEVMGR_PRIORITY,                       /**< Priority of I2C1DevMgr AO. */
    I2CBUS1MGR_PRIORITY,                        /**< Priority of I2CBusMgr AO. */
    /* If more I2C busses are used, make sure that the priorities for them are
@@ -59,7 +60,8 @@ enum AO_Priorities {
  * the blocking kind.
  */
 typedef enum AccessType {
-   ACCESS_BARE_METAL = 0,  /**< Blocking access where no RTOS services are
+   ACCESS_NONE       = 0,  /**< No access type.  Used as a default value  */
+   ACCESS_BARE_METAL,      /**< Blocking access where no RTOS services are
                                 running. All returns are done via passed in
                                 buffer */
    ACCESS_QPC,             /**< Non-blocking access performed from QPC Active

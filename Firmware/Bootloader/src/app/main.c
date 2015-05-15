@@ -17,6 +17,7 @@
 #include "I2CBusMgr.h"                           /* for starting I2CBusMgr AO */
 #include "I2C1DevMgr.h"                         /* for starting I2C1DevMgr AO */
 #include "FlashMgr.h"                             /* for starting FlashMgr AO */
+#include "SysMgr.h"                                 /* for starting SysMgr AO */
 
 #include "project_includes.h"           /* Includes common to entire project. */
 #include "Shared.h"
@@ -42,6 +43,7 @@ static QEvt const    *l_SerialMgrQueueSto[200];       /**< Storage for SerialMgr
 static QEvt const    *l_I2CBusMgrQueueSto[30][MAX_I2C_BUS];    /**< Storage for I2CBusMgr event Queue */
 static QEvt const    *l_I2C1DevMgrQueueSto[30];       /**< Storage for I2C1DevMgr event Queue */
 static QEvt const    *l_FlashMgrQueueSto[30];         /**< Storage for FlashMgr event Queue */
+static QEvt const    *l_SysMgrQueueSto[10];           /**< Storage for SysMgr event Queue */
 static QSubscrList   l_subscrSto[MAX_PUB_SIG];        /**< Storage for subscribe/publish event Queue */
 
 /**
@@ -56,6 +58,8 @@ static union SmallEvents {
     uint8_t e4[sizeof(I2CAddrEvt)];
     uint8_t e5[sizeof(I2CReadMemReqEvt)];
     uint8_t e6[sizeof(FlashStatusEvt)];
+    uint8_t e7[sizeof(DBWriteDoneEvt)];
+    uint8_t e8[sizeof(DBReadReqEvt)];
 } l_smlPoolSto[50];                     /* storage for the small event pool */
 
 /**
@@ -66,6 +70,8 @@ static union MediumEvents {
     void   *e0;                                       /* minimum event size */
     uint8_t e1[sizeof(I2CWriteReqEvt)];
     uint8_t e2[sizeof(FWMetaEvt)];
+    uint8_t e3[sizeof(DBWriteReqEvt)];
+    uint8_t e4[sizeof(DBReadDoneEvt)];
 } l_medPoolSto[10];                    /* storage for the medium event pool */
 
 /**
@@ -106,6 +112,7 @@ int main(void)
     DBG_ENABLE_DEBUG_FOR_MODULE(DBG_MODL_COMM);
     DBG_ENABLE_DEBUG_FOR_MODULE(DBG_MODL_CPLR);
     DBG_ENABLE_DEBUG_FOR_MODULE(DBG_MODL_FLASH);
+    DBG_ENABLE_DEBUG_FOR_MODULE(DBG_MODL_SYS);
 
     /* initialize the Board Support Package */
     BSP_init();
@@ -189,6 +196,7 @@ int main(void)
     I2C1DevMgr_ctor();
     CommMgr_ctor();
     FlashMgr_ctor();
+    SysMgr_ctor();
 
     dbg_slow_printf("Initializing QF\n");
     QF_init();       /* initialize the framework and the underlying RT kernel */
@@ -204,6 +212,7 @@ int main(void)
     QS_OBJ_DICTIONARY(l_I2C1DevMgrQueueSto);
     QS_OBJ_DICTIONARY(l_CommMgrQueueSto);
     QS_OBJ_DICTIONARY(l_FlashMgrQueueSto);
+    QS_OBJ_DICTIONARY(l_SysMgrQueueSto);
 
     QF_psInit(l_subscrSto, Q_DIM(l_subscrSto));     /* init publish-subscribe */
 
@@ -271,6 +280,14 @@ int main(void)
           (void *)0, 0,                              /* per-thread stack size */
           (QEvt *)0,                               /* no initialization event */
           "FlashMgr"                                      /* Name of the task */
+    );
+
+    QACTIVE_START(AO_SysMgr,
+          SYS_MGR_PRIORITY,                                       /* priority */
+          l_SysMgrQueueSto, Q_DIM(l_SysMgrQueueSto),             /* evt queue */
+          (void *)0, 0,                              /* per-thread stack size */
+          (QEvt *)0,                               /* no initialization event */
+          "SysMgr"                                        /* Name of the task */
     );
     log_slow_printf("Starting QPC. All logging from here on out shouldn't show 'SLOW'!!!\n\n");
     QF_run();                                       /* run the QF application */
