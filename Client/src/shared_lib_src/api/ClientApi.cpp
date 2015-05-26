@@ -448,6 +448,92 @@ ClientError_t ClientApi::DC3_flashFW(
 }
 
 /******************************************************************************/
+ClientError_t ClientApi::DC3_readI2C(
+      CBErrorCode *status,
+      uint16_t *pBytesRead,
+      uint8_t *pBuffer,
+      const int bufferSize,
+      const int bytes,
+      const int start,
+      const CBI2CDevices dev,
+      const CBAccessType acc
+)
+{
+   this->enableMsgCallbacks();
+
+   /* These will be used for responses */
+   CBBasicMsg basicMsg;
+   CBPayloadMsgUnion_t payloadMsgUnion;
+
+   /* Common settings for most messages */
+   this->m_basicMsg._msgID       = this->m_msgId;
+   this->m_basicMsg._msgReqProg  = (unsigned long)this->m_bRequestProg;
+   this->m_basicMsg._msgRoute    = this->m_msgRoute;
+
+   /* Settings specific to this message */
+   this->m_basicMsg._msgType     = _CB_Req;
+   this->m_basicMsg._msgName     = _CBI2CReadMsg;
+   this->m_basicMsg._msgPayload  = _CBI2CDataPayloadMsg;
+
+   this->m_i2cDataPayloadMsg._accType = acc;
+   this->m_i2cDataPayloadMsg._i2cDev = dev;
+   this->m_i2cDataPayloadMsg._nBytes = bytes;
+   this->m_i2cDataPayloadMsg._start = start;
+   this->m_i2cDataPayloadMsg._dataBuf_len = 0;
+   this->m_i2cDataPayloadMsg._errorCode = ERR_NONE; // This field is ignored in Req msgs.
+
+   DBG_printf(m_pLog,
+            "Sending I2CRead with dev %d", this->m_i2cDataPayloadMsg._i2cDev);
+
+   size_t size = CB_MAX_MSG_LEN;
+   uint8_t *buffer = new uint8_t[size];                    /* Allocate buffer */
+   unsigned int bufferLen = 0;
+   bufferLen = CBBasicMsg_write_delimited_to(&m_basicMsg, buffer, 0);
+   bufferLen = CBI2CDataPayloadMsg_write_delimited_to(&m_i2cDataPayloadMsg, buffer, bufferLen);
+   l_pComm->write_some((char *)buffer, bufferLen);                /* Send Req */
+
+   delete[] buffer;                                          /* Delete buffer */
+
+   memset(&basicMsg, 0, sizeof(basicMsg));
+   memset(&payloadMsgUnion, 0, sizeof(payloadMsgUnion));
+   ClientError_t clientStatus = waitForResp(                  /* Wait for Ack */
+         &basicMsg,
+         &payloadMsgUnion,
+         HL_MAX_TOUT_SEC_CLI_WAIT_FOR_ACK
+   );
+
+   if ( CLI_ERR_NONE != clientStatus ) {                    /* Check response */
+      ERR_printf(m_pLog,
+            "Waiting for Ack received client Error: 0x%08x", clientStatus);
+      return clientStatus;
+   }
+
+   memset(&basicMsg, 0, sizeof(basicMsg));
+   memset(&payloadMsgUnion, 0, sizeof(payloadMsgUnion));
+   clientStatus = waitForResp(                           /* Wait for Done msg */
+         &basicMsg,
+         &payloadMsgUnion,
+         HL_MAX_TOUT_SEC_CLI_WAIT_FOR_SIMPLE_MSG_DONE
+   );
+   if ( CLI_ERR_NONE != clientStatus ) {                    /* Check response */
+      ERR_printf(m_pLog,
+            "Waiting for Done received client Error: 0x%08x", clientStatus);
+      return clientStatus;
+   } else {
+      *status = (CBErrorCode)payloadMsgUnion.i2cDataPayload._errorCode;
+      if ( ERR_NONE == *status ) {
+         if ( payloadMsgUnion.i2cDataPayload._dataBuf_len < bufferSize ) {
+            DBG_printf(m_pLog,"Copying %d bytes", payloadMsgUnion.i2cDataPayload._dataBuf_len );
+            *pBytesRead = payloadMsgUnion.i2cDataPayload._dataBuf_len;
+            memcpy(pBuffer, payloadMsgUnion.i2cDataPayload._dataBuf, *pBytesRead);
+         }
+      }
+   }
+
+   return clientStatus;
+}
+
+/******************************************************************************/
 ClientError_t ClientApi::setNewConnection(
       const char *ipAddress,
       const char *pRemPort,
@@ -563,6 +649,15 @@ ClientError_t ClientApi::pollForResp(
             CBBootModePayloadMsg_read_delimited_from(
                   (void*)msg.dataBuf,
                   &(payloadMsgUnion->bootmodePayload),
+                  offset
+            );
+            break;
+         case _CBI2CDataPayloadMsg:
+            status = CLI_ERR_NONE;
+            DBG_printf( m_pLog, "I2CData payload detected");
+            CBI2CDataPayloadMsg_read_delimited_from(
+                  (void*)msg.dataBuf,
+                  &(payloadMsgUnion->i2cDataPayload),
                   offset
             );
             break;

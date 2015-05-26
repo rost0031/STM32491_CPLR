@@ -465,7 +465,17 @@ showver:
 	fi
 
 ver: config.mk
-	@echo "#define "FW_VER" \"v$(MAJOR).$(MINOR)\"" > $(SRC_DIR)/version.h;
+	@echo "#define "FW_VER_MAJOR" $(MAJOR)" > $(SRC_DIR)/version.h;
+	@echo "#define "FW_VER_MINOR" $(MINOR)" >> $(SRC_DIR)/version.h;
+	@if [ $(MAJOR) -gt 9 ] && [ $(MINOR) -gt 9 ] ; then \
+		echo "#define "FW_VER" \"v$(MAJOR).$(MINOR)\"" >> $(SRC_DIR)/version.h; \
+	elif [ $(MAJOR) -lt 10 ] && [ $(MINOR) -gt 9 ] ; then \
+		echo "#define "FW_VER" \"v0$(MAJOR).$(MINOR)\"" >> $(SRC_DIR)/version.h; \
+	elif [ $(MAJOR) -lt 10 ] && [ $(MINOR) -lt 10 ] ; then \
+		echo "#define "FW_VER" \"v0$(MAJOR).0$(MINOR)\"" >> $(SRC_DIR)/version.h; \
+	elif [ $(MAJOR) -gt 9 ] && [ $(MINOR) -lt 10 ] ; then \
+		echo "#define "FW_VER" \"v$(MAJOR).0$(MINOR)\"" >> $(SRC_DIR)/version.h; \
+	fi
 	@echo "#define "BUILD_DATE" \"$(NOW)\"" >> $(SRC_DIR)/version.h
 
 # All the rigamarole below is to avoid building code if the ip address didn't change (normal situation for development)

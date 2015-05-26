@@ -90,6 +90,32 @@ void HELP_printCmdSpecific(
 
       example = appName + " -i 207.27.0.75 --" + parsed_cmd +
             " file=../../DC3Appl.bin " + "type=Application";
+   } else if (  0 == parsed_cmd.compare("read_i2c") ) {  /* read_i2c cmd help */
+      description = parsed_cmd + " command initiates an I2C device read.  You "
+            "have to specify the I2C device (dev=), number of bytes to read "
+            "(bytes=), and a start offset (start=)."
+            "The options for the I2C devices are: ";
+      ss_params << "[" << enumToString(_CB_EEPROM) << "|"
+            << enumToString(_CB_SNROM) << "|" << enumToString(_CB_EUIROM) << "]";
+      description += ss_params.str();
+
+      description += ". Number of bytes is specified with 'bytes=<0 < int <= "
+            "128>'.  Offset from the start is specified with 'start=<0 < int "
+            "<= 128>'.  Depending on the device selected, size restrictions "
+            "apply to prevent reading past the memory boundaries.  EEPROM is 128"
+            " bytes, SNROM is 8 bytes, and EUIROM is 8 bytes.  start + bytes "
+            "must be less than the remaining memory.  There is also an optional "
+            "arg acc=<> which can be used to specify the type of access the board "
+            "attempts to the I2C device. By default, event driven (QPC) will be "
+            "used but acc= can be used to specify BARE and FRT (available in "
+            "Application only";
+
+      prototype = appName + " [connection options] --" + parsed_cmd
+            + " start=<0 - 128> bytes=<0-128>" + "dev=";
+      prototype += ss_params.str();
+
+      example = appName + " -i 207.27.0.75 --" + parsed_cmd +
+            " start=0 bytes=20" + "dev=EEPROM";
    } else {
       ERR_out << "Unable to find cmd specific help for " << parsed_cmd;
       EXIT_LOG_FLUSH(0);

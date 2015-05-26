@@ -43,6 +43,15 @@
  /* Exported defines ----------------------------------------------------------*/
 #define MAX_DB_ELEM_SIZE   20               /**< Max size of an element in DB */
 
+ /**< Magic word that will be stored at the head of the DB.  If this is not
+ * there, the DB needs to be initialized to a default and updated after. */
+#define DB_MAGIC_WORD_DEF   0xdefec8db
+
+/**< Current version of the DB.  This needs to be bumped once the FW is out in
+ * the field and any changes are made to the DB. This is to allow for a smooth
+ * upgrade of the DB. */
+#define DB_VERSION_DEF      0x0001
+
 /* Exported macros -----------------------------------------------------------*/
 /* Exported types ------------------------------------------------------------*/
 
@@ -53,6 +62,8 @@ typedef enum DB_Operations {
    DB_OP_NONE  = 0,                                 /**< No current operation */
    DB_OP_READ,                                  /**< Reading from settings DB */
    DB_OP_WRITE,                                   /**< Writing to settings DB */
+   DB_OP_INTERNAL,                        /**< Internal only setting used for DB
+                                              validation. No response is sent */
    /* Insert more I2C operations here... */
    DB_OP_MAX
 } DB_Operation_t;
@@ -288,6 +299,50 @@ const CBErrorCode DB_readEEPROM(
       const uint8_t bufferSize,
       uint8_t* const buffer,
       uint8_t* resultLen
+);
+
+/**
+ * @brief   Checks if the passed in db magic word matches the compiled in one.
+ *
+ * This function simply checks if the compiled in DB magic word matches the one
+ * passed in as a parameter.
+ * @param  [in] dbMagicWord: uint32_t magic number
+ * @return CBErrorCode: status of the read operation
+ *    @arg ERR_NONE: if no errors occurred
+ *    @arg ERR_DB_NOT_INIT: if there is a mismatch
+ */
+const CBErrorCode DB_isMagicWordValid( const uint32_t dbMagicWord );
+
+/**
+ * @brief   Checks if the passed in db version matches the compiled in one.
+ *
+ * This function simply checks if the compiled in DB version matches the one
+ * passed in as a parameter.
+
+ * @param  [in] dbMagicWord: uint32_t magic number
+ * @return CBErrorCode: status of the read operation
+ *    @arg ERR_NONE: if no errors occurred
+ *    @arg ERR_DB_NOT_INIT: if there is a mismatch
+ */
+const CBErrorCode DB_isVersionValid( const uint16_t dbVersion );
+
+/**
+ * @brief   Checks if the passed in db version matches the compiled in one.
+ *
+ * This function simply checks if the compiled in DB version matches the one
+ * passed in as a parameter.
+
+ * @param  [in] dt1: uint8_t pointer to array of CB_DATETIME_LEN length that
+ * contains the first datetime string.
+ * @param  [in] dt2: uint8_t pointer to array of CB_DATETIME_LEN length that
+ * contains the second datetime string.
+ * @return CBErrorCode: status of the read operation
+ *    @arg ERR_NONE: if exact match
+ *    @other errors if differences found
+ */
+const CBErrorCode DB_checkDTMatch(
+      const uint8_t* const dt1,
+      const uint8_t* const dt2
 );
 
 #ifdef __cplusplus

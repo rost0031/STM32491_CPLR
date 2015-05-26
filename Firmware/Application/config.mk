@@ -4,5 +4,5 @@
 #   MINOR: Minor version revision (0-99)
 #
 FW        := Appl
-MAJOR     := 00
-MINOR     := 01
+MAJOR     := 0
+MINOR     := 1

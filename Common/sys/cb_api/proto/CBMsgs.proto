@@ -236,6 +236,20 @@ enum CBMsgName
                               // CBFlashMsg basic msg. Used to send FW image and
                               // associated meta-data (fw packet number and CRC 
                               // of data included)
+                              
+    CBI2CReadMsg        = 10; // CBBasicMsg  - Used to send an I2C read cmd.
+                              // Requires a CBI2CDataPayloadMsg to fully 
+                              // specify what to read
+    
+    CBI2CWriteMsg       = 11; // CBBasicMsg  - Used to send an I2C write cmd.
+                              // Requires a CBI2CDataPayloadMsg to fully 
+                              // specify what to write
+    
+    CBI2CDataPayloadMsg = 12; // CBPayloadMsg - Used as a data payload by 
+                              // CBI2CReadMsg and CBI2CWriteMsg to specify what
+                              // to read and write, as well as send data and
+                              // status back.
+                                                                                      
 }
 
 //------------------------------------------------------------------------------
@@ -619,13 +633,13 @@ message CBBootModePayloadMsg
 //          < msgRoute = [CBMsgRoute]
 //          < msgPayload = CBNoMsg
 // *Rec*  [[************CBBasicMsg**********][**CBPayloadMsg**]\n]<<<<<<<<*Send*
-//          < msgName = CBFlashMsg                < imageCrc 
-//          < msgID   = n (some uint)             < imageSize
-//          < msgType = CB_Done                   < imageType
-//          < msgProgReq = [0|1]                  < imageMajor            
-//          < msgRoute = [CBMsgRoute]             < imageMinor
-//          < msgPayload = CBFlashMetaPayloadMsg  < imageDatetime
-//                                                < imageNumPackets
+//          < msgName = CBFlashMsg                < errorCode 
+//          < msgID   = n (some uint)             
+//          < msgType = CB_Done                   
+//          < msgProgReq = [0|1]                              
+//          < msgRoute = [CBMsgRoute]             
+//          < msgPayload = CBStatusPayloadMsg  
+//                                             
 // END CBFlashMsg
 //------------------------------------------------------------------------------
 
@@ -677,4 +691,131 @@ message CBFlashDataPayloadMsg
     required uint32     seqCurr   = 3; // sequence number of current data packet
 }
 // END CBFlashDataPayloadMsg.
+//------------------------------------------------------------------------------
+
+//------------------------------------------------------------------------------
+// START CBI2CReadMsg
+// Msg Tag  - 10
+// Msg Type - CBBasicMsg.  Uses CBBasicMsg structure. No definition needed
+// Msg Desc - This message is handles requests to read data from an I2C device
+//            on the board.
+//
+// No message definition needed.  Uses CBBasicMsg with CBI2CDataPayloadMsg
+// as a payload for CB_Ack and CB_Done.
+// Example:
+// Client                                                               CB Board
+//   |                                                                      |
+// *Send* [[**************CBBasicMsg********][**CBPayloadMsg**]\n]]>>*Receive*
+//          < msgName = CBI2CReadMsg              < i2cDev = I2C device
+//          < msgID   = [uint32]                  < start        
+//          < msgType = CB_Req                    < nBytes
+//          < msgProgReq = [0|1]                  < accessType
+//          < msgRoute = [CBMsgRoute]             < dataBuf_len = Not used  
+//          < msgPayload = CBI2CDataPayloadMsg    < dataBuf = Not used
+//                                                < errorCode = Not used       
+// *Rec*  [[**************CBBasicMsg***********]\n]<<<<<<<<<<<<<<<<<<<<<<<*Send*
+//          < msgName = CBI2CReadMsg
+//          < msgID   = [uint32]                   
+//          < msgType = CB_Ack      
+//          < msgProgReq = [0|1]
+//          < msgRoute = [CBMsgRoute]                  
+//          < msgPayload = CBNoMsg
+// *Rec*  [[************CBBasicMsg**********][**CBPayloadMsg**]\n]<<<<<<<<*Send*
+//          < msgName = CBI2CReadMsg           < i2cDev = I2C device
+//          < msgID   = [uint32]               < start        
+//          < msgType = CB_Done                < nBytes
+//          < msgProgReq = [0|1]               < accessType
+//          < msgRoute = [CBMsgRoute]          < dataBuf_len
+//          < msgPayload = CBI2CDataPayloadMsg < dataBuf
+//                                             < errorCode   = CB_ERR_CODE  
+// END CBI2CReadMsg
+//------------------------------------------------------------------------------
+
+//------------------------------------------------------------------------------
+// START CBI2CWriteMsg
+// Msg Tag  - 11
+// Msg Type - CBBasicMsg.  Uses CBBasicMsg structure. No definition needed
+// Msg Desc - This message is handles requests to write data to an I2C device
+//            on the board.
+//
+// No message definition needed.  Uses CBBasicMsg with CBI2CDataPayloadMsg
+// as a payload for CB_Ack and CB_Done.
+// Example:
+// Client                                                               CB Board
+//   |                                                                      |
+// *Send* [[**************CBBasicMsg********][**CBPayloadMsg**]\n]]>>*Receive*
+//          < msgName = CBI2CWriteMsg             < i2cDev = I2C device
+//          < msgID   = [uint32]                  < start        
+//          < msgType = CB_Req                    < nBytes
+//          < msgProgReq = [0|1]                  < accessType
+//          < msgRoute = [CBMsgRoute]             < dataBuf_len  
+//          < msgPayload = CBI2CDataPayloadMsg    < dataBuf
+//                                                < errorCode = Not used       
+// *Rec*  [[**************CBBasicMsg***********]\n]<<<<<<<<<<<<<<<<<<<<<<<*Send*
+//          < msgName = CBI2CWriteMsg
+//          < msgID   = [uint32]                   
+//          < msgType = CB_Ack      
+//          < msgProgReq = [0|1]
+//          < msgRoute = [CBMsgRoute]                  
+//          < msgPayload = CBNoMsg
+// *Rec*  [[************CBBasicMsg**********][**CBPayloadMsg**]\n]<<<<<<<<*Send*
+//          < msgName = CBI2CWriteMsg          < i2cDev = I2C device
+//          < msgID   = [uint32]               < start        
+//          < msgType = CB_Done                < nBytes
+//          < msgProgReq = [0|1]               < accessType
+//          < msgRoute = [CBMsgRoute]          < dataBuf_len = not used
+//          < msgPayload = CBI2CDataPayloadMsg < dataBuf = not used
+//                                             < errorCode   = CB_ERR_CODE  
+// END CBI2CWriteMsg
+//------------------------------------------------------------------------------
+
+
+//------------------------------------------------------------------------------
+// This enum defines all the different I2C devices that exist on the board 
+enum CBI2CDevices
+{
+    CB_EEPROM      = 0; // R/W EEPROM on I2C bus 1 
+    CB_SNROM       = 1; // RO EEPROM on I2C bus 1 that contains a serial number.
+    CB_EUIROM      = 2; // RO EEPROM on I2C bus 1 that contains Unique ID
+    CB_MaxI2CDev   = 3; // For error checking. This shouldn't be used by users.
+}
+
+//------------------------------------------------------------------------------
+// This enum defines all the different I2C devices that exist on the board 
+enum CBAccessType
+{
+    CB_ACCESS_NONE = 0; // No access type.  Used as a default value 
+    CB_ACCESS_BARE = 1; // Blocking access where no RTOS services are running. 
+                        // All returns are done via passed in buffer.  Very slow
+                        // and blocking. 
+    CB_ACCESS_QPC  = 2; // Non-blocking access performed from QPC Active Objects.
+                        // All returns are done via events that requesting AO 
+                        // should know how to handle
+    CB_ACCESS_FRT  = 3; // Non-blocking access performed from a FreeRTOS thread.
+                        // All returns are done via a QEQueue that the 
+                        // requesting thread should wait on. Note, this is only
+                        // available in Application boot mode.
+}
+
+//------------------------------------------------------------------------------
+// START CBI2CDataPayloadMsg 
+// Msg Tag  - 12
+// Msg Type - CBPayloadMsg.  
+// Msg Desc - Sent appended to the CBI2CWriteMsg  and CBI2CReadMsg CB_Req and
+//            CB_Done msgs. (See examples in description of CBI2CWriteMsg and 
+//            CBI2CReadMsg).
+//
+// Non-standard Field Description: (see below)
+message CBI2CDataPayloadMsg 
+{
+	required CBI2CDevices i2cDev  = 1; // Specifies which I2C device to access
+    required uint32       start   = 2; // offset from which to read dev from
+    required uint32       nBytes  = 3; // number of bytes to read/write
+    required CBAccessType accType = 4; // how to access the I2C device.
+    required uint32     errorCode = 5; // CBErrorCode that specifies status
+                                       // of the requested operation.  Not used
+                                       // when sent along with a CB_Req
+    required bytes        dataBuf = 6; // buffer with data                                       
+}
+// END CBI2CDataPayloadMsg.
 //------------------------------------------------------------------------------

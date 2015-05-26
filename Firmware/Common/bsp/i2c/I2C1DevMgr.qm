@@ -577,7 +577,25 @@ if ( ACCESS_FREERTOS == me-&gt;accessType ) {
 } else {
     /* Publish the event so other AOs can get it if they want */
     QF_PUBLISH((QEvt *)i2cReadDoneEvt, AO_I2C1DevMgr);
-}</action>
+}
+
+uint8_t tmp[100] = {0};
+uint16_t tmpLen = 0;
+CBErrorCode err = CON_hexToStr(
+    ((I2CBusDataEvt const *)e)-&gt;dataBuf, // data to convert
+    ((I2CBusDataEvt const *)e)-&gt;dataLen, // length of data to convert
+    tmp,                                 // where to write output
+    sizeof(tmp),                         // max size of output buffer
+    &amp;tmpLen,                             // size of the resulting output
+    0,                                   // no columns
+    ' ',                                 // separator
+    true                                 // bPrintX
+);
+
+DBG_printf(
+    &quot;Read %d bytes: %s\n&quot;,
+    ((I2CBusDataEvt const *)e)-&gt;dataLen, tmp
+);</action>
          <choice_glyph conn="128,44,5,1,9,11,-111">
           <action box="1,-2,10,2"/>
          </choice_glyph>
@@ -649,9 +667,7 @@ QTimeEvt_rearm(
 );</entry>
        <exit>QTimeEvt_disarm(&amp;me-&gt;i2cWriteTimerEvt);</exit>
        <tran trig="I2C1_DEV_POST_WRITE_TIMER">
-        <action>LOG_printf(&quot;Write to EEPROM finished with error: 0x%08x\n&quot;, me-&gt;errorCode);
-
-/* Update the counter and index */
+        <action>/* Update the counter and index */
 me-&gt;writeMemAddrCurr += me-&gt;writeSizeCurr;
 me-&gt;writeBufferIndex += me-&gt;writeSizeCurr;
 me-&gt;writeCurrPage    += 1;</action>
@@ -696,7 +712,10 @@ if ( ACCESS_FREERTOS == me-&gt;accessType ) {
     me-&gt;writeSizeCurr = me-&gt;writeSizeLastPage;
 } else {
     me-&gt;writeSizeCurr = I2C_getPageSize( me-&gt;iDev );
-}</action>
+}
+
+DBG_printf(&quot;Writing page %d (%d bytes) out of %d total to addr 0x%02x\n&quot;, 
+    me-&gt;writeCurrPage, me-&gt;writeSizeCurr, me-&gt;writeTotalPages, me-&gt;writeMemAddrCurr);</action>
          <choice_glyph conn="58,59,4,3,-36,8">
           <action box="0,-3,10,2"/>
          </choice_glyph>
@@ -785,7 +804,10 @@ me-&gt;addrStart  = ((I2CReadReqEvt const *)e)-&gt;addr;
 me-&gt;bytesTotal = ((I2CReadReqEvt const *)e)-&gt;bytes;
 me-&gt;accessType = ((I2CReadReqEvt const *)e)-&gt;accessType;
 me-&gt;addrSize   = I2C_getMemAddrSize(me-&gt;iDev);
-me-&gt;i2cDevOp   = I2C_OP_MEM_READ;</action>
+me-&gt;i2cDevOp   = I2C_OP_MEM_READ;
+
+LOG_printf(&quot;Reading %d bytes from I2C dev %d at I2C addr 0x%02x\n&quot;,
+    me-&gt;bytesTotal, me-&gt;iDev, me-&gt;addrStart);</action>
        <tran_glyph conn="5,15,3,3,61">
         <action box="0,-2,23,2"/>
        </tran_glyph>
@@ -822,14 +844,38 @@ DBG_printf(
     me-&gt;writeTotalPages,
     me-&gt;addrStart,
     me-&gt;bytesTotal
-);</action>
+);
+
+uint8_t tmp[100] = {0};
+uint16_t tmpLen = 0;
+CBErrorCode err = CON_hexToStr(
+    (const uint8_t *)me-&gt;dataBuf,        // data to convert
+    me-&gt;bytesTotal,                      // length of data to convert
+    tmp,                                 // where to write output
+    sizeof(tmp),                         // max size of output buffer
+    &amp;tmpLen,                             // size of the resulting output
+    0,                                   // no columns
+    ' ',                                 // separator
+    true                                 // bPrintX
+);
+
+DBG_printf(
+    &quot;Attempting to write %d bytes: %s\n&quot;,
+    me-&gt;bytesTotal, tmp
+);
+
+LOG_printf(&quot;Writing %d bytes (%d pages) to I2C dev %d at I2C addr 0x%02x\n&quot;,
+    me-&gt;bytesTotal, me-&gt;writeTotalPages, me-&gt;iDev, me-&gt;addrStart);</action>
        <choice target="../../../0/11">
         <guard brief="NoErr?">ERR_NONE == me-&gt;errorCode</guard>
         <action>/* This is the first iteration through the &quot;loop&quot; which writes several pages */
 me-&gt;writeCurrPage    = 0;
 me-&gt;writeSizeCurr    = me-&gt;writeSizeFirstPage;
 me-&gt;writeBufferIndex = 0;
-me-&gt;writeMemAddrCurr = me-&gt;addrStart;</action>
+me-&gt;writeMemAddrCurr = me-&gt;addrStart;
+
+DBG_printf(&quot;Writing page %d (%d bytes) out of %d total to addr 0x%02x\n&quot;, 
+    me-&gt;writeCurrPage, me-&gt;writeSizeCurr, me-&gt;writeTotalPages, me-&gt;writeMemAddrCurr);</action>
         <choice_glyph conn="32,18,5,3,34">
          <action box="1,0,10,2"/>
         </choice_glyph>

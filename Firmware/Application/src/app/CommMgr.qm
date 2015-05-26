@@ -85,7 +85,10 @@ QS_FUN_DICTIONARY(&amp;QHsm_top);
 QS_FUN_DICTIONARY(&amp;CommMgr_initial);
 QS_FUN_DICTIONARY(&amp;CommMgr_Active);
 
-QActive_subscribe((QActive *)me, SER_RECEIVED_SIG);</action>
+QActive_subscribe((QActive *)me, SER_RECEIVED_SIG);
+QActive_subscribe((QActive *)me, CLI_RECEIVED_SIG);
+
+</action>
      <initial_glyph conn="1,2,4,3,9,5">
       <action box="0,-2,6,2"/>
      </initial_glyph>
@@ -118,7 +121,7 @@ QTimeEvt_disarm(&amp;me-&gt;commOpTimerEvt);</entry>
      <tran trig="BOOT_RESET">
       <action>/* Perform Reset */
 NVIC_SystemReset();</action>
-      <tran_glyph conn="3,99,3,-1,14">
+      <tran_glyph conn="3,139,3,-1,16">
        <action box="0,-2,10,2"/>
       </tran_glyph>
      </tran>
@@ -233,7 +236,7 @@ switch( me-&gt;msgPayloadName ) {
         <action box="0,-2,10,2"/>
        </tran_glyph>
       </tran>
-      <state_glyph node="6,8,28,88">
+      <state_glyph node="6,8,28,128">
        <entry box="1,2,6,2"/>
       </state_glyph>
      </state>
@@ -355,7 +358,7 @@ if ( ERR_NONE != me-&gt;errorCode ) {
       <tran trig="COMM_MGR_TIMEOUT" target="../../1">
        <action>ERR_printf(&quot;COMM_MGR_TIMEOUT trying to process %d basic msg, error: 0x%08x\n&quot;,
     me-&gt;basicMsg._msgName, me-&gt;errorCode);</action>
-       <tran_glyph conn="58,94,3,1,-24">
+       <tran_glyph conn="58,132,3,1,-24">
         <action box="-19,-2,19,2"/>
        </tran_glyph>
       </tran>
@@ -430,8 +433,8 @@ me-&gt;payloadMsgUnion.statusPayload._errorCode = me-&gt;errorCode;
          <guard brief="Unsupported?">_CBFlashMsg == me-&gt;basicMsg._msgName</guard>
          <action>me-&gt;errorCode = ERR_MSG_UNSUPPORTED_IN_APPLICATION;
 </action>
-         <choice_glyph conn="91,25,4,1,65,-57">
-          <action box="-10,63,10,2"/>
+         <choice_glyph conn="91,25,4,1,33,-57">
+          <action box="-10,31,10,2"/>
          </choice_glyph>
         </choice>
         <choice>
@@ -506,16 +509,16 @@ ERR_printf(&quot;Unsupported bootmode requested (%d). Error: 0x%08x\n&quot;,
         <exit box="1,4,6,2"/>
        </state_glyph>
       </state>
-      <state_glyph node="58,8,63,88">
+      <state_glyph node="58,8,88,128">
        <entry box="1,2,6,2"/>
        <exit box="1,4,6,2"/>
       </state_glyph>
      </state>
-     <state_glyph node="3,3,123,97">
+     <state_glyph node="3,3,145,138">
       <entry box="1,2,5,2"/>
      </state_glyph>
     </state>
-    <state_diagram size="133,102"/>
+    <state_diagram size="150,143"/>
    </statechart>
   </class>
   <attribute name="AO_CommMgr" type="QActive * const" visibility="0x00" properties="0x00">
@@ -619,6 +622,8 @@ return status;</code>
 #include &quot;base64_wrapper.h&quot;                            /* For base64 encoding */
 #include &quot;SerialMgr.h&quot;
 #include &quot;LWIPMgr.h&quot;
+#include &quot;SysMgr.h&quot;
+#include &quot;version.h&quot;
 
 /* Compile-time called macros ------------------------------------------------*/
 Q_DEFINE_THIS_FILE;                 /* For QSPY to know the name of this file */

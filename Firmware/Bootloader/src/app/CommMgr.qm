@@ -85,7 +85,10 @@ QS_FUN_DICTIONARY(&amp;QHsm_top);
 QS_FUN_DICTIONARY(&amp;CommMgr_initial);
 QS_FUN_DICTIONARY(&amp;CommMgr_Active);
 
-QActive_subscribe((QActive *)me, SER_RECEIVED_SIG);</action>
+QActive_subscribe((QActive *)me, SER_RECEIVED_SIG);
+QActive_subscribe((QActive *)me, CLI_RECEIVED_SIG);
+QActive_subscribe((QActive *)me, I2C1_DEV_READ_DONE_SIG);
+QActive_subscribe((QActive *)me, I2C1_DEV_WRITE_DONE_SIG);</action>
      <initial_glyph conn="1,2,4,3,9,5">
       <action box="0,-2,6,2"/>
      </initial_glyph>
@@ -132,7 +135,7 @@ __set_MSP(*(__IO uint32_t*) FLASH_APPL_START_ADDR);
 
 /* After this call, we are running the Application FW image */
 Jump_To_Application();</action>
-      <tran_glyph conn="3,99,3,-1,17">
+      <tran_glyph conn="3,124,3,-1,16">
        <action box="0,-2,10,2"/>
       </tran_glyph>
      </tran>
@@ -181,7 +184,7 @@ QACTIVE_POST(
         <action box="0,-2,10,2"/>
        </tran_glyph>
       </tran>
-      <tran trig="CLI_RECEIVED" target="../../2/1">
+      <tran trig="CLI_RECEIVED" target="../../2/2">
        <action>/* Extract the basicMsg first */
 memset(&amp;(me-&gt;basicMsg), 0, sizeof(me-&gt;basicMsg));
 me-&gt;basicMsgOffset = CBBasicMsg_read_delimited_from(
@@ -236,6 +239,13 @@ switch( me-&gt;msgPayloadName ) {
             me-&gt;basicMsgOffset
         );
         break;
+    case _CBI2CDataPayloadMsg:
+        CBI2CDataPayloadMsg_read_delimited_from(
+            ((LrgDataEvt *) e)-&gt;dataBuf,
+            &amp;(me-&gt;payloadMsgUnion.i2cDataPayload),
+            me-&gt;basicMsgOffset
+        );
+        break;
     default:
         WRN_printf(
             &quot;Unknown payload detected: %d, this is probably an error\n&quot;,
@@ -247,7 +257,7 @@ switch( me-&gt;msgPayloadName ) {
         <action box="0,-2,10,2"/>
        </tran_glyph>
       </tran>
-      <state_glyph node="6,8,28,88">
+      <state_glyph node="6,8,28,114">
        <entry box="1,2,6,2"/>
       </state_glyph>
      </state>
@@ -347,6 +357,14 @@ switch( me-&gt;msgPayloadName ) {
             evt-&gt;dataLen
         );
         break;
+    case _CBI2CDataPayloadMsg:
+        DBG_printf(&quot;Sending I2CData payload\n&quot;);
+        evt-&gt;dataLen = CBI2CDataPayloadMsg_write_delimited_to(
+            (void*)&amp;(me-&gt;payloadMsgUnion.i2cDataPayload),
+            evt-&gt;dataBuf,
+            evt-&gt;dataLen
+        );
+        break;
     case _CBNoMsg:
         WRN_printf(&quot;Not sending payload as part of Done msg.\n&quot;);
         break;
@@ -369,10 +387,75 @@ if ( ERR_NONE != me-&gt;errorCode ) {
       <tran trig="COMM_MGR_TIMEOUT" target="../../1">
        <action>ERR_printf(&quot;COMM_MGR_TIMEOUT trying to process %d basic msg, error: 0x%08x\n&quot;,
     me-&gt;basicMsg._msgName, me-&gt;errorCode);</action>
-       <tran_glyph conn="63,94,3,1,-29">
+       <tran_glyph conn="63,120,3,1,-29">
         <action box="-19,-2,19,2"/>
        </tran_glyph>
       </tran>
+      <state name="WaitForRespFromFlashMgr">
+       <entry>QTimeEvt_rearm(                                       /* Re-arm timer on entry */
+    &amp;me-&gt;commOpTimerEvt,
+    SEC_TO_TICKS( LL_MAX_TOUT_SEC_COMM_MSG_FLASH_OP )
+);
+
+me-&gt;errorCode = ERR_COMM_FLASHMGR_TIMEOUT; /* Set the error in case we timeout */</entry>
+       <exit>QTimeEvt_disarm(&amp;me-&gt;commOpTimerEvt);                  /* Disarm timer on exit */
+
+if ( ERR_NONE != me-&gt;errorCode ) {
+    ERR_printf(&quot;Leaving state with error: 0x%08x\n&quot;, me-&gt;errorCode);
+}</exit>
+       <tran trig="FLASH_OP_DONE" target="../../../1">
+        <action>me-&gt;errorCode = ((FlashStatusEvt const *)e)-&gt;errorCode;
+me-&gt;payloadMsgUnion.statusPayload._errorCode = me-&gt;errorCode;
+if ( ERR_NONE != me-&gt;errorCode ) {
+    WRN_printf(&quot;Got FLASH_OP_DONE with status: 0x%08x\n&quot;, me-&gt;errorCode);
+}</action>
+        <tran_glyph conn="66,55,3,1,-32">
+         <action box="-19,-2,15,2"/>
+        </tran_glyph>
+       </tran>
+       <tran trig="FLASH_FW_DONE" target="../../../1">
+        <action>me-&gt;errorCode = ((FWMetaEvt const *)e)-&gt;errorCode;
+
+/* Overwrite the done response since the FW flashing is complete; we have to send the
+ * metadata back so the client can be happy that we did things correctly.  We can 
+ * re-use the current structure and it will be used by the exit action of the parent
+ * state to send the msg.  Here, we only set up fields that are specific to this
+ * response. We can also destructively change the payload name since we are sending
+ * a response right after this. */
+me-&gt;msgPayloadName = _CBFlashMetaPayloadMsg;
+me-&gt;basicMsg._msgPayload = me-&gt;msgPayloadName;
+
+/* Set up the payload msg here */
+me-&gt;payloadMsgUnion.flashMetaPayload._errorCode = me-&gt;errorCode;
+me-&gt;payloadMsgUnion.flashMetaPayload._imageCrc  = ((FWMetaEvt const *)e)-&gt;imageCRC;
+me-&gt;payloadMsgUnion.flashMetaPayload._imageMaj  = ((FWMetaEvt const *)e)-&gt;imageMaj;
+me-&gt;payloadMsgUnion.flashMetaPayload._imageMin  = ((FWMetaEvt const *)e)-&gt;imageMin;
+me-&gt;payloadMsgUnion.flashMetaPayload._imageSize = ((FWMetaEvt const *)e)-&gt;imageSize;
+me-&gt;payloadMsgUnion.flashMetaPayload._imageType = ((FWMetaEvt const *)e)-&gt;imageType;
+MEMCPY(
+    me-&gt;payloadMsgUnion.flashMetaPayload._imageDatetime,
+    ((FWMetaEvt const *)e)-&gt;imageDatetime,
+    CB_DATETIME_LEN
+);
+
+DBG_printf(&quot;Setting flash meta payload with error code: %d\n&quot;, me-&gt;payloadMsgUnion.flashMetaPayload._errorCode);
+</action>
+        <tran_glyph conn="66,53,3,1,-32">
+         <action box="-19,-2,15,2"/>
+        </tran_glyph>
+       </tran>
+       <tran trig="COMM_OP_TIMEOUT" target="../../../1">
+        <action>ERR_printf(&quot;COMM_OP_TIMEOUT trying to process %d basic msg, error: 0x%08x\n&quot;, 
+    me-&gt;basicMsg._msgName, me-&gt;errorCode);</action>
+        <tran_glyph conn="66,57,3,1,-32">
+         <action box="-19,-2,19,2"/>
+        </tran_glyph>
+       </tran>
+       <state_glyph node="66,51,19,7">
+        <entry box="1,2,6,2"/>
+        <exit box="1,4,6,2"/>
+       </state_glyph>
+      </state>
       <state name="ValidateMsg">
        <documentation>/**
  * @brief	State that ensures the system stays in the Busy state while processing.
@@ -564,7 +647,7 @@ ERR_printf(&quot;Unsupported bootmode requested (%d). Error: 0x%08x\n&quot;,
          <guard brief="Flash?">_CBFlashMsg == me-&gt;basicMsg._msgName</guard>
          <action>me-&gt;errorCode = ERR_NONE;
 </action>
-         <choice target="../../../../2">
+         <choice target="../../../../1">
           <guard brief="FlashMetaPayload?">_CBFlashMetaPayloadMsg == me-&gt;msgPayloadName</guard>
           <action>/* The flash meta payload is the start of the FW update.  The meta payload contains
  * all the information about the coming fw data.  We need to store this so it can be
@@ -595,11 +678,11 @@ me-&gt;msgPayloadName = _CBStatusPayloadMsg;
 
 /* Don't change the basicMsg name since it should be the same in all cases. */
 me-&gt;basicMsg._msgPayload = me-&gt;msgPayloadName;</action>
-          <choice_glyph conn="101,84,4,1,3,-16">
-           <action box="-14,1,13,2"/>
+          <choice_glyph conn="101,50,4,1,7,-16">
+           <action box="-13,5,13,2"/>
           </choice_glyph>
          </choice>
-         <choice target="../../../../2">
+         <choice target="../../../../1">
           <guard brief="FlashDataPayload?">_CBFlashDataPayloadMsg == me-&gt;msgPayloadName</guard>
           <action>/* The flash data payload is used to transfer the FW data packets to FlashMgr AO. */
 
@@ -623,8 +706,8 @@ me-&gt;msgPayloadName = _CBStatusPayloadMsg;
 
 /* Don't change the basicMsg name since it should be the same in all cases. */
 me-&gt;basicMsg._msgPayload = me-&gt;msgPayloadName;</action>
-          <choice_glyph conn="101,84,5,1,-16">
-           <action box="-14,-2,13,2"/>
+          <choice_glyph conn="101,50,4,1,4,-16">
+           <action box="-13,2,13,2"/>
           </choice_glyph>
          </choice>
          <choice target="../../../../../1">
@@ -632,12 +715,44 @@ me-&gt;basicMsg._msgPayload = me-&gt;msgPayloadName;</action>
           <action>me-&gt;errorCode = ERR_MSG_UNEXPECTED_PAYLOAD;
 WRN_printf(&quot;Unexpected Flash payload %d for FlashMsg. Error: 0x%08x\n&quot;,
     me-&gt;msgPayloadName, me-&gt;errorCode);</action>
-          <choice_glyph conn="101,84,4,1,6,-67">
-           <action box="-7,4,6,2"/>
+          <choice_glyph conn="101,50,5,1,-67">
+           <action box="-6,-2,6,2"/>
           </choice_glyph>
          </choice>
-         <choice_glyph conn="111,23,4,-1,61,-10">
-          <action box="-6,59,7,2"/>
+         <choice_glyph conn="111,23,4,-1,27,-10">
+          <action box="-7,25,7,2"/>
+         </choice_glyph>
+        </choice>
+        <choice>
+         <guard brief="I2CRead?">_CBI2CReadMsg == me-&gt;basicMsg._msgName</guard>
+         <choice target="../../../../../1">
+          <guard>else</guard>
+          <action>me-&gt;errorCode = ERR_MSG_UNEXPECTED_PAYLOAD;
+WRN_printf(&quot;Unexpected Flash payload %d for I2CReadMsg. Error: 0x%08x\n&quot;,
+    me-&gt;msgPayloadName, me-&gt;errorCode);</action>
+          <choice_glyph conn="101,61,5,1,-67">
+           <action box="-6,-2,6,2"/>
+          </choice_glyph>
+         </choice>
+         <choice target="../../../../3">
+          <guard brief="ValidPayload?">_CBI2CDataPayloadMsg == me-&gt;msgPayloadName</guard>
+          <action>/* Has to be set after checking for a valid payload */
+me-&gt;msgPayloadName = _CBI2CDataPayloadMsg;
+me-&gt;basicMsg._msgPayload = me-&gt;msgPayloadName;
+
+/* Create the event and directly post it to the right AO. */
+I2CReadReqEvt *i2cReadReqEvt  = Q_NEW(I2CReadReqEvt, I2C1_DEV_RAW_MEM_READ_SIG);
+i2cReadReqEvt-&gt;i2cDev         = me-&gt;payloadMsgUnion.i2cDataPayload._i2cDev;
+i2cReadReqEvt-&gt;addr           = I2C_getMemAddr( i2cReadReqEvt-&gt;i2cDev ) + me-&gt;payloadMsgUnion.i2cDataPayload._start;
+i2cReadReqEvt-&gt;bytes          = me-&gt;payloadMsgUnion.i2cDataPayload._nBytes;
+i2cReadReqEvt-&gt;accessType     = me-&gt;payloadMsgUnion.i2cDataPayload._accType;
+QACTIVE_POST(AO_I2C1DevMgr, (QEvt *)(i2cReadReqEvt), me);</action>
+          <choice_glyph conn="101,61,4,1,3,-16">
+           <action box="0,1,10,2"/>
+          </choice_glyph>
+         </choice>
+         <choice_glyph conn="111,23,4,-1,38,-10">
+          <action box="-7,36,9,2"/>
          </choice_glyph>
         </choice>
         <tran_glyph conn="111,19,2,-1,4">
@@ -649,81 +764,57 @@ WRN_printf(&quot;Unexpected Flash payload %d for FlashMsg. Error: 0x%08x\n&quot;
         <exit box="1,4,6,2"/>
        </state_glyph>
       </state>
-      <state name="WaitForRespFromFlashMgr">
+      <state name="WaitForRespFromI2C">
        <entry>QTimeEvt_rearm(                                       /* Re-arm timer on entry */
     &amp;me-&gt;commOpTimerEvt,
-    SEC_TO_TICKS( LL_MAX_TOUT_SEC_COMM_MSG_FLASH_OP )
+    SEC_TO_TICKS( HL_MAX_TOUT_SEC_CLI_WAIT_FOR_SIMPLE_MSG_DONE )
 );
 
-me-&gt;errorCode = ERR_COMM_FLASHMGR_TIMEOUT; /* Set the error in case we timeout */</entry>
+me-&gt;errorCode = ERR_COMM_I2C_READ_CMD_TIMEOUT; /* Set the error in case we timeout */</entry>
        <exit>QTimeEvt_disarm(&amp;me-&gt;commOpTimerEvt);                  /* Disarm timer on exit */
 
 if ( ERR_NONE != me-&gt;errorCode ) {
     ERR_printf(&quot;Leaving state with error: 0x%08x\n&quot;, me-&gt;errorCode);
 }</exit>
-       <tran trig="FLASH_OP_DONE" target="../../../1">
-        <action>me-&gt;errorCode = ((FlashStatusEvt const *)e)-&gt;errorCode;
-me-&gt;payloadMsgUnion.statusPayload._errorCode = me-&gt;errorCode;
-if ( ERR_NONE != me-&gt;errorCode ) {
-    WRN_printf(&quot;Got FLASH_OP_DONE with status: 0x%08x\n&quot;, me-&gt;errorCode);
-}</action>
-        <tran_glyph conn="66,83,3,1,-32">
-         <action box="-19,-2,15,2"/>
-        </tran_glyph>
-       </tran>
-       <tran trig="FLASH_FW_DONE" target="../../../1">
-        <action>me-&gt;errorCode = ((FWMetaEvt const *)e)-&gt;errorCode;
-
-/* Overwrite the done response since the FW flashing is complete; we have to send the
- * metadata back so the client can be happy that we did things correctly.  We can 
- * re-use the current structure and it will be used by the exit action of the parent
- * state to send the msg.  Here, we only set up fields that are specific to this
- * response. We can also destructively change the payload name since we are sending
- * a response right after this. */
-me-&gt;msgPayloadName = _CBFlashMetaPayloadMsg;
-me-&gt;basicMsg._msgPayload = me-&gt;msgPayloadName;
-
-/* Set up the payload msg here */
-me-&gt;payloadMsgUnion.flashMetaPayload._errorCode = me-&gt;errorCode;
-me-&gt;payloadMsgUnion.flashMetaPayload._imageCrc  = ((FWMetaEvt const *)e)-&gt;imageCRC;
-me-&gt;payloadMsgUnion.flashMetaPayload._imageMaj  = ((FWMetaEvt const *)e)-&gt;imageMaj;
-me-&gt;payloadMsgUnion.flashMetaPayload._imageMin  = ((FWMetaEvt const *)e)-&gt;imageMin;
-me-&gt;payloadMsgUnion.flashMetaPayload._imageSize = ((FWMetaEvt const *)e)-&gt;imageSize;
-me-&gt;payloadMsgUnion.flashMetaPayload._imageType = ((FWMetaEvt const *)e)-&gt;imageType;
-MEMCPY(
-    me-&gt;payloadMsgUnion.flashMetaPayload._imageDatetime,
-    ((FWMetaEvt const *)e)-&gt;imageDatetime,
-    CB_DATETIME_LEN
-);
-
-DBG_printf(&quot;Setting flash meta payload with error code: %d\n&quot;, me-&gt;payloadMsgUnion.flashMetaPayload._errorCode);
-</action>
-        <tran_glyph conn="66,81,3,1,-32">
-         <action box="-19,-2,15,2"/>
-        </tran_glyph>
-       </tran>
        <tran trig="COMM_OP_TIMEOUT" target="../../../1">
         <action>ERR_printf(&quot;COMM_OP_TIMEOUT trying to process %d basic msg, error: 0x%08x\n&quot;, 
     me-&gt;basicMsg._msgName, me-&gt;errorCode);</action>
-        <tran_glyph conn="66,85,3,1,-32">
+        <tran_glyph conn="66,64,3,1,-32">
          <action box="-19,-2,19,2"/>
         </tran_glyph>
        </tran>
-       <state_glyph node="66,78,19,10">
+       <tran trig="I2C1_DEV_READ_DONE" target="../../../1">
+        <action>me-&gt;errorCode = ((I2CReadDoneEvt const *) e)-&gt;status;
+if ( ERR_NONE == me-&gt;errorCode ) {
+    DBG_printf(&quot;Got I2C1_DEV_READ_DONE with %d bytes\n&quot;, ((I2CReadDoneEvt const *) e)-&gt;bytes);
+    me-&gt;payloadMsgUnion.i2cDataPayload._dataBuf_len = ((I2CReadDoneEvt const *) e)-&gt;bytes;
+    MEMCPY(
+        me-&gt;payloadMsgUnion.i2cDataPayload._dataBuf,
+        ((I2CReadDoneEvt const *) e)-&gt;dataBuf,
+        me-&gt;payloadMsgUnion.i2cDataPayload._dataBuf_len
+    );
+}
+
+me-&gt;payloadMsgUnion.i2cDataPayload._errorCode = me-&gt;errorCode;</action>
+        <tran_glyph conn="66,67,3,1,-32">
+         <action box="-19,-2,15,2"/>
+        </tran_glyph>
+       </tran>
+       <state_glyph node="66,62,19,7">
         <entry box="1,2,6,2"/>
         <exit box="1,4,6,2"/>
        </state_glyph>
       </state>
-      <state_glyph node="63,8,92,88">
+      <state_glyph node="63,8,92,114">
        <entry box="1,2,6,2"/>
        <exit box="1,4,6,2"/>
       </state_glyph>
      </state>
-     <state_glyph node="3,3,156,98">
+     <state_glyph node="3,3,156,123">
       <entry box="1,2,5,2"/>
      </state_glyph>
     </state>
-    <state_diagram size="166,103"/>
+    <state_diagram size="221,129"/>
    </statechart>
   </class>
   <attribute name="AO_CommMgr" type="QActive * const" visibility="0x00" properties="0x00">
@@ -818,18 +909,19 @@ return status;</code>
 /* Includes ------------------------------------------------------------------*/
 #include &quot;CommMgr.h&quot;
 #include &quot;project_includes.h&quot;           /* Includes common to entire project. */
-#include &quot;bsp.h&quot;                              /* For time to ticks conversion */
-#include &quot;I2C1DevMgr.h&quot;                                  /* For I2C Evt types */
-#include &quot;time.h&quot;
-#include &quot;stm32f4x7_eth.h&quot;
+#include &quot;bsp_defs.h&quot;                         /* For time to ticks conversion */
 #include &quot;serial.h&quot;                               /* For serial functionality */
+
+#include &quot;I2C1DevMgr.h&quot;                                  /* For I2C Evt types */
 #include &quot;LWIPMgr.h&quot;                        /* For UDP ethernet functionality */
-#include &quot;base64_wrapper.h&quot;                            /* For base64 encoding */
 #include &quot;SerialMgr.h&quot;
-#include &quot;LWIPMgr.h&quot;
+#include &quot;SysMgr.h&quot;
 #include &quot;FlashMgr.h&quot;
+
+#include &quot;base64_wrapper.h&quot;                            /* For base64 encoding */
 #include &quot;flash.h&quot;
 #include &quot;crc32compat.h&quot;
+#include &quot;version.h&quot;
 
 /* Compile-time called macros ------------------------------------------------*/
 Q_DEFINE_THIS_FILE;                 /* For QSPY to know the name of this file */

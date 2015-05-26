@@ -37,18 +37,19 @@
 /* Includes ------------------------------------------------------------------*/
 #include "CommMgr.h"
 #include "project_includes.h"           /* Includes common to entire project. */
-#include "bsp.h"                              /* For time to ticks conversion */
-#include "I2C1DevMgr.h"                                  /* For I2C Evt types */
-#include "time.h"
-#include "stm32f4x7_eth.h"
+#include "bsp_defs.h"                         /* For time to ticks conversion */
 #include "serial.h"                               /* For serial functionality */
+
+#include "I2C1DevMgr.h"                                  /* For I2C Evt types */
 #include "LWIPMgr.h"                        /* For UDP ethernet functionality */
-#include "base64_wrapper.h"                            /* For base64 encoding */
 #include "SerialMgr.h"
-#include "LWIPMgr.h"
+#include "SysMgr.h"
 #include "FlashMgr.h"
+
+#include "base64_wrapper.h"                            /* For base64 encoding */
 #include "flash.h"
 #include "crc32compat.h"
+#include "version.h"
 
 /* Compile-time called macros ------------------------------------------------*/
 Q_DEFINE_THIS_FILE;                 /* For QSPY to know the name of this file */
@@ -154,6 +155,7 @@ static QState CommMgr_Idle(CommMgr * const me, QEvt const * const e);
  * machine is going next.
  */
 static QState CommMgr_Busy(CommMgr * const me, QEvt const * const e);
+static QState CommMgr_WaitForRespFromFlashMgr(CommMgr * const me, QEvt const * const e);
 
 /**
  * @brief	State that ensures the system stays in the Busy state while processing.
@@ -167,7 +169,7 @@ static QState CommMgr_Busy(CommMgr * const me, QEvt const * const e);
  * machine is going next.
  */
 static QState CommMgr_ValidateMsg(CommMgr * const me, QEvt const * const e);
-static QState CommMgr_WaitForRespFromFlashMgr(CommMgr * const me, QEvt const * const e);
+static QState CommMgr_WaitForRespFromI2C(CommMgr * const me, QEvt const * const e);
 
 
 /* Private defines -----------------------------------------------------------*/
@@ -268,6 +270,9 @@ static QState CommMgr_initial(CommMgr * const me, QEvt const * const e) {
     QS_FUN_DICTIONARY(&CommMgr_Active);
 
     QActive_subscribe((QActive *)me, SER_RECEIVED_SIG);
+    QActive_subscribe((QActive *)me, CLI_RECEIVED_SIG);
+    QActive_subscribe((QActive *)me, I2C1_DEV_READ_DONE_SIG);
+    QActive_subscribe((QActive *)me, I2C1_DEV_WRITE_DONE_SIG);
     return Q_TRAN(&CommMgr_Idle);
 }
 
@@ -306,7 +311,7 @@ static QState CommMgr_Active(CommMgr * const me, QEvt const * const e) {
         }
         /* ${AOs::CommMgr::SM::Active::BOOT_APPL} */
         case BOOT_APPL_SIG: {
-            dbg_slow_printf("Got BOOT_APPL sig. Booting Application...\n");
+            //dbg_slow_printf("Got BOOT_APPL sig. Booting Application...\n");
             /* If we made it here, no errors have been encountered and we
              * can safely proceed to boot the Application FW image */
 
@@ -442,6 +447,13 @@ static QState CommMgr_Idle(CommMgr * const me, QEvt const * const e) {
                         me->basicMsgOffset
                     );
                     break;
+                case _CBI2CDataPayloadMsg:
+                    CBI2CDataPayloadMsg_read_delimited_from(
+                        ((LrgDataEvt *) e)->dataBuf,
+                        &(me->payloadMsgUnion.i2cDataPayload),
+                        me->basicMsgOffset
+                    );
+                    break;
                 default:
                     WRN_printf(
                         "Unknown payload detected: %d, this is probably an error\n",
@@ -566,6 +578,14 @@ static QState CommMgr_Busy(CommMgr * const me, QEvt const * const e) {
                         evt->dataLen
                     );
                     break;
+                case _CBI2CDataPayloadMsg:
+                    DBG_printf("Sending I2CData payload\n");
+                    evt->dataLen = CBI2CDataPayloadMsg_write_delimited_to(
+                        (void*)&(me->payloadMsgUnion.i2cDataPayload),
+                        evt->dataBuf,
+                        evt->dataLen
+                    );
+                    break;
                 case _CBNoMsg:
                     WRN_printf("Not sending payload as part of Done msg.\n");
                     break;
@@ -597,6 +617,86 @@ static QState CommMgr_Busy(CommMgr * const me, QEvt const * const e) {
         }
         default: {
             status_ = Q_SUPER(&CommMgr_Active);
+            break;
+        }
+    }
+    return status_;
+}
+/*${AOs::CommMgr::SM::Active::Busy::WaitForRespFromF~} .....................*/
+static QState CommMgr_WaitForRespFromFlashMgr(CommMgr * const me, QEvt const * const e) {
+    QState status_;
+    switch (e->sig) {
+        /* ${AOs::CommMgr::SM::Active::Busy::WaitForRespFromF~} */
+        case Q_ENTRY_SIG: {
+            QTimeEvt_rearm(                                       /* Re-arm timer on entry */
+                &me->commOpTimerEvt,
+                SEC_TO_TICKS( LL_MAX_TOUT_SEC_COMM_MSG_FLASH_OP )
+            );
+
+            me->errorCode = ERR_COMM_FLASHMGR_TIMEOUT; /* Set the error in case we timeout */
+            status_ = Q_HANDLED();
+            break;
+        }
+        /* ${AOs::CommMgr::SM::Active::Busy::WaitForRespFromF~} */
+        case Q_EXIT_SIG: {
+            QTimeEvt_disarm(&me->commOpTimerEvt);                  /* Disarm timer on exit */
+
+            if ( ERR_NONE != me->errorCode ) {
+                ERR_printf("Leaving state with error: 0x%08x\n", me->errorCode);
+            }
+            status_ = Q_HANDLED();
+            break;
+        }
+        /* ${AOs::CommMgr::SM::Active::Busy::WaitForRespFromF~::FLASH_OP_DONE} */
+        case FLASH_OP_DONE_SIG: {
+            me->errorCode = ((FlashStatusEvt const *)e)->errorCode;
+            me->payloadMsgUnion.statusPayload._errorCode = me->errorCode;
+            if ( ERR_NONE != me->errorCode ) {
+                WRN_printf("Got FLASH_OP_DONE with status: 0x%08x\n", me->errorCode);
+            }
+            status_ = Q_TRAN(&CommMgr_Idle);
+            break;
+        }
+        /* ${AOs::CommMgr::SM::Active::Busy::WaitForRespFromF~::FLASH_FW_DONE} */
+        case FLASH_FW_DONE_SIG: {
+            me->errorCode = ((FWMetaEvt const *)e)->errorCode;
+
+            /* Overwrite the done response since the FW flashing is complete; we have to send the
+             * metadata back so the client can be happy that we did things correctly.  We can
+             * re-use the current structure and it will be used by the exit action of the parent
+             * state to send the msg.  Here, we only set up fields that are specific to this
+             * response. We can also destructively change the payload name since we are sending
+             * a response right after this. */
+            me->msgPayloadName = _CBFlashMetaPayloadMsg;
+            me->basicMsg._msgPayload = me->msgPayloadName;
+
+            /* Set up the payload msg here */
+            me->payloadMsgUnion.flashMetaPayload._errorCode = me->errorCode;
+            me->payloadMsgUnion.flashMetaPayload._imageCrc  = ((FWMetaEvt const *)e)->imageCRC;
+            me->payloadMsgUnion.flashMetaPayload._imageMaj  = ((FWMetaEvt const *)e)->imageMaj;
+            me->payloadMsgUnion.flashMetaPayload._imageMin  = ((FWMetaEvt const *)e)->imageMin;
+            me->payloadMsgUnion.flashMetaPayload._imageSize = ((FWMetaEvt const *)e)->imageSize;
+            me->payloadMsgUnion.flashMetaPayload._imageType = ((FWMetaEvt const *)e)->imageType;
+            MEMCPY(
+                me->payloadMsgUnion.flashMetaPayload._imageDatetime,
+                ((FWMetaEvt const *)e)->imageDatetime,
+                CB_DATETIME_LEN
+            );
+
+            DBG_printf("Setting flash meta payload with error code: %d\n", me->payloadMsgUnion.flashMetaPayload._errorCode);
+
+            status_ = Q_TRAN(&CommMgr_Idle);
+            break;
+        }
+        /* ${AOs::CommMgr::SM::Active::Busy::WaitForRespFromF~::COMM_OP_TIMEOUT} */
+        case COMM_OP_TIMEOUT_SIG: {
+            ERR_printf("COMM_OP_TIMEOUT trying to process %d basic msg, error: 0x%08x\n",
+                me->basicMsg._msgName, me->errorCode);
+            status_ = Q_TRAN(&CommMgr_Idle);
+            break;
+        }
+        default: {
+            status_ = Q_SUPER(&CommMgr_Busy);
             break;
         }
     }
@@ -820,6 +920,31 @@ static QState CommMgr_ValidateMsg(CommMgr * const me, QEvt const * const e) {
                     status_ = Q_TRAN(&CommMgr_Idle);
                 }
             }
+            /* ${AOs::CommMgr::SM::Active::Busy::ValidateMsg::MSG_PROCESS::[I2CRead?]} */
+            else if (_CBI2CReadMsg == me->basicMsg._msgName) {
+                /* ${AOs::CommMgr::SM::Active::Busy::ValidateMsg::MSG_PROCESS::[I2CRead?]::[ValidPayload?]} */
+                if (_CBI2CDataPayloadMsg == me->msgPayloadName) {
+                    /* Has to be set after checking for a valid payload */
+                    me->msgPayloadName = _CBI2CDataPayloadMsg;
+                    me->basicMsg._msgPayload = me->msgPayloadName;
+
+                    /* Create the event and directly post it to the right AO. */
+                    I2CReadReqEvt *i2cReadReqEvt  = Q_NEW(I2CReadReqEvt, I2C1_DEV_RAW_MEM_READ_SIG);
+                    i2cReadReqEvt->i2cDev         = me->payloadMsgUnion.i2cDataPayload._i2cDev;
+                    i2cReadReqEvt->addr           = I2C_getMemAddr( i2cReadReqEvt->i2cDev ) + me->payloadMsgUnion.i2cDataPayload._start;
+                    i2cReadReqEvt->bytes          = me->payloadMsgUnion.i2cDataPayload._nBytes;
+                    i2cReadReqEvt->accessType     = me->payloadMsgUnion.i2cDataPayload._accType;
+                    QACTIVE_POST(AO_I2C1DevMgr, (QEvt *)(i2cReadReqEvt), me);
+                    status_ = Q_TRAN(&CommMgr_WaitForRespFromI2C);
+                }
+                /* ${AOs::CommMgr::SM::Active::Busy::ValidateMsg::MSG_PROCESS::[I2CRead?]::[else]} */
+                else {
+                    me->errorCode = ERR_MSG_UNEXPECTED_PAYLOAD;
+                    WRN_printf("Unexpected Flash payload %d for I2CReadMsg. Error: 0x%08x\n",
+                        me->msgPayloadName, me->errorCode);
+                    status_ = Q_TRAN(&CommMgr_Idle);
+                }
+            }
             /* ${AOs::CommMgr::SM::Active::Busy::ValidateMsg::MSG_PROCESS::[else]} */
             else {
                 me->errorCode = ERR_MSG_UNKNOWN_BASIC;
@@ -851,22 +976,22 @@ static QState CommMgr_ValidateMsg(CommMgr * const me, QEvt const * const e) {
     }
     return status_;
 }
-/*${AOs::CommMgr::SM::Active::Busy::WaitForRespFromF~} .....................*/
-static QState CommMgr_WaitForRespFromFlashMgr(CommMgr * const me, QEvt const * const e) {
+/*${AOs::CommMgr::SM::Active::Busy::WaitForRespFromI~} .....................*/
+static QState CommMgr_WaitForRespFromI2C(CommMgr * const me, QEvt const * const e) {
     QState status_;
     switch (e->sig) {
-        /* ${AOs::CommMgr::SM::Active::Busy::WaitForRespFromF~} */
+        /* ${AOs::CommMgr::SM::Active::Busy::WaitForRespFromI~} */
         case Q_ENTRY_SIG: {
             QTimeEvt_rearm(                                       /* Re-arm timer on entry */
                 &me->commOpTimerEvt,
-                SEC_TO_TICKS( LL_MAX_TOUT_SEC_COMM_MSG_FLASH_OP )
+                SEC_TO_TICKS( HL_MAX_TOUT_SEC_CLI_WAIT_FOR_SIMPLE_MSG_DONE )
             );
 
-            me->errorCode = ERR_COMM_FLASHMGR_TIMEOUT; /* Set the error in case we timeout */
+            me->errorCode = ERR_COMM_I2C_READ_CMD_TIMEOUT; /* Set the error in case we timeout */
             status_ = Q_HANDLED();
             break;
         }
-        /* ${AOs::CommMgr::SM::Active::Busy::WaitForRespFromF~} */
+        /* ${AOs::CommMgr::SM::Active::Busy::WaitForRespFromI~} */
         case Q_EXIT_SIG: {
             QTimeEvt_disarm(&me->commOpTimerEvt);                  /* Disarm timer on exit */
 
@@ -876,51 +1001,27 @@ static QState CommMgr_WaitForRespFromFlashMgr(CommMgr * const me, QEvt const * c
             status_ = Q_HANDLED();
             break;
         }
-        /* ${AOs::CommMgr::SM::Active::Busy::WaitForRespFromF~::FLASH_OP_DONE} */
-        case FLASH_OP_DONE_SIG: {
-            me->errorCode = ((FlashStatusEvt const *)e)->errorCode;
-            me->payloadMsgUnion.statusPayload._errorCode = me->errorCode;
-            if ( ERR_NONE != me->errorCode ) {
-                WRN_printf("Got FLASH_OP_DONE with status: 0x%08x\n", me->errorCode);
-            }
-            status_ = Q_TRAN(&CommMgr_Idle);
-            break;
-        }
-        /* ${AOs::CommMgr::SM::Active::Busy::WaitForRespFromF~::FLASH_FW_DONE} */
-        case FLASH_FW_DONE_SIG: {
-            me->errorCode = ((FWMetaEvt const *)e)->errorCode;
-
-            /* Overwrite the done response since the FW flashing is complete; we have to send the
-             * metadata back so the client can be happy that we did things correctly.  We can
-             * re-use the current structure and it will be used by the exit action of the parent
-             * state to send the msg.  Here, we only set up fields that are specific to this
-             * response. We can also destructively change the payload name since we are sending
-             * a response right after this. */
-            me->msgPayloadName = _CBFlashMetaPayloadMsg;
-            me->basicMsg._msgPayload = me->msgPayloadName;
-
-            /* Set up the payload msg here */
-            me->payloadMsgUnion.flashMetaPayload._errorCode = me->errorCode;
-            me->payloadMsgUnion.flashMetaPayload._imageCrc  = ((FWMetaEvt const *)e)->imageCRC;
-            me->payloadMsgUnion.flashMetaPayload._imageMaj  = ((FWMetaEvt const *)e)->imageMaj;
-            me->payloadMsgUnion.flashMetaPayload._imageMin  = ((FWMetaEvt const *)e)->imageMin;
-            me->payloadMsgUnion.flashMetaPayload._imageSize = ((FWMetaEvt const *)e)->imageSize;
-            me->payloadMsgUnion.flashMetaPayload._imageType = ((FWMetaEvt const *)e)->imageType;
-            MEMCPY(
-                me->payloadMsgUnion.flashMetaPayload._imageDatetime,
-                ((FWMetaEvt const *)e)->imageDatetime,
-                CB_DATETIME_LEN
-            );
-
-            DBG_printf("Setting flash meta payload with error code: %d\n", me->payloadMsgUnion.flashMetaPayload._errorCode);
-
-            status_ = Q_TRAN(&CommMgr_Idle);
-            break;
-        }
-        /* ${AOs::CommMgr::SM::Active::Busy::WaitForRespFromF~::COMM_OP_TIMEOUT} */
+        /* ${AOs::CommMgr::SM::Active::Busy::WaitForRespFromI~::COMM_OP_TIMEOUT} */
         case COMM_OP_TIMEOUT_SIG: {
             ERR_printf("COMM_OP_TIMEOUT trying to process %d basic msg, error: 0x%08x\n",
                 me->basicMsg._msgName, me->errorCode);
+            status_ = Q_TRAN(&CommMgr_Idle);
+            break;
+        }
+        /* ${AOs::CommMgr::SM::Active::Busy::WaitForRespFromI~::I2C1_DEV_READ_DO~} */
+        case I2C1_DEV_READ_DONE_SIG: {
+            me->errorCode = ((I2CReadDoneEvt const *) e)->status;
+            if ( ERR_NONE == me->errorCode ) {
+                DBG_printf("Got I2C1_DEV_READ_DONE with %d bytes\n", ((I2CReadDoneEvt const *) e)->bytes);
+                me->payloadMsgUnion.i2cDataPayload._dataBuf_len = ((I2CReadDoneEvt const *) e)->bytes;
+                MEMCPY(
+                    me->payloadMsgUnion.i2cDataPayload._dataBuf,
+                    ((I2CReadDoneEvt const *) e)->dataBuf,
+                    me->payloadMsgUnion.i2cDataPayload._dataBuf_len
+                );
+            }
+
+            me->payloadMsgUnion.i2cDataPayload._errorCode = me->errorCode;
             status_ = Q_TRAN(&CommMgr_Idle);
             break;
         }

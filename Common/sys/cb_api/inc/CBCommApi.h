@@ -54,6 +54,9 @@ typedef enum CBMsgName         CBMsgName;
 typedef enum CBMsgType         CBMsgType;
 typedef enum CBMsgRoute        CBMsgRoute;
 typedef enum CBBootMode        CBBootMode;
+typedef enum CBI2CDevices      CBI2CDevices;
+typedef enum CBAccessType      CBAccessType;
+
 
 /**
  * @brief   A Union of all the payload structs.
@@ -67,6 +70,7 @@ typedef union CBPayloadMsgs {
    struct CBBootModePayloadMsg bootmodePayload;
    struct CBFlashMetaPayloadMsg flashMetaPayload;
    struct CBFlashDataPayloadMsg flashDataPayload;
+   struct CBI2CDataPayloadMsg   i2cDataPayload;
 } CBPayloadMsgUnion_t;
 
 

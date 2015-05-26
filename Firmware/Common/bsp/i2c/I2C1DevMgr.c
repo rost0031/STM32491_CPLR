@@ -765,6 +765,24 @@ static QState I2C1DevMgr_ReadMem(I2C1DevMgr * const me, QEvt const * const e) {
                     /* Publish the event so other AOs can get it if they want */
                     QF_PUBLISH((QEvt *)i2cReadDoneEvt, AO_I2C1DevMgr);
                 }
+
+                uint8_t tmp[100] = {0};
+                uint16_t tmpLen = 0;
+                CBErrorCode err = CON_hexToStr(
+                    ((I2CBusDataEvt const *)e)->dataBuf, // data to convert
+                    ((I2CBusDataEvt const *)e)->dataLen, // length of data to convert
+                    tmp,                                 // where to write output
+                    sizeof(tmp),                         // max size of output buffer
+                    &tmpLen,                             // size of the resulting output
+                    0,                                   // no columns
+                    ' ',                                 // separator
+                    true                                 // bPrintX
+                );
+
+                DBG_printf(
+                    "Read %d bytes: %s\n",
+                    ((I2CBusDataEvt const *)e)->dataLen, tmp
+                );
                 status_ = Q_TRAN(&I2C1DevMgr_Idle);
             }
             /* ${AOs::I2C1DevMgr::SM::Active::Busy::ReadMem::I2C_BUS_DONE::[else]} */
@@ -862,8 +880,6 @@ static QState I2C1DevMgr_PostWriteWait(I2C1DevMgr * const me, QEvt const * const
         }
         /* ${AOs::I2C1DevMgr::SM::Active::Busy::PostWriteWait::I2C1_DEV_POST_WR~} */
         case I2C1_DEV_POST_WRITE_TIMER_SIG: {
-            LOG_printf("Write to EEPROM finished with error: 0x%08x\n", me->errorCode);
-
             /* Update the counter and index */
             me->writeMemAddrCurr += me->writeSizeCurr;
             me->writeBufferIndex += me->writeSizeCurr;
@@ -875,6 +891,9 @@ static QState I2C1DevMgr_PostWriteWait(I2C1DevMgr * const me, QEvt const * const
                 } else {
                     me->writeSizeCurr = I2C_getPageSize( me->iDev );
                 }
+
+                DBG_printf("Writing page %d (%d bytes) out of %d total to addr 0x%02x\n",
+                    me->writeCurrPage, me->writeSizeCurr, me->writeTotalPages, me->writeMemAddrCurr);
                 status_ = Q_TRAN(&I2C1DevMgr_CheckingBus);
             }
             /* ${AOs::I2C1DevMgr::SM::Active::Busy::PostWriteWait::I2C1_DEV_POST_WR~::[else]} */
@@ -1010,6 +1029,9 @@ static QState I2C1DevMgr_Idle(I2C1DevMgr * const me, QEvt const * const e) {
             me->accessType = ((I2CReadReqEvt const *)e)->accessType;
             me->addrSize   = I2C_getMemAddrSize(me->iDev);
             me->i2cDevOp   = I2C_OP_MEM_READ;
+
+            LOG_printf("Reading %d bytes from I2C dev %d at I2C addr 0x%02x\n",
+                me->bytesTotal, me->iDev, me->addrStart);
             status_ = Q_TRAN(&I2C1DevMgr_CheckingBus);
             break;
         }
@@ -1047,6 +1069,27 @@ static QState I2C1DevMgr_Idle(I2C1DevMgr * const me, QEvt const * const e) {
                 me->addrStart,
                 me->bytesTotal
             );
+
+            uint8_t tmp[100] = {0};
+            uint16_t tmpLen = 0;
+            CBErrorCode err = CON_hexToStr(
+                (const uint8_t *)me->dataBuf,        // data to convert
+                me->bytesTotal,                      // length of data to convert
+                tmp,                                 // where to write output
+                sizeof(tmp),                         // max size of output buffer
+                &tmpLen,                             // size of the resulting output
+                0,                                   // no columns
+                ' ',                                 // separator
+                true                                 // bPrintX
+            );
+
+            DBG_printf(
+                "Attempting to write %d bytes: %s\n",
+                me->bytesTotal, tmp
+            );
+
+            LOG_printf("Writing %d bytes (%d pages) to I2C dev %d at I2C addr 0x%02x\n",
+                me->bytesTotal, me->writeTotalPages, me->iDev, me->addrStart);
             /* ${AOs::I2C1DevMgr::SM::Active::Idle::I2C1_DEV_RAW_MEM~::[NoErr?]} */
             if (ERR_NONE == me->errorCode) {
                 /* This is the first iteration through the "loop" which writes several pages */
@@ -1054,6 +1097,9 @@ static QState I2C1DevMgr_Idle(I2C1DevMgr * const me, QEvt const * const e) {
                 me->writeSizeCurr    = me->writeSizeFirstPage;
                 me->writeBufferIndex = 0;
                 me->writeMemAddrCurr = me->addrStart;
+
+                DBG_printf("Writing page %d (%d bytes) out of %d total to addr 0x%02x\n",
+                    me->writeCurrPage, me->writeSizeCurr, me->writeTotalPages, me->writeMemAddrCurr);
                 status_ = Q_TRAN(&I2C1DevMgr_CheckingBus);
             }
             /* ${AOs::I2C1DevMgr::SM::Active::Idle::I2C1_DEV_RAW_MEM~::[else]} */

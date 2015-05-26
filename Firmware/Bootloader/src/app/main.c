@@ -120,6 +120,45 @@ int main(void)
     dbg_slow_printf("Initialized BSP\n");
     log_slow_printf("Starting Bootloader version %s built on %s\n", FW_VER, BUILD_DATE);
 
+
+    dbg_slow_printf("Reading the first 4 pages from EEPROM\n");
+
+    uint8_t buffer[32] = {0};
+
+    I2C_readDevMemBLK(
+          EEPROM,                       // I2C_Dev_t iDev,
+          0,                            // uint16_t offset,
+          32,                           // uint16_t bytesToRead,
+          ACCESS_BARE_METAL,            // AccessType_t accType,
+          buffer,                       // uint8_t* pBuffer,
+          sizeof(buffer)                // uint8_t  bufSize
+    );
+
+
+
+//    uint8_t tmp[100] = {0};
+//    uint16_t tmpLen = 0;
+//    CBErrorCode err = CON_hexToStr(
+//          (const uint8_t *)buffer,            // data to convert
+//          sizeof(buffer),                      // length of data to convert
+//          tmp,                                 // where to write output
+//          sizeof(tmp),                         // max size of output buffer
+//          &tmpLen,                             // size of the resulting output
+//          0,                                   // no columns
+//          ' ',                                 // separator
+//          true                                 // bPrintX
+//    );
+//
+    dbg_slow_printf(
+          "Read to write %d bytes: ",
+          sizeof(buffer)
+    );
+    for (uint8_t i = 0; i < 32; i++ ) {
+       printf("%02x ", buffer[i]);
+    } printf("\n");
+
+
+
     log_slow_printf("Checking settings DB validity...\n");
     CBErrorCode status = DB_isValid( ACCESS_BARE_METAL );
     if ( ERR_NONE != status ) {
@@ -181,6 +220,7 @@ int main(void)
              ipAddrBuffer[0], ipAddrBuffer[1], ipAddrBuffer[2], ipAddrBuffer[3]
        );
     }
+
 
     /* Instantiate the Active objects by calling their "constructors"         */
     dbg_slow_printf("Initializing AO constructors\n");

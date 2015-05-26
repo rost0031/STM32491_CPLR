@@ -172,6 +172,14 @@ int main(int argc, char *argv[])
             "Set current operating mode of the DC3. (Bootloader or Application) "
             "Example: '--set_mode Application' "
             "Example: '--set_mode Bootloader' ")
+
+         ("read_i2c", po::value<vector<string>>(&m_command)->multitoken(),
+            "Read data from an I2C device."
+            "Example: '--read_i2c dev=EEPROM bytes=3 start=0' "
+            "Example: '--read_i2c dev=EUIROM bytes=8 start=0' "
+            "Example: '--read_i2c dev=SNROM  bytes=6 start=0' acc=QPC"
+            "Example: '--read_i2c dev=SNROM  bytes=6 start=0' acc=FRT"
+            "Example: '--read_i2c dev=SNROM  bytes=6 start=0' acc=BARE")
       ; // End of add_options()
 
       DBG_out << "Parsing cmdline arguments...";
@@ -392,6 +400,130 @@ int main(int argc, char *argv[])
             ERR_out << "Got client error " << "0x" << std::hex
                << status << std::dec << " when trying to flash FW.";
          }
+      } else if (m_vm.count("read_i2c")) {         /* "read_i2c" cmd handling */
+         m_parsed_cmd = "read_i2c";
+
+         vector<string>::const_iterator begin = m_vm["read_i2c"].as<vector<string>>().begin();
+         vector<string>::const_iterator end = m_vm["read_i2c"].as<vector<string>>().end();
+         vector<string>::const_iterator itr;
+          /* Check for command specific help req */
+         if( find(begin, end, "--help") != end || find(begin, end, "help") != end  || !m_conn_set) {
+            HELP_printCmdSpecific( m_parsed_cmd, appName );
+         }
+
+         int bytes = -1, start = -1;
+         CBI2CDevices dev = _CB_MaxI2CDev;
+         CBAccessType acc = _CB_ACCESS_QPC; // set to a default arg of QPC
+
+         for( itr = begin; itr != end; ++itr ) {
+            if ( (*itr).find("=") ) {
+               vector<string> arg_pair;
+
+               CMD_tokenize( (*itr), arg_pair, "=" );
+               if (2 != arg_pair.size()) {              /* invalid arg format */
+                  ERR_out << "ERROR: found a = sign in argument but wrong number of params";
+                  HELP_printCmdSpecific( m_parsed_cmd, appName );
+               } else if ( 0 == arg_pair.at(0).compare("bytes")) { /* file arg */
+                  bool has_only_digits = (arg_pair.at(1).find_first_not_of( "0123456789" ) == string::npos);
+                  if ( !has_only_digits ) {
+                     ERR_out << "ERROR: only numbers are allowed for this argument";
+                     HELP_printCmdSpecific( m_parsed_cmd, appName );
+                  }
+
+                  bytes = atoi(arg_pair.at(1).c_str());
+                  if ( 0 > bytes && 128 < bytes ) {
+                     ERR_out << "Invalid range for bytes ";
+                     HELP_printCmdSpecific( m_parsed_cmd, appName );
+                  }
+               } else if ( 0 == arg_pair.at(0).compare("start")) {
+                  bool has_only_digits = (arg_pair.at(1).find_first_not_of( "0123456789" ) == string::npos);
+                  if ( !has_only_digits ) {
+                     ERR_out << "ERROR: only numbers are allowed for this argument";
+                     HELP_printCmdSpecific( m_parsed_cmd, appName );
+                  }
+                  start = atoi(arg_pair.at(1).c_str());
+                  if ( 0 > start && 128 < start ) {
+                     ERR_out << "Invalid range for start ";
+                     HELP_printCmdSpecific( m_parsed_cmd, appName );
+                  }
+               } else if ( 0 == arg_pair.at(0).compare("dev")) {
+                  DBG_out << "Dev is " << arg_pair.at(1);
+                  if ( 0 == arg_pair.at(1).compare("EEPROM")) {
+                     dev = _CB_EEPROM;
+                  } else if ( 0 == arg_pair.at(1).compare("EUIROM")) {
+                     dev = _CB_EUIROM;
+                  } else if ( 0 == arg_pair.at(1).compare("SNROM")) {
+                     dev = _CB_SNROM;
+                  } else {
+                     ERR_out << "Invalid I2C device specified ";
+                     HELP_printCmdSpecific( m_parsed_cmd, appName );
+                  }
+               } else if ( 0 == arg_pair.at(0).compare("acc")) {
+                  if ( 0 == arg_pair.at(1).compare("QPC")) {
+                     acc = _CB_ACCESS_QPC;
+                  } else if ( 0 == arg_pair.at(1).compare("FRT")) {
+                     acc = _CB_ACCESS_FRT;
+                  } else if ( 0 == arg_pair.at(1).compare("BARE")) {
+                     acc = _CB_ACCESS_BARE;
+                  } else {
+                     ERR_out << "Invalid I2C device access specified ";
+                     HELP_printCmdSpecific( m_parsed_cmd, appName );
+                  }
+               }
+            }
+         }
+
+         /* Check if everything has been parsed correctly */
+         if ( dev == _CB_EEPROM ) {
+            if ( (start + bytes) > 128 ) {
+               ERR_out << "Read range requested will attempt to read past the device boundary";
+               HELP_printCmdSpecific( m_parsed_cmd, appName );
+            }
+         } else if ( dev == _CB_EUIROM || dev == _CB_SNROM) {
+            if ( (start + bytes) > 16 ) {
+               ERR_out << "Read range requested will attempt to read past the device boundary";
+               HELP_printCmdSpecific( m_parsed_cmd, appName );
+            }
+         } else if ( dev == _CB_MaxI2CDev ) {
+            ERR_out << "Invalid device specified: " << dev;
+               HELP_printCmdSpecific( m_parsed_cmd, appName );
+         } else if ( start < 0 ) {
+            ERR_out << "Invalid start specified: " << start;
+               HELP_printCmdSpecific( m_parsed_cmd, appName );
+         } else if ( bytes < 0 ) {
+            ERR_out << "Invalid number of bytse specified: " << bytes;
+               HELP_printCmdSpecific( m_parsed_cmd, appName );
+         }
+         /* If we got here, we have a valid filename/path and valid FW image
+          * type. Execute (and block) on this command */
+         uint8_t *buffer = new uint8_t[1000];
+         int bufferSize = 1000 * sizeof(uint8_t);
+         uint16_t bytesRead = 0;
+         status = client->DC3_readI2C(
+               &statusDC3, &bytesRead, buffer,
+               bufferSize, bytes, start, dev, acc
+         );
+         if( CLI_ERR_NONE == status) {
+            ss.clear();
+            ss << "Reading of I2C device on DC3 ";
+            if (ERR_NONE == statusDC3) {
+               ss << "completed successfully.  Read " << bytesRead << " bytes:" << endl;
+               for (uint8_t i=0; i < bytesRead; i++ ) {
+                  ss << "0x" << uppercase << setw(2) << setfill('0') << hex << unsigned(buffer[i]) << ", ";
+               }
+
+               ss << dec << endl;
+
+            } else {
+               ss << "FAILED with ERROR: 0x" << setw(8) << setfill('0') << hex << statusDC3 << dec;
+            }
+            CON_print(ss.str());
+            DBG_out << "Bytes read: " << bytesRead;
+         } else {
+            ERR_out << "Got client error " << "0x" << std::hex
+                  << status << std::dec << " when trying to read I2C.";
+         }
+         delete[] buffer;
       }
 
       /* Now check if the user requested general help.  This has to be done
@@ -422,8 +554,8 @@ int main(int argc, char *argv[])
       string error = e.what();
       ERR_out << "Exception " << e.what() << " while parsing cmdline arguments.";
       EXIT_LOG_FLUSH(1);
-   } catch (...) {
-      ERR_out << "Some Unknown error occurred while parsing cmdline arguments.";
+   } catch ( exception& ex) {
+      ERR_out << "Some Unknown error occurred while parsing cmdline arguments: " << ex.what();
       EXIT_LOG_FLUSH(1);
    }
 

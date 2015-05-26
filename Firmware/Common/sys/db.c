@@ -28,24 +28,12 @@ DBG_DEFINE_THIS_MODULE( DBG_MODL_DB );  /* For debug system to ID this module */
 
 /* Private typedefs ----------------------------------------------------------*/
 /* Private defines -----------------------------------------------------------*/
-
-/**< Magic word that will be stored at the head of the DB.  If this is not
- * there, the DB needs to be initialized to a default and updated after. */
-#define DB_MAGIC_WORD_DEF   0xdefec8db
-
-/**< Current version of the DB.  This needs to be bumped once the FW is out in
- * the field and any changes are made to the DB. This is to allow for a smooth
- * upgrade of the DB. */
-#define DB_VERSION_DEF      0x0001
-
 /* Private macros ------------------------------------------------------------*/
-
 /**< Macro to get size of the element stored in the EEPROM memory */
 #define DB_SIZE_OF_ELEM(s,m)     ((size_t) sizeof(((s *)0)->m))
 
 /**< Macro to get the offset of the element stored in the EEPROM memory */
 #define DB_LOC_OF_ELEM(s,m)      offsetof(s, m)
-
 /* Private variables and Local objects ---------------------------------------*/
 
 /**< Array to specify where all the DB elements reside */
@@ -421,6 +409,46 @@ const CBErrorCode DB_readEEPROM(
    }
 
    return( status );
+}
+
+/******************************************************************************/
+const CBErrorCode DB_isMagicWordValid( const uint32_t dbMagicWord )
+{
+   CBErrorCode status = ERR_NONE;            /* keep track of success/failure */
+
+   if ( dbMagicWord != DB_MAGIC_WORD_DEF ) {
+      status = ERR_DB_NOT_INIT;
+   }
+
+   return( status );
+}
+
+/******************************************************************************/
+const CBErrorCode DB_isVersionValid( const uint16_t dbVersion )
+{
+   CBErrorCode status = ERR_NONE;            /* keep track of success/failure */
+
+   if ( dbVersion != DB_VERSION_DEF ) {
+      status = ERR_DB_NOT_INIT;
+   }
+
+   return( status );
+}
+
+/******************************************************************************/
+const CBErrorCode DB_checkDTMatch(
+      const uint8_t* const dt1,
+      const uint8_t* const dt2
+)
+{
+   for(uint8_t i = CB_DATETIME_LEN - 1; i != 0; i-- ) {
+      if (dt1[i] != dt2[i]) {
+         ERR_printf("dt1[%d]: %c dt2[%d]: %c\n", i, dt1[i], i, dt2[i]);
+         return ERR_DB_DATETIME_MISMATCH;
+      }
+   }
+
+   return ERR_NONE;
 }
 
 /**

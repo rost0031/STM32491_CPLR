@@ -102,6 +102,21 @@ template<typename T> std::ostream& operator<<(
 //   return str;
 }
 
+//
+///**
+// * @brief   Operator that does the actual conversion from enum to a string.
+// * @param [in] str: ostream type to output to.
+// * @param [in] data: template param of enum that is getting converted.
+// * @return  stream with output in string form.
+// */
+//template<typename T> std::string& operator+=(
+//      std::basic_string& str,
+//      enumConstRefHolder<T> const& data
+//)
+//{
+//   return( str += enumStrings<T>::data[data.enumVal] );
+//
+//}
 
 /**
  * @brief   Operator that does the actual conversion from enum to a string.

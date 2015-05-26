@@ -90,6 +90,7 @@ typedef enum CBErrors
    ERR_COMM_INVALID_APPL_SIZE                                  = 0x00040005,
    ERR_COMM_INVALID_APPL_CRC_MISMATCH                          = 0x00040006,
    ERR_COMM_INVALID_BOOTMODE_REQUESTED                         = 0x00040007,
+   ERR_COMM_I2C_READ_CMD_TIMEOUT                               = 0x00040008,
 
    /* Application CommMgr error category          0x00050000 - 0x0005FFFF */
    ERR_MENU_NODE_STORAGE_ALLOC_NULL                            = 0x00050000,
@@ -137,6 +138,13 @@ typedef enum CBErrors
    ERR_DB_ELEM_IS_NOT_IN_EEPROM                                = 0x00080004,
    ERR_DB_ACCESS_TIMEOUT                                       = 0x00080005,
    ERR_DB_ELEM_SIZE_OVERFLOW                                   = 0x00080006,
+   ERR_DB_INVALID_DATETIME_LENGTH                              = 0x00080007,
+   ERR_DB_INVALID_MAGIC_WORD_LENGTH                            = 0x00080008,
+   ERR_DB_DATETIME_MISMATCH                                    = 0x00080009,
+   ERR_DB_INVALID_MAJ_VER_LENGTH                               = 0x0008000A,
+   ERR_DB_INVALID_MIN_VER_LENGTH                               = 0x0008000B,
+   ERR_DB_INVALID_MAJ_VER_MISMATCH                             = 0x0008000C,
+   ERR_DB_INVALID_MIN_VER_MISMATCH                             = 0x0008000D,
 
    /* I2C Device general error category          0x00090000 - 0x0009FFFF */
    ERR_I2C_DEV_INVALID_DEVICE                                  = 0x00090000,

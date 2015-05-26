@@ -133,6 +133,18 @@ template<> char const* enumStrings<CBBootMode>::data[] =  {
          "Invalid"                        /**< _CB_MaxBootModes */
 };
 
+/**
+ * @brief String values for CBI2CDevices enums
+ * String values for consecutive enums can be placed into const char* arrays
+ * and a template will autogenerate the necessary enumToString function based
+ * on the existence of this ::data[] array.
+ * */
+template<> char const* enumStrings<CBI2CDevices>::data[] =  {
+         "EEPROM",                /**< _CB_EEPROM */
+         "SNROM",                 /**< _CB_SNROM */
+         "EUIROM",                /**< _CB_EUIROM */
+         "Invalid device",        /**< _CB_MaxI2CDev */
+};
 
 /* Private function prototypes -----------------------------------------------*/
 /* Private functions ---------------------------------------------------------*/

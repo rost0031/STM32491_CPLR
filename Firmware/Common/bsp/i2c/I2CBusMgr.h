@@ -148,7 +148,7 @@ typedef struct {
  * @brief Event struct type for reading internal memory of an I2C device such as an
  * EEPROM.
  */
-/*${Events::I2CWriteMemReqEvt} .............................................*/
+/*${Events::I2CWriteMemReqEv~} .............................................*/
 typedef struct {
 /* protected: */
     QEvt super;

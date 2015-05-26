@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<model version="3.1.3">
+<model version="3.2.2">
  <framework name="qpc"/>
  <package name="Events" stereotype="0x01">
   <class name="I2CBusDataEvt" superclass="qpc::QEvt">
@@ -237,13 +237,10 @@ I2C_BusInit( me-&gt;iBus ); /* Initialize the I2C devices and associated busses 
       <entry>DBG_printf(&quot;I2CBusMgr for I2CBus%d back in Idle\n&quot;, me-&gt;iBus+1);</entry>
       <tran trig="I2C_BUS_CHECK_FREE">
        <action>/* Set error code assuming the operation will fail */
-me-&gt;errorCode = ERR_I2CBUS_BUSY;
-
-DBG_printf(&quot;Got I2C_BUS_CHECK_FREE\n&quot;);</action>
+me-&gt;errorCode = ERR_I2CBUS_BUSY;</action>
        <choice>
         <guard brief="Bus Free?">RESET == I2C_GetFlagStatus( s_I2C_Bus[me-&gt;iBus].i2c_bus, I2C_FLAG_BUSY )</guard>
-        <action>DBG_printf(&quot;I2CBus%d free and ready to go.\n&quot;, me-&gt;iBus+1);
-me-&gt;errorCode = ERR_NONE;
+        <action>me-&gt;errorCode = ERR_NONE;
 
 /* Allocate a dynamic event to send back the result after attempting to recover
  * the I2C bus. */
@@ -920,6 +917,18 @@ ERR_printf(
        </state_glyph>
       </state>
       <state name="BusRecovery">
+       <documentation>/**
+ * @brief This state waits for I2C Bus recovery to complete or times out if stuck.
+ *
+ * This state is a Timeout/Wait state for the polling child state for MASTER MODE
+ * on the I2C bus.  It takes care of the timeout and sending a result to anyone
+ * who is listening for this event.
+ *
+ * @param  [in,out] me: Pointer to the state machine
+ * @param  [in,out] e:  Pointer to the event being processed.
+ * @return status_: QState type that specifies where the state
+ * machine is going next.
+ */</documentation>
        <entry>/* Post an operation timer on entry */
 QTimeEvt_rearm(
     &amp;me-&gt;i2cOpTimerEvt,

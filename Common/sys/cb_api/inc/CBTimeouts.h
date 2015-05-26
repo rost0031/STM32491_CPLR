@@ -99,14 +99,15 @@
    /*@} FlashMgr Timeouts and Times.*/
 
 
-   /** \name Bootloader CommMgr Timeouts and Times.
-    * These are the timeouts used by the CommMgr AO in Bootloader
+   /** \name CommMgr Timeouts and Times.
+    * These are the timeouts used by the CommMgr AO
     *@{*/
    #define HL_MAX_TOUT_SEC_COMM_MSG_PROCESS                                  10.0
    #define LL_MAX_TOUT_SEC_COMM_MSG_VALIDATE_MSG_OP                           1.0
    #define LL_MAX_TOUT_SEC_COMM_MSG_FLASH_OP                                  3.0
+   #define HL_MAX_TOUT_SEC_COMM_DB_VALIDATE                                   3.0
 
-   /*@} Bootloader CommMgr Timeouts and Times.*/
+   /*@} CommMgr Timeouts and Times.*/
 
 
    /** \name SysMgr Timeouts and Times.
@@ -114,6 +115,7 @@
     *@{*/
    #define HL_MAX_TOUT_SEC_SYS_MGR                                           60.0
    #define LL_MAX_TOUT_SEC_DB_ACCESS                                          3.0
+   #define LL_MAX_TIME_SEC_BETWEEN_RETRIES                                    0.5
 
    /*@} SysMgr Timeouts and Times.*/
 
