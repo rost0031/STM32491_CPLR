@@ -265,9 +265,7 @@ int main(int argc, char *argv[])
       if (m_vm.count("get_mode")) {                /* "get_mode" cmd handling */
          m_parsed_cmd = "get_mode";
 
-         if (m_vm.count("help") || !m_conn_set) {  /* Check for command specific help req */
-            HELP_printCmdSpecific( m_parsed_cmd, appName );
-         }
+         UTIL_checkForCmdSpecificHelp( m_parsed_cmd, appName, m_vm, m_conn_set );
 
          CBBootMode mode = _CB_NoBootMode;       /**< Store the bootmode here */
 
@@ -288,13 +286,12 @@ int main(int argc, char *argv[])
       } else if (m_vm.count("set_mode")) {         /* "set_mode" cmd handling */
          m_parsed_cmd = "set_mode";
 
+         /* Check for command specific help req */
+         UTIL_checkForCmdSpecificHelp( m_parsed_cmd, appName, m_vm, m_conn_set );
+
          vector<string>::const_iterator begin = m_vm["set_mode"].as<vector<string>>().begin();
          vector<string>::const_iterator end = m_vm["set_mode"].as<vector<string>>().end();
          vector<string>::const_iterator itr;
-          /* Check for command specific help req */
-         if( find(begin, end, "--help") != end || find(begin, end, "help") != end  || !m_conn_set ) {
-            HELP_printCmdSpecific( m_parsed_cmd, appName );
-         }
 
          CBBootMode mode = _CB_NoBootMode;
          for( itr = begin; itr != end; ++itr ) {
@@ -336,13 +333,12 @@ int main(int argc, char *argv[])
       } else if (m_vm.count("flash")) {               /* "flash" cmd handling */
          m_parsed_cmd = "flash";
 
+         /* Check for command specific help req */
+         UTIL_checkForCmdSpecificHelp( m_parsed_cmd, appName, m_vm, m_conn_set );
+
          vector<string>::const_iterator begin = m_vm["flash"].as<vector<string>>().begin();
          vector<string>::const_iterator end = m_vm["flash"].as<vector<string>>().end();
          vector<string>::const_iterator itr;
-          /* Check for command specific help req */
-         if( find(begin, end, "--help") != end || find(begin, end, "help") != end  || !m_conn_set) {
-            HELP_printCmdSpecific( m_parsed_cmd, appName );
-         }
 
          CBBootMode type = _CB_NoBootMode;
          string filename = "";
@@ -412,13 +408,12 @@ int main(int argc, char *argv[])
       } else if (m_vm.count("read_i2c")) {         /* "read_i2c" cmd handling */
          m_parsed_cmd = "read_i2c";
 
+         /* Check for command specific help req */
+         UTIL_checkForCmdSpecificHelp( m_parsed_cmd, appName, m_vm, m_conn_set );
+
          vector<string>::const_iterator begin = m_vm["read_i2c"].as<vector<string>>().begin();
          vector<string>::const_iterator end = m_vm["read_i2c"].as<vector<string>>().end();
          vector<string>::const_iterator itr;
-          /* Check for command specific help req */
-         if( find(begin, end, "--help") != end || find(begin, end, "help") != end  || !m_conn_set) {
-            HELP_printCmdSpecific( m_parsed_cmd, appName );
-         }
 
          int bytes = -1, start = -1;
          CBI2CDevices dev = _CB_MaxI2CDev;
