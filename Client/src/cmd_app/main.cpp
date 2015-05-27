@@ -161,25 +161,25 @@ int main(int argc, char *argv[])
          /* Options only required if running in non-interactive mode */
          ("flash", po::value<vector<string>>(&m_command)->multitoken(),
             "Flash FW to the DC3"
-            "Example: '--flash file=../some/path/DC3Appl.bin type=Application'"
-            "Example: '--flash file=../some/path/DC3Boot.bin type=Bootloader'")
+            "Example: --flash file=../some/path/DC3Appl.bin type=Application"
+            "Example: --flash file=../some/path/DC3Boot.bin type=Bootloader")
 
          ("get_mode", po::value<vector<string>>(&m_command)->zero_tokens(),
             "Get current operating mode of the DC3. (Bootloader or Application) "
-            "Example: '--get_mode' ")
+            "Example: --get_mode ")
 
          ("set_mode", po::value<vector<string>>(&m_command),
             "Set current operating mode of the DC3. (Bootloader or Application) "
-            "Example: '--set_mode Application' "
-            "Example: '--set_mode Bootloader' ")
+            "Example: --set_mode Application "
+            "Example: --set_mode Bootloader ")
 
          ("read_i2c", po::value<vector<string>>(&m_command)->multitoken(),
             "Read data from an I2C device."
-            "Example: '--read_i2c dev=EEPROM bytes=3 start=0' "
-            "Example: '--read_i2c dev=EUIROM bytes=8 start=0' "
-            "Example: '--read_i2c dev=SNROM  bytes=6 start=0' acc=QPC"
-            "Example: '--read_i2c dev=SNROM  bytes=6 start=0' acc=FRT"
-            "Example: '--read_i2c dev=SNROM  bytes=6 start=0' acc=BARE")
+            "Example: --read_i2c dev=EEPROM bytes=3 start=0 "
+            "Example: --read_i2c dev=EUIROM bytes=8 start=0 "
+            "Example: --read_i2c dev=SNROM  bytes=6 start=0 acc=QPC"
+            "Example: --read_i2c dev=SNROM  bytes=6 start=0 acc=FRT"
+            "Example: --read_i2c dev=SNROM  bytes=6 start=0 acc=BARE")
       ; // End of add_options()
 
       DBG_out << "Parsing cmdline arguments...";
