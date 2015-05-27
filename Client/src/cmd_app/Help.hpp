@@ -1,5 +1,5 @@
 /**
- * @file    Help.h
+ * @file    Help.hpp
  * Contains all the extended help for all commands so they don't take up space
  * in main.cpp.
  *
@@ -10,16 +10,19 @@
  */
 
 /* Define to prevent recursive inclusion -------------------------------------*/
-#ifndef HELP_H_
-#define HELP_H_
+#ifndef HELP_HPP_
+#define HELP_HPP_
 
 /* Includes ------------------------------------------------------------------*/
+/* System includes */
 #include <cctype>
 #include <iostream>
 #include <iterator>
 #include <memory>
 #include <sstream>
 #include <string>
+
+/* Boost includes */
 #include <boost/shared_ptr.hpp>
 
 /* Namespaces ----------------------------------------------------------------*/
@@ -165,5 +168,5 @@ private:
 };
 
 
-#endif                                                             /* HELP_H_ */
+#endif                                                           /* HELP_HPP_ */
 /******** Copyright (C) 2015 Datacard. All rights reserved *****END OF FILE****/

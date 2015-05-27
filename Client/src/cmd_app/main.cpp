@@ -12,6 +12,7 @@
 #define _WIN32_WINNT 0x400
 
 /* Includes ------------------------------------------------------------------*/
+/* System includes */
 #include <cctype>
 #include <iomanip>
 #include <iostream>
@@ -21,22 +22,21 @@
 #include <sstream>
 #include <string>
 
+/* Boost includes */
 #include <boost/program_options.hpp>
 #include <boost/shared_ptr.hpp>
 
-/* Local App includes */
-//#include "CmdlineParser.h"
-#include "Help.h"
-#include "Logging.h"
+/* App includes */
+#include "Help.hpp"
+#include "Logging.hpp"
+#include "Callbacks.hpp"
+#include "EnumMaps.hpp"
 
 /* Lib includes */
 #include "CBSharedDbgLevels.h"
-#include "Callbacks.h"
 #include "ClientModules.h"
 #include "LogStub.h"
 #include "ClientApi.h"
-#include "EnumMaps.h"
-
 
 /* Namespaces ----------------------------------------------------------------*/
 using namespace std;

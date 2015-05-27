@@ -1,5 +1,5 @@
 /**
- * @file    Logging.h
+ * @file    Logging.hpp
  * This class is responsible for logging and output.
  *
  * This class contains functions and methods which should be passed in as
@@ -13,15 +13,16 @@
  */
 
 /* Define to prevent recursive inclusion -------------------------------------*/
-#ifndef LOGGING_H_
-#define LOGGING_H_
+#ifndef LOGGING_HPP_
+#define LOGGING_HPP_
 
 /* Includes ------------------------------------------------------------------*/
-#include "CBSharedDbgLevels.h"
-#include "LogStub.h"
-#include "EnumMaps.h"
+/* System includes */
 #include <iomanip>
+#include <iostream>
+#include <stdarg.h>
 
+/* Boost includes */
 #include <boost/log/common.hpp>
 #include <boost/log/sinks.hpp>
 #include <boost/log/sources/logger.hpp>
@@ -50,8 +51,14 @@
 #include <boost/log/support/date_time.hpp>
 #include <boost/thread/thread.hpp>
 
-#include <iostream>                              /* For cout and endl support */
-#include <stdarg.h>
+/* Api includes */
+#include "CBSharedDbgLevels.h"
+
+/* Lib includes */
+#include "LogStub.h"
+
+/* App includes */
+#include "EnumMaps.hpp"
 
 /* Exported defines ----------------------------------------------------------*/
 /* Exported macros -----------------------------------------------------------*/
@@ -295,5 +302,5 @@ BOOST_LOG_GLOBAL_LOGGER(my_menu, logger_t)
 /* Exported classes ----------------------------------------------------------*/
 
 
-#endif                                                          /* LOGGING_H_ */
+#endif                                                        /* LOGGING_HPP_ */
 /******** Copyright (C) 2015 Datacard. All rights reserved *****END OF FILE****/

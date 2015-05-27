@@ -13,15 +13,21 @@
  */
 
 /* Includes ------------------------------------------------------------------*/
-#include "Logging.h"
-#include <boost/date_time.hpp>
+/* System includes */
 #include <stdio.h>
 #include <stdarg.h>
+
+/* Boost includes */
+#include <boost/date_time.hpp>
+
+/* Lib includes */
 #include "LogStub.h"
 #include "ClientModules.h"
-#include "Callbacks.h"
-#include "EnumMaps.h"
 
+/* App includes */
+#include "Callbacks.hpp"
+#include "EnumMaps.hpp"
+#include "Logging.hpp"
 
 #include <iostream>
 

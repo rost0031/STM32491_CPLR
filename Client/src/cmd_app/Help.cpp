@@ -10,9 +10,10 @@
  */
 
 /* Includes ------------------------------------------------------------------*/
-#include "Help.h"
-#include "Logging.h"
-#include "EnumMaps.h"
+/* App includes */
+#include "Help.hpp"
+#include "Logging.hpp"
+#include "EnumMaps.hpp"
 
 /* Namespaces ----------------------------------------------------------------*/
 using namespace std;

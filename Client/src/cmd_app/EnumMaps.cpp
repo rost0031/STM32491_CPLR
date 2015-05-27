@@ -9,13 +9,17 @@
  */
 
 /* Includes ------------------------------------------------------------------*/
-#include "EnumMaps.h"
-
-#include "CBSharedDbgLevels.h"
-#include "ClientModules.h"
-#include "Logging.h"
+/* System includes */
 #include <map>
 #include <boost/assign.hpp>
+
+/* App includes */
+#include "EnumMaps.hpp"
+#include "Logging.hpp"
+
+/* Lib includes */
+#include "CBSharedDbgLevels.h"
+#include "ClientModules.h"
 
 /* Namespaces ----------------------------------------------------------------*/
 using namespace std;

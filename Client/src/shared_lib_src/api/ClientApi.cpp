@@ -9,21 +9,23 @@
  */
 
 /* Includes ------------------------------------------------------------------*/
+/* System includes */
+#include <boost/thread/thread.hpp>
+#include <boost/atomic.hpp>
+#include <boost/lockfree/queue.hpp>
+
+/* Lib includes */
 #include "ClientApi.h"
-#include "ClientShared.h"
-//#include "MainMgr.h"
-//#include "MainMgrDefs.h"
-#include "cencode.h"
-#include "cdecode.h"
-#include "base64_wrapper.h"
 #include "LogHelper.h"
 #include "msg_utils.h"
 #include "fwLdr.h"
 #include "comm.h"
+#include "cencode.h"
+#include "cdecode.h"
+#include "base64_wrapper.h"
 
-#include <boost/thread/thread.hpp>
-#include <boost/atomic.hpp>
-#include <boost/lockfree/queue.hpp>
+/* Api includes */
+#include "ClientShared.h"
 
 /* Namespaces ----------------------------------------------------------------*/
 using namespace std;

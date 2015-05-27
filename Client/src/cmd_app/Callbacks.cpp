@@ -13,8 +13,8 @@
 /* Includes ------------------------------------------------------------------*/
 #include <iostream>                              /* For cout and endl support */
 #include <stdarg.h>
-#include "Callbacks.h"
-#include "Logging.h"
+#include "Callbacks.hpp"
+#include "Logging.hpp"
 #include "LogStub.h"
 
 /* Namespaces ----------------------------------------------------------------*/

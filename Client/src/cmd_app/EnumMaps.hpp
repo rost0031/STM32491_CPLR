@@ -1,5 +1,5 @@
 /**
- * @file    EnumMaps.cpp
+ * @file    EnumMaps.hpp
  * Template class that provides enum to string and back functionality.
  *
  * @date    04/06/2015
@@ -9,20 +9,26 @@
  */
 
 /* Define to prevent recursive inclusion -------------------------------------*/
-#ifndef ENUMMAPS_H_
-#define ENUMMAPS_H_
+#ifndef ENUMMAPS_HPP_
+#define ENUMMAPS_HPP_
 
 /* Includes ------------------------------------------------------------------*/
+/* System includes */
 #include <iostream>
 #include <sstream>
 #include <string>
 #include <algorithm>
 #include <iterator>
 #include <typeinfo>
+
+/* Boost includes */
 #include <boost/fusion/container/map.hpp>
 
+/* Api includes */
 #include "ClientModules.h"
-#include "Logging.h"
+
+/* App includes */
+#include "Logging.hpp"
 
 /* Exported defines ----------------------------------------------------------*/
 /* Exported macros -----------------------------------------------------------*/

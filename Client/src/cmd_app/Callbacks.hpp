@@ -1,5 +1,5 @@
 /**
- * @file    Callbacks.h
+ * @file    Callbacks.hpp
  * This file contains all the callbacks used by the Client.  This allows
  * different implementation of how to print and log info from the coupler
  * and the client.
@@ -11,14 +11,20 @@
  */
 
 /* Define to prevent recursive inclusion -------------------------------------*/
-#ifndef CALLBACKS_H_
-#define CALLBACKS_H_
+#ifndef CALLBACKS_HPP_
+#define CALLBACKS_HPP_
 
 /* Includes ------------------------------------------------------------------*/
+/* System includes */
+#include <map>
+
+/* Api includes */
 #include "CBSharedDbgLevels.h"
 #include "CBCommApi.h"
+
+/* Lib includes */
 #include "ClientModules.h"
-#include <map>
+
 
 /* Exported defines ----------------------------------------------------------*/
 /* Exported macros -----------------------------------------------------------*/
@@ -94,5 +100,5 @@ void CLI_DC3LogCallback(
 );
 /* Exported classes ----------------------------------------------------------*/
 
-#endif                                                        /* CALLBACKS_H_ */
+#endif                                                      /* CALLBACKS_HPP_ */
 /******** Copyright (C) 2015 Datacard. All rights reserved *****END OF FILE****/
