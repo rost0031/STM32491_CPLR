@@ -31,6 +31,7 @@
 #include "Logging.hpp"
 #include "Callbacks.hpp"
 #include "EnumMaps.hpp"
+#include "Utils.hpp"
 
 /* Lib includes */
 #include "CBSharedDbgLevels.h"
@@ -180,6 +181,14 @@ int main(int argc, char *argv[])
             "Example: --read_i2c dev=SNROM  bytes=6 start=0 acc=QPC"
             "Example: --read_i2c dev=SNROM  bytes=6 start=0 acc=FRT"
             "Example: --read_i2c dev=SNROM  bytes=6 start=0 acc=BARE")
+
+         ("write_i2c", po::value<vector<string>>(&m_command)->multitoken(),
+            "Write data to an I2C device."
+            "Example: --write_i2c dev=EEPROM bytes=3 start=0 "
+            "Example: --write_i2c dev=EEPROM bytes=8 start=0 acc=QPC "
+            "Example: --write_i2c dev=EEPROM start=0 data='0x23 0x43 0xA0 ...'"
+            "Example: --write_i2c dev=EEPROM start=0 data='A0 23 4b 3A ...' acc=FRT"
+            "Example: --write_i2c dev=EEPROM bytes=6 start=0 acc=BARE")
       ; // End of add_options()
 
       DBG_out << "Parsing cmdline arguments...";

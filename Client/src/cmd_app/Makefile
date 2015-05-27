@@ -123,7 +123,8 @@ CPP_SRCS                    = main.cpp \
                               Callbacks.cpp \
                               Help.cpp \
                               EnumMaps.cpp \
-                              Logging.cpp
+                              Logging.cpp \
+                              Utils.cpp
 
 #-----------------------------------------------------------------------------
 # BUILD OPTIONS FOR VARIOUS CONFIGURATIONS
