@@ -16,9 +16,14 @@
 #define UTILS_HPP_
 
 /* Includes ------------------------------------------------------------------*/
+/* System includes */
 #include <cstring>
 
+/* Boost includes */
 #include <boost/program_options.hpp>
+
+/* App includes */
+#include "Logging.hpp"
 
 /* Namespaces ----------------------------------------------------------------*/
 using namespace std;

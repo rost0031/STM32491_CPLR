@@ -20,20 +20,19 @@
 /* App includes */
 #include "Utils.hpp"
 #include "Help.hpp"
-//#include "Logging.hpp"
+
 /* Namespaces ----------------------------------------------------------------*/
 using namespace std;
 
 namespace po = boost::program_options;
 using namespace po;
 
-//using namespace boost::log;
-
 /* Compile-time called macros ------------------------------------------------*/
 /* Private typedefs ----------------------------------------------------------*/
 /* Private defines -----------------------------------------------------------*/
 /* Private macros ------------------------------------------------------------*/
-//MODULE_NAME( MODULE_EXT );
+MODULE_NAME( MODULE_EXT );
+
 /* Private variables and Local objects ---------------------------------------*/
 /* Private function prototypes -----------------------------------------------*/
 /* Private functions ---------------------------------------------------------*/
