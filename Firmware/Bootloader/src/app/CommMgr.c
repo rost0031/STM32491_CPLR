@@ -915,7 +915,7 @@ static QState CommMgr_ValidateMsg(CommMgr * const me, QEvt const * const e) {
                 /* ${AOs::CommMgr::SM::Active::Busy::ValidateMsg::MSG_PROCESS::[Flash?]::[else]} */
                 else {
                     me->errorCode = ERR_MSG_UNEXPECTED_PAYLOAD;
-                    WRN_printf("Unexpected Flash payload %d for FlashMsg. Error: 0x%08x\n",
+                    WRN_printf("Unexpected payload %d for FlashMsg. Error: 0x%08x\n",
                         me->msgPayloadName, me->errorCode);
                     status_ = Q_TRAN(&CommMgr_Idle);
                 }
@@ -940,7 +940,43 @@ static QState CommMgr_ValidateMsg(CommMgr * const me, QEvt const * const e) {
                 /* ${AOs::CommMgr::SM::Active::Busy::ValidateMsg::MSG_PROCESS::[I2CRead?]::[else]} */
                 else {
                     me->errorCode = ERR_MSG_UNEXPECTED_PAYLOAD;
-                    WRN_printf("Unexpected Flash payload %d for I2CReadMsg. Error: 0x%08x\n",
+                    WRN_printf("Unexpected payload %d for I2CReadMsg. Error: 0x%08x\n",
+                        me->msgPayloadName, me->errorCode);
+                    status_ = Q_TRAN(&CommMgr_Idle);
+                }
+            }
+            /* ${AOs::CommMgr::SM::Active::Busy::ValidateMsg::MSG_PROCESS::[I2CWrite?]} */
+            else if (_CBI2CWriteMsg == me->basicMsg._msgName) {
+                /* ${AOs::CommMgr::SM::Active::Busy::ValidateMsg::MSG_PROCESS::[I2CWrite?]::[ValidPayload?]} */
+                if (_CBI2CDataPayloadMsg == me->msgPayloadName) {
+                    /* Has to be set after checking for a valid payload */
+                    me->msgPayloadName = _CBStatusPayloadMsg;
+                    me->basicMsg._msgPayload = me->msgPayloadName;
+
+                    /* Create the event and directly post it to the right AO. */
+                    I2CWriteReqEvt *i2cWriteReqEvt  = Q_NEW(I2CWriteReqEvt, I2C1_DEV_RAW_MEM_WRITE_SIG);
+                    i2cWriteReqEvt->i2cDev         = me->payloadMsgUnion.i2cDataPayload._i2cDev;
+                    i2cWriteReqEvt->addr           = I2C_getMemAddr( i2cWriteReqEvt->i2cDev ) + me->payloadMsgUnion.i2cDataPayload._start;
+                    i2cWriteReqEvt->accessType     = me->payloadMsgUnion.i2cDataPayload._accType;
+                    i2cWriteReqEvt->bytes          = me->payloadMsgUnion.i2cDataPayload._nBytes;
+                    MEMCPY(
+                        i2cWriteReqEvt->dataBuf,
+                        me->payloadMsgUnion.i2cDataPayload._dataBuf,
+                        me->payloadMsgUnion.i2cDataPayload._dataBuf_len
+                    );
+
+                    QACTIVE_POST(AO_I2C1DevMgr, (QEvt *)(i2cWriteReqEvt), me);
+
+                    status_ = Q_TRAN(&CommMgr_WaitForRespFromI2C);
+                }
+                /* ${AOs::CommMgr::SM::Active::Busy::ValidateMsg::MSG_PROCESS::[I2CWrite?]::[else]} */
+                else {
+                    /* Has to be set after checking for a valid payload */
+                    me->msgPayloadName = _CBStatusPayloadMsg;
+                    me->basicMsg._msgPayload = me->msgPayloadName;
+
+                    me->errorCode = ERR_MSG_UNEXPECTED_PAYLOAD;
+                    WRN_printf("Unexpected payload %d for I2CWriteMsg. Error: 0x%08x\n",
                         me->msgPayloadName, me->errorCode);
                     status_ = Q_TRAN(&CommMgr_Idle);
                 }
@@ -1022,6 +1058,17 @@ static QState CommMgr_WaitForRespFromI2C(CommMgr * const me, QEvt const * const 
             }
 
             me->payloadMsgUnion.i2cDataPayload._errorCode = me->errorCode;
+            status_ = Q_TRAN(&CommMgr_Idle);
+            break;
+        }
+        /* ${AOs::CommMgr::SM::Active::Busy::WaitForRespFromI~::I2C1_DEV_WRITE_D~} */
+        case I2C1_DEV_WRITE_DONE_SIG: {
+            me->errorCode = ((I2CWriteDoneEvt const *) e)->status;
+            if ( ERR_NONE == me->errorCode ) {
+                DBG_printf("Got I2C1_DEV_WRITE_DONE with %d bytes\n", ((I2CWriteDoneEvt const *) e)->bytes);
+            }
+
+            me->payloadMsgUnion.statusPayload._errorCode = me->errorCode;
             status_ = Q_TRAN(&CommMgr_Idle);
             break;
         }
