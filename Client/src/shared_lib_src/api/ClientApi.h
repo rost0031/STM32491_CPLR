@@ -184,7 +184,7 @@ public:
          const char *filename
    );
 
-      /**
+   /**
     * @brief   Blocking cmd to read I2C device on the DC3.
     * @param [out] *status: CBErrorCode pointer to the returned status of from
     * the DC3 board.
@@ -217,6 +217,41 @@ public:
          uint16_t *pBytesRead,
          uint8_t *pBuffer,
          const int bufferSize,
+         const int bytes,
+         const int start,
+         const CBI2CDevices dev,
+         const CBAccessType acc
+   );
+
+   /**
+    * @brief   Blocking cmd to write I2C device on the DC3.
+    * @param [out] *status: CBErrorCode pointer to the returned status of from
+    * the DC3 board.
+    *    @arg  ERR_NONE: success.
+    *    other error codes if failure.
+    * @note: unless this variable is set to ERR_NONE at the completion, the
+    * results of other returned data should not be trusted.
+    * @param [out] *pBuffer: pointer to buffer where data to write is stored.
+    * @param [in] bytes: number of bytes to write
+    * @param [in] start: where to start writing to (offset)
+    * @param [in] dev: CBI2CDevices type that specifies the I2C device to read
+    *    @arg _CB_EEPROM: read from the EEPROM on I2C bus 1.
+    *    @arg _CB_SNROM: read from the RO SerialNumber ROM on I2C bus 1.
+    *    @arg _CB_EUIROM: read from the RO Unique number ROM on I2C bus 1.
+    * @param [in] acc: CBAccessType type that specifies the access to use to get
+    * at the I2C bus.
+    *    @arg _CB_ACCESS_BARE: bare metal access. Blocking and slow. For testing only.
+    *    @arg _CB_ACCESS_QPC: use event driven QPC access.
+    *    @arg _CB_ACCESS_FRT: use event driven FreeRTOS access.  Available in
+    *    Application only.
+    *
+    * @return: ClientError_t status of the client executing the command.
+    *    @arg  CLI_ERR_NONE: success
+    *    other error codes if failures.
+    */
+   ClientError_t DC3_writeI2C(
+         CBErrorCode *status,
+         const uint8_t* const pBuffer,
          const int bytes,
          const int start,
          const CBI2CDevices dev,

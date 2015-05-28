@@ -35,8 +35,6 @@ void HELP_printCmdSpecific(
       const std::string& appName
 )
 {
-   DBG_out << "printCmdSpecificHelp requested";
-
    /* String vars to use for detailed help */
    string description;
    string prototype;

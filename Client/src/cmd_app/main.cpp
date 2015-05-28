@@ -178,17 +178,17 @@ int main(int argc, char *argv[])
             "Read data from an I2C device."
             "Example: --read_i2c dev=EEPROM bytes=3 start=0 "
             "Example: --read_i2c dev=EUIROM bytes=8 start=0 "
-            "Example: --read_i2c dev=SNROM  bytes=6 start=0 acc=QPC"
-            "Example: --read_i2c dev=SNROM  bytes=6 start=0 acc=FRT"
-            "Example: --read_i2c dev=SNROM  bytes=6 start=0 acc=BARE")
+            "Example: --read_i2c dev=SNROM  bytes=6 start=0 {acc=QPC}"
+            "Example: --read_i2c dev=SNROM  bytes=6 start=0 {acc=FRT}"
+            "Example: --read_i2c dev=SNROM  bytes=6 start=0 {acc=BARE}")
 
          ("write_i2c", po::value<vector<string>>(&m_command)->multitoken(),
             "Write data to an I2C device."
             "Example: --write_i2c dev=EEPROM bytes=3 start=0 "
-            "Example: --write_i2c dev=EEPROM bytes=8 start=0 acc=QPC "
-            "Example: --write_i2c dev=EEPROM start=0 data='0x23 0x43 0xA0 ...'"
-            "Example: --write_i2c dev=EEPROM start=0 data='A0 23 4b 3A ...' acc=FRT"
-            "Example: --write_i2c dev=EEPROM bytes=6 start=0 acc=BARE")
+            "Example: --write_i2c dev=EEPROM bytes=8 start=0 {acc=QPC} "
+            "Example: --write_i2c dev=EEPROM start=0 {data='0x23 0x43 0xA0 ...'}'"
+            "Example: --write_i2c dev=EEPROM start=0 {data='A0 23 4b 3A ...'} {acc=FRT}"
+            "Example: --write_i2c dev=EEPROM bytes=6 start=0 {acc=BARE}")
       ; // End of add_options()
 
       DBG_out << "Parsing cmdline arguments...";
@@ -265,8 +265,10 @@ int main(int argc, char *argv[])
       if (m_vm.count("get_mode")) {                /* "get_mode" cmd handling */
          m_parsed_cmd = "get_mode";
 
+         // Check for command specific help req
          UTIL_checkForCmdSpecificHelp( m_parsed_cmd, appName, m_vm, m_conn_set );
 
+         // No need to extract the value from the arg=value pair for this cmd.
          CBBootMode mode = _CB_NoBootMode;       /**< Store the bootmode here */
 
          /* Execute (and block) on this command */
@@ -286,37 +288,25 @@ int main(int argc, char *argv[])
       } else if (m_vm.count("set_mode")) {         /* "set_mode" cmd handling */
          m_parsed_cmd = "set_mode";
 
-         /* Check for command specific help req */
+         // Check for command specific help req
          UTIL_checkForCmdSpecificHelp( m_parsed_cmd, appName, m_vm, m_conn_set );
 
-         vector<string>::const_iterator begin = m_vm["set_mode"].as<vector<string>>().begin();
-         vector<string>::const_iterator end = m_vm["set_mode"].as<vector<string>>().end();
-         vector<string>::const_iterator itr;
-
+         // Extract the value from the arg=value pair
          CBBootMode mode = _CB_NoBootMode;
-         for( itr = begin; itr != end; ++itr ) {
-            if ( (*itr).find("=") ) {
-               vector<string> arg_pair;
-
-               CMD_tokenize( (*itr), arg_pair, "=" );
-               if (2 != arg_pair.size()) {              /* invalid arg format */
-                  ERR_out << "ERROR: found a = sign in argument but wrong number of params";
-                  HELP_printCmdSpecific( m_parsed_cmd, appName );
-               } else if ( 0 == arg_pair.at(0).compare("mode")) { /* type arg */
-                  DBG_out << "Boot mode specified as: " << arg_pair.at(1);
-                  if ( 0 == arg_pair.at(1).compare("Bootloader")) {
-                     mode = _CB_Bootloader;
-                  } else if ( 0 == arg_pair.at(1).compare("Application")) {
-                     mode = _CB_Application;
-                  } else {
-                     ERR_out << "Unsupported mode specified: " << arg_pair.at(1);
-                     HELP_printCmdSpecific( m_parsed_cmd, appName );
-                  }
-               }
-            }
+         string value = "";
+         UTIL_getArgValue( value, "mode", m_parsed_cmd, appName, m_vm );
+         if (0 == value.compare("Bootloader")) {
+            mode = _CB_Bootloader;
+         } else if (0 == value.compare("Application")) {
+            mode = _CB_Application;
+         } else {
+            ERR_out << "Only " << enumToString(_CB_Bootloader) << " and "
+                  << enumToString(_CB_Application) << " boot modes supported.";
+            HELP_printCmdSpecific( m_parsed_cmd, appName );
          }
+         DBG_out << "Got arg value " << enumToString(mode) << " for arg name: mode";
 
-         /* Execute (and block) on this command */
+         // Execute (and block) on this command
          if( CLI_ERR_NONE == (status = client->DC3_setMode(&statusDC3, mode))) {
             ss.clear();
             ss << "DC3 bootmode ";
@@ -333,64 +323,45 @@ int main(int argc, char *argv[])
       } else if (m_vm.count("flash")) {               /* "flash" cmd handling */
          m_parsed_cmd = "flash";
 
-         /* Check for command specific help req */
+         // Check for command specific help req
          UTIL_checkForCmdSpecificHelp( m_parsed_cmd, appName, m_vm, m_conn_set );
 
-         vector<string>::const_iterator begin = m_vm["flash"].as<vector<string>>().begin();
-         vector<string>::const_iterator end = m_vm["flash"].as<vector<string>>().end();
-         vector<string>::const_iterator itr;
-
+         // Extract the value from the arg=value pair
          CBBootMode type = _CB_NoBootMode;
          string filename = "";
-         for( itr = begin; itr != end; ++itr ) {
-            if ( (*itr).find("=") ) {
-               vector<string> arg_pair;
+         string value = "";
 
-               CMD_tokenize( (*itr), arg_pair, "=" );
-               if (2 != arg_pair.size()) {              /* invalid arg format */
-                  ERR_out << "ERROR: found a = sign in argument but wrong number of params";
-                  HELP_printCmdSpecific( m_parsed_cmd, appName );
-               } else if ( 0 == arg_pair.at(0).compare("file")) { /* file arg */
-                  DBG_out << "Attempting to find file: " << arg_pair.at(1);
+         UTIL_getArgValue( value, "type", m_parsed_cmd, appName, m_vm );
+         if (0 == value.compare("Application")) {
+            type = _CB_Application;
+         } else {
+            ERR_out << "Currently, only " << enumToString(_CB_Application)
+                  << " FW image flashing is supported.";
+            HELP_printCmdSpecific( m_parsed_cmd, appName );
+         }
+         DBG_out << "Got arg value " << enumToString(type) << " for arg name: type";
 
-                  ifstream fw_file (      /* open file stream to read in file */
-                        arg_pair.at(1).c_str(),
-                        ios::in | ios::binary | ios::ate
-                  );
+         UTIL_getArgValue( filename, "file", m_parsed_cmd, appName, m_vm );
+         ifstream fw_file (      /* open file stream to read in file */
+               filename.c_str(),
+               ios::in | ios::binary | ios::ate
+         );
 
-                  if (fw_file) {               /* if the file exists, read it */
-                     DBG_out << "File exists: " << arg_pair.at(1);
-                     filename = arg_pair.at(1);
-                     fw_file.close();                           /* Close file */
-                  } else {
-                     ERR_out << "Unable to open file " << arg_pair.at(1);
-                     HELP_printCmdSpecific( m_parsed_cmd, appName );
-                  }
-
-               } else if ( 0 == arg_pair.at(0).compare("type")) { /* type arg */
-                  DBG_out << "FW image type specified as: " << arg_pair.at(1);
-                  if ( 0 == arg_pair.at(1).compare("Bootloader")) {
-                     //TODO: either implement or remove option.
-                     ERR_out << "Bootloader flashing is unimplemented currently";
-                     HELP_printCmdSpecific( m_parsed_cmd, appName );
-                  } else if ( 0 == arg_pair.at(1).compare("Application")) {
-                     type = _CB_Application;
-                  } else {
-                     ERR_out << "Unknown type of FW image specified: " << arg_pair.at(1);
-                     HELP_printCmdSpecific( m_parsed_cmd, appName );
-                  }
-               }
-            }
+         if (fw_file) {                           // if the file exists, read it
+            fw_file.close();                                       // Close file
+         } else {
+            ERR_out << "Unable to open file " << filename;
+            HELP_printCmdSpecific( m_parsed_cmd, appName );
          }
 
-         /* Check if everything has been parsed correctly */
+         // Check if everything has been parsed correctly
          if ( _CB_NoBootMode == type || 0 == filename.compare("") ) {
             ERR_out << "Failed to parse args. ";
             HELP_printCmdSpecific( m_parsed_cmd, appName );
          }
 
-         /* If we got here, we have a valid filename/path and valid FW image
-          * type. Execute (and block) on this command */
+         // If we got here, we have a valid filename/path and valid FW image
+         // type. Execute (and block) on this command
          status = client->DC3_flashFW(&statusDC3, type, filename.c_str());
          if( CLI_ERR_NONE == status) {
             ss.clear();
@@ -405,79 +376,79 @@ int main(int argc, char *argv[])
             ERR_out << "Got client error " << "0x" << std::hex
                << status << std::dec << " when trying to flash FW.";
          }
-      } else if (m_vm.count("read_i2c")) {         /* "read_i2c" cmd handling */
+      } else if (m_vm.count("read_i2c")) {            // "read_i2c" cmd handling
          m_parsed_cmd = "read_i2c";
 
-         /* Check for command specific help req */
+         // Check for command specific help req
          UTIL_checkForCmdSpecificHelp( m_parsed_cmd, appName, m_vm, m_conn_set );
 
-         vector<string>::const_iterator begin = m_vm["read_i2c"].as<vector<string>>().begin();
-         vector<string>::const_iterator end = m_vm["read_i2c"].as<vector<string>>().end();
-         vector<string>::const_iterator itr;
-
+         // Extract the value from the arg=value pair
          int bytes = -1, start = -1;
          CBI2CDevices dev = _CB_MaxI2CDev;
          CBAccessType acc = _CB_ACCESS_QPC; // set to a default arg of QPC
+         string value = "";
 
-         for( itr = begin; itr != end; ++itr ) {
-            if ( (*itr).find("=") ) {
-               vector<string> arg_pair;
+         // Get the "bytes" arg and make sure it's numeric
+         UTIL_getArgValue( value, "bytes", m_parsed_cmd, appName, m_vm );
+         if( (value.find_first_not_of( "0123456789" ) != string::npos) ) {
+            ERR_out << "ERROR: only numbers are allowed for this argument. "
+                  "Got: bytes=" << value;
+            HELP_printCmdSpecific( m_parsed_cmd, appName );
+         }
+         bytes = atoi(value.c_str());
+         if ( 0 > bytes && 128 < bytes ) {
+            ERR_out << "Invalid range for bytes: " << bytes << " is not between 0 and 128";
+            HELP_printCmdSpecific( m_parsed_cmd, appName );
+         }
 
-               CMD_tokenize( (*itr), arg_pair, "=" );
-               if (2 != arg_pair.size()) {              /* invalid arg format */
-                  ERR_out << "ERROR: found a = sign in argument but wrong number of params";
-                  HELP_printCmdSpecific( m_parsed_cmd, appName );
-               } else if ( 0 == arg_pair.at(0).compare("bytes")) { /* file arg */
-                  bool has_only_digits = (arg_pair.at(1).find_first_not_of( "0123456789" ) == string::npos);
-                  if ( !has_only_digits ) {
-                     ERR_out << "ERROR: only numbers are allowed for this argument";
-                     HELP_printCmdSpecific( m_parsed_cmd, appName );
-                  }
+         // Get the "start" arg and make sure it's numeric
+         UTIL_getArgValue( value, "start", m_parsed_cmd, appName, m_vm );
+         if( (value.find_first_not_of( "0123456789" ) != string::npos) ) {
+            ERR_out << "ERROR: only numbers are allowed for this argument. "
+                  "Got: start=" << value;
+            HELP_printCmdSpecific( m_parsed_cmd, appName );
+         }
+         start = atoi(value.c_str());
+         if ( 0 > start && 128 < start ) {
+            ERR_out << "Invalid range for start: " << start << " is not between 0 and 128";
+            HELP_printCmdSpecific( m_parsed_cmd, appName );
+         }
 
-                  bytes = atoi(arg_pair.at(1).c_str());
-                  if ( 0 > bytes && 128 < bytes ) {
-                     ERR_out << "Invalid range for bytes ";
-                     HELP_printCmdSpecific( m_parsed_cmd, appName );
-                  }
-               } else if ( 0 == arg_pair.at(0).compare("start")) {
-                  bool has_only_digits = (arg_pair.at(1).find_first_not_of( "0123456789" ) == string::npos);
-                  if ( !has_only_digits ) {
-                     ERR_out << "ERROR: only numbers are allowed for this argument";
-                     HELP_printCmdSpecific( m_parsed_cmd, appName );
-                  }
-                  start = atoi(arg_pair.at(1).c_str());
-                  if ( 0 > start && 128 < start ) {
-                     ERR_out << "Invalid range for start ";
-                     HELP_printCmdSpecific( m_parsed_cmd, appName );
-                  }
-               } else if ( 0 == arg_pair.at(0).compare("dev")) {
-                  DBG_out << "Dev is " << arg_pair.at(1);
-                  if ( 0 == arg_pair.at(1).compare("EEPROM")) {
-                     dev = _CB_EEPROM;
-                  } else if ( 0 == arg_pair.at(1).compare("EUIROM")) {
-                     dev = _CB_EUIROM;
-                  } else if ( 0 == arg_pair.at(1).compare("SNROM")) {
-                     dev = _CB_SNROM;
-                  } else {
-                     ERR_out << "Invalid I2C device specified ";
-                     HELP_printCmdSpecific( m_parsed_cmd, appName );
-                  }
-               } else if ( 0 == arg_pair.at(0).compare("acc")) {
-                  if ( 0 == arg_pair.at(1).compare("QPC")) {
-                     acc = _CB_ACCESS_QPC;
-                  } else if ( 0 == arg_pair.at(1).compare("FRT")) {
-                     acc = _CB_ACCESS_FRT;
-                  } else if ( 0 == arg_pair.at(1).compare("BARE")) {
-                     acc = _CB_ACCESS_BARE;
-                  } else {
-                     ERR_out << "Invalid I2C device access specified ";
-                     HELP_printCmdSpecific( m_parsed_cmd, appName );
-                  }
-               }
+         // Get the "dev" arg and make sure it's one of the I2C devices
+         UTIL_getArgValue( value, "dev", m_parsed_cmd, appName, m_vm );
+         if( 0 == value.compare("EEPROM") ) {
+            dev = _CB_EEPROM;
+         } else if ( 0 == value.compare("EUIROM") ) {
+            dev = _CB_EUIROM;
+         } else if ( 0 == value.compare("SNROM") ) {
+            dev = _CB_SNROM;
+         } else {
+            ERR_out << "ERROR: I2C device must be one of: "
+                  << enumToString(_CB_EEPROM) << ", "
+                  << enumToString(_CB_EUIROM) << ", or "
+                  << enumToString(_CB_SNROM);
+            HELP_printCmdSpecific( m_parsed_cmd, appName );
+         }
+
+         // Get the "acc" arg and make sure it's one of the I2C devices.  This
+         // is an optional arg so keep the default if user didn't specify.
+         if( UTIL_getArgValue( value, "acc", m_parsed_cmd, appName, m_vm ) ) {
+            if( 0 == value.compare("QPC") ) {
+               acc = _CB_ACCESS_QPC;
+            } else if ( 0 == value.compare("FRT") ) {
+               acc = _CB_ACCESS_FRT;
+            } else if ( 0 == value.compare("BARE") ) {
+               acc = _CB_ACCESS_BARE;
+            } else {
+               ERR_out << "ERROR: device access must be one of: "
+                     << enumToString(_CB_ACCESS_QPC) << ", "
+                     << enumToString(_CB_ACCESS_FRT) << ", or "
+                     << enumToString(_CB_ACCESS_BARE);
+               HELP_printCmdSpecific( m_parsed_cmd, appName );
             }
          }
 
-         /* Check if everything has been parsed correctly */
+         // Check if everything has been parsed correctly
          if ( dev == _CB_EEPROM ) {
             if ( (start + bytes) > 128 ) {
                ERR_out << "Read range requested will attempt to read past the device boundary";
@@ -498,11 +469,16 @@ int main(int argc, char *argv[])
             ERR_out << "Invalid number of bytse specified: " << bytes;
                HELP_printCmdSpecific( m_parsed_cmd, appName );
          }
-         /* If we got here, we have a valid filename/path and valid FW image
-          * type. Execute (and block) on this command */
+
+         DBG_out << "Issuing read_i2c cmd with start=" << start
+               << " bytes=" << bytes
+               << " from dev=" << enumToString(dev)
+               << " with acc=" << enumToString(acc) << "...";
+
          uint8_t *buffer = new uint8_t[1000];
          int bufferSize = 1000 * sizeof(uint8_t);
          uint16_t bytesRead = 0;
+
          status = client->DC3_readI2C(
                &statusDC3, &bytesRead, buffer,
                bufferSize, bytes, start, dev, acc
@@ -528,6 +504,118 @@ int main(int argc, char *argv[])
                   << status << std::dec << " when trying to read I2C.";
          }
          delete[] buffer;
+      } else if (m_vm.count("write_i2c")) {            // "read_i2c" cmd handling
+         m_parsed_cmd = "write_i2c";
+
+         // Check for command specific help req
+         UTIL_checkForCmdSpecificHelp( m_parsed_cmd, appName, m_vm, m_conn_set );
+
+         // Extract the value from the arg=value pair
+         int bytes = -1, start = -1;
+         CBI2CDevices dev = _CB_MaxI2CDev;
+         CBAccessType acc = _CB_ACCESS_QPC; // set to a default arg of QPC
+         uint8_t *data;
+         string value = "";
+
+         // Get the "bytes" arg and make sure it's numeric
+         UTIL_getArgValue( value, "bytes", m_parsed_cmd, appName, m_vm );
+         if( (value.find_first_not_of( "0123456789" ) != string::npos) ) {
+            ERR_out << "ERROR: only numbers are allowed for this argument. "
+                  "Got: bytes=" << value;
+            HELP_printCmdSpecific( m_parsed_cmd, appName );
+         }
+         bytes = atoi(value.c_str());
+         if ( 0 > bytes && 128 < bytes ) {
+            ERR_out << "Invalid range for bytes: " << bytes << " is not between 0 and 128";
+            HELP_printCmdSpecific( m_parsed_cmd, appName );
+         }
+
+         // Get the "start" arg and make sure it's numeric
+         UTIL_getArgValue( value, "start", m_parsed_cmd, appName, m_vm );
+         if( (value.find_first_not_of( "0123456789" ) != string::npos) ) {
+            ERR_out << "ERROR: only numbers are allowed for this argument. "
+                  "Got: start=" << value;
+            HELP_printCmdSpecific( m_parsed_cmd, appName );
+         }
+         start = atoi(value.c_str());
+         if ( 0 > start && 128 < start ) {
+            ERR_out << "Invalid range for start: " << start << " is not between 0 and 128";
+            HELP_printCmdSpecific( m_parsed_cmd, appName );
+         }
+
+         // Get the "dev" arg and make sure it's one of the I2C devices
+         UTIL_getArgValue( value, "dev", m_parsed_cmd, appName, m_vm );
+         if( 0 == value.compare("EEPROM") ) {
+            dev = _CB_EEPROM;
+         } else {
+            ERR_out << "ERROR: can only write to I2C device: "
+                  << enumToString(_CB_EEPROM);
+            HELP_printCmdSpecific( m_parsed_cmd, appName );
+         }
+
+         // Get the "acc" arg and make sure it's one of the I2C devices.  This
+         // is an optional arg so keep the default if user didn't specify.
+         if( UTIL_getArgValue( value, "acc", m_parsed_cmd, appName, m_vm ) ) {
+            if( 0 == value.compare("QPC") ) {
+               acc = _CB_ACCESS_QPC;
+            } else if ( 0 == value.compare("FRT") ) {
+               acc = _CB_ACCESS_FRT;
+            } else if ( 0 == value.compare("BARE") ) {
+               acc = _CB_ACCESS_BARE;
+            } else {
+               ERR_out << "ERROR: device access must be one of: "
+                     << enumToString(_CB_ACCESS_QPC) << ", "
+                     << enumToString(_CB_ACCESS_FRT) << ", or "
+                     << enumToString(_CB_ACCESS_BARE);
+               HELP_printCmdSpecific( m_parsed_cmd, appName );
+            }
+         }
+
+         // Check if everything has been parsed correctly
+         if ( dev == _CB_EEPROM ) {
+            if ( (start + bytes) > 128 ) {
+               ERR_out << "Read range requested will attempt to read past the device boundary";
+               HELP_printCmdSpecific( m_parsed_cmd, appName );
+            }
+         } else if ( start < 0 ) {
+            ERR_out << "Invalid start specified: " << start;
+               HELP_printCmdSpecific( m_parsed_cmd, appName );
+         } else if ( bytes < 0 ) {
+            ERR_out << "Invalid number of bytes specified: " << bytes;
+               HELP_printCmdSpecific( m_parsed_cmd, appName );
+         }
+
+         DBG_out << "Issuing write_i2c cmd with start=" << start
+               << " bytes=" << bytes
+               << " to dev=" << enumToString(dev)
+               << " with acc=" << enumToString(acc) << "...";
+
+         data = new uint8_t[bytes];
+
+         for (uint8_t i = 0; i < bytes; i++ ) {
+            data[i] = i;
+         }
+         status = client->DC3_writeI2C(
+               &statusDC3, data,
+               bytes, start, dev, acc
+         );
+
+         delete[] data;
+
+         if( CLI_ERR_NONE == status) {
+            ss.clear();
+            ss << "Writing of I2C device on DC3 ";
+            if (ERR_NONE == statusDC3) {
+               ss << "completed successfully." << endl;
+            } else {
+               ss << "FAILED with ERROR: 0x" << setw(8) << setfill('0') << hex << statusDC3 << dec;
+            }
+            CON_print(ss.str());
+         } else {
+            ERR_out << "Got client error " << "0x" << std::hex
+                  << status << std::dec << " when trying to read I2C.";
+         }
+
       }
 
       /* Now check if the user requested general help.  This has to be done

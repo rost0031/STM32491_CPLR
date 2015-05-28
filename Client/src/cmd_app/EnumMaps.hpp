@@ -89,40 +89,7 @@ template<typename T> std::ostream& operator<<(
 )
 {
    return( str << enumStrings<T>::data[data.enumVal] );
-
-
-   /* Have to handle non-consecutive enums differently */
-//   if (typeid(T) == typeid( ModuleId_t )) {
-//      str << getModuleIdStr( (ModuleId_t) data.enumVal);
-//      std::cout << "DEBUG: str is " << str  << std::endl;
-//      return( str );
-//   } else {
-//      return( str << enumStrings<T>::data[data.enumVal] );
-//   }
-
-//   typename boost::fusion::map<T, std::string>::iterator it = enumStrings<T>::m_map.find(data.enumVal);
-//   if (it != enumStrings<T>::m_map.end() ) {
-////      std::cout << "DEBUG:" << data << " maps to "<< it->second << std::endl;
-//      return str << it->second;
-//   }
-//   return str;
 }
-
-//
-///**
-// * @brief   Operator that does the actual conversion from enum to a string.
-// * @param [in] str: ostream type to output to.
-// * @param [in] data: template param of enum that is getting converted.
-// * @return  stream with output in string form.
-// */
-//template<typename T> std::string& operator+=(
-//      std::basic_string& str,
-//      enumConstRefHolder<T> const& data
-//)
-//{
-//   return( str += enumStrings<T>::data[data.enumVal] );
-//
-//}
 
 /**
  * @brief   Operator that does the actual conversion from enum to a string.
@@ -143,12 +110,11 @@ template<typename T> std::istream& operator>>(
     // These two can be made easier to read in C++11
     // using std::begin() and std::end()
     //
-    static auto begin  = std::begin(enumStrings<T>::data);
-    static auto end    = std::end(enumStrings<T>::data);
-
+    auto begin  = std::begin(enumStrings<T>::data);
+    auto end    = std::end(enumStrings<T>::data);
     auto find   = std::find(begin, end, value);
-    if (find != end)
-    {
+
+    if (find != end) {
         data.enumVal = static_cast<T>(std::distance(begin, find));
     }
     return str;

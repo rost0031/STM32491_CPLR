@@ -19,7 +19,6 @@
 
 /* App includes */
 #include "Utils.hpp"
-#include "Help.hpp"
 
 /* Namespaces ----------------------------------------------------------------*/
 using namespace std;
@@ -45,17 +44,72 @@ void UTIL_checkForCmdSpecificHelp(
       const bool isConnSet
 )
 {
-   if (vm.count("help") || !isConnSet) {  /* Check for command specific help req */
+   if (vm.count("help") || !isConnSet) {  // Check for command specific help req
       HELP_printCmdSpecific( cmd, appName );
    }
 
    vector<string>::const_iterator begin = vm[cmd].as<vector<string>>().begin();
    vector<string>::const_iterator end = vm[cmd].as<vector<string>>().end();
    vector<string>::const_iterator itr;
-   /* Check for command specific help req */
-   if( find(begin, end, "--help") != end || find(begin, end, "help") != end  || !isConnSet) {
+   // Check for command specific help req
+   if( find(begin, end, "--help") != end ||
+       find(begin, end, "help") != end  || !isConnSet ) {
       HELP_printCmdSpecific( cmd, appName );
    }
+}
+
+/******************************************************************************/
+void UTIL_splitArgs(
+      const std::string& str,
+      std::vector<string>& tokens,
+      const std::string& delims
+)
+{
+   // Skip delimiters at beginning.
+   string::size_type lastPos = str.find_first_not_of(delims, 0);
+   // Find first "non-delimiter".
+   string::size_type pos     = str.find_first_of(delims, lastPos);
+
+   while (string::npos != pos || string::npos != lastPos) {
+      // Foundtoken, add to the vector.
+      tokens.push_back(str.substr(lastPos, pos - lastPos));
+
+      // Skip delimiters.
+      lastPos = str.find_first_not_of(delims, pos);
+
+      // Find next "non-delimiter"
+      pos = str.find_first_of(delims, lastPos);
+   }
+}
+
+/******************************************************************************/
+bool UTIL_getArgValue(
+      string& value,
+      const string& argName,
+      const string& cmd,
+      const string& appName,
+      const po::variables_map& vm
+)
+{
+   vector<string>::const_iterator begin = vm[cmd].as<vector<string>>().begin();
+   vector<string>::const_iterator end = vm[cmd].as<vector<string>>().end();
+   vector<string>::const_iterator itr;
+
+   for( itr = begin; itr != end; ++itr ) {
+      if ( (*itr).find("=") ) {
+         vector<string> arg_pair;
+
+         UTIL_splitArgs( (*itr), arg_pair, "=" );
+         if (2 != arg_pair.size()) {                       // invalid arg format
+            HELP_printCmdSpecific( cmd, appName );
+         } else if ( 0 == arg_pair.at(0).compare(argName)) {
+            // Do all the checking for whether it exists top level
+            value = arg_pair.at(1);
+            return true;
+         }
+      }
+   }
+   return false;
 }
 
 /* Private class prototypes --------------------------------------------------*/
