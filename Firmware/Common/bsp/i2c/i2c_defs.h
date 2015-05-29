@@ -30,11 +30,11 @@ extern "C" {
 #include "stm32f4xx_i2c.h"                           /* For STM32 DMA support */
 
 /* Exported defines ----------------------------------------------------------*/
-#define I2C_SPEED             400000                /**< Speed of the I2C Bus */
-#define MAX_I2C_WRITE_LEN     20  /**< Max size of the I2C buffer for writing */
-#define MAX_I2C_READ_LEN      20  /**< Max size of the I2C buffer for reading */
+#define I2C_SPEED            400000                 /**< Speed of the I2C Bus */
+#define MAX_I2C_WRITE_LEN    128  /**< Max size of the I2C buffer for writing */
+#define MAX_I2C_READ_LEN     128  /**< Max size of the I2C buffer for reading */
 
-#define EEPROM_PAGE_SIZE   16    /**< Size of the page in bytes on the EEPROM */
+#define EEPROM_PAGE_SIZE   8    /**< Size of the page in bytes on the EEPROM */
 
 /* Exported types ------------------------------------------------------------*/
 

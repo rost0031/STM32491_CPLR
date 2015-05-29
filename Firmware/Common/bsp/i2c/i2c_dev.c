@@ -79,7 +79,7 @@ I2C_DevSettings_t s_I2C_Dev[MAX_I2C_DEV] =
             0x98,                      /**< i2c_mem_addr */
             0x98,                      /**< i2c_mem_min_addr */
             0x9F,                      /**< i2c_mem_max_addr */
-            EEPROM_PAGE_SIZE / 2,      /**< i2c_mem_page_size */
+            EEPROM_PAGE_SIZE,          /**< i2c_mem_page_size */
       },
 };
 
@@ -209,6 +209,9 @@ const CBErrorCode I2C_calcPageWriteSizes(
    *writeTotalPages = 0;
    if (bytesToWrite > *writeSizeFirstPage) {
       *writeTotalPages = ((bytesToWrite - *writeSizeFirstPage)/(pageSize)) + 2;
+      if (*writeTotalPages > 1 && *writeSizeLastPage == 0) {
+         *writeTotalPages -= 1;
+      }
    } else {
       *writeTotalPages = 1;
    }

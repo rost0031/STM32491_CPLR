@@ -451,8 +451,6 @@ static QState I2C1DevMgr_GenerateStart(I2C1DevMgr * const me, QEvt const * const
             /* Directly post an event to the appropriate I2CBusMgr AO */
             static QEvt const qEvt = { I2C_BUS_START_BIT_SIG, 0U, 0U };
             QACTIVE_POST(AO_I2CBusMgr[me->iBus], &qEvt, me);
-
-            DBG_printf("ActivePosted I2C_BUS_START_BIT\n");
             status_ = Q_HANDLED();
             break;
         }
@@ -737,11 +735,34 @@ static QState I2C1DevMgr_ReadMem(I2C1DevMgr * const me, QEvt const * const e) {
             if (ERR_NONE == ((I2CBusDataEvt const *)e)->errorCode) {
                 /* Set this so the state machine remembers the result */
                 me->errorCode = ERR_NONE;
-                LOG_printf("Got I2C_BUS_DONE with no error\n");
 
                 I2CReadDoneEvt *i2cReadDoneEvt = Q_NEW(I2CReadDoneEvt, I2C1_DEV_READ_DONE_SIG);
                 i2cReadDoneEvt->status = me->errorCode;
                 i2cReadDoneEvt->i2cDev = me->iDev;
+
+                /* Use the event buffer to convert buffer and print it before using it to send the
+                 * response */
+                uint16_t tmpLen = 0;
+                CBErrorCode err = CON_hexToStr(
+                    ((I2CBusDataEvt const *)e)->dataBuf, // data to convert
+                    ((I2CBusDataEvt const *)e)->dataLen, // length of data to convert
+                    (char *)i2cReadDoneEvt->dataBuf,     // where to write output
+                    sizeof(i2cReadDoneEvt->dataBuf),     // max size of output buffer
+                    &tmpLen,                             // size of the resulting output
+                    0,                                   // no columns
+                    ' ',                                 // separator
+                    true                                 // bPrintX
+                );
+
+                if ( ERR_NONE == err ) {
+                    LOG_printf( "Read %d bytes: %s\n",
+                        ((I2CBusDataEvt const *)e)->dataLen, i2cReadDoneEvt->dataBuf );
+                } else {
+                    WRN_printf( "Read %d bytes but data too big for printing due to buffer size. Not shown\n",
+                        ((I2CBusDataEvt const *)e)->dataLen );
+                }
+
+                /* Now copy the data from the I2CBus evt to the I2CReadDone evt */
                 i2cReadDoneEvt->bytes  = ((I2CBusDataEvt const *)e)->dataLen;
                 MEMCPY(
                     i2cReadDoneEvt->dataBuf,
@@ -749,6 +770,7 @@ static QState I2C1DevMgr_ReadMem(I2C1DevMgr * const me, QEvt const * const e) {
                     i2cReadDoneEvt->bytes
                 );
 
+                /* Check who is getting the done evt and send it there */
                 if ( ACCESS_FREERTOS == me->accessType ) {
                 #if CPLR_APP
                     /* Post directly to the "raw" queue for FreeRTOS task to read */
@@ -766,6 +788,7 @@ static QState I2C1DevMgr_ReadMem(I2C1DevMgr * const me, QEvt const * const e) {
                     QF_PUBLISH((QEvt *)i2cReadDoneEvt, AO_I2C1DevMgr);
                 }
 
+                /*
                 uint8_t tmp[100] = {0};
                 uint16_t tmpLen = 0;
                 CBErrorCode err = CON_hexToStr(
@@ -783,6 +806,7 @@ static QState I2C1DevMgr_ReadMem(I2C1DevMgr * const me, QEvt const * const e) {
                     "Read %d bytes: %s\n",
                     ((I2CBusDataEvt const *)e)->dataLen, tmp
                 );
+                */
                 status_ = Q_TRAN(&I2C1DevMgr_Idle);
             }
             /* ${AOs::I2C1DevMgr::SM::Active::Busy::ReadMem::I2C_BUS_DONE::[else]} */
@@ -825,7 +849,6 @@ static QState I2C1DevMgr_WriteMem(I2C1DevMgr * const me, QEvt const * const e) {
                 &me->dataBuf[me->writeBufferIndex],
                 i2cWriteMemReqEvt->bytes
             );
-            DBG_printf("QACTPosting I2C_BUS_WRITE_MEM_SIG with %d bytes\n", i2cWriteMemReqEvt->bytes );
             QACTIVE_POST(AO_I2CBusMgr[me->iBus], (QEvt *)i2cWriteMemReqEvt, me);
             status_ = Q_HANDLED();
             break;
@@ -840,7 +863,7 @@ static QState I2C1DevMgr_WriteMem(I2C1DevMgr * const me, QEvt const * const e) {
         case I2C_BUS_DONE_SIG: {
             /* Remember the result of each event coming back from I2CBusMgr AO */
             me->errorCode = ((I2CStatusEvt const *)e)->errorCode;
-            DBG_printf("Got I2C_BUS_DONE with error: 0x%08x\n", me->errorCode);
+
             /* ${AOs::I2C1DevMgr::SM::Active::Busy::WriteMem::I2C_BUS_DONE::[NoErr?]} */
             if (ERR_NONE == me->errorCode) {
                 status_ = Q_TRAN(&I2C1DevMgr_PostWriteWait);
@@ -884,9 +907,10 @@ static QState I2C1DevMgr_PostWriteWait(I2C1DevMgr * const me, QEvt const * const
             me->writeMemAddrCurr += me->writeSizeCurr;
             me->writeBufferIndex += me->writeSizeCurr;
             me->writeCurrPage    += 1;
+            me->addrStart         = me->writeMemAddrCurr;
             /* ${AOs::I2C1DevMgr::SM::Active::Busy::PostWriteWait::I2C1_DEV_POST_WR~::[MorePages?]} */
-            if (me->writeCurrPage < me->writeTotalPages) {
-                if ( me->writeCurrPage == me->writeTotalPages-1 ) {
+            if (me->writeCurrPage <= me->writeTotalPages) {
+                if ( me->writeCurrPage == me->writeTotalPages && me->writeSizeLastPage != 0 ) {
                     me->writeSizeCurr = me->writeSizeLastPage;
                 } else {
                     me->writeSizeCurr = I2C_getPageSize( me->iDev );
@@ -1030,8 +1054,8 @@ static QState I2C1DevMgr_Idle(I2C1DevMgr * const me, QEvt const * const e) {
             me->addrSize   = I2C_getMemAddrSize(me->iDev);
             me->i2cDevOp   = I2C_OP_MEM_READ;
 
-            LOG_printf("Reading %d bytes from I2C dev %d at I2C addr 0x%02x\n",
-                me->bytesTotal, me->iDev, me->addrStart);
+            LOG_printf("Attempt to read %d bytes from %s on from addr 0x%02x via Acc %d\n",
+                me->bytesTotal, I2C_devToStr(me->iDev), me->addrStart, me->accessType);
             status_ = Q_TRAN(&I2C1DevMgr_CheckingBus);
             break;
         }
@@ -1040,15 +1064,15 @@ static QState I2C1DevMgr_Idle(I2C1DevMgr * const me, QEvt const * const e) {
             /* Store all the data from the event and look up a few things */
             me->iDev       = ((I2CWriteReqEvt const *)e)->i2cDev;
             me->addrStart  = ((I2CWriteReqEvt const *)e)->addr;
-            me->bytesTotal = ((I2CWriteReqEvt const *)e)->bytes;
             me->addrSize   = I2C_getMemAddrSize(me->iDev);
             me->i2cDevOp   = I2C_OP_MEM_WRITE;
             me->accessType = ((I2CWriteReqEvt const *)e)->accessType;
-            MEMCPY(
-                me->dataBuf,
-                ((I2CWriteReqEvt const *)e)->dataBuf,
-                me->bytesTotal
-            );
+            me->bytesTotal = ((I2CWriteReqEvt const *)e)->bytes;
+
+            /* Use the state machine buffer to do a print out of the data we are attempting to
+             * write so  we don't have to have a separate buffer just for that. After printing,
+             * the buffer can be used to do its actual purpose of storing data for when a later
+             * state will send it to be written. */
 
             /* Figure out the write sizes of pages if number of bytes desired to be written is
              bigger than the page size. */
@@ -1061,39 +1085,56 @@ static QState I2C1DevMgr_Idle(I2C1DevMgr * const me, QEvt const * const e) {
                 I2C_getPageSize( me->iDev )
             );
 
-            DBG_printf(
-                "wsFP: %d, wsLP: %d, wsTP: %d, aS: 0x%02x, bT: %d\n",
-                me->writeSizeFirstPage,
-                me->writeSizeLastPage,
-                me->writeTotalPages,
-                me->addrStart,
-                me->bytesTotal
-            );
-
-            uint8_t tmp[100] = {0};
             uint16_t tmpLen = 0;
             CBErrorCode err = CON_hexToStr(
                 (const uint8_t *)me->dataBuf,        // data to convert
                 me->bytesTotal,                      // length of data to convert
-                tmp,                                 // where to write output
-                sizeof(tmp),                         // max size of output buffer
+                (char *)me->dataBuf,                 // where to write output
+                sizeof(me->dataBuf),                 // max size of output buffer
                 &tmpLen,                             // size of the resulting output
                 0,                                   // no columns
                 ' ',                                 // separator
                 true                                 // bPrintX
             );
 
-            DBG_printf(
-                "Attempting to write %d bytes: %s\n",
-                me->bytesTotal, tmp
+            LOG_printf( "Attempt to write %d bytes to %s %d at I2C addr 0x%02x\n",
+                me->bytesTotal, I2C_devToStr(me->iDev), me->addrStart );
+            if ( ERR_NONE == err ) {
+                LOG_printf( "Data to write (%d bytes): %s\n",
+                    me->bytesTotal, me->dataBuf );
+            } else {
+                WRN_printf( "Data to write too big for printing due to buffer size. Not shown\n",
+                    ((I2CBusDataEvt const *)e)->dataLen );
+            }
+            LOG_printf( "write sizes: 1st page: %d, lst page: %d, tot pages: %d\n",
+                me->writeSizeFirstPage, me->writeSizeLastPage, me->writeTotalPages );
+
+            /* Now copy the data into the state machine buffer. */
+            MEMCPY(
+                me->dataBuf,
+                ((I2CWriteReqEvt const *)e)->dataBuf,
+                me->bytesTotal
             );
 
-            LOG_printf("Writing %d bytes (%d pages) to I2C dev %d at I2C addr 0x%02x\n",
-                me->bytesTotal, me->writeTotalPages, me->iDev, me->addrStart);
+
+            /*
+            uint8_t tmp[100] = {0};
+            uint16_t tmpLen = 0;
+            CBErrorCode err = CON_hexToStr(
+                (const uint8_t *)me->dataBuf,        // data to convert
+                me->bytesTotal,                      // length of data to convert
+                (char *)tmp,                         // where to write output
+                sizeof(tmp),                         // max size of output buffer
+                &tmpLen,                             // size of the resulting output
+                0,                                   // no columns
+                ' ',                                 // separator
+                true                                 // bPrintX
+            );
+            */
             /* ${AOs::I2C1DevMgr::SM::Active::Idle::I2C1_DEV_RAW_MEM~::[NoErr?]} */
             if (ERR_NONE == me->errorCode) {
                 /* This is the first iteration through the "loop" which writes several pages */
-                me->writeCurrPage    = 0;
+                me->writeCurrPage    = 1;
                 me->writeSizeCurr    = me->writeSizeFirstPage;
                 me->writeBufferIndex = 0;
                 me->writeMemAddrCurr = me->addrStart;
