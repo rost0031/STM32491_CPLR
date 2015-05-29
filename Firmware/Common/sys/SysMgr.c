@@ -1176,7 +1176,10 @@ static QState SysMgr_SetBootLdrMajVer(SysMgr * const me, QEvt const * const e) {
             evt->accessType = ACCESS_QPC;
             evt->dbElem = DB_BOOT_MAJ;
             evt->dataLen =  DB_getElemSize(DB_BOOT_MAJ);
-            MEMCPY(evt->dataBuf, (uint8_t *)FW_VER_MAJOR, evt->dataLen);
+            evt->dataBuf[0] = FW_VER_MAJOR;
+
+            DBG_printf("Bootloader major version in byffer after copy: %d\n", evt->dataBuf[0] );
+
             QACTIVE_POST(AO_SysMgr, (QEvt *)(evt), me);
             status_ = Q_HANDLED();
             break;
@@ -1370,7 +1373,7 @@ static QState SysMgr_SetBootLdrMinVer(SysMgr * const me, QEvt const * const e) {
             evt->accessType = ACCESS_QPC;
             evt->dbElem = DB_BOOT_MIN;
             evt->dataLen =  DB_getElemSize(DB_BOOT_MIN);
-            MEMCPY(evt->dataBuf, (uint8_t *)FW_VER_MINOR, evt->dataLen);
+            evt->dataBuf[0] = FW_VER_MINOR;
             QACTIVE_POST(AO_SysMgr, (QEvt *)(evt), me);
             status_ = Q_HANDLED();
             break;

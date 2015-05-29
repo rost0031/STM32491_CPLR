@@ -877,7 +877,10 @@ DBWriteReqEvt *evt = Q_NEW(DBWriteReqEvt, DB_WRITE_SIG);
 evt-&gt;accessType = ACCESS_QPC;
 evt-&gt;dbElem = DB_BOOT_MAJ;
 evt-&gt;dataLen =  DB_getElemSize(DB_BOOT_MAJ);
-MEMCPY(evt-&gt;dataBuf, (uint8_t *)FW_VER_MAJOR, evt-&gt;dataLen);
+evt-&gt;dataBuf[0] = FW_VER_MAJOR;
+
+DBG_printf(&quot;Bootloader major version in byffer after copy: %d\n&quot;, evt-&gt;dataBuf[0] );
+
 QACTIVE_POST(AO_SysMgr, (QEvt *)(evt), me);</entry>
         <tran trig="DB_OP_DONE" target="../../15">
          <tran_glyph conn="116,54,3,0,5,16">
@@ -1065,7 +1068,7 @@ DBWriteReqEvt *evt = Q_NEW(DBWriteReqEvt, DB_WRITE_SIG);
 evt-&gt;accessType = ACCESS_QPC;
 evt-&gt;dbElem = DB_BOOT_MIN;
 evt-&gt;dataLen =  DB_getElemSize(DB_BOOT_MIN);
-MEMCPY(evt-&gt;dataBuf, (uint8_t *)FW_VER_MINOR, evt-&gt;dataLen);
+evt-&gt;dataBuf[0] = FW_VER_MINOR;
 QACTIVE_POST(AO_SysMgr, (QEvt *)(evt), me);</entry>
         <tran trig="DB_OP_DONE">
          <action>me-&gt;currRetry++;</action>
@@ -1098,11 +1101,11 @@ ERR_printf(&quot;Out of retries when attempting to reset DB to a valid state. Er
 );
 </entry>
         <tran trig="DB_ACCESS_TIMEOUT" target="../../9">
-         <tran_glyph conn="126,93,3,0,10,-69,-32,1">
+         <tran_glyph conn="125,93,3,0,10,-69,-31,1">
           <action box="-4,-2,15,2"/>
          </tran_glyph>
         </tran>
-        <state_glyph node="126,89,8,6">
+        <state_glyph node="125,89,9,6">
          <entry box="1,2,6,2"/>
         </state_glyph>
        </state>

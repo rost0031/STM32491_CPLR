@@ -1097,7 +1097,7 @@ static QState I2C1DevMgr_Idle(I2C1DevMgr * const me, QEvt const * const e) {
                 true                                 // bPrintX
             );
 
-            LOG_printf( "Attempt to write %d bytes to %s %d at I2C addr 0x%02x\n",
+            LOG_printf( "Attempt to write %d bytes to %s at I2C addr 0x%02x\n",
                 me->bytesTotal, I2C_devToStr(me->iDev), me->addrStart );
             if ( ERR_NONE == err ) {
                 LOG_printf( "Data to write (%d bytes): %s\n",
