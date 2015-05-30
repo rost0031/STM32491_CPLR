@@ -158,6 +158,16 @@
    <attribute name="writeBufferIndex" type="uint8_t" visibility="0x01" properties="0x00">
     <documentation>/**&lt; Keep track of the index into the buffer of data when writing several pages */</documentation>
    </attribute>
+   <attribute name="i2cReadDoneEvt" type="I2CReadDoneEvt*" visibility="0x01" properties="0x00">
+    <documentation>/**&lt; This is a state machine pointer to an event that will be allocated upon entry
+ * into the busy state by the I2C1_DEV_RAW_MEM_READ signal and used to store the read
+ * i2c data in ReadMem state.  This allows not having a static buffer hanging around.*/</documentation>
+   </attribute>
+   <attribute name="i2cWriteDoneEvt" type="I2CWriteDoneEvt*" visibility="0x01" properties="0x00">
+    <documentation>/**&lt; This is a state machine pointer to an event that will be allocated upon entry
+ * into the busy state by the I2C1_DEV_RAW_MEM_WRITE signal and used to send a done
+ * from the exit of Busy state regardless of operation's success or failure. */</documentation>
+   </attribute>
    <statechart>
     <initial target="../1/1">
      <action>(void)e;        /* suppress the compiler warning about unused parameter */
@@ -228,53 +238,46 @@ QTimeEvt_rearm(
 );</entry>
       <exit>QTimeEvt_disarm( &amp;me-&gt;i2cTimerEvt ); /* Disarm timer on exit */
 
-/* If an error occurred, figure out what operation was being 
-   done and send the appropriate done event */
-if ( ERR_NONE != me-&gt;errorCode ) {
-    ERR_printf(&quot;Exiting busy state with error code: 0x%08x\n&quot;, me-&gt;errorCode);
-    if ( I2C_OP_MEM_READ == me-&gt;i2cDevOp ) {
-        I2CReadDoneEvt *i2cReadDoneEvt = Q_NEW(I2CReadDoneEvt, I2C1_DEV_READ_DONE_SIG);
-        i2cReadDoneEvt-&gt;status = me-&gt;errorCode;
-        i2cReadDoneEvt-&gt;bytes = 0;
-        i2cReadDoneEvt-&gt;i2cDev = me-&gt;iDev;
-        if ( ACCESS_FREERTOS == me-&gt;accessType ) {
+if ( I2C_OP_MEM_READ == me-&gt;i2cDevOp || I2C_OP_REG_READ == me-&gt;i2cDevOp ) {
+    /* Change only the fields that could have changed since */
+    me-&gt;i2cReadDoneEvt-&gt;status = me-&gt;errorCode;
+
+    if ( ACCESS_FREERTOS == me-&gt;accessType ) {
 #if CPLR_APP
-            /* Post directly to the &quot;raw&quot; queue for FreeRTOS task to read */
-            QEQueue_postFIFO(&amp;CPLR_evtQueue, (QEvt *)i2cReadDoneEvt);
-            vTaskResume( xHandle_CPLR );
+        /* Post directly to the &quot;raw&quot; queue for FreeRTOS task to read */
+        QEQueue_postFIFO(&amp;CPLR_evtQueue, (QEvt *)me-&gt;i2cReadDoneEvt);
+        vTaskResume( xHandle_CPLR );
 #elif CPLR_BOOT
-            /* Publish the event so other AOs can get it if they want */
-            QF_PUBLISH((QEvt *)i2cReadDoneEvt, AO_I2C1DevMgr);
+        /* Publish the event so other AOs can get it if they want */
+        QF_PUBLISH((QEvt *)me-&gt;i2cReadDoneEvt, AO_I2C1DevMgr);
 #else
     #error &quot;Invalid build.  CPLR_APP or CPLR_BOOT must be specified&quot;
 #endif
-        } else {
-            /* Publish the event so other AOs can get it if they want */
-            QF_PUBLISH((QEvt *)i2cReadDoneEvt, AO_I2C1DevMgr);
-        }
-    } else if ( I2C_OP_MEM_WRITE == me-&gt;i2cDevOp ) {
-        I2CWriteDoneEvt *i2cWriteDoneEvt = Q_NEW(I2CWriteDoneEvt, I2C1_DEV_WRITE_DONE_SIG);
-        i2cWriteDoneEvt-&gt;status = me-&gt;errorCode;
-        i2cWriteDoneEvt-&gt;bytes = 0;
-        i2cWriteDoneEvt-&gt;i2cDev = me-&gt;iDev;
-        if ( ACCESS_FREERTOS == me-&gt;accessType ) {
-#if CPLR_APP
-            /* Post directly to the &quot;raw&quot; queue for FreeRTOS task to read */
-            QEQueue_postFIFO(&amp;CPLR_evtQueue, (QEvt *)i2cWriteDoneEvt);
-            vTaskResume( xHandle_CPLR );
-#elif CPLR_BOOT
-            /* Publish the event so other AOs can get it if they want */
-            QF_PUBLISH((QEvt *)i2cWriteDoneEvt, AO_I2C1DevMgr);
-#else
-    #error &quot;Invalid build.  CPLR_APP or CPLR_BOOT must be specified&quot;
-#endif
-        } else {
-            /* Publish the event so other AOs can get it if they want */
-            QF_PUBLISH((QEvt *)i2cWriteDoneEvt, AO_I2C1DevMgr);
-        }
     } else {
-        WRN_printf(&quot;Unimplemented I2C operation: %d, not sending a response\n&quot;, me-&gt;i2cDevOp);
+        /* Publish the event so other AOs can get it if they want */
+        QF_PUBLISH((QEvt *)me-&gt;i2cReadDoneEvt, AO_I2C1DevMgr);
     }
+} else if ( I2C_OP_MEM_WRITE == me-&gt;i2cDevOp || I2C_OP_REG_WRITE == me-&gt;i2cDevOp ) {
+    /* Change only the fields that could have changed since */
+    me-&gt;i2cWriteDoneEvt-&gt;status = me-&gt;errorCode;
+
+    if ( ACCESS_FREERTOS == me-&gt;accessType ) {
+#if CPLR_APP
+        /* Post directly to the &quot;raw&quot; queue for FreeRTOS task to read */
+        QEQueue_postFIFO(&amp;CPLR_evtQueue, (QEvt *)me-&gt;i2cWriteDoneEvt);
+        vTaskResume( xHandle_CPLR );
+#elif CPLR_BOOT
+        /* Publish the event so other AOs can get it if they want */
+        QF_PUBLISH((QEvt *)me-&gt;i2cWriteDoneEvt, AO_I2C1DevMgr);
+#else
+#error &quot;Invalid build.  CPLR_APP or CPLR_BOOT must be specified&quot;
+#endif
+    } else {
+        /* Publish the event so other AOs can get it if they want */
+        QF_PUBLISH((QEvt *)me-&gt;i2cWriteDoneEvt, AO_I2C1DevMgr);
+    }
+} else {
+    WRN_printf(&quot;Invalid I2C operation (%d) was somehow specified. Internal error. Ignoring\n&quot;, me-&gt;i2cDevOp );
 }</exit>
       <tran trig="I2C1_DEV_TIMEOUT" target="../../1">
        <action>ERR_printf(&quot;I2C1Dev timeout occurred with error: 0x%08x\n&quot;, me-&gt;errorCode);</action>
@@ -549,9 +552,9 @@ me-&gt;errorCode = ((I2CStatusEvt const *)e)-&gt;errorCode;</action>
          <action>/* Set this so the state machine remembers the result */
 me-&gt;errorCode = ERR_NONE;
 
-I2CReadDoneEvt *i2cReadDoneEvt = Q_NEW(I2CReadDoneEvt, I2C1_DEV_READ_DONE_SIG);
-i2cReadDoneEvt-&gt;status = me-&gt;errorCode;
-i2cReadDoneEvt-&gt;i2cDev = me-&gt;iDev;
+//I2CReadDoneEvt *i2cReadDoneEvt = Q_NEW(I2CReadDoneEvt, I2C1_DEV_READ_DONE_SIG);
+me-&gt;i2cReadDoneEvt-&gt;status = me-&gt;errorCode;
+me-&gt;i2cReadDoneEvt-&gt;i2cDev = me-&gt;iDev;
 
 /* Use the event buffer to convert buffer and print it before using it to send the
  * response */
@@ -559,8 +562,8 @@ uint16_t tmpLen = 0;
 CBErrorCode err = CON_hexToStr(
     ((I2CBusDataEvt const *)e)-&gt;dataBuf, // data to convert
     ((I2CBusDataEvt const *)e)-&gt;dataLen, // length of data to convert
-    (char *)i2cReadDoneEvt-&gt;dataBuf,     // where to write output
-    sizeof(i2cReadDoneEvt-&gt;dataBuf),     // max size of output buffer
+    (char *)me-&gt;i2cReadDoneEvt-&gt;dataBuf, // where to write output
+    sizeof(me-&gt;i2cReadDoneEvt-&gt;dataBuf), // max size of output buffer
     &amp;tmpLen,                             // size of the resulting output
     0,                                   // no columns
     ' ',                                 // separator
@@ -569,57 +572,19 @@ CBErrorCode err = CON_hexToStr(
 
 if ( ERR_NONE == err ) {
     LOG_printf( &quot;Read %d bytes: %s\n&quot;,
-        ((I2CBusDataEvt const *)e)-&gt;dataLen, i2cReadDoneEvt-&gt;dataBuf );
+        ((I2CBusDataEvt const *)e)-&gt;dataLen, me-&gt;i2cReadDoneEvt-&gt;dataBuf );
 } else {
     WRN_printf( &quot;Read %d bytes but data too big for printing due to buffer size. Not shown\n&quot;,
         ((I2CBusDataEvt const *)e)-&gt;dataLen );
 }
 
 /* Now copy the data from the I2CBus evt to the I2CReadDone evt */
-i2cReadDoneEvt-&gt;bytes  = ((I2CBusDataEvt const *)e)-&gt;dataLen;
+me-&gt;i2cReadDoneEvt-&gt;bytes  = ((I2CBusDataEvt const *)e)-&gt;dataLen;
 MEMCPY(
-    i2cReadDoneEvt-&gt;dataBuf,
+    me-&gt;i2cReadDoneEvt-&gt;dataBuf,
     ((I2CBusDataEvt const *)e)-&gt;dataBuf,
-    i2cReadDoneEvt-&gt;bytes
-);
-
-/* Check who is getting the done evt and send it there */
-if ( ACCESS_FREERTOS == me-&gt;accessType ) {
-#if CPLR_APP
-    /* Post directly to the &quot;raw&quot; queue for FreeRTOS task to read */
-    QEQueue_postFIFO(&amp;CPLR_evtQueue, (QEvt *)i2cReadDoneEvt);
-    vTaskResume( xHandle_CPLR );
-#elif CPLR_BOOT
-    /* Publish the event so other AOs can get it if they want */
-    QF_PUBLISH((QEvt *)i2cReadDoneEvt, AO_I2C1DevMgr);
-#else
-    #error &quot;Invalid build.  CPLR_APP or CPLR_BOOT must be specified&quot;
-#endif
-
-} else {
-    /* Publish the event so other AOs can get it if they want */
-    QF_PUBLISH((QEvt *)i2cReadDoneEvt, AO_I2C1DevMgr);
-}
-
-/*
-uint8_t tmp[100] = {0};
-uint16_t tmpLen = 0;
-CBErrorCode err = CON_hexToStr(
-    ((I2CBusDataEvt const *)e)-&gt;dataBuf, // data to convert
-    ((I2CBusDataEvt const *)e)-&gt;dataLen, // length of data to convert
-    tmp,                                 // where to write output
-    sizeof(tmp),                         // max size of output buffer
-    &amp;tmpLen,                             // size of the resulting output
-    0,                                   // no columns
-    ' ',                                 // separator
-    true                                 // bPrintX
-);
-
-DBG_printf(
-    &quot;Read %d bytes: %s\n&quot;,
-    ((I2CBusDataEvt const *)e)-&gt;dataLen, tmp
-);
-*/</action>
+    me-&gt;i2cReadDoneEvt-&gt;bytes
+);</action>
          <choice_glyph conn="128,44,5,1,9,11,-111">
           <action box="1,-2,10,2"/>
          </choice_glyph>
@@ -705,27 +670,9 @@ me-&gt;addrStart         = me-&gt;writeMemAddrCurr;</action>
 );
 
 /* Publish event for anyone who is listening */
-I2CWriteDoneEvt *i2cWriteDoneEvt = Q_NEW(I2CWriteDoneEvt, I2C1_DEV_WRITE_DONE_SIG);
-i2cWriteDoneEvt-&gt;status = me-&gt;errorCode;
-i2cWriteDoneEvt-&gt;i2cDev = me-&gt;iDev;
-i2cWriteDoneEvt-&gt;bytes  = me-&gt;bytesTotal;
-
-if ( ACCESS_FREERTOS == me-&gt;accessType ) {
-#if CPLR_APP
-    /* Post directly to the &quot;raw&quot; queue for FreeRTOS task to read */
-    QEQueue_postFIFO(&amp;CPLR_evtQueue, (QEvt *)i2cWriteDoneEvt);
-    vTaskResume( xHandle_CPLR );
-#elif CPLR_BOOT
-    /* Publish the event so other AOs can get it if they want */
-    QF_PUBLISH((QEvt *)i2cWriteDoneEvt, AO_I2C1DevMgr);
-#else
-    #error &quot;Invalid build.  CPLR_APP or CPLR_BOOT must be specified&quot;
-#endif
-
-} else {
-    /* Publish the event so other AOs can get it if they want */
-    QF_PUBLISH((QEvt *)i2cWriteDoneEvt, AO_I2C1DevMgr);
-}</action>
+//I2CWriteDoneEvt *i2cWriteDoneEvt = Q_NEW(I2CWriteDoneEvt, I2C1_DEV_WRITE_DONE_SIG);
+me-&gt;i2cWriteDoneEvt-&gt;status = me-&gt;errorCode;
+me-&gt;i2cWriteDoneEvt-&gt;bytes  = me-&gt;bytesTotal;</action>
          <choice_glyph conn="58,59,5,1,-32">
           <action box="-10,0,6,2"/>
          </choice_glyph>
@@ -831,7 +778,15 @@ me-&gt;addrSize   = I2C_getMemAddrSize(me-&gt;iDev);
 me-&gt;i2cDevOp   = I2C_OP_MEM_READ;
 
 LOG_printf(&quot;Attempt to read %d bytes from %s on from addr 0x%02x via Acc %d\n&quot;,
-    me-&gt;bytesTotal, I2C_devToStr(me-&gt;iDev), me-&gt;addrStart, me-&gt;accessType);</action>
+    me-&gt;bytesTotal, I2C_devToStr(me-&gt;iDev), me-&gt;addrStart, me-&gt;accessType);
+
+/* Allocate a ReadDone evt that will ALWAYS be sent out upon exit of the Busy state
+ * for read operations. */
+me-&gt;i2cReadDoneEvt = Q_NEW(I2CReadDoneEvt, I2C1_DEV_READ_DONE_SIG);
+
+/* Fill out the fields that won't change or to just safe values in case of failure */
+me-&gt;i2cReadDoneEvt-&gt;i2cDev = me-&gt;iDev;
+me-&gt;i2cReadDoneEvt-&gt;bytes  = 0;</action>
        <tran_glyph conn="5,15,3,3,61">
         <action box="0,-2,23,2"/>
        </tran_glyph>
@@ -890,23 +845,7 @@ MEMCPY(
     me-&gt;dataBuf,
     ((I2CWriteReqEvt const *)e)-&gt;dataBuf,
     me-&gt;bytesTotal
-);
-
-
-/*
-uint8_t tmp[100] = {0};
-uint16_t tmpLen = 0;
-CBErrorCode err = CON_hexToStr(
-    (const uint8_t *)me-&gt;dataBuf,        // data to convert
-    me-&gt;bytesTotal,                      // length of data to convert
-    (char *)tmp,                         // where to write output
-    sizeof(tmp),                         // max size of output buffer
-    &amp;tmpLen,                             // size of the resulting output
-    0,                                   // no columns
-    ' ',                                 // separator
-    true                                 // bPrintX
-);
-*/</action>
+);</action>
        <choice target="../../../0/11">
         <guard brief="NoErr?">ERR_NONE == me-&gt;errorCode</guard>
         <action>/* This is the first iteration through the &quot;loop&quot; which writes several pages */
@@ -915,8 +854,16 @@ me-&gt;writeSizeCurr    = me-&gt;writeSizeFirstPage;
 me-&gt;writeBufferIndex = 0;
 me-&gt;writeMemAddrCurr = me-&gt;addrStart;
 
-DBG_printf(&quot;Writing page %d (%d bytes) out of %d total to addr 0x%02x\n&quot;, 
-    me-&gt;writeCurrPage, me-&gt;writeSizeCurr, me-&gt;writeTotalPages, me-&gt;writeMemAddrCurr);</action>
+DBG_printf(&quot;Writing page %d (%d bytes) out of %d total to addr 0x%02x\n&quot;,
+    me-&gt;writeCurrPage, me-&gt;writeSizeCurr, me-&gt;writeTotalPages, me-&gt;writeMemAddrCurr);
+
+/* Allocate a WriteDone evt that will ALWAYS be sent out upon exit of the Busy state
+ * for write operations. */
+me-&gt;i2cWriteDoneEvt = Q_NEW(I2CWriteDoneEvt, I2C1_DEV_WRITE_DONE_SIG);
+
+/* Fill out the fields that won't change or to just safe values in case of failure */
+me-&gt;i2cWriteDoneEvt-&gt;bytes  = 0;
+me-&gt;i2cWriteDoneEvt-&gt;i2cDev = me-&gt;iDev;</action>
         <choice_glyph conn="32,18,5,3,34">
          <action box="1,0,10,2"/>
         </choice_glyph>

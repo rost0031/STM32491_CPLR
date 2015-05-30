@@ -120,7 +120,6 @@
 
 /* Includes ------------------------------------------------------------------*/
 #include <stdint.h>
-#include <stdarg.h>
 #include <stdio.h>
 #include <string.h>
 #include "CBSharedDbgLevels.h"                   /* For the shared dbg levels */
@@ -472,20 +471,19 @@ extern uint32_t  glbDbgConfig; /**< Allow global access to debug info */
  *
  * @return None
  */
+/*
 #ifndef SLOW_PRINTF
-#if 0
 #define MENU_printf(dst, fmt, ...) \
-      do {  DBG_printf("dst:%d\n", dst); \
-            CON_output(CON, dst, dst, __func__, __LINE__, fmt, \
+      do {  CON_output(CON, dst, dst, __func__, __LINE__, fmt, \
             ##__VA_ARGS__); \
       } while (0)
-#endif
 #else
 #define MENU_printf(dst, fmt, ...) \
       do { CON_slow_output(CON, __func__, __LINE__, fmt, \
             ##__VA_ARGS__); \
       } while (0)
 #endif
+*/
 /**
  * @} end group groupDbgFast
  */
