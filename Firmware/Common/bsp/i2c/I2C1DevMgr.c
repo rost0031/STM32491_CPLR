@@ -188,14 +188,102 @@ static QState I2C1DevMgr_Active(I2C1DevMgr * const me, QEvt const * const e);
  * machine is going next.
  */
 static QState I2C1DevMgr_Busy(I2C1DevMgr * const me, QEvt const * const e);
+
+/**
+ * @brief   This state sends the start bit on the I2C bus.
+ *
+ * @param  [in,out] me: Pointer to the state machine
+ * @param  [in,out] e:  Pointer to the event being processed.
+ * @return status: QState type that specifies where the state
+ * machine is going next.
+ */
 static QState I2C1DevMgr_GenerateStart(I2C1DevMgr * const me, QEvt const * const e);
+
+/**
+ * @brief   This state sends an address of the I2C device to select the device and
+ * selects the TRANSMITTER mode.
+ *
+ * @param  [in,out] me: Pointer to the state machine
+ * @param  [in,out] e:  Pointer to the event being processed.
+ * @return status: QState type that specifies where the state
+ * machine is going next.
+ */
 static QState I2C1DevMgr_Send7BitAddrTxMode(I2C1DevMgr * const me, QEvt const * const e);
+
+/**
+ * @brief   This state sends the internal memory address of the selected I2C device
+ * that tells the device where the read or write will happen.
+ *
+ * @param  [in,out] me: Pointer to the state machine
+ * @param  [in,out] e:  Pointer to the event being processed.
+ * @return status: QState type that specifies where the state
+ * machine is going next.
+ */
 static QState I2C1DevMgr_SendInternalAddr(I2C1DevMgr * const me, QEvt const * const e);
+
+/**
+ * @brief   This state sends the start bit on the I2C bus.
+ * Some I2C devices require a second start bit to do random addr operations.
+ *
+ * @param  [in,out] me: Pointer to the state machine
+ * @param  [in,out] e:  Pointer to the event being processed.
+ * @return status: QState type that specifies where the state
+ * machine is going next.
+ */
 static QState I2C1DevMgr_GenerateStart1(I2C1DevMgr * const me, QEvt const * const e);
+
+/**
+ * @brief   This state sends an address of the I2C device to select the device and
+ * selects the RECEIVER mode.
+ *
+ * @param  [in,out] me: Pointer to the state machine
+ * @param  [in,out] e:  Pointer to the event being processed.
+ * @return status: QState type that specifies where the state
+ * machine is going next.
+ */
 static QState I2C1DevMgr_Send7BitAddrRxMode(I2C1DevMgr * const me, QEvt const * const e);
+
+/**
+ * @brief   This state sends the command to read to memory in the selected I2C
+ * device.
+ *
+ * @param  [in,out] me: Pointer to the state machine
+ * @param  [in,out] e:  Pointer to the event being processed.
+ * @return status: QState type that specifies where the state
+ * machine is going next.
+ */
 static QState I2C1DevMgr_ReadMem(I2C1DevMgr * const me, QEvt const * const e);
+
+/**
+ * @brief   This state sends the command to write to memory in the selected I2C
+ * device.
+ *
+ * @param  [in,out] me: Pointer to the state machine
+ * @param  [in,out] e:  Pointer to the event being processed.
+ * @return status: QState type that specifies where the state
+ * machine is going next.
+ */
 static QState I2C1DevMgr_WriteMem(I2C1DevMgr * const me, QEvt const * const e);
+
+/**
+ * @brief   This state waits for 5 ms for a post write timeout that I2C devices
+ * require after writing a page.
+ *
+ * @param  [in,out] me: Pointer to the state machine
+ * @param  [in,out] e:  Pointer to the event being processed.
+ * @return status: QState type that specifies where the state
+ * machine is going next.
+ */
 static QState I2C1DevMgr_PostWriteWait(I2C1DevMgr * const me, QEvt const * const e);
+
+/**
+ * @brief   This state checks the I2C bus and makes sure it's not busy.
+ *
+ * @param  [in,out] me: Pointer to the state machine
+ * @param  [in,out] e:  Pointer to the event being processed.
+ * @return status: QState type that specifies where the state
+ * machine is going next.
+ */
 static QState I2C1DevMgr_CheckingBus(I2C1DevMgr * const me, QEvt const * const e);
 
 /**
@@ -436,6 +524,15 @@ static QState I2C1DevMgr_Busy(I2C1DevMgr * const me, QEvt const * const e) {
     }
     return status_;
 }
+
+/**
+ * @brief   This state sends the start bit on the I2C bus.
+ *
+ * @param  [in,out] me: Pointer to the state machine
+ * @param  [in,out] e:  Pointer to the event being processed.
+ * @return status: QState type that specifies where the state
+ * machine is going next.
+ */
 /*${AOs::I2C1DevMgr::SM::Active::Busy::GenerateStart} ......................*/
 static QState I2C1DevMgr_GenerateStart(I2C1DevMgr * const me, QEvt const * const e) {
     QState status_;
@@ -484,6 +581,16 @@ static QState I2C1DevMgr_GenerateStart(I2C1DevMgr * const me, QEvt const * const
     }
     return status_;
 }
+
+/**
+ * @brief   This state sends an address of the I2C device to select the device and
+ * selects the TRANSMITTER mode.
+ *
+ * @param  [in,out] me: Pointer to the state machine
+ * @param  [in,out] e:  Pointer to the event being processed.
+ * @return status: QState type that specifies where the state
+ * machine is going next.
+ */
 /*${AOs::I2C1DevMgr::SM::Active::Busy::Send7BitAddrTxMo~} ..................*/
 static QState I2C1DevMgr_Send7BitAddrTxMode(I2C1DevMgr * const me, QEvt const * const e) {
     QState status_;
@@ -536,6 +643,16 @@ static QState I2C1DevMgr_Send7BitAddrTxMode(I2C1DevMgr * const me, QEvt const * 
     }
     return status_;
 }
+
+/**
+ * @brief   This state sends the internal memory address of the selected I2C device
+ * that tells the device where the read or write will happen.
+ *
+ * @param  [in,out] me: Pointer to the state machine
+ * @param  [in,out] e:  Pointer to the event being processed.
+ * @return status: QState type that specifies where the state
+ * machine is going next.
+ */
 /*${AOs::I2C1DevMgr::SM::Active::Busy::SendInternalAddr} ...................*/
 static QState I2C1DevMgr_SendInternalAddr(I2C1DevMgr * const me, QEvt const * const e) {
     QState status_;
@@ -598,6 +715,16 @@ static QState I2C1DevMgr_SendInternalAddr(I2C1DevMgr * const me, QEvt const * co
     }
     return status_;
 }
+
+/**
+ * @brief   This state sends the start bit on the I2C bus.
+ * Some I2C devices require a second start bit to do random addr operations.
+ *
+ * @param  [in,out] me: Pointer to the state machine
+ * @param  [in,out] e:  Pointer to the event being processed.
+ * @return status: QState type that specifies where the state
+ * machine is going next.
+ */
 /*${AOs::I2C1DevMgr::SM::Active::Busy::GenerateStart1} .....................*/
 static QState I2C1DevMgr_GenerateStart1(I2C1DevMgr * const me, QEvt const * const e) {
     QState status_;
@@ -646,6 +773,16 @@ static QState I2C1DevMgr_GenerateStart1(I2C1DevMgr * const me, QEvt const * cons
     }
     return status_;
 }
+
+/**
+ * @brief   This state sends an address of the I2C device to select the device and
+ * selects the RECEIVER mode.
+ *
+ * @param  [in,out] me: Pointer to the state machine
+ * @param  [in,out] e:  Pointer to the event being processed.
+ * @return status: QState type that specifies where the state
+ * machine is going next.
+ */
 /*${AOs::I2C1DevMgr::SM::Active::Busy::Send7BitAddrRxMo~} ..................*/
 static QState I2C1DevMgr_Send7BitAddrRxMode(I2C1DevMgr * const me, QEvt const * const e) {
     QState status_;
@@ -698,6 +835,16 @@ static QState I2C1DevMgr_Send7BitAddrRxMode(I2C1DevMgr * const me, QEvt const * 
     }
     return status_;
 }
+
+/**
+ * @brief   This state sends the command to read to memory in the selected I2C
+ * device.
+ *
+ * @param  [in,out] me: Pointer to the state machine
+ * @param  [in,out] e:  Pointer to the event being processed.
+ * @return status: QState type that specifies where the state
+ * machine is going next.
+ */
 /*${AOs::I2C1DevMgr::SM::Active::Busy::ReadMem} ............................*/
 static QState I2C1DevMgr_ReadMem(I2C1DevMgr * const me, QEvt const * const e) {
     QState status_;
@@ -787,6 +934,16 @@ static QState I2C1DevMgr_ReadMem(I2C1DevMgr * const me, QEvt const * const e) {
     }
     return status_;
 }
+
+/**
+ * @brief   This state sends the command to write to memory in the selected I2C
+ * device.
+ *
+ * @param  [in,out] me: Pointer to the state machine
+ * @param  [in,out] e:  Pointer to the event being processed.
+ * @return status: QState type that specifies where the state
+ * machine is going next.
+ */
 /*${AOs::I2C1DevMgr::SM::Active::Busy::WriteMem} ...........................*/
 static QState I2C1DevMgr_WriteMem(I2C1DevMgr * const me, QEvt const * const e) {
     QState status_;
@@ -846,6 +1003,16 @@ static QState I2C1DevMgr_WriteMem(I2C1DevMgr * const me, QEvt const * const e) {
     }
     return status_;
 }
+
+/**
+ * @brief   This state waits for 5 ms for a post write timeout that I2C devices
+ * require after writing a page.
+ *
+ * @param  [in,out] me: Pointer to the state machine
+ * @param  [in,out] e:  Pointer to the event being processed.
+ * @return status: QState type that specifies where the state
+ * machine is going next.
+ */
 /*${AOs::I2C1DevMgr::SM::Active::Busy::PostWriteWait} ......................*/
 static QState I2C1DevMgr_PostWriteWait(I2C1DevMgr * const me, QEvt const * const e) {
     QState status_;
@@ -909,6 +1076,15 @@ static QState I2C1DevMgr_PostWriteWait(I2C1DevMgr * const me, QEvt const * const
     }
     return status_;
 }
+
+/**
+ * @brief   This state checks the I2C bus and makes sure it's not busy.
+ *
+ * @param  [in,out] me: Pointer to the state machine
+ * @param  [in,out] e:  Pointer to the event being processed.
+ * @return status: QState type that specifies where the state
+ * machine is going next.
+ */
 /*${AOs::I2C1DevMgr::SM::Active::Busy::CheckingBus} ........................*/
 static QState I2C1DevMgr_CheckingBus(I2C1DevMgr * const me, QEvt const * const e) {
     QState status_;
@@ -988,7 +1164,7 @@ static QState I2C1DevMgr_Idle(I2C1DevMgr * const me, QEvt const * const e) {
                 &me->deferredEvtQueue
             );
 
-            DBG_printf("back in Idle\n");
+            DBG_printf("Back in Idle state.\n");
             status_ = Q_HANDLED();
             break;
         }
@@ -1097,18 +1273,22 @@ static QState I2C1DevMgr_Idle(I2C1DevMgr * const me, QEvt const * const e) {
                 i2cWriteDoneEvt->status = me->errorCode;
                 i2cWriteDoneEvt->bytes = 0;
                 i2cWriteDoneEvt->i2cDev = me->iDev;
-                QF_PUBLISH((QEvt *)i2cWriteDoneEvt, AO_I2C1DevMgr);
 
+                if ( ACCESS_FREERTOS == me->accessType ) {
                 #if CPLR_APP
                     /* Post directly to the "raw" queue for FreeRTOS task to read */
-                    QEQueue_postFIFO(&CPLR_evtQueue, (QEvt *)i2cWriteDoneEvt);
+                    QEQueue_postFIFO(&CPLR_evtQueue, (QEvt *)me->i2cReadDoneEvt);
                     vTaskResume( xHandle_CPLR );
                 #elif CPLR_BOOT
                     /* Publish the event so other AOs can get it if they want */
-                    QF_PUBLISH((QEvt *)i2cWriteDoneEvt, AO_I2C1DevMgr);
+                    QF_PUBLISH((QEvt *)me->i2cReadDoneEvt, AO_I2C1DevMgr);
                 #else
-                    #error "Invalid build.  CPLR_APP or CPLR_BOOT must be specified"
+                #error "Invalid build.  CPLR_APP or CPLR_BOOT must be specified"
                 #endif
+                } else {
+                    /* Publish the event so other AOs can get it if they want */
+                    QF_PUBLISH((QEvt *)me->i2cReadDoneEvt, AO_I2C1DevMgr);
+                }
                 status_ = Q_TRAN(&I2C1DevMgr_Idle);
             }
             break;

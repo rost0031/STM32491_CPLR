@@ -306,6 +306,14 @@ if ( I2C_OP_MEM_READ == me-&gt;i2cDevOp || I2C_OP_REG_READ == me-&gt;i2cDevOp ) 
        </tran_glyph>
       </tran>
       <state name="GenerateStart">
+       <documentation>/**
+ * @brief   This state sends the start bit on the I2C bus.
+ *
+ * @param  [in,out] me: Pointer to the state machine
+ * @param  [in,out] e:  Pointer to the event being processed.
+ * @return status: QState type that specifies where the state
+ * machine is going next.
+ */</documentation>
        <entry>/* Set error code */
 me-&gt;errorCode = ERR_I2C1DEV_EV5_TIMEOUT;
 
@@ -344,6 +352,15 @@ me-&gt;errorCode = ((I2CStatusEvt const *)e)-&gt;errorCode;</action>
        </state_glyph>
       </state>
       <state name="Send7BitAddrTxMode">
+       <documentation>/**
+ * @brief   This state sends an address of the I2C device to select the device and 
+ * selects the TRANSMITTER mode.
+ *
+ * @param  [in,out] me: Pointer to the state machine
+ * @param  [in,out] e:  Pointer to the event being processed.
+ * @return status: QState type that specifies where the state
+ * machine is going next.
+ */</documentation>
        <entry>/* Set error code */
 me-&gt;errorCode = ERR_I2C1DEV_EV6_TIMEOUT;
 
@@ -386,6 +403,15 @@ me-&gt;errorCode = ((I2CStatusEvt const *)e)-&gt;errorCode;</action>
        </state_glyph>
       </state>
       <state name="SendInternalAddr">
+       <documentation>/**
+ * @brief   This state sends the internal memory address of the selected I2C device
+ * that tells the device where the read or write will happen.
+ *
+ * @param  [in,out] me: Pointer to the state machine
+ * @param  [in,out] e:  Pointer to the event being processed.
+ * @return status: QState type that specifies where the state
+ * machine is going next.
+ */</documentation>
        <entry>/* Set error code */
 me-&gt;errorCode = ERR_I2C1DEV_EV8_TIMEOUT;
 
@@ -440,6 +466,15 @@ me-&gt;errorCode = ((I2CStatusEvt const *)e)-&gt;errorCode;</action>
        </state_glyph>
       </state>
       <state name="GenerateStart1">
+       <documentation>/**
+ * @brief   This state sends the start bit on the I2C bus.
+ * Some I2C devices require a second start bit to do random addr operations.
+ *
+ * @param  [in,out] me: Pointer to the state machine
+ * @param  [in,out] e:  Pointer to the event being processed.
+ * @return status: QState type that specifies where the state
+ * machine is going next.
+ */</documentation>
        <entry>/* Set error code */
 me-&gt;errorCode = ERR_I2C1DEV_EV5_TIMEOUT;
 
@@ -478,6 +513,15 @@ me-&gt;errorCode = ((I2CStatusEvt const *)e)-&gt;errorCode;</action>
        </state_glyph>
       </state>
       <state name="Send7BitAddrRxMode">
+       <documentation>/**
+ * @brief   This state sends an address of the I2C device to select the device and 
+ * selects the RECEIVER mode.
+ *
+ * @param  [in,out] me: Pointer to the state machine
+ * @param  [in,out] e:  Pointer to the event being processed.
+ * @return status: QState type that specifies where the state
+ * machine is going next.
+ */</documentation>
        <entry>/* Set error code */
 me-&gt;errorCode = ERR_I2C1DEV_EV6_TIMEOUT;
 
@@ -520,6 +564,15 @@ me-&gt;errorCode = ((I2CStatusEvt const *)e)-&gt;errorCode;</action>
        </state_glyph>
       </state>
       <state name="ReadMem">
+       <documentation>/**
+ * @brief   This state sends the command to read to memory in the selected I2C 
+ * device.
+ *
+ * @param  [in,out] me: Pointer to the state machine
+ * @param  [in,out] e:  Pointer to the event being processed.
+ * @return status: QState type that specifies where the state
+ * machine is going next.
+ */</documentation>
        <entry>/* Set error code */
 me-&gt;errorCode = ERR_I2C1DEV_READ_MEM_TIMEOUT;
 
@@ -599,6 +652,15 @@ MEMCPY(
        </state_glyph>
       </state>
       <state name="WriteMem">
+       <documentation>/**
+ * @brief   This state sends the command to write to memory in the selected I2C 
+ * device.
+ *
+ * @param  [in,out] me: Pointer to the state machine
+ * @param  [in,out] e:  Pointer to the event being processed.
+ * @return status: QState type that specifies where the state
+ * machine is going next.
+ */</documentation>
        <entry>/* Set error code */
 me-&gt;errorCode = ERR_I2C1DEV_WRITE_MEM_TIMEOUT;
 
@@ -648,6 +710,15 @@ me-&gt;errorCode = ((I2CStatusEvt const *)e)-&gt;errorCode;
        </state_glyph>
       </state>
       <state name="PostWriteWait">
+       <documentation>/**
+ * @brief   This state waits for 5 ms for a post write timeout that I2C devices 
+ * require after writing a page.
+ *
+ * @param  [in,out] me: Pointer to the state machine
+ * @param  [in,out] e:  Pointer to the event being processed.
+ * @return status: QState type that specifies where the state
+ * machine is going next.
+ */</documentation>
        <entry>/* Set timer */
 QTimeEvt_rearm(
     &amp;me-&gt;i2cWriteTimerEvt,
@@ -701,6 +772,14 @@ DBG_printf(&quot;Writing page %d (%d bytes) out of %d total to addr 0x%02x\n&quo
        </state_glyph>
       </state>
       <state name="CheckingBus">
+       <documentation>/**
+ * @brief   This state checks the I2C bus and makes sure it's not busy.
+ *
+ * @param  [in,out] me: Pointer to the state machine
+ * @param  [in,out] e:  Pointer to the event being processed.
+ * @return status: QState type that specifies where the state
+ * machine is going next.
+ */</documentation>
        <entry>/* Set error code */
 me-&gt;errorCode = ERR_I2C1DEV_CHECK_BUS_TIMEOUT;
 
@@ -768,7 +847,7 @@ QActive_recall(
     &amp;me-&gt;deferredEvtQueue
 );
 
-DBG_printf(&quot;back in Idle\n&quot;);</entry>
+DBG_printf(&quot;Back in Idle state.\n&quot;);</entry>
       <tran trig="I2C1_DEV_RAW_MEM_READ" target="../../0/11">
        <action>me-&gt;iDev       = ((I2CReadReqEvt const *)e)-&gt;i2cDev;
 me-&gt;addrStart  = ((I2CReadReqEvt const *)e)-&gt;addr;
@@ -875,18 +954,22 @@ I2CWriteDoneEvt *i2cWriteDoneEvt = Q_NEW(I2CWriteDoneEvt, I2C1_DEV_WRITE_DONE_SI
 i2cWriteDoneEvt-&gt;status = me-&gt;errorCode;
 i2cWriteDoneEvt-&gt;bytes = 0;
 i2cWriteDoneEvt-&gt;i2cDev = me-&gt;iDev;
-QF_PUBLISH((QEvt *)i2cWriteDoneEvt, AO_I2C1DevMgr);
 
+if ( ACCESS_FREERTOS == me-&gt;accessType ) {
 #if CPLR_APP
     /* Post directly to the &quot;raw&quot; queue for FreeRTOS task to read */
-    QEQueue_postFIFO(&amp;CPLR_evtQueue, (QEvt *)i2cWriteDoneEvt);
+    QEQueue_postFIFO(&amp;CPLR_evtQueue, (QEvt *)me-&gt;i2cReadDoneEvt);
     vTaskResume( xHandle_CPLR );
 #elif CPLR_BOOT
     /* Publish the event so other AOs can get it if they want */
-    QF_PUBLISH((QEvt *)i2cWriteDoneEvt, AO_I2C1DevMgr);
+    QF_PUBLISH((QEvt *)me-&gt;i2cReadDoneEvt, AO_I2C1DevMgr);
 #else
-    #error &quot;Invalid build.  CPLR_APP or CPLR_BOOT must be specified&quot;
-#endif</action>
+#error &quot;Invalid build.  CPLR_APP or CPLR_BOOT must be specified&quot;
+#endif
+} else {
+    /* Publish the event so other AOs can get it if they want */
+    QF_PUBLISH((QEvt *)me-&gt;i2cReadDoneEvt, AO_I2C1DevMgr);
+}</action>
         <choice_glyph conn="32,18,4,1,7,-6">
          <action box="-5,2,6,2"/>
         </choice_glyph>

@@ -264,7 +264,6 @@ QTimeEvt_rearm(
    /* defer the request - this event will be handled
     * when the state machine goes back to Idle state */
    QActive_defer((QActive *)me, &amp;me-&gt;deferredEvtQueue, e);
-   DBG_printf(&quot;Deferring DB request until current is done\n&quot;);
 } else {
    /* notify the request sender that the request was ignored.. */
    ERR_printf(&quot;Unable to defer DB request\n&quot;);
@@ -346,7 +345,9 @@ if ( me-&gt;dbCmd == DB_OP_READ ) {
     /* Do nothing in this case.  Internal operations are for DB
      * validation and similar actions and are initiated intenally so
      * so nobody is expecting a response */
-    LOG_printf(&quot;Internal DB operation completed with error code: 0x%08x\n&quot;, me-&gt;errorCode);
+    if ( ERR_NONE != me-&gt;errorCode ) {
+        ERR_printf(&quot;Internal DB op failed with error code: 0x%08x\n&quot;, me-&gt;errorCode);
+    }
 } else {
     me-&gt;errorCode = ERR_DB_ELEM_SIZE_OVERFLOW;
     ERR_printf(&quot;Invalid DB operation (%d) specified somehow\n&quot;, me-&gt;dbCmd);
@@ -369,7 +370,6 @@ if ( me-&gt;dbCmd == DB_OP_READ ) {
         /* Publish the event so other AOs can get it if they want */
         QF_PUBLISH((QEvt *)evt, AO_SysMgr);
     }
-
 }</exit>
        <tran trig="DB_ACCESS_TIMEOUT" target="../../../0">
         <tran_glyph conn="39,31,3,1,-19">
@@ -377,9 +377,9 @@ if ( me-&gt;dbCmd == DB_OP_READ ) {
         </tran_glyph>
        </tran>
        <tran trig="DB_READ">
-        <action>DBG_printf(&quot;DB_READ with accType %d and dbElem %d\n&quot;, 
+        <action>LOG_printf(&quot;DB_READ via %d acc to read dbElem: %s\n&quot;, 
     ((DBReadReqEvt const *)e)-&gt;accessType,
-    ((DBReadReqEvt const *)e)-&gt;dbElem
+    DB_elemToStr( ((DBReadReqEvt const *)e)-&gt;dbElem )
 );
 
 /* Find where the element lives */
@@ -398,7 +398,6 @@ switch( loc ) {
         i2cReadReqEvt-&gt;bytes          = DB_getElemSize(((DBReadReqEvt const *)e)-&gt;dbElem);
         i2cReadReqEvt-&gt;accessType     = me-&gt;accessType;
         QACTIVE_POST(AO_I2C1DevMgr, (QEvt *)(i2cReadReqEvt), me);
-        DBG_printf(&quot;Posting a read req to I2C1DevMgr\n&quot;);
         break;
     case DB_GPIO:
         me-&gt;errorCode = ERR_UNIMPLEMENTED;
@@ -429,9 +428,9 @@ switch( loc ) {
         </tran_glyph>
        </tran>
        <tran trig="DB_WRITE">
-        <action>DBG_printf(&quot;DB_WRITE with accType %d and dbElem %d\n&quot;,
-    ((DBWriteReqEvt const *)e)-&gt;accessType,
-    ((DBWriteReqEvt const *)e)-&gt;dbElem
+        <action>LOG_printf(&quot;DB_WRITE via %d acc to write dbElem: %s\n&quot;,
+    ((DBReadReqEvt const *)e)-&gt;accessType,
+    DB_elemToStr( ((DBReadReqEvt const *)e)-&gt;dbElem )
 );
 
 /* Find where the element lives */
@@ -477,9 +476,7 @@ switch( loc ) {
         </tran_glyph>
        </tran>
        <tran trig="I2C1_DEV_READ_DONE">
-        <action>DBG_printf(&quot;Got a read done from I2C1DevMgr\n&quot;);
-
-me-&gt;errorCode = ((I2CReadDoneEvt const *) e)-&gt;status;
+        <action>me-&gt;errorCode = ((I2CReadDoneEvt const *) e)-&gt;status;
 if ( ERR_NONE == me-&gt;errorCode ) {
     me-&gt;dataLen = ((I2CReadDoneEvt const *) e)-&gt;bytes;
     if ( me-&gt;dataLen &gt; MAX_DB_ELEM_SIZE ) {
@@ -497,9 +494,7 @@ QACTIVE_POST(AO_SysMgr, evt, me);</action>
         </tran_glyph>
        </tran>
        <tran trig="I2C1_DEV_WRITE_DONE">
-        <action>DBG_printf(&quot;Got a write done from I2C1DevMgr\n&quot;);
-
-me-&gt;errorCode = ((I2CWriteDoneEvt const *) e)-&gt;status;
+        <action>me-&gt;errorCode = ((I2CWriteDoneEvt const *) e)-&gt;status;
 
 /* Self post to let the exit condition handle the sending back to requester */
 QEvt *evt = Q_NEW(QEvt, DB_OP_DONE_SIG);
@@ -530,9 +525,7 @@ evt-&gt;dbElem = DB_MAGIC_WORD;
 QACTIVE_POST(AO_SysMgr, (QEvt *)(evt), AO_SysMgr);</entry>
         <exit>QTimeEvt_disarm(&amp;me-&gt;dbTimerEvt);                  /* Disarm timer on exit */</exit>
         <tran trig="I2C1_DEV_READ_DONE">
-         <action>DBG_printf(&quot;Got a read done from I2C1DevMgr\n&quot;);
-
-me-&gt;errorCode = ((I2CReadDoneEvt const *) e)-&gt;status;
+         <action>me-&gt;errorCode = ((I2CReadDoneEvt const *) e)-&gt;status;
 if ( ERR_NONE == me-&gt;errorCode ) {
     me-&gt;dataLen = ((I2CReadDoneEvt const *) e)-&gt;bytes;
     if ( me-&gt;dataLen &gt; MAX_DB_ELEM_SIZE ) {
@@ -545,9 +538,6 @@ if ( ERR_NONE == me-&gt;errorCode ) {
           <guard brief="NoError?">ERR_NONE == me-&gt;errorCode</guard>
           <action>uint32_t dbMagicWord = 0;
 MEMCPY( &amp;dbMagicWord, ((I2CReadDoneEvt const *)e)-&gt;dataBuf, ((I2CReadDoneEvt const *)e)-&gt;bytes );
-
-DBG_printf(&quot;Magic word read: 0x%08x vs built one: 0x%08x\n&quot;, dbMagicWord, DB_MAGIC_WORD_DEF);
-
 me-&gt;errorCode = DB_isMagicWordValid( dbMagicWord );
 
 
@@ -556,20 +546,21 @@ me-&gt;errorCode = DB_isMagicWordValid( dbMagicWord );
 </action>
           <choice target="../../../../7">
            <guard>else</guard>
-           <action>ERR_printf(&quot;Invalid Magic Word in DB, need to reset DB. Error: 0x%08x\n&quot;, me-&gt;errorCode);
+           <action>WRN_printf(&quot;Invalid DB magic word; expected: 0x%08x read: 0x%08x. Resetting DB. Error: 0x%08x\n&quot;,
+    DB_MAGIC_WORD_DEF, dbMagicWord, me-&gt;errorCode);
 
 /* Need to reset the DB */</action>
-           <choice_glyph conn="43,52,5,3,20,-14,3">
+           <choice_glyph conn="43,49,5,3,17,-11,2">
             <action box="3,-2,4,2"/>
            </choice_glyph>
           </choice>
           <choice target="../../../../8">
            <guard brief="NoError?">ERR_NONE == me-&gt;errorCode</guard>
-           <choice_glyph conn="43,52,4,0,3">
+           <choice_glyph conn="43,49,4,0,3">
             <action box="-7,1,7,2"/>
            </choice_glyph>
           </choice>
-          <choice_glyph conn="43,48,4,-1,4">
+          <choice_glyph conn="43,45,4,-1,4">
            <action box="-7,1,7,2"/>
           </choice_glyph>
          </choice>
@@ -577,15 +568,15 @@ me-&gt;errorCode = DB_isMagicWordValid( dbMagicWord );
           <guard>else</guard>
           <action>ERR_printf(&quot;Unable to read Magic Word from DB, need to reset DB. Error: 0x%08x\n&quot;, me-&gt;errorCode);
 /* Need to reset the DB */</action>
-          <choice_glyph conn="43,48,5,3,19,-11,4">
+          <choice_glyph conn="43,45,5,3,16,-8,3">
            <action box="3,-2,5,2"/>
           </choice_glyph>
          </choice>
-         <tran_glyph conn="43,43,2,-1,5">
+         <tran_glyph conn="43,40,2,-1,5">
           <action box="0,0,18,2"/>
          </tran_glyph>
         </tran>
-        <state_glyph node="41,33,19,10">
+        <state_glyph node="41,33,15,7">
          <entry box="1,2,6,2"/>
          <exit box="1,4,6,2"/>
         </state_glyph>
@@ -599,7 +590,7 @@ me-&gt;errorCode = DB_isMagicWordValid( dbMagicWord );
  * @return status: QState type that specifies where the state
  * machine is going next.
  */</documentation>
-        <entry>LOG_printf(&quot;Resetting DB magic word...\n&quot;);
+        <entry>WRN_printf(&quot;Resetting DB magic word to default...\n&quot;);
 
 /* Post to SysMgr to set the build datetime since it doesn't match the compiled one */
 DBWriteReqEvt *evt = Q_NEW(DBWriteReqEvt, DB_WRITE_SIG);
@@ -609,15 +600,23 @@ evt-&gt;dataLen =  DB_getElemSize(DB_MAGIC_WORD);
 MEMCPY(evt-&gt;dataBuf, (uint8_t *)DB_MAGIC_WORD_DEF,evt-&gt;dataLen);
 QACTIVE_POST(AO_SysMgr, (QEvt *)(evt), me);</entry>
         <tran trig="DB_OP_DONE" target="../../10">
-         <tran_glyph conn="66,41,3,0,5,14">
-          <action box="1,-2,10,2"/>
+         <tran_glyph conn="64,40,2,0,12">
+          <action box="0,0,10,2"/>
          </tran_glyph>
         </tran>
-        <state_glyph node="66,33,16,9">
+        <state_glyph node="62,33,14,7">
          <entry box="1,2,6,2"/>
         </state_glyph>
        </state>
        <state name="DBVersionCheck">
+        <documentation>/**
+ * @brief    Check DB version and reset DB to default values if invalid.
+ * 
+ * @param  [in|out] me: Pointer to the state machine
+ * @param  [in|out]  e:  Pointer to the event being processed.
+ * @return status: QState type that specifies where the state
+ * machine is going next.
+ */</documentation>
         <entry>QTimeEvt_rearm(                                       /* Re-arm timer on entry */
     &amp;me-&gt;dbTimerEvt,
     SEC_TO_TICKS( HL_MAX_TOUT_SEC_COMM_DB_VALIDATE )
@@ -631,9 +630,7 @@ evt-&gt;dbElem = DB_VERSION;
 QACTIVE_POST(AO_SysMgr, (QEvt *)(evt), AO_SysMgr);</entry>
         <exit>QTimeEvt_disarm(&amp;me-&gt;dbTimerEvt);                  /* Disarm timer on exit */</exit>
         <tran trig="I2C1_DEV_READ_DONE">
-         <action>DBG_printf(&quot;Got a read done from I2C1DevMgr\n&quot;);
-
-me-&gt;errorCode = ((I2CReadDoneEvt const *) e)-&gt;status;
+         <action>me-&gt;errorCode = ((I2CReadDoneEvt const *) e)-&gt;status;
 if ( ERR_NONE == me-&gt;errorCode ) {
     me-&gt;dataLen = ((I2CReadDoneEvt const *) e)-&gt;bytes;
     if ( me-&gt;dataLen &gt; MAX_DB_ELEM_SIZE ) {
@@ -655,10 +652,10 @@ me-&gt;errorCode = DB_isVersionValid( dbVersion );
 </action>
           <choice target="../../../../10">
            <guard>else</guard>
-           <action>ERR_printf(&quot;Invalid version in DB, need to reset DB. Error: 0x%08x\n&quot;, me-&gt;errorCode);
-
+           <action>WRN_printf(&quot;Invalid DB version; expected: 0x%04x read: 0x%04x. Resetting DB. Error: 0x%08x\n&quot;,
+    DB_VERSION_DEF, dbVersion, me-&gt;errorCode);
 /* Need to reset the DB */</action>
-           <choice_glyph conn="43,73,5,3,22,-14,2">
+           <choice_glyph conn="43,70,5,3,18,-14,1">
             <action box="3,-2,4,2"/>
            </choice_glyph>
           </choice>
@@ -666,11 +663,11 @@ me-&gt;errorCode = DB_isVersionValid( dbVersion );
            <guard brief="NoError?">ERR_NONE == me-&gt;errorCode</guard>
            <action>LOG_printf(&quot;DB validation complete.\n&quot;);
 me-&gt;isDBValid = true;</action>
-           <choice_glyph conn="43,73,5,1,-23">
+           <choice_glyph conn="43,70,5,1,-23">
             <action box="-7,0,7,2"/>
            </choice_glyph>
           </choice>
-          <choice_glyph conn="43,68,4,-1,5">
+          <choice_glyph conn="43,65,4,-1,5">
            <action box="-7,1,7,2"/>
           </choice_glyph>
          </choice>
@@ -678,15 +675,15 @@ me-&gt;isDBValid = true;</action>
           <guard>else</guard>
           <action>ERR_printf(&quot;Unable to version from DB, need to reset DB. Error: 0x%08x\n&quot;, me-&gt;errorCode);
 /* Need to reset the DB */</action>
-          <choice_glyph conn="43,68,5,3,21,-10,3">
+          <choice_glyph conn="43,65,5,3,17,-10,2">
            <action box="3,-2,5,2"/>
           </choice_glyph>
          </choice>
-         <tran_glyph conn="43,63,2,-1,5">
+         <tran_glyph conn="43,59,2,-1,6">
           <action box="0,0,18,2"/>
          </tran_glyph>
         </tran>
-        <state_glyph node="41,55,19,8">
+        <state_glyph node="41,52,15,7">
          <entry box="1,2,6,2"/>
          <exit box="1,4,6,2"/>
         </state_glyph>
@@ -721,38 +718,21 @@ if ( ERR_NONE == me-&gt;errorCode ) {
 }</action>
          <choice>
           <guard brief="NoError?">me-&gt;errorCode == ERR_NONE</guard>
-          <choice>
-           <guard brief="ValidLength?">((I2CReadDoneEvt const *)e)-&gt;bytes == DB_getElemSize(DB_BOOT_BUILD_DATETIME)</guard>
-           <action>me-&gt;errorCode = DB_checkDTMatch( ((I2CReadDoneEvt const *) e)-&gt;dataBuf, (uint8_t *)BUILD_DATE );</action>
-           <choice target="../../../../../11">
-            <guard brief="DatetimeDiff?">ERR_NONE != me-&gt;errorCode</guard>
-            <action>WRN_printf(&quot;Bootloader datetime mismatch. DB: %s, Compiled: %s\n&quot;, 
+          <action>me-&gt;errorCode = DB_checkDTMatch( ((I2CReadDoneEvt const *) e)-&gt;dataBuf, (uint8_t *)BUILD_DATE );</action>
+          <choice target="../../../../11">
+           <guard brief="DatetimeDiff?">ERR_NONE != me-&gt;errorCode</guard>
+           <action>WRN_printf(&quot;Bootloader datetime mismatch. DB: %s, Compiled: %s\n&quot;, 
     ((I2CReadDoneEvt const *) e)-&gt;dataBuf, BUILD_DATE
 );</action>
-            <choice_glyph conn="97,43,5,3,17,-14,2">
-             <action box="1,-2,9,2"/>
-            </choice_glyph>
-           </choice>
-           <choice target="../../../../../13">
-            <guard>else</guard>
-            <action>DBG_printf(&quot;Bootloader datetime match\n&quot;);</action>
-            <choice_glyph conn="97,43,4,0,4">
-             <action box="-4,1,6,2"/>
-            </choice_glyph>
-           </choice>
-           <choice_glyph conn="97,40,4,-1,3">
-            <action box="-9,1,10,2"/>
+           <choice_glyph conn="97,40,5,3,16,-12,3">
+            <action box="1,-2,9,2"/>
            </choice_glyph>
           </choice>
-          <choice target="../../../../11">
+          <choice target="../../../../13">
            <guard>else</guard>
-           <action>me-&gt;errorCode = ERR_DB_INVALID_DATETIME_LENGTH;
-ERR_printf(
-    &quot;Bootloader datetime length (%d) invalid. EXpected %d. Error 0x%08x, aborting attempt to validating the DB\n&quot;,
-    ((DBReadDoneEvt const *)e)-&gt;dataLen,  DB_getElemSize(DB_BOOT_BUILD_DATETIME), me-&gt;errorCode
-);</action>
-           <choice_glyph conn="97,40,5,3,16,-12,3">
-            <action box="2,-2,5,2"/>
+           <action>DBG_printf(&quot;Bootloader datetime match\n&quot;);</action>
+           <choice_glyph conn="97,40,4,0,4">
+            <action box="-4,1,6,2"/>
            </choice_glyph>
           </choice>
           <choice_glyph conn="97,37,4,-1,3">
@@ -766,23 +746,23 @@ ERR_printf(
            <action box="2,-2,4,2"/>
           </choice_glyph>
          </choice>
-         <tran_glyph conn="97,33,2,-1,4">
+         <tran_glyph conn="97,31,2,-1,6">
           <action box="0,0,15,2"/>
          </tran_glyph>
         </tran>
-        <state_glyph node="95,25,16,8">
+        <state_glyph node="95,25,14,6">
          <entry box="1,2,6,2"/>
         </state_glyph>
        </state>
        <state name="ResetDBVersion">
         <documentation>/**
- * @brief   Reset the settings DB version to default value.
+ * @brief   Reset the DB version to default value.
  * @param  [in|out] me: Pointer to the state machine
  * @param  [in|out]  e:  Pointer to the event being processed.
  * @return status: QState type that specifies where the state
  * machine is going next.
  */</documentation>
-        <entry>LOG_printf(&quot;Resetting DB version...\n&quot;);
+        <entry>WRN_printf(&quot;Resetting DB version to default...\n&quot;);
 
 /* Post to SysMgr to set the build datetime since it doesn't match the compiled one */
 DBWriteReqEvt *evt = Q_NEW(DBWriteReqEvt, DB_WRITE_SIG);
@@ -793,9 +773,9 @@ MEMCPY(evt-&gt;dataBuf, (uint8_t *)DB_VERSION_DEF,evt-&gt;dataLen);
 QACTIVE_POST(AO_SysMgr, (QEvt *)(evt), me);</entry>
         <tran trig="DB_OP_DONE">
          <action>me-&gt;currRetry++;</action>
-         <choice target="../../../6">
+         <choice target="../../../17">
           <guard brief="Retry?">me-&gt;currRetry &lt; MAX_RETRIES</guard>
-          <choice_glyph conn="70,67,5,0,14,-36,-29,2">
+          <choice_glyph conn="65,64,5,0,14,5">
            <action box="1,0,10,2"/>
           </choice_glyph>
          </choice>
@@ -803,15 +783,15 @@ QACTIVE_POST(AO_SysMgr, (QEvt *)(evt), me);</entry>
           <guard>else</guard>
           <action>me-&gt;errorCode = ERR_DB_NOT_INIT;
 ERR_printf(&quot;Out of retries when attempting to reset DB to a valid state. Error: 0x%08x\n&quot;, me-&gt;errorCode);</action>
-          <choice_glyph conn="70,67,4,1,9,-50">
+          <choice_glyph conn="65,64,4,1,11,-45">
            <action box="0,3,10,2"/>
           </choice_glyph>
          </choice>
-         <tran_glyph conn="67,61,3,-1,3,6">
-          <action box="1,-2,10,2"/>
+         <tran_glyph conn="65,59,2,-1,5">
+          <action box="0,0,10,2"/>
          </tran_glyph>
         </tran>
-        <state_glyph node="67,55,15,8">
+        <state_glyph node="62,52,14,7">
          <entry box="1,2,6,2"/>
         </state_glyph>
        </state>
@@ -853,11 +833,11 @@ DBG_printf(
     evt-&gt;dataLen, tmp
 );</entry>
         <tran trig="DB_OP_DONE" target="../../12">
-         <tran_glyph conn="116,32,3,0,4,15">
-          <action box="1,-2,10,2"/>
+         <tran_glyph conn="119,31,2,0,13">
+          <action box="0,0,10,2"/>
          </tran_glyph>
         </tran>
-        <state_glyph node="116,25,14,8">
+        <state_glyph node="116,25,14,6">
          <entry box="1,2,6,2"/>
         </state_glyph>
        </state>
@@ -883,11 +863,11 @@ DBG_printf(&quot;Bootloader major version in byffer after copy: %d\n&quot;, evt-
 
 QACTIVE_POST(AO_SysMgr, (QEvt *)(evt), me);</entry>
         <tran trig="DB_OP_DONE" target="../../15">
-         <tran_glyph conn="116,54,3,0,5,16">
-          <action box="1,-2,10,2"/>
+         <tran_glyph conn="119,50,2,0,12">
+          <action box="0,0,10,2"/>
          </tran_glyph>
         </tran>
-        <state_glyph node="116,47,14,8">
+        <state_glyph node="116,44,14,6">
          <entry box="1,2,6,2"/>
         </state_glyph>
        </state>
@@ -919,56 +899,39 @@ if ( ERR_NONE == me-&gt;errorCode ) {
 }</action>
          <choice>
           <guard brief="NoError?">me-&gt;errorCode == ERR_NONE</guard>
-          <choice>
-           <guard brief="ValidLength?">((I2CReadDoneEvt const *)e)-&gt;bytes == DB_getElemSize(DB_BOOT_MAJ)</guard>
-           <choice target="../../../../../12">
-            <guard brief="MajVerDiff?">((I2CReadDoneEvt const *) e)-&gt;dataBuf[0] != FW_VER_MAJOR</guard>
-            <action>me-&gt;errorCode = ERR_DB_INVALID_MAJ_VER_MISMATCH;
+          <choice target="../../../../12">
+           <guard brief="MajVerDiff?">((I2CReadDoneEvt const *) e)-&gt;dataBuf[0] != FW_VER_MAJOR</guard>
+           <action>me-&gt;errorCode = ERR_DB_INVALID_MAJ_VER_MISMATCH;
 WRN_printf(&quot;Bootloader datetime mismatch. DB: %d, Compiled: %d\n&quot;,
     ((I2CReadDoneEvt const *) e)-&gt;dataBuf[0], FW_VER_MAJOR
 );</action>
-            <choice_glyph conn="97,65,5,3,17,-13,2">
-             <action box="1,-2,9,2"/>
-            </choice_glyph>
-           </choice>
-           <choice target="../../../../../14">
-            <guard>else</guard>
-            <action>DBG_printf(&quot;Bootloader major version match\n&quot;);</action>
-            <choice_glyph conn="97,65,4,0,5">
-             <action box="-4,1,6,2"/>
-            </choice_glyph>
-           </choice>
-           <choice_glyph conn="97,62,4,-1,3">
-            <action box="-9,1,10,2"/>
+           <choice_glyph conn="97,58,5,3,16,-10,3">
+            <action box="1,-2,9,2"/>
            </choice_glyph>
           </choice>
-          <choice target="../../../../12">
+          <choice target="../../../../14">
            <guard>else</guard>
-           <action>me-&gt;errorCode = ERR_DB_INVALID_MAJ_VER_LENGTH;
-ERR_printf(
-    &quot;Bootloader major version length (%d) invalid. EXpected %d. Error 0x%08x, aborting attempt to validating the DB\n&quot;,
-    ((DBReadDoneEvt const *)e)-&gt;dataLen,  DB_getElemSize(DB_BOOT_MAJ), me-&gt;errorCode
-);</action>
-           <choice_glyph conn="97,62,5,3,16,-11,3">
-            <action box="2,-2,5,2"/>
+           <action>DBG_printf(&quot;Bootloader major version match\n&quot;);</action>
+           <choice_glyph conn="97,58,4,0,4">
+            <action box="-4,1,6,2"/>
            </choice_glyph>
           </choice>
-          <choice_glyph conn="97,59,4,-1,3">
+          <choice_glyph conn="97,55,4,-1,3">
            <action box="-7,0,9,2"/>
           </choice_glyph>
          </choice>
          <choice target="../../../12">
           <guard>else</guard>
           <action>ERR_printf(&quot;DB access resulted in error 0x%08x, aborting attempt to validating the DB\n&quot;, me-&gt;errorCode);</action>
-          <choice_glyph conn="97,59,5,3,15,-9,4">
+          <choice_glyph conn="97,55,5,3,15,-8,4">
            <action box="2,-2,4,2"/>
           </choice_glyph>
          </choice>
-         <tran_glyph conn="97,55,2,-1,4">
+         <tran_glyph conn="97,50,2,-1,5">
           <action box="0,0,15,2"/>
          </tran_glyph>
         </tran>
-        <state_glyph node="95,47,16,8">
+        <state_glyph node="95,44,14,6">
          <entry box="1,2,6,2"/>
         </state_glyph>
        </state>
@@ -1000,55 +963,38 @@ if ( ERR_NONE == me-&gt;errorCode ) {
 }</action>
          <choice>
           <guard brief="NoError?">me-&gt;errorCode == ERR_NONE</guard>
-          <choice>
-           <guard brief="ValidLength?">((I2CReadDoneEvt const *)e)-&gt;bytes == DB_getElemSize(DB_BOOT_MIN)</guard>
-           <choice target="../../../../../15">
-            <guard brief="MinVerDiff?">((I2CReadDoneEvt const *) e)-&gt;dataBuf[0] != FW_VER_MINOR</guard>
-            <action>WRN_printf(&quot;Bootloader minor version mismatch. DB: %d, Compiled: %d\n&quot;,
+          <choice target="../../../../15">
+           <guard brief="MinVerDiff?">((I2CReadDoneEvt const *) e)-&gt;dataBuf[0] != FW_VER_MINOR</guard>
+           <action>WRN_printf(&quot;Bootloader minor version mismatch. DB: %d, Compiled: %d\n&quot;,
     ((I2CReadDoneEvt const *) e)-&gt;dataBuf[0], FW_VER_MINOR
 );</action>
-            <choice_glyph conn="97,88,5,3,17,-13,2">
-             <action box="1,-2,9,2"/>
-            </choice_glyph>
-           </choice>
-           <choice target="../../../../../../../0">
-            <guard>else</guard>
-            <action>DBG_printf(&quot;Bootloader major version match\n&quot;);</action>
-            <choice_glyph conn="97,88,4,1,4,-77">
-             <action box="-4,2,6,2"/>
-            </choice_glyph>
-           </choice>
-           <choice_glyph conn="97,85,4,-1,3">
-            <action box="-9,1,10,2"/>
+           <choice_glyph conn="97,75,5,3,17,-9,2">
+            <action box="1,-2,9,2"/>
            </choice_glyph>
           </choice>
-          <choice target="../../../../15">
+          <choice target="../../../../../../0">
            <guard>else</guard>
-           <action>me-&gt;errorCode = ERR_DB_INVALID_MIN_VER_LENGTH;
-ERR_printf(
-    &quot;Bootloader minor version length (%d) invalid. EXpected %d. Error 0x%08x, aborting attempt to validating the DB\n&quot;,
-    ((DBReadDoneEvt const *)e)-&gt;dataLen,  DB_getElemSize(DB_BOOT_MIN), me-&gt;errorCode
-);</action>
-           <choice_glyph conn="97,85,5,3,16,-11,3">
-            <action box="2,-2,5,2"/>
+           <action>DBG_printf(&quot;Bootloader major version match\n&quot;);</action>
+           <choice_glyph conn="97,75,4,1,9,-77">
+            <action box="-4,2,6,2"/>
            </choice_glyph>
           </choice>
-          <choice_glyph conn="97,82,4,-1,3">
+          <choice_glyph conn="97,72,4,-1,3">
            <action box="-7,0,9,2"/>
           </choice_glyph>
          </choice>
          <choice target="../../../15">
           <guard>else</guard>
           <action>ERR_printf(&quot;DB access resulted in error 0x%08x, aborting attempt to validating the DB\n&quot;, me-&gt;errorCode);</action>
-          <choice_glyph conn="97,82,5,3,15,-9,4">
+          <choice_glyph conn="97,72,5,3,15,-8,4">
            <action box="2,-2,4,2"/>
           </choice_glyph>
          </choice>
-         <tran_glyph conn="97,78,2,-1,4">
+         <tran_glyph conn="97,68,2,-1,4">
           <action box="0,0,15,2"/>
          </tran_glyph>
         </tran>
-        <state_glyph node="95,70,16,8">
+        <state_glyph node="95,62,16,6">
          <entry box="1,2,6,2"/>
         </state_glyph>
        </state>
@@ -1074,7 +1020,7 @@ QACTIVE_POST(AO_SysMgr, (QEvt *)(evt), me);</entry>
          <action>me-&gt;currRetry++;</action>
          <choice target="../../../16">
           <guard brief="Retry?">me-&gt;currRetry &lt; MAX_RETRIES</guard>
-          <choice_glyph conn="119,82,5,0,11,7">
+          <choice_glyph conn="119,73,5,0,7,6">
            <action box="1,0,10,2"/>
           </choice_glyph>
          </choice>
@@ -1082,34 +1028,67 @@ QACTIVE_POST(AO_SysMgr, (QEvt *)(evt), me);</entry>
           <guard>else</guard>
           <action>me-&gt;errorCode = ERR_DB_NOT_INIT;
 ERR_printf(&quot;Out of retries when attempting to reset DB to a valid state. Error: 0x%08x\n&quot;, me-&gt;errorCode);</action>
-          <choice_glyph conn="119,82,4,1,14,-99">
+          <choice_glyph conn="119,73,4,1,12,-99">
            <action box="0,3,10,2"/>
           </choice_glyph>
          </choice>
-         <tran_glyph conn="116,77,3,-1,3,5">
-          <action box="1,-2,10,2"/>
+         <tran_glyph conn="119,68,2,-1,5">
+          <action box="0,0,10,2"/>
          </tran_glyph>
         </tran>
-        <state_glyph node="116,70,14,8">
+        <state_glyph node="116,62,14,6">
          <entry box="1,2,6,2"/>
         </state_glyph>
        </state>
-       <state name="Wait">
+       <state name="Wait2">
+        <documentation>/**
+ * @brief   Small timeout to make sure that retries don't overwhelm the logging 
+ * system.
+ * 
+ * @param  [in|out] me: Pointer to the state machine
+ * @param  [in|out]  e:  Pointer to the event being processed.
+ * @return status: QState type that specifies where the state
+ * machine is going next.
+ */</documentation>
         <entry>QTimeEvt_rearm(                                       /* Re-arm timer on entry */
     &amp;me-&gt;dbTimerEvt,
     SEC_TO_TICKS( LL_MAX_TIME_SEC_BETWEEN_RETRIES )
 );
 </entry>
         <tran trig="DB_ACCESS_TIMEOUT" target="../../9">
-         <tran_glyph conn="125,93,3,0,10,-69,-31,1">
-          <action box="-4,-2,15,2"/>
+         <tran_glyph conn="122,83,3,0,13,-60,-31,2">
+          <action box="1,0,15,2"/>
          </tran_glyph>
         </tran>
-        <state_glyph node="125,89,9,6">
+        <state_glyph node="122,79,15,8">
          <entry box="1,2,6,2"/>
         </state_glyph>
        </state>
-       <state_glyph node="39,14,99,93">
+       <state name="Wait1">
+        <documentation>/**
+ * @brief   Small timeout to make sure that retries don't overwhelm the logging 
+ * system.
+ * 
+ * @param  [in|out] me: Pointer to the state machine
+ * @param  [in|out]  e:  Pointer to the event being processed.
+ * @return status: QState type that specifies where the state
+ * machine is going next.
+ */</documentation>
+        <entry>QTimeEvt_rearm(                                       /* Re-arm timer on entry */
+    &amp;me-&gt;dbTimerEvt,
+    SEC_TO_TICKS( LL_MAX_TIME_SEC_BETWEEN_RETRIES )
+);
+</entry>
+        <tran trig="DB_ACCESS_TIMEOUT" target="../../6">
+         <tran_glyph conn="67,73,3,0,14,-42,-26,2">
+          <action box="1,0,15,2"/>
+         </tran_glyph>
+        </tran>
+        <state_glyph node="67,69,15,7">
+         <entry box="1,2,6,2"/>
+        </state_glyph>
+       </state>
+       <state_glyph node="39,14,99,76">
         <entry box="1,2,6,2"/>
         <exit box="1,4,6,2"/>
        </state_glyph>

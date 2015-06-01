@@ -78,12 +78,21 @@ static const SettingsDB_t DB_defaultEeepromSettings = {
 const char* const DB_elemToStr( const DB_Elem_t elem )
 {
    switch ( elem ) {
-      case DB_MAGIC_WORD:  return("DB_MAGIC_WORD");   break;
-      case DB_VERSION:     return("DB_VERSION");      break;
-      case DB_MAC_ADDR:    return("DB_MAC_ADDR");     break;
-      case DB_IP_ADDR:     return("DB_IP_ADDR");      break;
-      case DB_SN:          return("DB_SN");           break;
-      default:             return("");                break;
+      case DB_MAGIC_WORD:           return("DB_MAGIC_WORD");            break;
+      case DB_VERSION:              return("DB_VERSION");               break;
+      case DB_MAC_ADDR:             return("DB_MAC_ADDR");              break;
+      case DB_IP_ADDR:              return("DB_IP_ADDR");               break;
+      case DB_SN:                   return("DB_SN");                    break;
+      case DB_BOOT_MAJ:             return("DB_BOOT_MAJ");              break;
+      case DB_BOOT_MIN:             return("DB_BOOT_MIN");              break;
+      case DB_BOOT_BUILD_DATETIME:  return("DB_BOOT_BUILD_DATETIME");   break;
+      case DB_APPL_MAJ:             return("DB_APPL_MAJ");              break;
+      case DB_APPL_MIN:             return("DB_APPL_MIN");              break;
+      case DB_APPL_BUILD_DATETIME:  return("DB_APPL_BUILD_DATETIME");   break;
+      case DB_FPGA_MAJ:             return("DB_FPGA_MAJ");              break;
+      case DB_FPGA_MIN:             return("DB_FPGA_MIN");              break;
+      case DB_FPGA_BUILD_DATETIME:  return("DB_FPGA_BUILD_DATETIME");   break;
+      default:                      return("");                         break;
    }
 }
 

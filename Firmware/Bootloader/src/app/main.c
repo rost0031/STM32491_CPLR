@@ -122,106 +122,70 @@ int main(void)
     log_slow_printf("Starting Bootloader version %s built on %s\n", FW_VER, BUILD_DATE);
 
 
-    dbg_slow_printf("Reading the first 4 pages from EEPROM\n");
-
-    uint8_t buffer[32] = {0};
-
-    I2C_readDevMemBLK(
-          EEPROM,                       // I2C_Dev_t iDev,
-          0,                            // uint16_t offset,
-          32,                           // uint16_t bytesToRead,
-          ACCESS_BARE_METAL,            // AccessType_t accType,
-          buffer,                       // uint8_t* pBuffer,
-          sizeof(buffer)                // uint8_t  bufSize
-    );
-
-
-
-//    uint8_t tmp[100] = {0};
-//    uint16_t tmpLen = 0;
-//    CBErrorCode err = CON_hexToStr(
-//          (const uint8_t *)buffer,            // data to convert
-//          sizeof(buffer),                      // length of data to convert
-//          tmp,                                 // where to write output
-//          sizeof(tmp),                         // max size of output buffer
-//          &tmpLen,                             // size of the resulting output
-//          0,                                   // no columns
-//          ' ',                                 // separator
-//          true                                 // bPrintX
+//
+//
+//    log_slow_printf("Checking settings DB validity...\n");
+//    CBErrorCode status = DB_isValid( ACCESS_BARE_METAL );
+//    if ( ERR_NONE != status ) {
+//       wrn_slow_printf("Settings DB validity check returned: 0x%08x\n", status);
+//       wrn_slow_printf("Attempting to write default DB to EEPROM...\n");
+//       status = DB_initToDefault( ACCESS_BARE_METAL );
+//       if ( ERR_NONE != status ) {
+//          err_slow_printf("Unable to write default DB to EEPROM. Error: 0x%08x\n", status);
+//       } else {
+//          log_slow_printf("Wrote default DB to EEPROM. Attempting to validate...\n");
+//          status = DB_isValid( ACCESS_BARE_METAL );
+//          if ( ERR_NONE != status ) {
+//             err_slow_printf("DB validity check returned: 0x%08x\n", status);
+//             err_slow_printf("Unable to fix DB in EEPROM\n");
+//          } else {
+//             log_slow_printf("A default DB has been successfully written to EEPROM\n");
+//          }
+//       }
+//    } else {
+//       log_slow_printf("Valid settings DB found.\n");
+//    }
+//
+//    dbg_slow_printf("Reading the MAC address from the settings DB...\n");
+//    uint8_t macAddrBuffer[6];
+//    memset(macAddrBuffer, 0, sizeof(macAddrBuffer));
+//
+//    status = DB_getElemBLK(
+//          DB_MAC_ADDR,
+//          macAddrBuffer,
+//          sizeof(macAddrBuffer),
+//          ACCESS_BARE_METAL
+//    );
+//    if ( ERR_NONE != status ) {
+//       err_slow_printf("Unable to read stored MAC address, error: 0x%08x\n", status);
+//    } else {
+//       log_slow_printf(
+//             "Read MAC address from settings DB: %02x:%02x:%02x:%02x:%02x:%02x\n",
+//             macAddrBuffer[0], macAddrBuffer[1], macAddrBuffer[2],
+//             macAddrBuffer[3], macAddrBuffer[4], macAddrBuffer[5]
+//       );
+//    }
+//
+//    /* Read the stored IP address from DB */
+//    dbg_slow_printf("Reading the IP address from the settings DB...\n");
+//    uint8_t ipAddrBuffer[4];
+//    memset(ipAddrBuffer, 0, sizeof(ipAddrBuffer));
+//    status = DB_getElemBLK(
+//          DB_IP_ADDR,
+//          ipAddrBuffer,
+//          sizeof(ipAddrBuffer),
+//          ACCESS_BARE_METAL
 //    );
 //
-    dbg_slow_printf(
-          "Read to write %d bytes: ",
-          sizeof(buffer)
-    );
-    for (uint8_t i = 0; i < 32; i++ ) {
-       printf("%02x ", buffer[i]);
-    } printf("\n");
-
-
-
-    log_slow_printf("Checking settings DB validity...\n");
-    CBErrorCode status = DB_isValid( ACCESS_BARE_METAL );
-    if ( ERR_NONE != status ) {
-       wrn_slow_printf("Settings DB validity check returned: 0x%08x\n", status);
-       wrn_slow_printf("Attempting to write default DB to EEPROM...\n");
-       status = DB_initToDefault( ACCESS_BARE_METAL );
-       if ( ERR_NONE != status ) {
-          err_slow_printf("Unable to write default DB to EEPROM. Error: 0x%08x\n", status);
-       } else {
-          log_slow_printf("Wrote default DB to EEPROM. Attempting to validate...\n");
-          status = DB_isValid( ACCESS_BARE_METAL );
-          if ( ERR_NONE != status ) {
-             err_slow_printf("DB validity check returned: 0x%08x\n", status);
-             err_slow_printf("Unable to fix DB in EEPROM\n");
-          } else {
-             log_slow_printf("A default DB has been successfully written to EEPROM\n");
-          }
-       }
-    } else {
-       log_slow_printf("Valid settings DB found.\n");
-    }
-
-    dbg_slow_printf("Reading the MAC address from the settings DB...\n");
-    uint8_t macAddrBuffer[6];
-    memset(macAddrBuffer, 0, sizeof(macAddrBuffer));
-
-    status = DB_getElemBLK(
-          DB_MAC_ADDR,
-          macAddrBuffer,
-          sizeof(macAddrBuffer),
-          ACCESS_BARE_METAL
-    );
-    if ( ERR_NONE != status ) {
-       err_slow_printf("Unable to read stored MAC address, error: 0x%08x\n", status);
-    } else {
-       log_slow_printf(
-             "Read MAC address from settings DB: %02x:%02x:%02x:%02x:%02x:%02x\n",
-             macAddrBuffer[0], macAddrBuffer[1], macAddrBuffer[2],
-             macAddrBuffer[3], macAddrBuffer[4], macAddrBuffer[5]
-       );
-    }
-
-    /* Read the stored IP address from DB */
-    dbg_slow_printf("Reading the IP address from the settings DB...\n");
-    uint8_t ipAddrBuffer[4];
-    memset(ipAddrBuffer, 0, sizeof(ipAddrBuffer));
-    status = DB_getElemBLK(
-          DB_IP_ADDR,
-          ipAddrBuffer,
-          sizeof(ipAddrBuffer),
-          ACCESS_BARE_METAL
-    );
-
-    if ( ERR_NONE != status ) {
-       err_slow_printf("Unable to read stored IP address, error: 0x%08x\n", status);
-    } else {
-       log_slow_printf(
-             "Read IP address from settings DB: %d:%d:%d:%d\n",
-             ipAddrBuffer[0], ipAddrBuffer[1], ipAddrBuffer[2], ipAddrBuffer[3]
-       );
-    }
-
+//    if ( ERR_NONE != status ) {
+//       err_slow_printf("Unable to read stored IP address, error: 0x%08x\n", status);
+//    } else {
+//       log_slow_printf(
+//             "Read IP address from settings DB: %d:%d:%d:%d\n",
+//             ipAddrBuffer[0], ipAddrBuffer[1], ipAddrBuffer[2], ipAddrBuffer[3]
+//       );
+//    }
+//
 
     /* Instantiate the Active objects by calling their "constructors"         */
     dbg_slow_printf("Initializing AO constructors\n");
