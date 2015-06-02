@@ -812,26 +812,7 @@ evt-&gt;accessType = ACCESS_QPC;
 evt-&gt;dbElem = DB_BOOT_BUILD_DATETIME;
 evt-&gt;dataLen =  DB_getElemSize(DB_BOOT_BUILD_DATETIME);
 MEMCPY(evt-&gt;dataBuf, (uint8_t *)BUILD_DATE, evt-&gt;dataLen);
-QACTIVE_POST(AO_SysMgr, (QEvt *)(evt), me);
-
-
-uint8_t tmp[100] = {0};
-uint16_t tmpLen = 0;
-CBErrorCode err = CON_hexToStr(
-    evt-&gt;dataBuf,                        // data to convert
-    evt-&gt;dataLen,                        // length of data to convert
-    tmp,                                 // where to write output
-    sizeof(tmp),                         // max size of output buffer
-    &amp;tmpLen,                             // size of the resulting output
-    0,                                   // no columns
-    ' ',                                 // separator
-    true                                 // bPrintX
-);
-
-DBG_printf(
-    &quot;Attempting to write %d bytes: %s\n&quot;,
-    evt-&gt;dataLen, tmp
-);</entry>
+QACTIVE_POST(AO_SysMgr, (QEvt *)(evt), me);</entry>
         <tran trig="DB_OP_DONE" target="../../12">
          <tran_glyph conn="119,31,2,0,13">
           <action box="0,0,10,2"/>

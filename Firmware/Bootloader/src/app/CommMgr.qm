@@ -979,6 +979,7 @@ return status;</code>
 #include &quot;flash.h&quot;
 #include &quot;crc32compat.h&quot;
 #include &quot;version.h&quot;
+#include &quot;i2c_dev.h&quot;
 
 /* Compile-time called macros ------------------------------------------------*/
 Q_DEFINE_THIS_FILE;                 /* For QSPY to know the name of this file */

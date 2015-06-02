@@ -1136,25 +1136,6 @@ static QState SysMgr_SetBootLdrDatetime(SysMgr * const me, QEvt const * const e)
             evt->dataLen =  DB_getElemSize(DB_BOOT_BUILD_DATETIME);
             MEMCPY(evt->dataBuf, (uint8_t *)BUILD_DATE, evt->dataLen);
             QACTIVE_POST(AO_SysMgr, (QEvt *)(evt), me);
-
-
-            uint8_t tmp[100] = {0};
-            uint16_t tmpLen = 0;
-            CBErrorCode err = CON_hexToStr(
-                evt->dataBuf,                        // data to convert
-                evt->dataLen,                        // length of data to convert
-                tmp,                                 // where to write output
-                sizeof(tmp),                         // max size of output buffer
-                &tmpLen,                             // size of the resulting output
-                0,                                   // no columns
-                ' ',                                 // separator
-                true                                 // bPrintX
-            );
-
-            DBG_printf(
-                "Attempting to write %d bytes: %s\n",
-                evt->dataLen, tmp
-            );
             status_ = Q_HANDLED();
             break;
         }
