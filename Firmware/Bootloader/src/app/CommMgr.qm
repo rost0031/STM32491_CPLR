@@ -119,7 +119,10 @@ QTimeEvt_postIn(
 );
 QTimeEvt_disarm(&amp;me-&gt;commOpTimerEvt);</entry>
      <tran trig="BOOT_APPL">
-      <action>//dbg_slow_printf(&quot;Got BOOT_APPL sig. Booting Application...\n&quot;);
+      <action>/* This slow log statement has to be here because it flushes the serial output. If
+ * this is removed, there will be crashing here - HR */
+log_slow_printf(&quot;Got BOOT_APPL sig. Booting Application...\n&quot;);
+
 /* If we made it here, no errors have been encountered and we
  * can safely proceed to boot the Application FW image */
 
@@ -576,7 +579,7 @@ uint32_t crcCheck = CRC32_Calc(
              <choice target="../../../../../../../../../1">
               <guard brief="CRC match?">crcCheck == storedCRC</guard>
               <action>me-&gt;errorCode = ERR_NONE;
-DBG_printf(&quot;CRC check passed, booting to Application FW image\n&quot;);
+LOG_printf(&quot;CRC check passed, booting to Application FW image\n&quot;);
 
 /* Post to self to boot to application but still have enough time to send a Done */
 QEvt *evt = Q_NEW(QEvt, BOOT_APPL_SIG);

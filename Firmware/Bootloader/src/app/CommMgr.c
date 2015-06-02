@@ -311,7 +311,10 @@ static QState CommMgr_Active(CommMgr * const me, QEvt const * const e) {
         }
         /* ${AOs::CommMgr::SM::Active::BOOT_APPL} */
         case BOOT_APPL_SIG: {
-            //dbg_slow_printf("Got BOOT_APPL sig. Booting Application...\n");
+            /* This slow log statement has to be here because it flushes the serial output. If
+             * this is removed, there will be crashing here - HR */
+            log_slow_printf("Got BOOT_APPL sig. Booting Application...\n");
+
             /* If we made it here, no errors have been encountered and we
              * can safely proceed to boot the Application FW image */
 
@@ -786,7 +789,7 @@ static QState CommMgr_ValidateMsg(CommMgr * const me, QEvt const * const e) {
                                 /* ${AOs::CommMgr::SM::Active::Busy::ValidateMsg::MSG_PROCESS::[SetBootMode?]::[ValidPayload?]::[Application?]::[ValidCRC?]::[ValidSize?]::[CRCmatch?]} */
                                 if (crcCheck == storedCRC) {
                                     me->errorCode = ERR_NONE;
-                                    DBG_printf("CRC check passed, booting to Application FW image\n");
+                                    LOG_printf("CRC check passed, booting to Application FW image\n");
 
                                     /* Post to self to boot to application but still have enough time to send a Done */
                                     QEvt *evt = Q_NEW(QEvt, BOOT_APPL_SIG);
