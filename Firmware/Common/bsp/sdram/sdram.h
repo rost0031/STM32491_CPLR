@@ -138,12 +138,26 @@ uint32_t SDRAM_testDataBus( const uint32_t addr );
  * region, select a base address on a 64 Kbyte boundary. Also, select the region
  * size as a power of two.
  *
- * @param [in] addr: volatile uint32_t memory base address to test.
+ * @param [in] addr: uint32_t memory base address to test.
  * @param [in] nBytes: number of bytes to test from the base address.
  * @return: 0 if sucess,
  *          address that failed if error occurred.
  */
 uint32_t SDRAM_testAddrBus( const uint32_t addr, const uint32_t nBytes );
+
+/**
+ * @brief   SDRAM device integrity test.
+ *
+ * Test the device cells in a memory region by performing a increment/decrement
+ * test over all memory addresses.  The entire memory region is tested for
+ * ability to store both 0 and 1.
+ *
+ * @param [in] addr: uint32_t memory base address to test.
+ * @param [in] nBytes: number of bytes to test from the base address.
+ * @return: 0 if sucess,
+ *          address that failed if error occurred.
+ */
+uint32_t SDRAM_testDevice( const uint32_t addr, const uint32_t nBytes );
 
 /**
  * @brief   NOR Event callback function

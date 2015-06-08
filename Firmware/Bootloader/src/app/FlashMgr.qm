@@ -123,9 +123,6 @@
    <attribute name="ramTimerEvt" type="QTimeEvt" visibility="0x01" properties="0x00">
     <documentation>/**&lt; Used for timing out the Ram test in case it gets stuck for some reason. */</documentation>
    </attribute>
-   <attribute name="ramOpTimerEvt" type="QTimeEvt" visibility="0x01" properties="0x00">
-    <documentation>/**&lt; Used for timing out individual operations on RAM in FlashMgr object. */</documentation>
-   </attribute>
    <attribute name="currRamTest" type="CBRamTest_t" visibility="0x01" properties="0x00">
     <documentation>/**&lt; Which test is running. */</documentation>
    </attribute>
@@ -188,14 +185,7 @@ QTimeEvt_postIn(
     (QActive *)me,
     SEC_TO_TICKS( HL_MAX_TOUT_SEC_FLASH_FW )
 );
-QTimeEvt_disarm(&amp;me-&gt;ramTimerEvt);
-
-QTimeEvt_postIn(
-    &amp;me-&gt;ramOpTimerEvt,
-    (QActive *)me,
-    SEC_TO_TICKS( HL_MAX_TOUT_SEC_FLASH_FW )
-);
-QTimeEvt_disarm(&amp;me-&gt;ramOpTimerEvt);</entry>
+QTimeEvt_disarm(&amp;me-&gt;ramTimerEvt);</entry>
      <state name="Idle">
       <documentation>/**
  * @brief	Idle state that allows new messages to be received.
@@ -238,12 +228,11 @@ MEMCPY(
        </tran_glyph>
       </tran>
       <tran trig="RAM_TEST_START" target="../../2/3">
-       <action>DBG_printf(&quot;RAM_TEST_START signal\n&quot;);</action>
-       <tran_glyph conn="6,106,3,3,41">
+       <tran_glyph conn="6,106,3,3,40">
         <action box="0,-2,15,2"/>
        </tran_glyph>
       </tran>
-      <state_glyph node="6,8,15,145">
+      <state_glyph node="6,8,15,114">
        <entry box="1,2,6,2"/>
       </state_glyph>
      </state>
@@ -762,9 +751,7 @@ QTimeEvt_rearm(                         /* Re-arm timer on entry */
     &amp;me-&gt;ramTimerEvt,
     SEC_TO_TICKS( HL_MAX_TOUT_SEC_CLI_WAIT_FOR_RAM_TEST )
 );
-
-/* Reset all the variables that keep track of statuses */
-me-&gt;retryCurr    = 0;</entry>
+</entry>
       <exit>QTimeEvt_disarm(&amp;me-&gt;ramTimerEvt); /* Disarm timer on exit */
 
 /* Always send a flash status event to the CommMgr AO with the current error code */
@@ -774,72 +761,101 @@ evt-&gt;test = me-&gt;currRamTest;
 evt-&gt;addr = me-&gt;currRamAddr;
 QACTIVE_POST(AO_CommMgr, (QEvt *)(evt), AO_FlashMgr);</exit>
       <tran trig="RAM_TIMEOUT" target="../../0">
-       <action>ERR_printf(&quot;Timeout trying to process RAM test request, error: 0x%08x\n&quot;, me-&gt;errorCode);</action>
-       <tran_glyph conn="42,150,3,1,-21">
+       <action>ERR_printf(
+    &quot;Timeout trying to process RAM test request during RAM test %d, error: 0x%08x\n&quot;,
+    me-&gt;currRamTest, me-&gt;errorCode
+);</action>
+       <tran_glyph conn="42,120,3,1,-21">
         <action box="-14,-2,14,2"/>
-       </tran_glyph>
-      </tran>
-      <tran trig="RAM_ERROR" target="../../0">
-       <action>ERR_printf(&quot;Unable to to process RAM test request. Error: 0x%08x\n&quot;, me-&gt;errorCode);
-</action>
-       <tran_glyph conn="42,147,3,1,-21">
-        <action box="-14,-2,10,2"/>
        </tran_glyph>
       </tran>
       <state name="AddrBusTest">
        <documentation>/**
- * @brief    Perform a RAM address bus test on a single address
+ * @brief    Perform a RAM address bus test
  * 
  * @param  [in|out] me: Pointer to the state machine
  * @param  [in|out]  e:  Pointer to the event being processed.
  * @return status: QState type that specifies where the state
  * machine is going next.
  */</documentation>
-       <entry>QEvt *evt = Q_NEW(QEvt, RAM_OP_START_SIG);
+       <entry>me-&gt;currRamTest = _CB_RAM_TEST_ADDR_BUS;
+me-&gt;currRamAddr = 0;
+me-&gt;errorCode = ERR_SDRAM_ADDR_BUS_TEST_TIMEOUT;
+
+QEvt *evt = Q_NEW(QEvt, RAM_OP_START_SIG);
 QACTIVE_POST(AO_FlashMgr, (QEvt *)(evt), AO_FlashMgr);
 </entry>
        <tran trig="RAM_OP_START">
-        <action>uint32_t failedAddr = SDRAM_testAddrBus( me-&gt;currRamAddr,  RAM_TEST_BLOCK_SIZE );</action>
-        <choice>
+        <action>me-&gt;currRamAddr = SDRAM_testAddrBus( 0,  RAM_TEST_BLOCK_SIZE );</action>
+        <choice target="../../../2">
          <guard>else</guard>
-         <action>DBG_printf(&quot;Test for %d bytes at addr 0x%08x passed.\n&quot;, RAM_TEST_BLOCK_SIZE, me-&gt;currRamAddr);
-
-me-&gt;currRamAddr += RAM_TEST_BLOCK_SIZE;</action>
-         <choice target="../../..">
-          <guard brief="MoreRamToTest?">me-&gt;currRamAddr &lt; (SDRAM_MEM_SIZE - RAM_TEST_BLOCK_SIZE)</guard>
-          <choice_glyph conn="107,121,4,1,-15,-3">
-           <action box="1,-4,12,2"/>
-          </choice_glyph>
-         </choice>
-         <choice target="../../../../../0">
-          <guard>else</guard>
-          <action>DBG_printf(&quot;Ram test finished with no errors\n&quot;);</action>
-          <choice_glyph conn="107,121,4,1,4,-86">
-           <action box="1,0,10,2"/>
-          </choice_glyph>
-         </choice>
-         <choice_glyph conn="86,121,5,-1,21">
+         <action>DBG_printf(&quot;No RAM Addr bus error found.\n&quot;);</action>
+         <choice_glyph conn="85,109,4,3,-3,5">
           <action box="1,0,10,2"/>
          </choice_glyph>
         </choice>
         <choice target="../../../../0">
-         <guard brief="Error?">0 != failedAddr</guard>
-         <action>me-&gt;errorCode = ERR_SDRAM_DATA_BUS;
-me-&gt;currRamAddr = failedAddr;
+         <guard brief="Error?">0 != me-&gt;currRamAddr</guard>
+         <action>me-&gt;errorCode = ERR_SDRAM_ADDR_BUS;
 ERR_printf(
     &quot;RAM addr bus test failed at addr: 0x%08x. Error: 0x%08x\n&quot;,
-    me-&gt;currRamAddr, me-&gt;errorCode 
+    me-&gt;currRamAddr, me-&gt;errorCode
 );</action>
-         <choice_glyph conn="86,121,5,1,-65">
-          <action box="-9,0,10,2"/>
+         <choice_glyph conn="85,109,4,1,5,-64">
+          <action box="-6,3,7,2"/>
          </choice_glyph>
         </choice>
-        <tran_glyph conn="86,110,2,-1,11">
-         <action box="0,0,12,2"/>
+        <tran_glyph conn="68,109,3,-1,17">
+         <action box="1,-2,12,2"/>
         </tran_glyph>
        </tran>
-       <state_glyph node="84,103,20,7">
-        <entry box="1,2,15,2"/>
+       <state_glyph node="68,103,15,8">
+        <entry box="1,2,4,2"/>
+       </state_glyph>
+      </state>
+      <state name="DeviceTest">
+       <documentation>/**
+ * @brief    Perform a RAM device bus test.
+ * 
+ * @param  [in|out] me: Pointer to the state machine
+ * @param  [in|out]  e:  Pointer to the event being processed.
+ * @return status: QState type that specifies where the state
+ * machine is going next.
+ */</documentation>
+       <entry>me-&gt;currRamTest = _CB_RAM_TEST_DEV_INT;
+me-&gt;currRamAddr = 0;
+me-&gt;errorCode = ERR_SDRAM_DEVICE_INTEGRITY_TEST_TIMEOUT;
+
+QEvt *evt = Q_NEW(QEvt, RAM_OP_START_SIG);
+QACTIVE_POST(AO_FlashMgr, (QEvt *)(evt), AO_FlashMgr);
+</entry>
+       <tran trig="RAM_OP_START">
+        <action>me-&gt;currRamAddr = SDRAM_testDevice(0, RAM_TEST_BLOCK_SIZE );</action>
+        <choice target="../../../../0">
+         <guard>else</guard>
+         <action>me-&gt;errorCode = ERR_NONE;
+DBG_printf(&quot;No RAM device errors found.\n&quot;);</action>
+         <choice_glyph conn="107,115,4,1,2,-86">
+          <action box="1,0,10,2"/>
+         </choice_glyph>
+        </choice>
+        <choice target="../../../../0">
+         <guard brief="Error?">0 != me-&gt;currRamAddr</guard>
+         <action>me-&gt;errorCode = ERR_SDRAM_DEVICE_INTEGRITY;
+ERR_printf(
+    &quot;RAM device bus test failed at addr: 0x%08x. Error: 0x%08x\n&quot;,
+    me-&gt;currRamAddr, me-&gt;errorCode
+);</action>
+         <choice_glyph conn="107,115,5,1,-86">
+          <action box="-8,-2,10,2"/>
+         </choice_glyph>
+        </choice>
+        <tran_glyph conn="90,109,3,-1,17,6">
+         <action box="1,-2,12,2"/>
+        </tran_glyph>
+       </tran>
+       <state_glyph node="90,103,15,8">
+        <entry box="1,2,4,2"/>
        </state_glyph>
       </state>
       <state name="DataBusTest">
@@ -852,53 +868,51 @@ ERR_printf(
  * machine is going next.
  */</documentation>
        <entry>me-&gt;currRamTest = _CB_RAM_TEST_DATA_BUS;
+me-&gt;currRamAddr = 0;
+me-&gt;errorCode = ERR_SDRAM_DATA_BUS_TEST_TIMEOUT;
 
 QEvt *evt = Q_NEW(QEvt, RAM_OP_START_SIG);
 QACTIVE_POST(AO_FlashMgr, (QEvt *)(evt), AO_FlashMgr);
 </entry>
        <tran trig="RAM_OP_START">
         <action>me-&gt;currRamTest = _CB_RAM_TEST_DATA_BUS;
-me-&gt;currRamAddr = 0;
-uint32_t failedPattern = SDRAM_testDataBus( me-&gt;currRamAddr );</action>
-        <choice target="../../../2">
+me-&gt;currRamAddr = SDRAM_testDataBus( 0 );</action>
+        <choice target="../../../1">
          <guard>else</guard>
-         <action>DBG_printf(&quot;No RAM Data bus error found.\n&quot;);
-
-me-&gt;currRamTest = _CB_RAM_TEST_DATA_BUS;
-me-&gt;currRamAddr = 0;</action>
-         <choice_glyph conn="71,113,4,3,-7,13">
-          <action box="1,-9,10,2"/>
+         <action>DBG_printf(&quot;No RAM Data bus error found.\n&quot;);</action>
+         <choice_glyph conn="64,109,4,3,-3,4">
+          <action box="0,-6,10,2"/>
          </choice_glyph>
         </choice>
         <choice target="../../../../0">
-         <guard brief="Error?">0 != failedPattern</guard>
+         <guard brief="Error?">0 != me-&gt;currRamAddr</guard>
          <action>me-&gt;errorCode = ERR_SDRAM_DATA_BUS;
 ERR_printf(
     &quot;RAM data bus test failed at addr: 0x%08x on pattern: 0x%08x. Error: 0x%08x\n&quot;,
-    me-&gt;currRamAddr, failedPattern, me-&gt;errorCode 
+    SDRAM_BANK_ADDR + 0, me-&gt;currRamAddr, me-&gt;errorCode 
 );</action>
-         <choice_glyph conn="71,113,4,1,6,-50">
-          <action box="0,2,10,2"/>
+         <choice_glyph conn="64,109,4,1,4,-43">
+          <action box="-6,2,7,2"/>
          </choice_glyph>
         </choice>
-        <tran_glyph conn="47,113,3,-1,24">
+        <tran_glyph conn="46,109,3,-1,18">
          <action box="0,-2,12,2"/>
         </tran_glyph>
        </tran>
-       <state_glyph node="47,103,20,14">
+       <state_glyph node="46,103,15,8">
         <entry box="1,2,6,2"/>
        </state_glyph>
       </state>
-      <state_glyph node="42,99,84,54">
+      <state_glyph node="42,99,71,23">
        <entry box="1,2,6,2"/>
        <exit box="1,4,6,2"/>
       </state_glyph>
      </state>
-     <state_glyph node="3,3,130,152">
+     <state_glyph node="3,3,130,123">
       <entry box="1,2,5,2"/>
      </state_glyph>
     </state>
-    <state_diagram size="137,158"/>
+    <state_diagram size="137,127"/>
    </statechart>
   </class>
   <attribute name="AO_FlashMgr" type="QActive * const" visibility="0x00" properties="0x00">
@@ -917,8 +931,7 @@ ERR_printf(
 QActive_ctor(&amp;me-&gt;super, (QStateHandler)&amp;FlashMgr_initial);
 QTimeEvt_ctor(&amp;me-&gt;flashTimerEvt, FLASH_TIMEOUT_SIG);
 QTimeEvt_ctor(&amp;me-&gt;flashOpTimerEvt, FLASH_OP_TIMEOUT_SIG);
-QTimeEvt_ctor(&amp;me-&gt;ramTimerEvt, RAM_TIMEOUT_SIG);
-QTimeEvt_ctor(&amp;me-&gt;ramOpTimerEvt, RAM_OP_TIMEOUT_SIG);</code>
+QTimeEvt_ctor(&amp;me-&gt;ramTimerEvt, RAM_TIMEOUT_SIG);</code>
   </operation>
  </package>
  <directory name=".">

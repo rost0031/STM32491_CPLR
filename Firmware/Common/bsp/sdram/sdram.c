@@ -560,7 +560,7 @@ uint32_t SDRAM_testAddrBus( const uint32_t addr, const uint32_t nBytes )
          if ( offset != testOffset &&
                *(__IO uint8_t *)(SDRAM_BANK_ADDR + addr + offset) != testPattern ) {
             ERR_printf(
-                  "Expected: 0x%02x, read: 0x%02x\n",
+                  "RAM address bus stuck-low test failed. Expected: 0x%02x, read: 0x%02x\n",
                   testPattern,
                   *(__IO uint8_t *)(SDRAM_BANK_ADDR + addr + offset )
             );
@@ -577,14 +577,65 @@ uint32_t SDRAM_testAddrBus( const uint32_t addr, const uint32_t nBytes )
 }
 
 /******************************************************************************/
+uint32_t SDRAM_testDevice( const uint32_t addr, const uint32_t nBytes )
+{
+   LOG_printf("Testing RAM device...\n");
+
+   uint32_t offset = 0;
+   uint32_t nWords = nBytes / (sizeof(uint32_t));
+
+   uint32_t testPattern = 0;
+   uint32_t antiPattern = 0;
+
+   /* Fill memory with known pattern */
+   for( testPattern = 1, offset = 0; offset < nWords; testPattern++, offset += 4 ) {
+      *(__IO uint32_t *)(SDRAM_BANK_ADDR + addr + offset) = testPattern; // Write pattern to the address
+   }
+
+   /* Check each location and invert it for a second pass */
+   for( testPattern = 1, offset = 0; offset < nWords; testPattern++,  offset += 4 ) {
+      if( *(__IO uint32_t *)(SDRAM_BANK_ADDR + addr + offset) != testPattern ) {
+         ERR_printf(
+               "RAM device test failed at addr: 0x%08x. Expected: 0x%08x, read: 0x%08x\n",
+               SDRAM_BANK_ADDR + addr + offset,
+               testPattern,
+               *(__IO uint32_t *)(SDRAM_BANK_ADDR + addr + offset )
+         );
+         return( SDRAM_BANK_ADDR + addr + offset );
+      }
+
+      antiPattern = ~testPattern;
+      *(__IO uint32_t *)(SDRAM_BANK_ADDR + addr + offset ) = antiPattern;
+   }
+
+   /* Check each location for the inverted pattern and zero it */
+   for( testPattern = 1, offset = 0; offset < nWords; testPattern++, offset += 4 ) {
+      antiPattern = ~testPattern;
+      if( *(__IO uint32_t *)(SDRAM_BANK_ADDR + addr + offset) != antiPattern ) {
+         ERR_printf(
+               "RAM device test failed at addr: 0x%08x. Expected: 0x%08x, read: 0x%08x\n",
+               SDRAM_BANK_ADDR + addr + offset,
+               testPattern,
+               *(__IO uint32_t *)(SDRAM_BANK_ADDR + addr + offset )
+         );
+         return( SDRAM_BANK_ADDR + addr + offset );
+      }
+   }
+
+   LOG_printf("RAM device test finished with no errors.\n");
+   return 0;
+}
+
+
+/******************************************************************************/
 static void SDRAM_slowPrintMemRegion( uint32_t startAddr, uint32_t nBytes )
 {
-   dbg_slow_printf("Memory Region %d bytes from addr 0x%08x\n", nBytes, startAddr);
+   dbg_slow_printf("Memory Region %d bytes from addr 0x%08x\n", (unsigned int)nBytes, (unsigned int)startAddr);
    for ( uint32_t i = 0; i <= nBytes; i += 4 ) {
       if ( i%16 == 0 ) {
-         printf("\nAddr: 0x%08x : ", startAddr + i );
+         printf("\nAddr: 0x%08x : ", (unsigned int)(startAddr + i) );
       }
-      printf("%08x ", *(__IO uint32_t *)(startAddr + i ));
+      printf("%08x ", (unsigned int)*(__IO uint32_t *)(startAddr + i ));
    }
 }
 

@@ -78,6 +78,9 @@ typedef enum CBErrors
    ERR_FLASH_INVALID_FW_PACKET_CRC                             = 0x00010012,
    ERR_FLASH_WRITE_TIMEOUT                                     = 0x00010013,
    ERR_FLASH_INVALID_IMAGE_CRC_AFTER_FLASH                     = 0x00010014,
+   ERR_SDRAM_DATA_BUS_TEST_TIMEOUT                             = 0x00010015,
+   ERR_SDRAM_ADDR_BUS_TEST_TIMEOUT                             = 0x00010016,
+   ERR_SDRAM_DEVICE_INTEGRITY_TEST_TIMEOUT                     = 0x00010017,
 
    /* NOR error category                         0x00030000 - 0x0003FFFF */
    ERR_NOR_ERROR                                               = 0x00030000,

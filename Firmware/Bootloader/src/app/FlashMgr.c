@@ -105,9 +105,6 @@ typedef struct {
     /**< Used for timing out the Ram test in case it gets stuck for some reason. */
     QTimeEvt ramTimerEvt;
 
-    /**< Used for timing out individual operations on RAM in FlashMgr object. */
-    QTimeEvt ramOpTimerEvt;
-
     /**< Which test is running. */
     CBRamTest_t currRamTest;
 
@@ -219,7 +216,7 @@ static QState FlashMgr_WritingFlash(FlashMgr * const me, QEvt const * const e);
 static QState FlashMgr_BusyRam(FlashMgr * const me, QEvt const * const e);
 
 /**
- * @brief    Perform a RAM address bus test on a single address
+ * @brief    Perform a RAM address bus test
  *
  * @param  [in|out] me: Pointer to the state machine
  * @param  [in|out]  e:  Pointer to the event being processed.
@@ -227,6 +224,16 @@ static QState FlashMgr_BusyRam(FlashMgr * const me, QEvt const * const e);
  * machine is going next.
  */
 static QState FlashMgr_AddrBusTest(FlashMgr * const me, QEvt const * const e);
+
+/**
+ * @brief    Perform a RAM device bus test.
+ *
+ * @param  [in|out] me: Pointer to the state machine
+ * @param  [in|out]  e:  Pointer to the event being processed.
+ * @return status: QState type that specifies where the state
+ * machine is going next.
+ */
+static QState FlashMgr_DeviceTest(FlashMgr * const me, QEvt const * const e);
 
 /**
  * @brief    Perform a RAM data bus test on a single address
@@ -267,7 +274,6 @@ void FlashMgr_ctor(void) {
     QTimeEvt_ctor(&me->flashTimerEvt, FLASH_TIMEOUT_SIG);
     QTimeEvt_ctor(&me->flashOpTimerEvt, FLASH_OP_TIMEOUT_SIG);
     QTimeEvt_ctor(&me->ramTimerEvt, RAM_TIMEOUT_SIG);
-    QTimeEvt_ctor(&me->ramOpTimerEvt, RAM_OP_TIMEOUT_SIG);
 }
 
 /**
@@ -336,13 +342,6 @@ static QState FlashMgr_Active(FlashMgr * const me, QEvt const * const e) {
                 SEC_TO_TICKS( HL_MAX_TOUT_SEC_FLASH_FW )
             );
             QTimeEvt_disarm(&me->ramTimerEvt);
-
-            QTimeEvt_postIn(
-                &me->ramOpTimerEvt,
-                (QActive *)me,
-                SEC_TO_TICKS( HL_MAX_TOUT_SEC_FLASH_FW )
-            );
-            QTimeEvt_disarm(&me->ramOpTimerEvt);
             status_ = Q_HANDLED();
             break;
         }
@@ -405,7 +404,6 @@ static QState FlashMgr_Idle(FlashMgr * const me, QEvt const * const e) {
         }
         /* ${AOs::FlashMgr::SM::Active::Idle::RAM_TEST_START} */
         case RAM_TEST_START_SIG: {
-            DBG_printf("RAM_TEST_START signal\n");
             status_ = Q_TRAN(&FlashMgr_DataBusTest);
             break;
         }
@@ -935,8 +933,6 @@ static QState FlashMgr_BusyRam(FlashMgr * const me, QEvt const * const e) {
                 SEC_TO_TICKS( HL_MAX_TOUT_SEC_CLI_WAIT_FOR_RAM_TEST )
             );
 
-            /* Reset all the variables that keep track of statuses */
-            me->retryCurr    = 0;
             status_ = Q_HANDLED();
             break;
         }
@@ -955,14 +951,10 @@ static QState FlashMgr_BusyRam(FlashMgr * const me, QEvt const * const e) {
         }
         /* ${AOs::FlashMgr::SM::Active::BusyRam::RAM_TIMEOUT} */
         case RAM_TIMEOUT_SIG: {
-            ERR_printf("Timeout trying to process RAM test request, error: 0x%08x\n", me->errorCode);
-            status_ = Q_TRAN(&FlashMgr_Idle);
-            break;
-        }
-        /* ${AOs::FlashMgr::SM::Active::BusyRam::RAM_ERROR} */
-        case RAM_ERROR_SIG: {
-            ERR_printf("Unable to to process RAM test request. Error: 0x%08x\n", me->errorCode);
-
+            ERR_printf(
+                "Timeout trying to process RAM test request during RAM test %d, error: 0x%08x\n",
+                me->currRamTest, me->errorCode
+            );
             status_ = Q_TRAN(&FlashMgr_Idle);
             break;
         }
@@ -975,7 +967,7 @@ static QState FlashMgr_BusyRam(FlashMgr * const me, QEvt const * const e) {
 }
 
 /**
- * @brief    Perform a RAM address bus test on a single address
+ * @brief    Perform a RAM address bus test
  *
  * @param  [in|out] me: Pointer to the state machine
  * @param  [in|out]  e:  Pointer to the event being processed.
@@ -988,6 +980,10 @@ static QState FlashMgr_AddrBusTest(FlashMgr * const me, QEvt const * const e) {
     switch (e->sig) {
         /* ${AOs::FlashMgr::SM::Active::BusyRam::AddrBusTest} */
         case Q_ENTRY_SIG: {
+            me->currRamTest = _CB_RAM_TEST_ADDR_BUS;
+            me->currRamAddr = 0;
+            me->errorCode = ERR_SDRAM_ADDR_BUS_TEST_TIMEOUT;
+
             QEvt *evt = Q_NEW(QEvt, RAM_OP_START_SIG);
             QACTIVE_POST(AO_FlashMgr, (QEvt *)(evt), AO_FlashMgr);
 
@@ -996,11 +992,10 @@ static QState FlashMgr_AddrBusTest(FlashMgr * const me, QEvt const * const e) {
         }
         /* ${AOs::FlashMgr::SM::Active::BusyRam::AddrBusTest::RAM_OP_START} */
         case RAM_OP_START_SIG: {
-            uint32_t failedAddr = SDRAM_testAddrBus( me->currRamAddr,  RAM_TEST_BLOCK_SIZE );
+            me->currRamAddr = SDRAM_testAddrBus( 0,  RAM_TEST_BLOCK_SIZE );
             /* ${AOs::FlashMgr::SM::Active::BusyRam::AddrBusTest::RAM_OP_START::[Error?]} */
-            if (0 != failedAddr) {
-                me->errorCode = ERR_SDRAM_DATA_BUS;
-                me->currRamAddr = failedAddr;
+            if (0 != me->currRamAddr) {
+                me->errorCode = ERR_SDRAM_ADDR_BUS;
                 ERR_printf(
                     "RAM addr bus test failed at addr: 0x%08x. Error: 0x%08x\n",
                     me->currRamAddr, me->errorCode
@@ -1009,18 +1004,60 @@ static QState FlashMgr_AddrBusTest(FlashMgr * const me, QEvt const * const e) {
             }
             /* ${AOs::FlashMgr::SM::Active::BusyRam::AddrBusTest::RAM_OP_START::[else]} */
             else {
-                DBG_printf("Test for %d bytes at addr 0x%08x passed.\n", RAM_TEST_BLOCK_SIZE, me->currRamAddr);
+                DBG_printf("No RAM Addr bus error found.\n");
+                status_ = Q_TRAN(&FlashMgr_DeviceTest);
+            }
+            break;
+        }
+        default: {
+            status_ = Q_SUPER(&FlashMgr_BusyRam);
+            break;
+        }
+    }
+    return status_;
+}
 
-                me->currRamAddr += RAM_TEST_BLOCK_SIZE;
-                /* ${AOs::FlashMgr::SM::Active::BusyRam::AddrBusTest::RAM_OP_START::[else]::[MoreRamToTest?]} */
-                if (me->currRamAddr < (SDRAM_MEM_SIZE - RAM_TEST_BLOCK_SIZE)) {
-                    status_ = Q_TRAN(&FlashMgr_AddrBusTest);
-                }
-                /* ${AOs::FlashMgr::SM::Active::BusyRam::AddrBusTest::RAM_OP_START::[else]::[else]} */
-                else {
-                    DBG_printf("Ram test finished with no errors\n");
-                    status_ = Q_TRAN(&FlashMgr_Idle);
-                }
+/**
+ * @brief    Perform a RAM device bus test.
+ *
+ * @param  [in|out] me: Pointer to the state machine
+ * @param  [in|out]  e:  Pointer to the event being processed.
+ * @return status: QState type that specifies where the state
+ * machine is going next.
+ */
+/*${AOs::FlashMgr::SM::Active::BusyRam::DeviceTest} ........................*/
+static QState FlashMgr_DeviceTest(FlashMgr * const me, QEvt const * const e) {
+    QState status_;
+    switch (e->sig) {
+        /* ${AOs::FlashMgr::SM::Active::BusyRam::DeviceTest} */
+        case Q_ENTRY_SIG: {
+            me->currRamTest = _CB_RAM_TEST_DEV_INT;
+            me->currRamAddr = 0;
+            me->errorCode = ERR_SDRAM_DEVICE_INTEGRITY_TEST_TIMEOUT;
+
+            QEvt *evt = Q_NEW(QEvt, RAM_OP_START_SIG);
+            QACTIVE_POST(AO_FlashMgr, (QEvt *)(evt), AO_FlashMgr);
+
+            status_ = Q_HANDLED();
+            break;
+        }
+        /* ${AOs::FlashMgr::SM::Active::BusyRam::DeviceTest::RAM_OP_START} */
+        case RAM_OP_START_SIG: {
+            me->currRamAddr = SDRAM_testDevice(0, RAM_TEST_BLOCK_SIZE );
+            /* ${AOs::FlashMgr::SM::Active::BusyRam::DeviceTest::RAM_OP_START::[Error?]} */
+            if (0 != me->currRamAddr) {
+                me->errorCode = ERR_SDRAM_DEVICE_INTEGRITY;
+                ERR_printf(
+                    "RAM device bus test failed at addr: 0x%08x. Error: 0x%08x\n",
+                    me->currRamAddr, me->errorCode
+                );
+                status_ = Q_TRAN(&FlashMgr_Idle);
+            }
+            /* ${AOs::FlashMgr::SM::Active::BusyRam::DeviceTest::RAM_OP_START::[else]} */
+            else {
+                me->errorCode = ERR_NONE;
+                DBG_printf("No RAM device errors found.\n");
+                status_ = Q_TRAN(&FlashMgr_Idle);
             }
             break;
         }
@@ -1047,6 +1084,8 @@ static QState FlashMgr_DataBusTest(FlashMgr * const me, QEvt const * const e) {
         /* ${AOs::FlashMgr::SM::Active::BusyRam::DataBusTest} */
         case Q_ENTRY_SIG: {
             me->currRamTest = _CB_RAM_TEST_DATA_BUS;
+            me->currRamAddr = 0;
+            me->errorCode = ERR_SDRAM_DATA_BUS_TEST_TIMEOUT;
 
             QEvt *evt = Q_NEW(QEvt, RAM_OP_START_SIG);
             QACTIVE_POST(AO_FlashMgr, (QEvt *)(evt), AO_FlashMgr);
@@ -1057,23 +1096,19 @@ static QState FlashMgr_DataBusTest(FlashMgr * const me, QEvt const * const e) {
         /* ${AOs::FlashMgr::SM::Active::BusyRam::DataBusTest::RAM_OP_START} */
         case RAM_OP_START_SIG: {
             me->currRamTest = _CB_RAM_TEST_DATA_BUS;
-            me->currRamAddr = 0;
-            uint32_t failedPattern = SDRAM_testDataBus( me->currRamAddr );
+            me->currRamAddr = SDRAM_testDataBus( 0 );
             /* ${AOs::FlashMgr::SM::Active::BusyRam::DataBusTest::RAM_OP_START::[Error?]} */
-            if (0 != failedPattern) {
+            if (0 != me->currRamAddr) {
                 me->errorCode = ERR_SDRAM_DATA_BUS;
                 ERR_printf(
                     "RAM data bus test failed at addr: 0x%08x on pattern: 0x%08x. Error: 0x%08x\n",
-                    me->currRamAddr, failedPattern, me->errorCode
+                    SDRAM_BANK_ADDR + 0, me->currRamAddr, me->errorCode
                 );
                 status_ = Q_TRAN(&FlashMgr_Idle);
             }
             /* ${AOs::FlashMgr::SM::Active::BusyRam::DataBusTest::RAM_OP_START::[else]} */
             else {
                 DBG_printf("No RAM Data bus error found.\n");
-
-                me->currRamTest = _CB_RAM_TEST_DATA_BUS;
-                me->currRamAddr = 0;
                 status_ = Q_TRAN(&FlashMgr_AddrBusTest);
             }
             break;
