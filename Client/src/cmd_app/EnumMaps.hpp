@@ -70,12 +70,16 @@ template<typename T> struct enumConstRefHolder
 
 
 /**
- * This function returns a string representation of the ModuleId_t enum.
- *
- * @param  a: A ModuleId_t enum
- * @return: a string representation of the ModuleId_t enum
+ * @brief   += Operator that does the actual conversion from enum to a string.
+ * @param [in] str: string type to append to.
+ * @param [in] data: template param of enum that is getting converted.
+ * @return  stream with output in string form.
  */
-//std::ostream getModuleIdStr( const ModuleId_t a );
+template<typename T>
+std::string& operator+=(std::string& str, enumConstRefHolder<T> const& data)
+{
+   return( str += enumStrings<T>::data[data.enumVal] );
+}
 
 /**
  * @brief   Operator that does the actual conversion from enum to a string.

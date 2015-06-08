@@ -258,6 +258,35 @@ public:
          const CBAccessType acc
    );
 
+   /**
+    * @brief   Blocking cmd to start a test of external RAM of DC3.
+    * @param [out] *status: CBErrorCode pointer to the returned status of from
+    * the DC3 board.
+    *    @arg  ERR_NONE: success.
+    *    other error codes if failure.
+    * @note: unless this variable is set to ERR_NONE at the completion, the
+    * results of other returned data should not be trusted.
+    *
+    * @param [out] *test: CBRamTest_t pointer to the returned RAM test that
+    * failed on the DC3 board.
+    *    @arg _CB_RAM_TEST_NONE: no test failed.
+    *    @arg _CB_RAM_TEST_DATA_BUS: ram test failed in the data bus integrity
+    *                                test
+    *    @arg _CB_RAM_TEST_ADDR_BUS: ram test failed in the addr bus integrity
+    *                                test
+    *    @arg _CB_RAM_TEST_DEV_INT:  ram test failed in the device integrity
+    *                                test
+    * @param [out] *addr: address at which the ram address saw an error.
+    * @return: ClientError_t status of the client executing the command.
+    *    @arg  CLI_ERR_NONE: success
+    *    other error codes if failure.
+    */
+   ClientError_t DC3_ramTest(
+         CBErrorCode *status,
+         CBRamTest_t* test,
+         uint32_t* addr
+   );
+
    /****************************************************************************
     *                    Client control functionality
     ***************************************************************************/

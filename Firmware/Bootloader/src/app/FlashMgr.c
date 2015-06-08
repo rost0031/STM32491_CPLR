@@ -40,6 +40,7 @@
 #include "flash.h"
 #include "CommMgr.h"
 #include "crc32compat.h"
+#include "sdram.h"
 
 /* Compile-time called macros ------------------------------------------------*/
 Q_DEFINE_THIS_FILE;                 /* For QSPY to know the name of this file */
@@ -100,6 +101,18 @@ typedef struct {
 
     /**< Length of data in fwDataToFlash buffer */
     uint8_t fwDataToFlashLen;
+
+    /**< Used for timing out the Ram test in case it gets stuck for some reason. */
+    QTimeEvt ramTimerEvt;
+
+    /**< Used for timing out individual operations on RAM in FlashMgr object. */
+    QTimeEvt ramOpTimerEvt;
+
+    /**< Which test is running. */
+    CBRamTest_t currRamTest;
+
+    /**< Address where the test is running if no error or failed at if error. */
+    __IO uint32_t currRamAddr;
 } FlashMgr;
 
 /* protected: */
@@ -130,16 +143,16 @@ static QState FlashMgr_Active(FlashMgr * const me, QEvt const * const e);
 static QState FlashMgr_Idle(FlashMgr * const me, QEvt const * const e);
 
 /**
- * @brief	Busy state for msg processing.
- * This state handles msg processing and indicates that the system is busy and
- * cannot process another msg at this time.
+ * @brief	Busy state for flash operation processing.
+ * This state handles flash operation processing and indicates that the system
+ * is busy and cannot process another req at this time.
  *
  * @param  [in|out] me: Pointer to the state machine
  * @param  [in|out]  e:  Pointer to the event being processed.
  * @return status: QState type that specifies where the state
  * machine is going next.
  */
-static QState FlashMgr_Busy(FlashMgr * const me, QEvt const * const e);
+static QState FlashMgr_BusyFlash(FlashMgr * const me, QEvt const * const e);
 
 /**
  * @brief    Prepares flash memory for flashing
@@ -193,11 +206,42 @@ static QState FlashMgr_WaitingForFWData(FlashMgr * const me, QEvt const * const 
  */
 static QState FlashMgr_WritingFlash(FlashMgr * const me, QEvt const * const e);
 
+/**
+ * @brief    Busy state for RAM test operation processing.
+ * This state handles RAM test processing and indicates that the system is busy and
+ * cannot process another req at this time.
+ *
+ * @param  [in|out] me: Pointer to the state machine
+ * @param  [in|out]  e:  Pointer to the event being processed.
+ * @return status: QState type that specifies where the state
+ * machine is going next.
+ */
+static QState FlashMgr_BusyRam(FlashMgr * const me, QEvt const * const e);
+
+/**
+ * @brief    Perform a RAM address bus test on a single address
+ *
+ * @param  [in|out] me: Pointer to the state machine
+ * @param  [in|out]  e:  Pointer to the event being processed.
+ * @return status: QState type that specifies where the state
+ * machine is going next.
+ */
+static QState FlashMgr_AddrBusTest(FlashMgr * const me, QEvt const * const e);
+
+/**
+ * @brief    Perform a RAM data bus test on a single address
+ *
+ * @param  [in|out] me: Pointer to the state machine
+ * @param  [in|out]  e:  Pointer to the event being processed.
+ * @return status: QState type that specifies where the state
+ * machine is going next.
+ */
+static QState FlashMgr_DataBusTest(FlashMgr * const me, QEvt const * const e);
+
 
 /* Private defines -----------------------------------------------------------*/
-#define USER_FLASH_FIRST_PAGE_ADDRESS                                 0x08020000
 #define MAX_FLASH_RETRIES                                                      5
-
+#define RAM_TEST_BLOCK_SIZE                                           0x00800000
 /* Private macros ------------------------------------------------------------*/
 /* Private variables and Local objects ---------------------------------------*/
 static FlashMgr l_FlashMgr; /* the single instance of the Interstage active object */
@@ -222,6 +266,8 @@ void FlashMgr_ctor(void) {
     QActive_ctor(&me->super, (QStateHandler)&FlashMgr_initial);
     QTimeEvt_ctor(&me->flashTimerEvt, FLASH_TIMEOUT_SIG);
     QTimeEvt_ctor(&me->flashOpTimerEvt, FLASH_OP_TIMEOUT_SIG);
+    QTimeEvt_ctor(&me->ramTimerEvt, RAM_TIMEOUT_SIG);
+    QTimeEvt_ctor(&me->ramOpTimerEvt, RAM_OP_TIMEOUT_SIG);
 }
 
 /**
@@ -283,6 +329,20 @@ static QState FlashMgr_Active(FlashMgr * const me, QEvt const * const e) {
                 SEC_TO_TICKS( HL_MAX_TOUT_SEC_FLASH_FW )
             );
             QTimeEvt_disarm(&me->flashOpTimerEvt);
+
+            QTimeEvt_postIn(
+                &me->ramTimerEvt,
+                (QActive *)me,
+                SEC_TO_TICKS( HL_MAX_TOUT_SEC_FLASH_FW )
+            );
+            QTimeEvt_disarm(&me->ramTimerEvt);
+
+            QTimeEvt_postIn(
+                &me->ramOpTimerEvt,
+                (QActive *)me,
+                SEC_TO_TICKS( HL_MAX_TOUT_SEC_FLASH_FW )
+            );
+            QTimeEvt_disarm(&me->ramOpTimerEvt);
             status_ = Q_HANDLED();
             break;
         }
@@ -317,6 +377,8 @@ static QState FlashMgr_Idle(FlashMgr * const me, QEvt const * const e) {
             me->reqProg         = false;
 
             memset(&me->fwFlashMetadata, 0, sizeof(me->fwFlashMetadata));
+            me->currRamTest = _CB_RAM_TEST_NONE;
+            me->currRamAddr = 0;
             status_ = Q_HANDLED();
             break;
         }
@@ -341,6 +403,12 @@ static QState FlashMgr_Idle(FlashMgr * const me, QEvt const * const e) {
             status_ = Q_TRAN(&FlashMgr_PrepFlash);
             break;
         }
+        /* ${AOs::FlashMgr::SM::Active::Idle::RAM_TEST_START} */
+        case RAM_TEST_START_SIG: {
+            DBG_printf("RAM_TEST_START signal\n");
+            status_ = Q_TRAN(&FlashMgr_DataBusTest);
+            break;
+        }
         default: {
             status_ = Q_SUPER(&FlashMgr_Active);
             break;
@@ -350,20 +418,20 @@ static QState FlashMgr_Idle(FlashMgr * const me, QEvt const * const e) {
 }
 
 /**
- * @brief	Busy state for msg processing.
- * This state handles msg processing and indicates that the system is busy and
- * cannot process another msg at this time.
+ * @brief	Busy state for flash operation processing.
+ * This state handles flash operation processing and indicates that the system
+ * is busy and cannot process another req at this time.
  *
  * @param  [in|out] me: Pointer to the state machine
  * @param  [in|out]  e:  Pointer to the event being processed.
  * @return status: QState type that specifies where the state
  * machine is going next.
  */
-/*${AOs::FlashMgr::SM::Active::Busy} .......................................*/
-static QState FlashMgr_Busy(FlashMgr * const me, QEvt const * const e) {
+/*${AOs::FlashMgr::SM::Active::BusyFlash} ..................................*/
+static QState FlashMgr_BusyFlash(FlashMgr * const me, QEvt const * const e) {
     QState status_;
     switch (e->sig) {
-        /* ${AOs::FlashMgr::SM::Active::Busy} */
+        /* ${AOs::FlashMgr::SM::Active::BusyFlash} */
         case Q_ENTRY_SIG: {
             /* Arm the timer so if the message can't be processed for some reason, we can get
              * back to idle state.  This timer may be re-armed if some messages require more
@@ -386,7 +454,7 @@ static QState FlashMgr_Busy(FlashMgr * const me, QEvt const * const e) {
             status_ = Q_HANDLED();
             break;
         }
-        /* ${AOs::FlashMgr::SM::Active::Busy} */
+        /* ${AOs::FlashMgr::SM::Active::BusyFlash} */
         case Q_EXIT_SIG: {
             QTimeEvt_disarm(&me->flashTimerEvt); /* Disarm timer on exit */
 
@@ -399,13 +467,13 @@ static QState FlashMgr_Busy(FlashMgr * const me, QEvt const * const e) {
             status_ = Q_HANDLED();
             break;
         }
-        /* ${AOs::FlashMgr::SM::Active::Busy::FLASH_TIMEOUT} */
+        /* ${AOs::FlashMgr::SM::Active::BusyFlash::FLASH_TIMEOUT} */
         case FLASH_TIMEOUT_SIG: {
             ERR_printf("Timeout trying to process flash request, error: 0x%08x\n", me->errorCode);
             status_ = Q_TRAN(&FlashMgr_Idle);
             break;
         }
-        /* ${AOs::FlashMgr::SM::Active::Busy::FLASH_ERROR} */
+        /* ${AOs::FlashMgr::SM::Active::BusyFlash::FLASH_ERROR} */
         case FLASH_ERROR_SIG: {
             ERR_printf("Unable to to process flash request. Error: 0x%08x\n", me->errorCode);
 
@@ -429,11 +497,11 @@ static QState FlashMgr_Busy(FlashMgr * const me, QEvt const * const e) {
  * @return status: QState type that specifies where the state
  * machine is going next.
  */
-/*${AOs::FlashMgr::SM::Active::Busy::PrepFlash} ............................*/
+/*${AOs::FlashMgr::SM::Active::BusyFlash::PrepFlash} .......................*/
 static QState FlashMgr_PrepFlash(FlashMgr * const me, QEvt const * const e) {
     QState status_;
     switch (e->sig) {
-        /* ${AOs::FlashMgr::SM::Active::Busy::PrepFlash} */
+        /* ${AOs::FlashMgr::SM::Active::BusyFlash::PrepFlash} */
         case Q_ENTRY_SIG: {
             /* Self post an event to keep going.  The reason this is done is so that we can use
              * common error handling of the parent state to report errors back to CommMgr instead
@@ -444,7 +512,7 @@ static QState FlashMgr_PrepFlash(FlashMgr * const me, QEvt const * const e) {
             status_ = Q_HANDLED();
             break;
         }
-        /* ${AOs::FlashMgr::SM::Active::Busy::PrepFlash::FLASH_NEXT_STEP} */
+        /* ${AOs::FlashMgr::SM::Active::BusyFlash::PrepFlash::FLASH_NEXT_STEP} */
         case FLASH_NEXT_STEP_SIG: {
             DBG_printf("FLASH_NEXT_STEP\n");
 
@@ -459,7 +527,7 @@ static QState FlashMgr_PrepFlash(FlashMgr * const me, QEvt const * const e) {
 
             /* Do some sanity checking on the FW image metadata */
             me->errorCode = FLASH_validateMetadata(&(me->fwFlashMetadata));
-            /* ${AOs::FlashMgr::SM::Active::Busy::PrepFlash::FLASH_NEXT_STEP::[MetadataValid?]} */
+            /* ${AOs::FlashMgr::SM::Active::BusyFlash::PrepFlash::FLASH_NEXT_STEP::[MetadataValid?]} */
             if (ERR_NONE == me->errorCode) {
                 DBG_printf("Finding flash sectors to erase.\n");
 
@@ -481,7 +549,7 @@ static QState FlashMgr_PrepFlash(FlashMgr * const me, QEvt const * const e) {
                     ERR_printf("FW image type %d currently not supported for FW upgrades, error: 0x%08x\n",
                         me->fwFlashMetadata._imageType, me->errorCode);
                 }
-                /* ${AOs::FlashMgr::SM::Active::Busy::PrepFlash::FLASH_NEXT_STEP::[MetadataValid?]::[SectorsValid?]} */
+                /* ${AOs::FlashMgr::SM::Active::BusyFlash::PrepFlash::FLASH_NEXT_STEP::[MetadataValid?]::[SectorsValid?]} */
                 if (ERR_NONE == me->errorCode && me->flashSectorsToEraseNum > 1) {
                     LOG_printf("List of %d sectors (by address) to erase:\n", me->flashSectorsToEraseNum);
                     for( uint8_t i=0; i < me->flashSectorsToEraseNum; i++ ) {
@@ -489,20 +557,20 @@ static QState FlashMgr_PrepFlash(FlashMgr * const me, QEvt const * const e) {
                     }
                     status_ = Q_TRAN(&FlashMgr_ErasingSector);
                 }
-                /* ${AOs::FlashMgr::SM::Active::Busy::PrepFlash::FLASH_NEXT_STEP::[MetadataValid?]::[else]} */
+                /* ${AOs::FlashMgr::SM::Active::BusyFlash::PrepFlash::FLASH_NEXT_STEP::[MetadataValid?]::[else]} */
                 else {
                     ERR_printf("Unable to get a list of sectors to erase. Error: 0x%08x\n", me->errorCode);
                     status_ = Q_TRAN(&FlashMgr_Idle);
                 }
             }
-            /* ${AOs::FlashMgr::SM::Active::Busy::PrepFlash::FLASH_NEXT_STEP::[else]} */
+            /* ${AOs::FlashMgr::SM::Active::BusyFlash::PrepFlash::FLASH_NEXT_STEP::[else]} */
             else {
                 ERR_printf("FW image metadata failed validation with error: 0x%08x\n", me->errorCode);
                 status_ = Q_TRAN(&FlashMgr_Idle);
             }
             break;
         }
-        /* ${AOs::FlashMgr::SM::Active::Busy::PrepFlash::FLASH_OP_TIMEOUT} */
+        /* ${AOs::FlashMgr::SM::Active::BusyFlash::PrepFlash::FLASH_OP_TIMEOUT} */
         case FLASH_OP_TIMEOUT_SIG: {
             /* Override whatever error since the timeout interrupted whatever was happening. */
             me->errorCode = ERR_FLASH_ERASE_TIMEOUT;
@@ -511,7 +579,7 @@ static QState FlashMgr_PrepFlash(FlashMgr * const me, QEvt const * const e) {
             break;
         }
         default: {
-            status_ = Q_SUPER(&FlashMgr_Busy);
+            status_ = Q_SUPER(&FlashMgr_BusyFlash);
             break;
         }
     }
@@ -529,11 +597,11 @@ static QState FlashMgr_PrepFlash(FlashMgr * const me, QEvt const * const e) {
  * @return status: QState type that specifies where the state
  * machine is going next.
  */
-/*${AOs::FlashMgr::SM::Active::Busy::PrepFlash::ErasingSector} .............*/
+/*${AOs::FlashMgr::SM::Active::BusyFlash::PrepFlash::ErasingSector} ........*/
 static QState FlashMgr_ErasingSector(FlashMgr * const me, QEvt const * const e) {
     QState status_;
     switch (e->sig) {
-        /* ${AOs::FlashMgr::SM::Active::Busy::PrepFlash::ErasingSector} */
+        /* ${AOs::FlashMgr::SM::Active::BusyFlash::PrepFlash::ErasingSector} */
         case Q_ENTRY_SIG: {
             QTimeEvt_rearm(                         /* Re-arm timer on entry */
                 &me->flashOpTimerEvt,
@@ -556,40 +624,40 @@ static QState FlashMgr_ErasingSector(FlashMgr * const me, QEvt const * const e) 
             status_ = Q_HANDLED();
             break;
         }
-        /* ${AOs::FlashMgr::SM::Active::Busy::PrepFlash::ErasingSector} */
+        /* ${AOs::FlashMgr::SM::Active::BusyFlash::PrepFlash::ErasingSector} */
         case Q_EXIT_SIG: {
             QTimeEvt_disarm(&me->flashOpTimerEvt); /* Disarm timer on exit */
             status_ = Q_HANDLED();
             break;
         }
-        /* ${AOs::FlashMgr::SM::Active::Busy::PrepFlash::ErasingSector::FLASH_NEXT_STEP} */
+        /* ${AOs::FlashMgr::SM::Active::BusyFlash::PrepFlash::ErasingSector::FLASH_NEXT_STEP} */
         case FLASH_NEXT_STEP_SIG: {
-            /* ${AOs::FlashMgr::SM::Active::Busy::PrepFlash::ErasingSector::FLASH_NEXT_STEP::[EraseOK?]} */
+            /* ${AOs::FlashMgr::SM::Active::BusyFlash::PrepFlash::ErasingSector::FLASH_NEXT_STEP::[EraseOK?]} */
             if (ERR_NONE == me->errorCode) {
                 DBG_printf("Successfully erased sector addr 0x%08x\n",
                     me->flashSectorsToErase[ me->flashSectorsToEraseIndex ]);
 
                 me->flashSectorsToEraseIndex += 1; /* increment the index into the erase array */
 
-                /* ${AOs::FlashMgr::SM::Active::Busy::PrepFlash::ErasingSector::FLASH_NEXT_STEP::[EraseOK?]::[MoreToErase?]} */
+                /* ${AOs::FlashMgr::SM::Active::BusyFlash::PrepFlash::ErasingSector::FLASH_NEXT_STEP::[EraseOK?]::[MoreToErase?]} */
                 if (me->flashSectorsToEraseIndex < me->flashSectorsToEraseNum) {
                     status_ = Q_TRAN(&FlashMgr_ErasingSector);
                 }
-                /* ${AOs::FlashMgr::SM::Active::Busy::PrepFlash::ErasingSector::FLASH_NEXT_STEP::[EraseOK?]::[else]} */
+                /* ${AOs::FlashMgr::SM::Active::BusyFlash::PrepFlash::ErasingSector::FLASH_NEXT_STEP::[EraseOK?]::[else]} */
                 else {
                     status_ = Q_TRAN(&FlashMgr_WaitingForFWData);
                 }
             }
-            /* ${AOs::FlashMgr::SM::Active::Busy::PrepFlash::ErasingSector::FLASH_NEXT_STEP::[else]} */
+            /* ${AOs::FlashMgr::SM::Active::BusyFlash::PrepFlash::ErasingSector::FLASH_NEXT_STEP::[else]} */
             else {
                 WRN_printf("Failed to erase flash sector 0x%08x\n", me->flashSectorsToErase[ me->flashSectorsToEraseIndex ]);
-                /* ${AOs::FlashMgr::SM::Active::Busy::PrepFlash::ErasingSector::FLASH_NEXT_STEP::[else]::[retry?]} */
+                /* ${AOs::FlashMgr::SM::Active::BusyFlash::PrepFlash::ErasingSector::FLASH_NEXT_STEP::[else]::[retry?]} */
                 if (me->retryCurr < MAX_FLASH_RETRIES) {
                     me->retryCurr += 1; /* Increment retry counter */
                     WRN_printf("Attempting operation again (retry %d out of %d)...\n", me->retryCurr, MAX_FLASH_RETRIES);
                     status_ = Q_TRAN(&FlashMgr_ErasingSector);
                 }
-                /* ${AOs::FlashMgr::SM::Active::Busy::PrepFlash::ErasingSector::FLASH_NEXT_STEP::[else]::[else]} */
+                /* ${AOs::FlashMgr::SM::Active::BusyFlash::PrepFlash::ErasingSector::FLASH_NEXT_STEP::[else]::[else]} */
                 else {
                     ERR_printf("No more retries, aborting with error: 0x%08x\n", me->errorCode);
                     status_ = Q_TRAN(&FlashMgr_Idle);
@@ -617,11 +685,11 @@ static QState FlashMgr_ErasingSector(FlashMgr * const me, QEvt const * const e) 
  * @return status: QState type that specifies where the state
  * machine is going next.
  */
-/*${AOs::FlashMgr::SM::Active::Busy::WaitingForFWData} .....................*/
+/*${AOs::FlashMgr::SM::Active::BusyFlash::WaitingForFWData} ................*/
 static QState FlashMgr_WaitingForFWData(FlashMgr * const me, QEvt const * const e) {
     QState status_;
     switch (e->sig) {
-        /* ${AOs::FlashMgr::SM::Active::Busy::WaitingForFWData} */
+        /* ${AOs::FlashMgr::SM::Active::BusyFlash::WaitingForFWData} */
         case Q_ENTRY_SIG: {
             /* Ok, we are ready to receive FW data and start flashing. Post an event letting
              * CommMgr know we are ready for a data packet. */
@@ -640,20 +708,20 @@ static QState FlashMgr_WaitingForFWData(FlashMgr * const me, QEvt const * const 
             status_ = Q_HANDLED();
             break;
         }
-        /* ${AOs::FlashMgr::SM::Active::Busy::WaitingForFWData} */
+        /* ${AOs::FlashMgr::SM::Active::BusyFlash::WaitingForFWData} */
         case Q_EXIT_SIG: {
             QTimeEvt_disarm(&me->flashOpTimerEvt); /* Disarm timer on exit */
             status_ = Q_HANDLED();
             break;
         }
-        /* ${AOs::FlashMgr::SM::Active::Busy::WaitingForFWData::FLASH_DATA} */
+        /* ${AOs::FlashMgr::SM::Active::BusyFlash::WaitingForFWData::FLASH_DATA} */
         case FLASH_DATA_SIG: {
-            /* ${AOs::FlashMgr::SM::Active::Busy::WaitingForFWData::FLASH_DATA::[ValidSeq?]} */
+            /* ${AOs::FlashMgr::SM::Active::BusyFlash::WaitingForFWData::FLASH_DATA::[ValidSeq?]} */
             if (me->fwPacketCurr + 1 == ((FWDataEvt const *)e)->seqCurr) {
                 /* Calculate packet data CRC and make sure it matches the one sent over */
                 CRC_ResetDR();
                 uint32_t CRCValue = CRC32_Calc(((FWDataEvt const *)e)->dataBuf, ((FWDataEvt const *)e)->dataLen);
-                /* ${AOs::FlashMgr::SM::Active::Busy::WaitingForFWData::FLASH_DATA::[ValidSeq?]::[ValidCRC?]} */
+                /* ${AOs::FlashMgr::SM::Active::BusyFlash::WaitingForFWData::FLASH_DATA::[ValidSeq?]::[ValidCRC?]} */
                 if (CRCValue == ((FWDataEvt const *)e)->dataCRC) {
                     me->fwDataToFlashLen = ((FWDataEvt const *)e)->dataLen;
                     MEMCPY(
@@ -663,7 +731,7 @@ static QState FlashMgr_WaitingForFWData(FlashMgr * const me, QEvt const * const 
                     );
                     status_ = Q_TRAN(&FlashMgr_WritingFlash);
                 }
-                /* ${AOs::FlashMgr::SM::Active::Busy::WaitingForFWData::FLASH_DATA::[ValidSeq?]::[else]} */
+                /* ${AOs::FlashMgr::SM::Active::BusyFlash::WaitingForFWData::FLASH_DATA::[ValidSeq?]::[else]} */
                 else {
                     me->errorCode = ERR_FLASH_INVALID_FW_PACKET_CRC;
                     ERR_printf(
@@ -673,7 +741,7 @@ static QState FlashMgr_WaitingForFWData(FlashMgr * const me, QEvt const * const 
                     status_ = Q_TRAN(&FlashMgr_Idle);
                 }
             }
-            /* ${AOs::FlashMgr::SM::Active::Busy::WaitingForFWData::FLASH_DATA::[else]} */
+            /* ${AOs::FlashMgr::SM::Active::BusyFlash::WaitingForFWData::FLASH_DATA::[else]} */
             else {
                 ERR_printf("Invalid fw packet sequence number. Expecting: %d, got %d\n", me->fwPacketCurr + 1, ((FWDataEvt const *)e)->seqCurr);
                 status_ = Q_TRAN(&FlashMgr_Idle);
@@ -681,7 +749,7 @@ static QState FlashMgr_WaitingForFWData(FlashMgr * const me, QEvt const * const 
             break;
         }
         default: {
-            status_ = Q_SUPER(&FlashMgr_Busy);
+            status_ = Q_SUPER(&FlashMgr_BusyFlash);
             break;
         }
     }
@@ -700,11 +768,11 @@ static QState FlashMgr_WaitingForFWData(FlashMgr * const me, QEvt const * const 
  * @return status: QState type that specifies where the state
  * machine is going next.
  */
-/*${AOs::FlashMgr::SM::Active::Busy::WritingFlash} .........................*/
+/*${AOs::FlashMgr::SM::Active::BusyFlash::WritingFlash} ....................*/
 static QState FlashMgr_WritingFlash(FlashMgr * const me, QEvt const * const e) {
     QState status_;
     switch (e->sig) {
-        /* ${AOs::FlashMgr::SM::Active::Busy::WritingFlash} */
+        /* ${AOs::FlashMgr::SM::Active::BusyFlash::WritingFlash} */
         case Q_ENTRY_SIG: {
             me->errorCode = ERR_FLASH_WRITE_TIMEOUT; /* Set the timeout error code*/
             if ( (me->fwPacketCurr + 1) % 100 == 0 ) {
@@ -740,15 +808,13 @@ static QState FlashMgr_WritingFlash(FlashMgr * const me, QEvt const * const e) {
             status_ = Q_HANDLED();
             break;
         }
-        /* ${AOs::FlashMgr::SM::Active::Busy::WritingFlash::FLASH_DONE} */
+        /* ${AOs::FlashMgr::SM::Active::BusyFlash::WritingFlash::FLASH_DONE} */
         case FLASH_DONE_SIG: {
-
-
-            /* ${AOs::FlashMgr::SM::Active::Busy::WritingFlash::FLASH_DONE::[MorePackets?]} */
+            /* ${AOs::FlashMgr::SM::Active::BusyFlash::WritingFlash::FLASH_DONE::[MorePackets?]} */
             if (me->fwPacketCurr != me->fwPacketExp) {
                 status_ = Q_TRAN(&FlashMgr_WaitingForFWData);
             }
-            /* ${AOs::FlashMgr::SM::Active::Busy::WritingFlash::FLASH_DONE::[else]} */
+            /* ${AOs::FlashMgr::SM::Active::BusyFlash::WritingFlash::FLASH_DONE::[else]} */
             else {
                 DBG_printf("No more fw packets expected\n");
                 /* Do a check of the FW image and compare all the CRCs and sizes */
@@ -757,61 +823,61 @@ static QState FlashMgr_WritingFlash(FlashMgr * const me, QEvt const * const e) {
                     (uint8_t *)FLASH_APPL_START_ADDR,
                     me->fwFlashMetadata._imageSize
                 );
-                /* ${AOs::FlashMgr::SM::Active::Busy::WritingFlash::FLASH_DONE::[else]::[CRCMatch?]} */
+                /* ${AOs::FlashMgr::SM::Active::BusyFlash::WritingFlash::FLASH_DONE::[else]::[CRCMatch?]} */
                 if (me->fwFlashMetadata._imageCrc == crcCheck) {
                     DBG_printf("CRCs of the FW image match, writing metadata...\n");
                     me->errorCode = FLASH_writeApplSize( me->fwFlashMetadata._imageSize );
-                    /* ${AOs::FlashMgr::SM::Active::Busy::WritingFlash::FLASH_DONE::[else]::[CRCMatch?]::[NoError?]} */
+                    /* ${AOs::FlashMgr::SM::Active::BusyFlash::WritingFlash::FLASH_DONE::[else]::[CRCMatch?]::[NoError?]} */
                     if (ERR_NONE == me->errorCode) {
                         me->errorCode = FLASH_writeApplCRC( me->fwFlashMetadata._imageCrc );
-                        /* ${AOs::FlashMgr::SM::Active::Busy::WritingFlash::FLASH_DONE::[else]::[CRCMatch?]::[NoError?]::[NoError?]} */
+                        /* ${AOs::FlashMgr::SM::Active::BusyFlash::WritingFlash::FLASH_DONE::[else]::[CRCMatch?]::[NoError?]::[NoError?]} */
                         if (ERR_NONE == me->errorCode) {
                             me->errorCode = FLASH_writeApplMajVer( me->fwFlashMetadata._imageMaj );
-                            /* ${AOs::FlashMgr::SM::Active::Busy::WritingFlash::FLASH_DONE::[else]::[CRCMatch?]::[NoError?]::[NoError?]::[NoError?]} */
+                            /* ${AOs::FlashMgr::SM::Active::BusyFlash::WritingFlash::FLASH_DONE::[else]::[CRCMatch?]::[NoError?]::[NoError?]::[NoError?]} */
                             if (ERR_NONE == me->errorCode) {
                                 me->errorCode = FLASH_writeApplMinVer( me->fwFlashMetadata._imageMin );
-                                /* ${AOs::FlashMgr::SM::Active::Busy::WritingFlash::FLASH_DONE::[else]::[CRCMatch?]::[NoError?]::[NoError?]::[NoError?]::[NoError?]} */
+                                /* ${AOs::FlashMgr::SM::Active::BusyFlash::WritingFlash::FLASH_DONE::[else]::[CRCMatch?]::[NoError?]::[NoError?]::[NoError?]::[NoError?]} */
                                 if (ERR_NONE == me->errorCode) {
                                     me->errorCode = FLASH_writeApplBuildDatetime(
                                         (uint8_t *)me->fwFlashMetadata._imageDatetime,
                                         me->fwFlashMetadata._imageDatetime_len
                                     );
-                                    /* ${AOs::FlashMgr::SM::Active::Busy::WritingFlash::FLASH_DONE::[else]::[CRCMatch?]::[NoError?]::[NoError?]::[NoError?]::[NoError?]::[NoError?]} */
+                                    /* ${AOs::FlashMgr::SM::Active::BusyFlash::WritingFlash::FLASH_DONE::[else]::[CRCMatch?]::[NoError?]::[NoError?]::[NoError?]::[NoError?]::[NoError?]} */
                                     if (ERR_NONE == me->errorCode) {
                                         LOG_printf("Successfully finished upgrading FW!\n");
                                         status_ = Q_TRAN(&FlashMgr_Idle);
                                     }
-                                    /* ${AOs::FlashMgr::SM::Active::Busy::WritingFlash::FLASH_DONE::[else]::[CRCMatch?]::[NoError?]::[NoError?]::[NoError?]::[NoError?]::[else]} */
+                                    /* ${AOs::FlashMgr::SM::Active::BusyFlash::WritingFlash::FLASH_DONE::[else]::[CRCMatch?]::[NoError?]::[NoError?]::[NoError?]::[NoError?]::[else]} */
                                     else {
                                         ERR_printf("Unable to write image build datetime after flashing. Error: 0x%08x.\n", me->errorCode);
                                         status_ = Q_TRAN(&FlashMgr_Idle);
                                     }
                                 }
-                                /* ${AOs::FlashMgr::SM::Active::Busy::WritingFlash::FLASH_DONE::[else]::[CRCMatch?]::[NoError?]::[NoError?]::[NoError?]::[else]} */
+                                /* ${AOs::FlashMgr::SM::Active::BusyFlash::WritingFlash::FLASH_DONE::[else]::[CRCMatch?]::[NoError?]::[NoError?]::[NoError?]::[else]} */
                                 else {
                                     ERR_printf("Unable to write image Minor Version after flashing. Error: 0x%08x.\n", me->errorCode);
                                     status_ = Q_TRAN(&FlashMgr_Idle);
                                 }
                             }
-                            /* ${AOs::FlashMgr::SM::Active::Busy::WritingFlash::FLASH_DONE::[else]::[CRCMatch?]::[NoError?]::[NoError?]::[else]} */
+                            /* ${AOs::FlashMgr::SM::Active::BusyFlash::WritingFlash::FLASH_DONE::[else]::[CRCMatch?]::[NoError?]::[NoError?]::[else]} */
                             else {
                                 ERR_printf("Unable to write image Major Version after flashing. Error: 0x%08x.\n", me->errorCode);
                                 status_ = Q_TRAN(&FlashMgr_Idle);
                             }
                         }
-                        /* ${AOs::FlashMgr::SM::Active::Busy::WritingFlash::FLASH_DONE::[else]::[CRCMatch?]::[NoError?]::[else]} */
+                        /* ${AOs::FlashMgr::SM::Active::BusyFlash::WritingFlash::FLASH_DONE::[else]::[CRCMatch?]::[NoError?]::[else]} */
                         else {
                             ERR_printf("Unable to write image CRC after flashing. Error: 0x%08x.\n", me->errorCode);
                             status_ = Q_TRAN(&FlashMgr_Idle);
                         }
                     }
-                    /* ${AOs::FlashMgr::SM::Active::Busy::WritingFlash::FLASH_DONE::[else]::[CRCMatch?]::[else]} */
+                    /* ${AOs::FlashMgr::SM::Active::BusyFlash::WritingFlash::FLASH_DONE::[else]::[CRCMatch?]::[else]} */
                     else {
                         ERR_printf("Unable to write image size after flashing. Error: 0x%08x.\n", me->errorCode);
                         status_ = Q_TRAN(&FlashMgr_Idle);
                     }
                 }
-                /* ${AOs::FlashMgr::SM::Active::Busy::WritingFlash::FLASH_DONE::[else]::[else]} */
+                /* ${AOs::FlashMgr::SM::Active::BusyFlash::WritingFlash::FLASH_DONE::[else]::[else]} */
                 else {
                     me->errorCode = ERR_FLASH_INVALID_IMAGE_CRC_AFTER_FLASH;
                     ERR_printf("CRC check failed after flash. Error: 0x%08x.\n", me->errorCode);
@@ -822,15 +888,15 @@ static QState FlashMgr_WritingFlash(FlashMgr * const me, QEvt const * const e) {
             }
             break;
         }
-        /* ${AOs::FlashMgr::SM::Active::Busy::WritingFlash::FLASH_ERROR} */
+        /* ${AOs::FlashMgr::SM::Active::BusyFlash::WritingFlash::FLASH_ERROR} */
         case FLASH_ERROR_SIG: {
             WRN_printf("FLASH_ERROR\n");
-            /* ${AOs::FlashMgr::SM::Active::Busy::WritingFlash::FLASH_ERROR::[RetriesLeft?]} */
+            /* ${AOs::FlashMgr::SM::Active::BusyFlash::WritingFlash::FLASH_ERROR::[RetriesLeft?]} */
             if (me->retryCurr < MAX_FLASH_RETRIES) {
                 LOG_printf("Retrying to flash packet, retry %d out of %d max\n", me->retryCurr, MAX_FLASH_RETRIES);
                 status_ = Q_TRAN(&FlashMgr_WritingFlash);
             }
-            /* ${AOs::FlashMgr::SM::Active::Busy::WritingFlash::FLASH_ERROR::[else]} */
+            /* ${AOs::FlashMgr::SM::Active::BusyFlash::WritingFlash::FLASH_ERROR::[else]} */
             else {
                 ERR_printf("No more retries\n");
                 status_ = Q_TRAN(&FlashMgr_Idle);
@@ -838,7 +904,182 @@ static QState FlashMgr_WritingFlash(FlashMgr * const me, QEvt const * const e) {
             break;
         }
         default: {
-            status_ = Q_SUPER(&FlashMgr_Busy);
+            status_ = Q_SUPER(&FlashMgr_BusyFlash);
+            break;
+        }
+    }
+    return status_;
+}
+
+/**
+ * @brief    Busy state for RAM test operation processing.
+ * This state handles RAM test processing and indicates that the system is busy and
+ * cannot process another req at this time.
+ *
+ * @param  [in|out] me: Pointer to the state machine
+ * @param  [in|out]  e:  Pointer to the event being processed.
+ * @return status: QState type that specifies where the state
+ * machine is going next.
+ */
+/*${AOs::FlashMgr::SM::Active::BusyRam} ....................................*/
+static QState FlashMgr_BusyRam(FlashMgr * const me, QEvt const * const e) {
+    QState status_;
+    switch (e->sig) {
+        /* ${AOs::FlashMgr::SM::Active::BusyRam} */
+        case Q_ENTRY_SIG: {
+            /* Arm the timer so if the message can't be processed for some reason, we can get
+             * back to idle state.  This timer may be re-armed if some messages require more
+             * time to process than others. */
+            QTimeEvt_rearm(                         /* Re-arm timer on entry */
+                &me->ramTimerEvt,
+                SEC_TO_TICKS( HL_MAX_TOUT_SEC_CLI_WAIT_FOR_RAM_TEST )
+            );
+
+            /* Reset all the variables that keep track of statuses */
+            me->retryCurr    = 0;
+            status_ = Q_HANDLED();
+            break;
+        }
+        /* ${AOs::FlashMgr::SM::Active::BusyRam} */
+        case Q_EXIT_SIG: {
+            QTimeEvt_disarm(&me->ramTimerEvt); /* Disarm timer on exit */
+
+            /* Always send a flash status event to the CommMgr AO with the current error code */
+            RamStatusEvt *evt = Q_NEW(RamStatusEvt, RAM_TEST_DONE_SIG);
+            evt->errorCode = me->errorCode;
+            evt->test = me->currRamTest;
+            evt->addr = me->currRamAddr;
+            QACTIVE_POST(AO_CommMgr, (QEvt *)(evt), AO_FlashMgr);
+            status_ = Q_HANDLED();
+            break;
+        }
+        /* ${AOs::FlashMgr::SM::Active::BusyRam::RAM_TIMEOUT} */
+        case RAM_TIMEOUT_SIG: {
+            ERR_printf("Timeout trying to process RAM test request, error: 0x%08x\n", me->errorCode);
+            status_ = Q_TRAN(&FlashMgr_Idle);
+            break;
+        }
+        /* ${AOs::FlashMgr::SM::Active::BusyRam::RAM_ERROR} */
+        case RAM_ERROR_SIG: {
+            ERR_printf("Unable to to process RAM test request. Error: 0x%08x\n", me->errorCode);
+
+            status_ = Q_TRAN(&FlashMgr_Idle);
+            break;
+        }
+        default: {
+            status_ = Q_SUPER(&FlashMgr_Active);
+            break;
+        }
+    }
+    return status_;
+}
+
+/**
+ * @brief    Perform a RAM address bus test on a single address
+ *
+ * @param  [in|out] me: Pointer to the state machine
+ * @param  [in|out]  e:  Pointer to the event being processed.
+ * @return status: QState type that specifies where the state
+ * machine is going next.
+ */
+/*${AOs::FlashMgr::SM::Active::BusyRam::AddrBusTest} .......................*/
+static QState FlashMgr_AddrBusTest(FlashMgr * const me, QEvt const * const e) {
+    QState status_;
+    switch (e->sig) {
+        /* ${AOs::FlashMgr::SM::Active::BusyRam::AddrBusTest} */
+        case Q_ENTRY_SIG: {
+            QEvt *evt = Q_NEW(QEvt, RAM_OP_START_SIG);
+            QACTIVE_POST(AO_FlashMgr, (QEvt *)(evt), AO_FlashMgr);
+
+            status_ = Q_HANDLED();
+            break;
+        }
+        /* ${AOs::FlashMgr::SM::Active::BusyRam::AddrBusTest::RAM_OP_START} */
+        case RAM_OP_START_SIG: {
+            uint32_t failedAddr = SDRAM_testAddrBus( me->currRamAddr,  RAM_TEST_BLOCK_SIZE );
+            /* ${AOs::FlashMgr::SM::Active::BusyRam::AddrBusTest::RAM_OP_START::[Error?]} */
+            if (0 != failedAddr) {
+                me->errorCode = ERR_SDRAM_DATA_BUS;
+                me->currRamAddr = failedAddr;
+                ERR_printf(
+                    "RAM addr bus test failed at addr: 0x%08x. Error: 0x%08x\n",
+                    me->currRamAddr, me->errorCode
+                );
+                status_ = Q_TRAN(&FlashMgr_Idle);
+            }
+            /* ${AOs::FlashMgr::SM::Active::BusyRam::AddrBusTest::RAM_OP_START::[else]} */
+            else {
+                DBG_printf("Test for %d bytes at addr 0x%08x passed.\n", RAM_TEST_BLOCK_SIZE, me->currRamAddr);
+
+                me->currRamAddr += RAM_TEST_BLOCK_SIZE;
+                /* ${AOs::FlashMgr::SM::Active::BusyRam::AddrBusTest::RAM_OP_START::[else]::[MoreRamToTest?]} */
+                if (me->currRamAddr < (SDRAM_MEM_SIZE - RAM_TEST_BLOCK_SIZE)) {
+                    status_ = Q_TRAN(&FlashMgr_AddrBusTest);
+                }
+                /* ${AOs::FlashMgr::SM::Active::BusyRam::AddrBusTest::RAM_OP_START::[else]::[else]} */
+                else {
+                    DBG_printf("Ram test finished with no errors\n");
+                    status_ = Q_TRAN(&FlashMgr_Idle);
+                }
+            }
+            break;
+        }
+        default: {
+            status_ = Q_SUPER(&FlashMgr_BusyRam);
+            break;
+        }
+    }
+    return status_;
+}
+
+/**
+ * @brief    Perform a RAM data bus test on a single address
+ *
+ * @param  [in|out] me: Pointer to the state machine
+ * @param  [in|out]  e:  Pointer to the event being processed.
+ * @return status: QState type that specifies where the state
+ * machine is going next.
+ */
+/*${AOs::FlashMgr::SM::Active::BusyRam::DataBusTest} .......................*/
+static QState FlashMgr_DataBusTest(FlashMgr * const me, QEvt const * const e) {
+    QState status_;
+    switch (e->sig) {
+        /* ${AOs::FlashMgr::SM::Active::BusyRam::DataBusTest} */
+        case Q_ENTRY_SIG: {
+            me->currRamTest = _CB_RAM_TEST_DATA_BUS;
+
+            QEvt *evt = Q_NEW(QEvt, RAM_OP_START_SIG);
+            QACTIVE_POST(AO_FlashMgr, (QEvt *)(evt), AO_FlashMgr);
+
+            status_ = Q_HANDLED();
+            break;
+        }
+        /* ${AOs::FlashMgr::SM::Active::BusyRam::DataBusTest::RAM_OP_START} */
+        case RAM_OP_START_SIG: {
+            me->currRamTest = _CB_RAM_TEST_DATA_BUS;
+            me->currRamAddr = 0;
+            uint32_t failedPattern = SDRAM_testDataBus( me->currRamAddr );
+            /* ${AOs::FlashMgr::SM::Active::BusyRam::DataBusTest::RAM_OP_START::[Error?]} */
+            if (0 != failedPattern) {
+                me->errorCode = ERR_SDRAM_DATA_BUS;
+                ERR_printf(
+                    "RAM data bus test failed at addr: 0x%08x on pattern: 0x%08x. Error: 0x%08x\n",
+                    me->currRamAddr, failedPattern, me->errorCode
+                );
+                status_ = Q_TRAN(&FlashMgr_Idle);
+            }
+            /* ${AOs::FlashMgr::SM::Active::BusyRam::DataBusTest::RAM_OP_START::[else]} */
+            else {
+                DBG_printf("No RAM Data bus error found.\n");
+
+                me->currRamTest = _CB_RAM_TEST_DATA_BUS;
+                me->currRamAddr = 0;
+                status_ = Q_TRAN(&FlashMgr_AddrBusTest);
+            }
+            break;
+        }
+        default: {
+            status_ = Q_SUPER(&FlashMgr_BusyRam);
             break;
         }
     }

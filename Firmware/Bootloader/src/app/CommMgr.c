@@ -156,6 +156,15 @@ static QState CommMgr_Idle(CommMgr * const me, QEvt const * const e);
  * machine is going next.
  */
 static QState CommMgr_Busy(CommMgr * const me, QEvt const * const e);
+
+/**
+ * @brief    State that waits for a response from FlashMgr AO.
+ *
+ * @param  [in|out] me: Pointer to the state machine
+ * @param  [in|out]  e:  Pointer to the event being processed.
+ * @return status: QState type that specifies where the state
+ * machine is going next.
+ */
 static QState CommMgr_WaitForRespFromFlashMgr(CommMgr * const me, QEvt const * const e);
 
 /**
@@ -170,6 +179,15 @@ static QState CommMgr_WaitForRespFromFlashMgr(CommMgr * const me, QEvt const * c
  * machine is going next.
  */
 static QState CommMgr_ValidateMsg(CommMgr * const me, QEvt const * const e);
+
+/**
+ * @brief    State that waits for a response from I2C1DevMgr AO.
+ *
+ * @param  [in|out] me: Pointer to the state machine
+ * @param  [in|out]  e:  Pointer to the event being processed.
+ * @return status: QState type that specifies where the state
+ * machine is going next.
+ */
 static QState CommMgr_WaitForRespFromI2C(CommMgr * const me, QEvt const * const e);
 
 
@@ -590,6 +608,14 @@ static QState CommMgr_Busy(CommMgr * const me, QEvt const * const e) {
                         evt->dataLen
                     );
                     break;
+                case _CBRamTestPayloadMsg:
+                    DBG_printf("Sending RamTest payload\n");
+                    evt->dataLen = CBRamTestPayloadMsg_write_delimited_to(
+                        (void*)&(me->payloadMsgUnion.ramTestPayload),
+                        evt->dataBuf,
+                        evt->dataLen
+                    );
+                    break;
                 case _CBNoMsg:
                     WRN_printf("Not sending payload as part of Done msg.\n");
                     break;
@@ -626,6 +652,15 @@ static QState CommMgr_Busy(CommMgr * const me, QEvt const * const e) {
     }
     return status_;
 }
+
+/**
+ * @brief    State that waits for a response from FlashMgr AO.
+ *
+ * @param  [in|out] me: Pointer to the state machine
+ * @param  [in|out]  e:  Pointer to the event being processed.
+ * @return status: QState type that specifies where the state
+ * machine is going next.
+ */
 /*${AOs::CommMgr::SM::Active::Busy::WaitForRespFromF~} .....................*/
 static QState CommMgr_WaitForRespFromFlashMgr(CommMgr * const me, QEvt const * const e) {
     QState status_;
@@ -696,6 +731,18 @@ static QState CommMgr_WaitForRespFromFlashMgr(CommMgr * const me, QEvt const * c
         case COMM_OP_TIMEOUT_SIG: {
             ERR_printf("COMM_OP_TIMEOUT trying to process %d basic msg, error: 0x%08x\n",
                 me->basicMsg._msgName, me->errorCode);
+            status_ = Q_TRAN(&CommMgr_Idle);
+            break;
+        }
+        /* ${AOs::CommMgr::SM::Active::Busy::WaitForRespFromF~::RAM_TEST_DONE} */
+        case RAM_TEST_DONE_SIG: {
+            me->errorCode = ((RamStatusEvt const *)e)->errorCode;
+            me->payloadMsgUnion.ramTestPayload._errorCode = me->errorCode;
+            me->payloadMsgUnion.ramTestPayload._test = ((RamStatusEvt const *)e)->test;
+            me->payloadMsgUnion.ramTestPayload._addr = ((RamStatusEvt const *)e)->addr;
+            if ( ERR_NONE != me->errorCode ) {
+                ERR_printf("Got RAM_TEST_DONE with status: 0x%08x\n", me->errorCode);
+            }
             status_ = Q_TRAN(&CommMgr_Idle);
             break;
         }
@@ -985,6 +1032,27 @@ static QState CommMgr_ValidateMsg(CommMgr * const me, QEvt const * const e) {
                     status_ = Q_TRAN(&CommMgr_Idle);
                 }
             }
+            /* ${AOs::CommMgr::SM::Active::Busy::ValidateMsg::MSG_PROCESS::[RamTest?]} */
+            else if (_CBRamTestMsg == me->basicMsg._msgName) {
+                me->errorCode = ERR_NONE;
+
+                DBG_printf("_CBRamTestMsg decoded, not expecting any payload\n");
+
+                /* Compose Done response.  We can re-use the current structure and it will be used by
+                 * the exit action of the parent state to send the msg.  Here, we only set up fields
+                 * that are specific to this response. We can also destructively change the payload
+                 * name since we are sending a response right after this. */
+                me->msgPayloadName = _CBRamTestPayloadMsg;
+
+                /* Don't change the basicMsg name since it should be the same in all cases. */
+                me->basicMsg._msgPayload = me->msgPayloadName;
+                //me->payloadMsgUnion.ramTestPayload._errorCode = me->errorCode;
+
+                QEvt *evt = Q_NEW(QEvt, RAM_TEST_START_SIG);
+                QACTIVE_POST(AO_FlashMgr, (QEvt *)(evt), AO_CommMgr);
+
+                status_ = Q_TRAN(&CommMgr_WaitForRespFromFlashMgr);
+            }
             /* ${AOs::CommMgr::SM::Active::Busy::ValidateMsg::MSG_PROCESS::[else]} */
             else {
                 me->errorCode = ERR_MSG_UNKNOWN_BASIC;
@@ -1016,6 +1084,15 @@ static QState CommMgr_ValidateMsg(CommMgr * const me, QEvt const * const e) {
     }
     return status_;
 }
+
+/**
+ * @brief    State that waits for a response from I2C1DevMgr AO.
+ *
+ * @param  [in|out] me: Pointer to the state machine
+ * @param  [in|out]  e:  Pointer to the event being processed.
+ * @return status: QState type that specifies where the state
+ * machine is going next.
+ */
 /*${AOs::CommMgr::SM::Active::Busy::WaitForRespFromI~} .....................*/
 static QState CommMgr_WaitForRespFromI2C(CommMgr * const me, QEvt const * const e) {
     QState status_;

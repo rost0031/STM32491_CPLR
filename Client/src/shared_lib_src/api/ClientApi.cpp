@@ -558,8 +558,8 @@ ClientError_t ClientApi::DC3_writeI2C(
 
    /* Settings specific to this message */
    this->m_basicMsg._msgType     = _CB_Req;
-   this->m_basicMsg._msgName     = _CBI2CWriteMsg;
-   this->m_basicMsg._msgPayload  = _CBI2CDataPayloadMsg;
+   this->m_basicMsg._msgName     = _CBRamTestMsg;
+   this->m_basicMsg._msgPayload  = _CBNoMsg;
 
    this->m_i2cDataPayloadMsg._accType = acc;
    this->m_i2cDataPayloadMsg._i2cDev = dev;
@@ -608,6 +608,73 @@ ClientError_t ClientApi::DC3_writeI2C(
       return clientStatus;
    } else {
       *status = (CBErrorCode)payloadMsgUnion.statusPayload._errorCode;
+   }
+
+   return clientStatus;
+}
+
+/******************************************************************************/
+ClientError_t ClientApi::DC3_ramTest(
+      CBErrorCode *status,
+      CBRamTest_t* test,
+      uint32_t* addr
+)
+{
+   this->enableMsgCallbacks();
+
+   /* These will be used for responses */
+   CBBasicMsg basicMsg;
+   CBPayloadMsgUnion_t payloadMsgUnion;
+
+   /* Common settings for most messages */
+   this->m_basicMsg._msgID       = this->m_msgId;
+   this->m_basicMsg._msgReqProg  = (unsigned long)this->m_bRequestProg;
+   this->m_basicMsg._msgRoute    = this->m_msgRoute;
+
+   /* Settings specific to this message */
+   this->m_basicMsg._msgType     = _CB_Req;
+   this->m_basicMsg._msgName     = _CBRamTestMsg;
+   this->m_basicMsg._msgPayload  = _CBNoMsg;
+
+   size_t size = CB_MAX_MSG_LEN;
+   uint8_t *buffer = new uint8_t[size];                    /* Allocate buffer */
+   unsigned int bufferLen = 0;
+   bufferLen = CBBasicMsg_write_delimited_to(&m_basicMsg, buffer, 0);
+   l_pComm->write_some((char *)buffer, bufferLen);                /* Send Req */
+
+   delete[] buffer;                                          /* Delete buffer */
+
+   memset(&basicMsg, 0, sizeof(basicMsg));
+   memset(&payloadMsgUnion, 0, sizeof(payloadMsgUnion));
+   ClientError_t clientStatus = waitForResp(                  /* Wait for Ack */
+         &basicMsg,
+         &payloadMsgUnion,
+         HL_MAX_TOUT_SEC_CLI_WAIT_FOR_ACK
+   );
+
+   if ( CLI_ERR_NONE != clientStatus ) {                    /* Check response */
+      ERR_printf(m_pLog,
+            "Waiting for Ack received client Error: 0x%08x", clientStatus);
+      return clientStatus;
+   }
+
+   memset(&basicMsg, 0, sizeof(basicMsg));
+   memset(&payloadMsgUnion, 0, sizeof(payloadMsgUnion));
+   clientStatus = waitForResp(                              // Wait for Done msg
+         &basicMsg,
+         &payloadMsgUnion,
+         HL_MAX_TOUT_SEC_CLI_WAIT_FOR_RAM_TEST
+   );
+   if ( CLI_ERR_NONE != clientStatus ) {                       // Check response
+      ERR_printf(m_pLog,
+            "Waiting for Done received client Error: 0x%08x", clientStatus);
+      return clientStatus;
+   } else {
+      *status = (CBErrorCode)payloadMsgUnion.ramTestPayload._errorCode;
+      if ( ERR_NONE != *status ) {
+         *test = payloadMsgUnion.ramTestPayload._test;
+         *addr = payloadMsgUnion.ramTestPayload._addr;
+      }
    }
 
    return clientStatus;
@@ -738,6 +805,15 @@ ClientError_t ClientApi::pollForResp(
             CBI2CDataPayloadMsg_read_delimited_from(
                   (void*)msg.dataBuf,
                   &(payloadMsgUnion->i2cDataPayload),
+                  offset
+            );
+            break;
+         case _CBRamTestPayloadMsg:
+            status = CLI_ERR_NONE;
+            DBG_printf( m_pLog, "RamTest payload detected");
+            CBRamTestPayloadMsg_read_delimited_from(
+                  (void*)msg.dataBuf,
+                  &(payloadMsgUnion->ramTestPayload),
                   offset
             );
             break;

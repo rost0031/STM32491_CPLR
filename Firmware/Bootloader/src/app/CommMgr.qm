@@ -368,6 +368,14 @@ switch( me-&gt;msgPayloadName ) {
             evt-&gt;dataLen
         );
         break;
+    case _CBRamTestPayloadMsg:
+        DBG_printf(&quot;Sending RamTest payload\n&quot;);
+        evt-&gt;dataLen = CBRamTestPayloadMsg_write_delimited_to(
+            (void*)&amp;(me-&gt;payloadMsgUnion.ramTestPayload),
+            evt-&gt;dataBuf,
+            evt-&gt;dataLen
+        );
+        break;
     case _CBNoMsg:
         WRN_printf(&quot;Not sending payload as part of Done msg.\n&quot;);
         break;
@@ -395,6 +403,14 @@ if ( ERR_NONE != me-&gt;errorCode ) {
        </tran_glyph>
       </tran>
       <state name="WaitForRespFromFlashMgr">
+       <documentation>/**
+ * @brief    State that waits for a response from FlashMgr AO.
+ *
+ * @param  [in|out] me: Pointer to the state machine
+ * @param  [in|out]  e:  Pointer to the event being processed.
+ * @return status: QState type that specifies where the state
+ * machine is going next.
+ */</documentation>
        <entry>QTimeEvt_rearm(                                       /* Re-arm timer on entry */
     &amp;me-&gt;commOpTimerEvt,
     SEC_TO_TICKS( LL_MAX_TOUT_SEC_COMM_MSG_FLASH_OP )
@@ -454,7 +470,19 @@ DBG_printf(&quot;Setting flash meta payload with error code: %d\n&quot;, me-&gt;
          <action box="-19,-2,19,2"/>
         </tran_glyph>
        </tran>
-       <state_glyph node="66,51,19,7">
+       <tran trig="RAM_TEST_DONE" target="../../../1">
+        <action>me-&gt;errorCode = ((RamStatusEvt const *)e)-&gt;errorCode;
+me-&gt;payloadMsgUnion.ramTestPayload._errorCode = me-&gt;errorCode;
+me-&gt;payloadMsgUnion.ramTestPayload._test = ((RamStatusEvt const *)e)-&gt;test;
+me-&gt;payloadMsgUnion.ramTestPayload._addr = ((RamStatusEvt const *)e)-&gt;addr;
+if ( ERR_NONE != me-&gt;errorCode ) {
+    ERR_printf(&quot;Got RAM_TEST_DONE with status: 0x%08x\n&quot;, me-&gt;errorCode);
+}</action>
+        <tran_glyph conn="66,60,3,1,-32">
+         <action box="-19,-2,14,2"/>
+        </tran_glyph>
+       </tran>
+       <state_glyph node="66,51,19,10">
         <entry box="1,2,6,2"/>
         <exit box="1,4,6,2"/>
        </state_glyph>
@@ -733,7 +761,7 @@ WRN_printf(&quot;Unexpected payload %d for FlashMsg. Error: 0x%08x\n&quot;,
           <action>me-&gt;errorCode = ERR_MSG_UNEXPECTED_PAYLOAD;
 WRN_printf(&quot;Unexpected payload %d for I2CReadMsg. Error: 0x%08x\n&quot;,
     me-&gt;msgPayloadName, me-&gt;errorCode);</action>
-          <choice_glyph conn="101,61,5,1,-67">
+          <choice_glyph conn="101,64,5,1,-67">
            <action box="-6,-2,6,2"/>
           </choice_glyph>
          </choice>
@@ -750,12 +778,12 @@ i2cReadReqEvt-&gt;addr           = I2C_getMemAddr( i2cReadReqEvt-&gt;i2cDev ) + 
 i2cReadReqEvt-&gt;bytes          = me-&gt;payloadMsgUnion.i2cDataPayload._nBytes;
 i2cReadReqEvt-&gt;accessType     = me-&gt;payloadMsgUnion.i2cDataPayload._accType;
 QACTIVE_POST(AO_I2C1DevMgr, (QEvt *)(i2cReadReqEvt), me);</action>
-          <choice_glyph conn="101,61,4,1,3,-16">
-           <action box="0,1,10,2"/>
+          <choice_glyph conn="101,64,4,1,4,-16">
+           <action box="-10,2,10,2"/>
           </choice_glyph>
          </choice>
-         <choice_glyph conn="111,23,4,-1,38,-10">
-          <action box="-7,36,9,2"/>
+         <choice_glyph conn="111,23,4,-1,41,-10">
+          <action box="-8,39,9,2"/>
          </choice_glyph>
         </choice>
         <choice>
@@ -769,7 +797,7 @@ me-&gt;basicMsg._msgPayload = me-&gt;msgPayloadName;
 me-&gt;errorCode = ERR_MSG_UNEXPECTED_PAYLOAD;
 WRN_printf(&quot;Unexpected payload %d for I2CWriteMsg. Error: 0x%08x\n&quot;,
     me-&gt;msgPayloadName, me-&gt;errorCode);</action>
-          <choice_glyph conn="101,73,5,1,-67">
+          <choice_glyph conn="101,76,5,1,-65,0,-2">
            <action box="-6,-2,6,2"/>
           </choice_glyph>
          </choice>
@@ -793,12 +821,35 @@ MEMCPY(
 
 QACTIVE_POST(AO_I2C1DevMgr, (QEvt *)(i2cWriteReqEvt), me);
 </action>
-          <choice_glyph conn="101,73,4,1,-4,-16">
-           <action box="0,-4,10,2"/>
+          <choice_glyph conn="101,76,4,1,-4,-16">
+           <action box="-11,-6,10,2"/>
           </choice_glyph>
          </choice>
-         <choice_glyph conn="111,23,4,-1,50,-10">
-          <action box="-7,48,9,2"/>
+         <choice_glyph conn="111,23,4,-1,53,-10">
+          <action box="-7,50,9,2"/>
+         </choice_glyph>
+        </choice>
+        <choice target="../../../1">
+         <guard brief="RamTest?">_CBRamTestMsg == me-&gt;basicMsg._msgName</guard>
+         <action>me-&gt;errorCode = ERR_NONE;
+
+DBG_printf(&quot;_CBRamTestMsg decoded, not expecting any payload\n&quot;);
+
+/* Compose Done response.  We can re-use the current structure and it will be used by
+ * the exit action of the parent state to send the msg.  Here, we only set up fields
+ * that are specific to this response. We can also destructively change the payload
+ * name since we are sending a response right after this. */
+me-&gt;msgPayloadName = _CBRamTestPayloadMsg;
+
+/* Don't change the basicMsg name since it should be the same in all cases. */
+me-&gt;basicMsg._msgPayload = me-&gt;msgPayloadName;
+//me-&gt;payloadMsgUnion.ramTestPayload._errorCode = me-&gt;errorCode;
+
+QEvt *evt = Q_NEW(QEvt, RAM_TEST_START_SIG);
+QACTIVE_POST(AO_FlashMgr, (QEvt *)(evt), AO_CommMgr);
+</action>
+         <choice_glyph conn="111,23,4,1,37,-26">
+          <action box="-8,35,10,2"/>
          </choice_glyph>
         </choice>
         <tran_glyph conn="111,19,2,-1,4">
@@ -811,6 +862,14 @@ QACTIVE_POST(AO_I2C1DevMgr, (QEvt *)(i2cWriteReqEvt), me);
        </state_glyph>
       </state>
       <state name="WaitForRespFromI2C">
+       <documentation>/**
+ * @brief    State that waits for a response from I2C1DevMgr AO.
+ *
+ * @param  [in|out] me: Pointer to the state machine
+ * @param  [in|out]  e:  Pointer to the event being processed.
+ * @return status: QState type that specifies where the state
+ * machine is going next.
+ */</documentation>
        <entry>QTimeEvt_rearm(                                       /* Re-arm timer on entry */
     &amp;me-&gt;commOpTimerEvt,
     SEC_TO_TICKS( HL_MAX_TOUT_SEC_CLI_WAIT_FOR_SIMPLE_MSG_DONE )
@@ -825,7 +884,7 @@ if ( ERR_NONE != me-&gt;errorCode ) {
        <tran trig="COMM_OP_TIMEOUT" target="../../../1">
         <action>ERR_printf(&quot;COMM_OP_TIMEOUT trying to process %d basic msg, error: 0x%08x\n&quot;, 
     me-&gt;basicMsg._msgName, me-&gt;errorCode);</action>
-        <tran_glyph conn="66,64,3,1,-32">
+        <tran_glyph conn="66,67,3,1,-32">
          <action box="-19,-2,19,2"/>
         </tran_glyph>
        </tran>
@@ -842,7 +901,7 @@ if ( ERR_NONE == me-&gt;errorCode ) {
 }
 
 me-&gt;payloadMsgUnion.i2cDataPayload._errorCode = me-&gt;errorCode;</action>
-        <tran_glyph conn="66,67,3,1,-32">
+        <tran_glyph conn="66,70,3,1,-32">
          <action box="-19,-2,15,2"/>
         </tran_glyph>
        </tran>
@@ -853,11 +912,11 @@ if ( ERR_NONE == me-&gt;errorCode ) {
 }
 
 me-&gt;payloadMsgUnion.statusPayload._errorCode = me-&gt;errorCode;</action>
-        <tran_glyph conn="66,70,3,1,-32">
+        <tran_glyph conn="66,73,3,1,-32">
          <action box="-19,-2,15,2"/>
         </tran_glyph>
        </tran>
-       <state_glyph node="66,62,19,10">
+       <state_glyph node="66,65,19,10">
         <entry box="1,2,6,2"/>
         <exit box="1,4,6,2"/>
        </state_glyph>

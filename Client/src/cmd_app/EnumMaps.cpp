@@ -163,6 +163,20 @@ template<> char const* enumStrings<CBAccessType>::data[] =  {
          "FRT",                  /**< _CB_ACCESS_FRT */
 };
 
+/**
+ * @brief String values for CBI2CDevices enums
+ * String values for consecutive enums can be placed into const char* arrays
+ * and a template will autogenerate the necessary enumToString function based
+ * on the existence of this ::data[] array.
+ * */
+template<> char const* enumStrings<CBRamTest_t>::data[] =  {
+         "None",                 /**< _CB_RAM_TEST_NONE */
+         "DataBusTest",          /**< _CB_RAM_TEST_DATA_BUS */
+         "AddrBusTest",          /**< _CB_RAM_TEST_ADDR_BUS */
+         "DeviceTest",           /**< _CB_RAM_TEST_DEV_INT */
+         "InvalidTest",          /**< _CB_RAM_TEST_MAX */
+};
+
 /* Private function prototypes -----------------------------------------------*/
 /* Private functions ---------------------------------------------------------*/
 /******************************************************************************/

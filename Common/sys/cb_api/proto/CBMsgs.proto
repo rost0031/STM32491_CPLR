@@ -249,6 +249,12 @@ enum CBMsgName
                               // CBI2CReadMsg and CBI2CWriteMsg to specify what
                               // to read and write, as well as send data and
                               // status back.
+    
+    CBRamTestMsg        = 13; // CBBasicMsg  - Used to send an RAM test cmd.
+    
+    CBRamTestPayloadMsg = 14; // CBPayloadMsg - Used as a data payload by 
+                              // CBRamTestMsg to send status and errors back.                  
+                              
                                                                                       
 }
 
@@ -818,4 +824,82 @@ message CBI2CDataPayloadMsg
     required bytes        dataBuf = 6; // buffer with data                                       
 }
 // END CBI2CDataPayloadMsg.
+//------------------------------------------------------------------------------
+
+
+//------------------------------------------------------------------------------
+// This enum defines all the different RAM memory tests that exist on the board 
+enum CBRamTest_t
+{
+    CB_RAM_TEST_NONE      = 0; // No test.  Used for error checking 
+    CB_RAM_TEST_DATA_BUS  = 1; // Ram test that tests the integrity of the RAM 
+                               // data bus.  
+    CB_RAM_TEST_ADDR_BUS  = 2; // Ram test that tests the integrity of the RAM 
+                               // address bus.
+    CB_RAM_TEST_DEV_INT   = 3; // Ram test that tests the integrity of the RAM 
+                               // device itself.
+    CB_RAM_TEST_MAX       = 4; // Max number of tests.  Used for error checking.                               
+}
+
+//------------------------------------------------------------------------------
+// START CBRamTestMsg
+// Msg Tag  - 13
+// Msg Type - CBBasicMsg.  Uses CBBasicMsg structure. No definition needed
+// Msg Desc - This message is Used to send an RAM test cmd.
+//
+// No message definition needed.  Uses CBBasicMsg with no payload for Req and
+// CBRamTestPayloadMsg as a payload for CB_Prog and CB_Done.
+// Example:
+// Client                                                               CB Board
+//   |                                                                      |
+// *Send* [[**************CBBasicMsg********]>>>>>>>>>>>>>>>>>>>>>>>>>>*Receive*
+//          < msgName = CBRamTestMsg              
+//          < msgID   = [uint32]                          
+//          < msgType = CB_Req                    
+//          < msgProgReq = [0|1]                  
+//          < msgRoute = [CBMsgRoute]               
+//          < msgPayload = CBNoMsg           
+// *Rec*  [[**************CBBasicMsg***********]\n]<<<<<<<<<<<<<<<<<<<<<<<*Send*
+//          < msgName = CBRamTestMsg
+//          < msgID   = [uint32]                   
+//          < msgType = CB_Ack      
+//          < msgProgReq = [0|1]
+//          < msgRoute = [CBMsgRoute]                  
+//          < msgPayload = CBNoMsg
+// ... Start of optional Progress msgs ...
+// *Rec*  [[************CBBasicMsg**********][**CBPayloadMsg**]\n]<<<<<<<<*Send*
+//          < msgName = CBRamTestMsg           < errorCode = CB_ERR_CODE  
+//          < msgID   = [uint32]               < addr = (addr where error was found)        
+//          < msgType = CB_Prog                < test = (which test is in progress)
+//          < msgProgReq = [0|1]               
+//          < msgRoute = [CBMsgRoute]          
+//          < msgPayload = CBRamTestPayloadMsg
+// ... End of optional progress msgs ...
+// *Rec*  [[************CBBasicMsg**********][**CBPayloadMsg**]\n]<<<<<<<<*Send*
+//          < msgName = CBRamTestMsg           < errorCode = CB_ERR_CODE  
+//          < msgID   = [uint32]               < addr = (addr where error was found if any)        
+//          < msgType = CB_Done                < test = (which test failed or last finished)
+//          < msgProgReq = [0|1]               
+//          < msgRoute = [CBMsgRoute]          
+//          < msgPayload = CBRamTestPayloadMsg 
+//                                               
+// END CBRamTestMsg
+//------------------------------------------------------------------------------
+
+//------------------------------------------------------------------------------
+// START CBRamTestPayloadMsg 
+// Msg Tag  - 14
+// Msg Type - CBPayloadMsg.  
+// Msg Desc - Sent appended to the CBRamTestMsg CB_Prog and CB_Done msgs. 
+// (See examples in description of CBRamTestMsg ).
+//
+// Non-standard Field Description: (see below)
+message CBRamTestPayloadMsg 
+{
+	required uint32     errorCode = 1; // CBErrorCode that specifies status
+                                       // of the requested operation.
+    required CBRamTest_t  test    = 2; // Test that failed (if any)
+    required uint32       addr    = 3; // Addr at which the test failed (if any)                                       
+}
+// END CBRamTestPayloadMsg.
 //------------------------------------------------------------------------------

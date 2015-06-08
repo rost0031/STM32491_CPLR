@@ -115,6 +115,24 @@ void HELP_printCmdSpecific(
 
       example = appName + " -i 207.27.0.75 --" + parsed_cmd +
             " start=0 bytes=20" + "dev=EEPROM";
+   } else if( 0 == parsed_cmd.compare("ram_test") ) {       // ram_test cmd help
+      description = parsed_cmd + " command sends a request to the DC3 to run "
+            "a test on the external RAM. The RAM test checks the integrity of "
+            "the address lines, the data lines, and finally, the integrity of "
+            "the RAM chips themselves. This is a long test and may take a "
+            "while. The command returns the status of the ram test and if any "
+            "failures occurred, the test which failed and the address at which "
+            "the failure occurred. The possible return for: "
+            "status: 0x00000000 for success or other codes for failure.\n"
+            "addr: 0x00000000 if no failures and hex value of the memory "
+            "address the error occurred at. \n"
+            "test: ";
+      ss_params << "[" << enumToString(_CB_RAM_TEST_DATA_BUS) << "|"
+            << enumToString(_CB_RAM_TEST_ADDR_BUS) << "|"
+            << enumToString(_CB_RAM_TEST_DEV_INT) << "]";
+      description += ss_params.str();
+      prototype = appName + " [connection options] --" + parsed_cmd;
+      example = appName + " -i 207.27.0.75 --" + parsed_cmd;
    } else {
       ERR_out << "Unable to find cmd specific help for " << parsed_cmd;
       EXIT_LOG_FLUSH(0);

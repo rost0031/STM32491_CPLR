@@ -52,6 +52,9 @@ typedef enum CBErrors
    ERR_POR_PDR_RESET                                           = 0x00000009,
    ERR_PIN_RESET                                               = 0x0000000A,
    ERR_BOR_RESET                                               = 0x0000000B,
+   ERR_SDRAM_DATA_BUS                                          = 0x0000000C,
+   ERR_SDRAM_ADDR_BUS                                          = 0x0000000D,
+   ERR_SDRAM_DEVICE_INTEGRITY                                  = 0x0000000E,
 
    /* Flash error category                       0x00010000 - 0x0001FFFF */
    ERR_FLASH_IMAGE_SIZE_INVALID                                = 0x00010000,

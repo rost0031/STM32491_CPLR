@@ -59,19 +59,19 @@ MODULE_NAME( MODULE_EXT );
 /******************************************************************************/
 int main(int argc, char *argv[])
 {
-   ClientError_t status = CLI_ERR_NONE;               /* Keep track of status */
+   ClientError_t status = CLI_ERR_NONE;                  // Keep track of status
    string appName = argv[0];
    unsigned found = appName.find_last_of("/\\");
    appName = appName.substr(found+1);
    LOG_out << "Starting " << appName;
 
-   /* 1. Create a new LogStub instance.  This allows setting of logging
-    * callbacks to the rest of the client library.  Safe to do this without
-    * try/catch since no exceptions are thrown from library. */
+   // 1. Create a new LogStub instance.  This allows setting of logging
+   // callbacks to the rest of the client library.  Safe to do this without
+   // try/catch since no exceptions are thrown from library.
     LogStub *pLogStub = new LogStub();
 
-   /* 2. Set the callback functions which allow the library to log to this
-    * cmdline client. */
+   // 2. Set the callback functions which allow the library to log to this
+   // cmdline client.
    status = pLogStub->setLibLogCallBack( CLI_LibLogCallback );
    if ( CLI_ERR_NONE != status ) {
       ERR_out << "Failed to set library logging callback function. Exiting...";
@@ -84,21 +84,21 @@ int main(int argc, char *argv[])
       EXIT_LOG_FLUSH(1);
    }
 
-   /* 3. Enable and disable logging for various modules in the library */
+   // 3. Enable and disable logging for various modules in the library
    pLogStub->enableLogForAllLibModules();
-   pLogStub->disableLogForLibModule(MODULE_SER);    /* Disable serial logging */
-   pLogStub->disableLogForLibModule(MODULE_MGR);   /* Disable MainMgr logging */
+   pLogStub->disableLogForLibModule(MODULE_SER);       // Disable serial logging
+   pLogStub->disableLogForLibModule(MODULE_MGR);      // Disable MainMgr logging
    LOG_setDbgLvl(DBG); /* Set logging level */
 
-   /* 4. Set up the client api and initialize its logging.  Users can call the
-    * constructor that also sets up the communication at the same time but if
-    * something goes wrong and an exception is thrown, the program will log it
-    * but attempt to continue since exceptions can't be thrown across dll
-    * boundaries. This way is safer because it allows for explicit error
-    * checking via error codes from class functions. */
+   // 4. Set up the client api and initialize its logging.  Users can call the
+   // constructor that also sets up the communication at the same time but if
+   // something goes wrong and an exception is thrown, the program will log it
+   // but attempt to continue since exceptions can't be thrown across dll
+   // boundaries. This way is safer because it allows for explicit error
+   // checking via error codes from class functions.
    ClientApi *client = new ClientApi( pLogStub );
 
-   /* 5. Set callbacks for Req, Ack, and Done msg types. */
+   // 5. Set callbacks for Req, Ack, and Done msg types.
    if ( CLI_ERR_NONE != (status = client->setReqCallBack(CLI_ReqCallback)) ) {
       WRN_out << "Failed to set library callback function for Req msgs.";
    }
@@ -138,7 +138,7 @@ int main(int argc, char *argv[])
 
    try {
       desc.add_options()
-         /* Common options always required */
+         // Common options always required
          ("help,h", "produce help message")
          ("version,v", "print version of client") // TODO: not implemented
 
@@ -159,7 +159,7 @@ int main(int argc, char *argv[])
          ("serial_baud,b", po::value<int>(&m_serial_baud)->default_value(115200),
             "Set the baud rate of the serial device")
 
-         /* Options only required if running in non-interactive mode */
+         // Options only required if running in non-interactive mode
          ("flash", po::value<vector<string>>(&m_command)->multitoken(),
             "Flash FW to the DC3"
             "Example: --flash file=../some/path/DC3Appl.bin type=Application"
@@ -173,6 +173,10 @@ int main(int argc, char *argv[])
             "Set current operating mode of the DC3. (Bootloader or Application) "
             "Example: --set_mode Application "
             "Example: --set_mode Bootloader ")
+
+         ("ram_test", po::value<vector<string>>(&m_command)->zero_tokens(),
+            "Run a test of the external RAM on the DC3."
+            "Example: --ram_test ")
 
          ("read_i2c", po::value<vector<string>>(&m_command)->multitoken(),
             "Read data from an I2C device."
@@ -192,17 +196,17 @@ int main(int argc, char *argv[])
       ; // End of add_options()
 
       DBG_out << "Parsing cmdline arguments...";
-      /* parse regular options */
 
+      // parse regular options
       po::parsed_options parsed = po::parse_command_line(argc, argv, desc);
       po::store( parsed, m_vm);
       po::notify(m_vm);
 
-      /* Clear out the argument map */
+      // Clear out the argument map
       m_parsed_args.clear();
 
-      /* Serial and IP connections are mutually exclusive so treat them as such
-       * on the cmdline. */
+      // Serial and IP connections are mutually exclusive so treat them as such
+      // on the cmdline.
       if (m_vm.count("ip_address") && !m_vm.count("serial_dev")) {
          LOG_out << "UDP connection to: "
                << m_vm["ip_address"].as<string>() << ":"
@@ -244,8 +248,8 @@ int main(int argc, char *argv[])
          }
          m_conn_set = true;
       } else if (m_vm.count("serial_dev") && m_vm.count("ip_address")) {
-         /* User specified specified both connection options. Let's not allow
-          * that. */
+         // User specified specified both connection options. Let's not allow
+         // that. */
          ss.clear();
          ss << desc << endl;
          ss << "To get detailed help for any command, add a --help after the "
@@ -259,10 +263,10 @@ int main(int argc, char *argv[])
       /**< Used for status of commands sent to the DC3 board */
       CBErrorCode statusDC3;
 
-      /* Figure out which command is being specified.  If a command is found,
-       * execute and exit.  If no command is found, start the menu thread and
-       * go into interactive mode. */
-      if (m_vm.count("get_mode")) {                /* "get_mode" cmd handling */
+      // Figure out which command is being specified.  If a command is found,
+      // execute and exit.  If no command is found, start the menu thread and
+      // go into interactive mode.
+      if (m_vm.count("get_mode")) {                   // "get_mode" cmd handling
          m_parsed_cmd = "get_mode";
 
          // Check for command specific help req
@@ -271,7 +275,7 @@ int main(int argc, char *argv[])
          // No need to extract the value from the arg=value pair for this cmd.
          CBBootMode mode = _CB_NoBootMode;       /**< Store the bootmode here */
 
-         /* Execute (and block) on this command */
+         // Execute (and block) on this command
          if( CLI_ERR_NONE == (status = client->DC3_getMode(&statusDC3, &mode))) {
             ss.clear();
             ss << "Got back DC3 bootmode: " << enumToString(mode);
@@ -285,7 +289,7 @@ int main(int argc, char *argv[])
             ERR_out << "Got DC3 error " << "0x" << std::hex
                << status << std::dec << " when trying to get bootmode.";
          }
-      } else if (m_vm.count("set_mode")) {         /* "set_mode" cmd handling */
+      } else if (m_vm.count("set_mode")) {            // "set_mode" cmd handling
          m_parsed_cmd = "set_mode";
 
          // Check for command specific help req
@@ -320,7 +324,7 @@ int main(int argc, char *argv[])
             ERR_out << "Got DC3 error " << "0x" << std::hex
                << status << std::dec << " when trying to set bootmode.";
          }
-      } else if (m_vm.count("flash")) {               /* "flash" cmd handling */
+      } else if (m_vm.count("flash")) {                  // "flash" cmd handling
          m_parsed_cmd = "flash";
 
          // Check for command specific help req
@@ -342,7 +346,7 @@ int main(int argc, char *argv[])
          DBG_out << "Got arg value " << enumToString(type) << " for arg name: type";
 
          UTIL_getArgValue( filename, "file", m_parsed_cmd, appName, m_vm );
-         ifstream fw_file (      /* open file stream to read in file */
+         ifstream fw_file (                  // open file stream to read in file
                filename.c_str(),
                ios::in | ios::binary | ios::ate
          );
@@ -385,7 +389,7 @@ int main(int argc, char *argv[])
          // Extract the value from the arg=value pair
          int bytes = -1, start = -1;
          CBI2CDevices dev = _CB_MaxI2CDev;
-         CBAccessType acc = _CB_ACCESS_QPC; // set to a default arg of QPC
+         CBAccessType acc = _CB_ACCESS_QPC;       // set to a default arg of QPC
          string value = "";
 
          // Get the "bytes" arg and make sure it's numeric
@@ -504,7 +508,7 @@ int main(int argc, char *argv[])
                   << status << std::dec << " when trying to read I2C.";
          }
          delete[] buffer;
-      } else if (m_vm.count("write_i2c")) {            // "read_i2c" cmd handling
+      } else if (m_vm.count("write_i2c")) {           // "read_i2c" cmd handling
          m_parsed_cmd = "write_i2c";
 
          // Check for command specific help req
@@ -513,7 +517,7 @@ int main(int argc, char *argv[])
          // Extract the value from the arg=value pair
          int bytes = -1, start = -1;
          CBI2CDevices dev = _CB_MaxI2CDev;
-         CBAccessType acc = _CB_ACCESS_QPC; // set to a default arg of QPC
+         CBAccessType acc = _CB_ACCESS_QPC;       // set to a default arg of QPC
          uint8_t *data;
          string value = "";
 
@@ -616,11 +620,38 @@ int main(int argc, char *argv[])
                   << status << std::dec << " when trying to read I2C.";
          }
 
+      } else if (m_vm.count("ram_test")) {            // "ram_test" cmd handling
+         m_parsed_cmd = "ram_test";
+
+         // Check for command specific help req
+         UTIL_checkForCmdSpecificHelp( m_parsed_cmd, appName, m_vm, m_conn_set );
+
+         // No need to extract the value from the arg=value pair for this cmd.
+
+         // Execute (and block) on this command
+         CBRamTest_t test = _CB_RAM_TEST_NONE;
+         uint32_t addr = 0x00000000;
+         if( CLI_ERR_NONE == (status = client->DC3_ramTest(&statusDC3, &test, &addr))) {
+            ss.clear();
+            ss << "Ram test of DC3 completed ";
+            if (ERR_NONE == statusDC3) {
+               ss << " with no errors.";
+            } else {
+               ss << " with ERROR: 0x" << setw(8) << setfill('0') << hex << statusDC3
+                     << " with test " << enumToString(test) << " failing at addr "
+                     << "0x" << setw(8) << setfill('0') << hex << addr
+                     << dec;
+            }
+            CON_print(ss.str());
+         } else {
+            ERR_out << "Got DC3 error " << "0x" << std::hex
+               << status << std::dec << " when trying to run RAM test.";
+         }
       }
 
-      /* Now check if the user requested general help.  This has to be done
-       * after checking for commands.  This allows checking for user requesting
-       * help for a specific command and this general help won't override. */
+      // Now check if the user requested general help.  This has to be done
+      // after checking for commands.  This allows checking for user requesting
+      // help for a specific command and this general help won't override.
       else if (m_vm.count("help")) {
          stringstream ss;
 
@@ -636,8 +667,8 @@ int main(int argc, char *argv[])
          CON_print(ss.str());
          EXIT_LOG_FLUSH(0);
       }
-      else { // end of checking for cmdline requested commands.
-         /* If we are here, no commands were requested so */
+      else {                  // end of checking for cmdline requested commands.
+         // If we are here, no commands were requested so
          ERR_out << "TODO: implement menu here";
          EXIT_LOG_FLUSH(0);
       }
@@ -651,7 +682,7 @@ int main(int argc, char *argv[])
       EXIT_LOG_FLUSH(1);
    }
 
-   /* Tell the client to stop and wait for it */
+   // Tell the client to stop and wait for it */
    DBG_out << "Exiting with client status 0x"
          << setw(8) << setfill('0') << hex << status << dec;
    EXIT_LOG_FLUSH( status );

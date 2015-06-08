@@ -56,6 +56,18 @@
     <documentation>/**&lt; Status of the FlashMgr operation completion. */</documentation>
    </attribute>
   </class>
+  <class name="RamStatusEvt" superclass="qpc::QEvt">
+   <documentation>/**&lt; Event type that transports data about the RAM test */</documentation>
+   <attribute name="errorCode" type="CBErrorCode" visibility="0x01" properties="0x00">
+    <documentation>/**&lt; Status of the RAM operation. */</documentation>
+   </attribute>
+   <attribute name="test" type="CBRamTest_t" visibility="0x01" properties="0x00">
+    <documentation>/**&lt; Which test is running if no error or failed if error. */</documentation>
+   </attribute>
+   <attribute name="addr" type="uint32_t" visibility="0x01" properties="0x00">
+    <documentation>/**&lt; Address where the test is running if no error or failed at if error. */</documentation>
+   </attribute>
+  </class>
  </package>
  <package name="AOs" stereotype="0x02">
   <class name="FlashMgr" superclass="qpc::QActive">
@@ -108,6 +120,18 @@
    <attribute name="fwDataToFlashLen" type="uint8_t" visibility="0x01" properties="0x00">
     <documentation>/**&lt; Length of data in fwDataToFlash buffer */</documentation>
    </attribute>
+   <attribute name="ramTimerEvt" type="QTimeEvt" visibility="0x01" properties="0x00">
+    <documentation>/**&lt; Used for timing out the Ram test in case it gets stuck for some reason. */</documentation>
+   </attribute>
+   <attribute name="ramOpTimerEvt" type="QTimeEvt" visibility="0x01" properties="0x00">
+    <documentation>/**&lt; Used for timing out individual operations on RAM in FlashMgr object. */</documentation>
+   </attribute>
+   <attribute name="currRamTest" type="CBRamTest_t" visibility="0x01" properties="0x00">
+    <documentation>/**&lt; Which test is running. */</documentation>
+   </attribute>
+   <attribute name="currRamAddr" type="__IO uint32_t" visibility="0x01" properties="0x00">
+    <documentation>/**&lt; Address where the test is running if no error or failed at if error. */</documentation>
+   </attribute>
    <statechart>
     <initial target="../1/0">
      <action>(void)e;        /* suppress the compiler warning about unused parameter */
@@ -157,7 +181,21 @@ QTimeEvt_postIn(
     (QActive *)me,
     SEC_TO_TICKS( HL_MAX_TOUT_SEC_FLASH_FW )
 );
-QTimeEvt_disarm(&amp;me-&gt;flashOpTimerEvt);</entry>
+QTimeEvt_disarm(&amp;me-&gt;flashOpTimerEvt);
+
+QTimeEvt_postIn(
+    &amp;me-&gt;ramTimerEvt,
+    (QActive *)me,
+    SEC_TO_TICKS( HL_MAX_TOUT_SEC_FLASH_FW )
+);
+QTimeEvt_disarm(&amp;me-&gt;ramTimerEvt);
+
+QTimeEvt_postIn(
+    &amp;me-&gt;ramOpTimerEvt,
+    (QActive *)me,
+    SEC_TO_TICKS( HL_MAX_TOUT_SEC_FLASH_FW )
+);
+QTimeEvt_disarm(&amp;me-&gt;ramOpTimerEvt);</entry>
      <state name="Idle">
       <documentation>/**
  * @brief	Idle state that allows new messages to be received.
@@ -175,7 +213,9 @@ me-&gt;errorCode       = ERR_NONE;
 me-&gt;msgRoute        = _CB_NoRoute;
 me-&gt;reqProg         = false;
 
-memset(&amp;me-&gt;fwFlashMetadata, 0, sizeof(me-&gt;fwFlashMetadata));</entry>
+memset(&amp;me-&gt;fwFlashMetadata, 0, sizeof(me-&gt;fwFlashMetadata));
+me-&gt;currRamTest = _CB_RAM_TEST_NONE;
+me-&gt;currRamAddr = 0;</entry>
       <tran trig="FLASH_OP_START" target="../../1/2">
        <action>DBG_printf(&quot;FLASH_OP_START\n&quot;);
 
@@ -197,15 +237,21 @@ MEMCPY(
         <action box="0,-2,15,2"/>
        </tran_glyph>
       </tran>
-      <state_glyph node="6,8,15,88">
+      <tran trig="RAM_TEST_START" target="../../2/3">
+       <action>DBG_printf(&quot;RAM_TEST_START signal\n&quot;);</action>
+       <tran_glyph conn="6,106,3,3,41">
+        <action box="0,-2,15,2"/>
+       </tran_glyph>
+      </tran>
+      <state_glyph node="6,8,15,145">
        <entry box="1,2,6,2"/>
       </state_glyph>
      </state>
-     <state name="Busy">
+     <state name="BusyFlash">
       <documentation>/**
- * @brief	Busy state for msg processing.
- * This state handles msg processing and indicates that the system is busy and
- * cannot process another msg at this time.
+ * @brief	Busy state for flash operation processing.
+ * This state handles flash operation processing and indicates that the system 
+ * is busy and cannot process another req at this time.
  *
  * @param  [in|out] me: Pointer to the state machine
  * @param  [in|out]  e:  Pointer to the event being processed.
@@ -555,8 +601,6 @@ if( ERR_NONE != err || bytesWritten != me-&gt;fwDataToFlashLen) { /* Error occur
     QACTIVE_POST(AO_FlashMgr, (QEvt *)(evt), AO_FlashMgr);
 }</entry>
        <tran trig="FLASH_DONE">
-        <action>
-</action>
         <choice target="../../../3">
          <guard brief="MorePackets?">me-&gt;fwPacketCurr != me-&gt;fwPacketExp</guard>
          <choice_glyph conn="116,54,4,0,-9,-52,2">
@@ -695,16 +739,166 @@ ERR_printf(&quot;Calculated: 0x%08x\n&quot;, crcCheck);</action>
         <entry box="1,2,6,2"/>
        </state_glyph>
       </state>
-      <state_glyph node="42,8,84,88">
+      <state_glyph node="42,8,84,87">
        <entry box="1,2,6,2"/>
        <exit box="1,4,6,2"/>
       </state_glyph>
      </state>
-     <state_glyph node="3,3,130,95">
+     <state name="BusyRam">
+      <documentation>/**
+ * @brief    Busy state for RAM test operation processing.
+ * This state handles RAM test processing and indicates that the system is busy and
+ * cannot process another req at this time.
+ *
+ * @param  [in|out] me: Pointer to the state machine
+ * @param  [in|out]  e:  Pointer to the event being processed.
+ * @return status: QState type that specifies where the state
+ * machine is going next.
+ */</documentation>
+      <entry>/* Arm the timer so if the message can't be processed for some reason, we can get
+ * back to idle state.  This timer may be re-armed if some messages require more 
+ * time to process than others. */
+QTimeEvt_rearm(                         /* Re-arm timer on entry */
+    &amp;me-&gt;ramTimerEvt,
+    SEC_TO_TICKS( HL_MAX_TOUT_SEC_CLI_WAIT_FOR_RAM_TEST )
+);
+
+/* Reset all the variables that keep track of statuses */
+me-&gt;retryCurr    = 0;</entry>
+      <exit>QTimeEvt_disarm(&amp;me-&gt;ramTimerEvt); /* Disarm timer on exit */
+
+/* Always send a flash status event to the CommMgr AO with the current error code */
+RamStatusEvt *evt = Q_NEW(RamStatusEvt, RAM_TEST_DONE_SIG);
+evt-&gt;errorCode = me-&gt;errorCode;
+evt-&gt;test = me-&gt;currRamTest;
+evt-&gt;addr = me-&gt;currRamAddr;
+QACTIVE_POST(AO_CommMgr, (QEvt *)(evt), AO_FlashMgr);</exit>
+      <tran trig="RAM_TIMEOUT" target="../../0">
+       <action>ERR_printf(&quot;Timeout trying to process RAM test request, error: 0x%08x\n&quot;, me-&gt;errorCode);</action>
+       <tran_glyph conn="42,150,3,1,-21">
+        <action box="-14,-2,14,2"/>
+       </tran_glyph>
+      </tran>
+      <tran trig="RAM_ERROR" target="../../0">
+       <action>ERR_printf(&quot;Unable to to process RAM test request. Error: 0x%08x\n&quot;, me-&gt;errorCode);
+</action>
+       <tran_glyph conn="42,147,3,1,-21">
+        <action box="-14,-2,10,2"/>
+       </tran_glyph>
+      </tran>
+      <state name="AddrBusTest">
+       <documentation>/**
+ * @brief    Perform a RAM address bus test on a single address
+ * 
+ * @param  [in|out] me: Pointer to the state machine
+ * @param  [in|out]  e:  Pointer to the event being processed.
+ * @return status: QState type that specifies where the state
+ * machine is going next.
+ */</documentation>
+       <entry>QEvt *evt = Q_NEW(QEvt, RAM_OP_START_SIG);
+QACTIVE_POST(AO_FlashMgr, (QEvt *)(evt), AO_FlashMgr);
+</entry>
+       <tran trig="RAM_OP_START">
+        <action>uint32_t failedAddr = SDRAM_testAddrBus( me-&gt;currRamAddr,  RAM_TEST_BLOCK_SIZE );</action>
+        <choice>
+         <guard>else</guard>
+         <action>DBG_printf(&quot;Test for %d bytes at addr 0x%08x passed.\n&quot;, RAM_TEST_BLOCK_SIZE, me-&gt;currRamAddr);
+
+me-&gt;currRamAddr += RAM_TEST_BLOCK_SIZE;</action>
+         <choice target="../../..">
+          <guard brief="MoreRamToTest?">me-&gt;currRamAddr &lt; (SDRAM_MEM_SIZE - RAM_TEST_BLOCK_SIZE)</guard>
+          <choice_glyph conn="107,121,4,1,-15,-3">
+           <action box="1,-4,12,2"/>
+          </choice_glyph>
+         </choice>
+         <choice target="../../../../../0">
+          <guard>else</guard>
+          <action>DBG_printf(&quot;Ram test finished with no errors\n&quot;);</action>
+          <choice_glyph conn="107,121,4,1,4,-86">
+           <action box="1,0,10,2"/>
+          </choice_glyph>
+         </choice>
+         <choice_glyph conn="86,121,5,-1,21">
+          <action box="1,0,10,2"/>
+         </choice_glyph>
+        </choice>
+        <choice target="../../../../0">
+         <guard brief="Error?">0 != failedAddr</guard>
+         <action>me-&gt;errorCode = ERR_SDRAM_DATA_BUS;
+me-&gt;currRamAddr = failedAddr;
+ERR_printf(
+    &quot;RAM addr bus test failed at addr: 0x%08x. Error: 0x%08x\n&quot;,
+    me-&gt;currRamAddr, me-&gt;errorCode 
+);</action>
+         <choice_glyph conn="86,121,5,1,-65">
+          <action box="-9,0,10,2"/>
+         </choice_glyph>
+        </choice>
+        <tran_glyph conn="86,110,2,-1,11">
+         <action box="0,0,12,2"/>
+        </tran_glyph>
+       </tran>
+       <state_glyph node="84,103,20,7">
+        <entry box="1,2,15,2"/>
+       </state_glyph>
+      </state>
+      <state name="DataBusTest">
+       <documentation>/**
+ * @brief    Perform a RAM data bus test on a single address
+ * 
+ * @param  [in|out] me: Pointer to the state machine
+ * @param  [in|out]  e:  Pointer to the event being processed.
+ * @return status: QState type that specifies where the state
+ * machine is going next.
+ */</documentation>
+       <entry>me-&gt;currRamTest = _CB_RAM_TEST_DATA_BUS;
+
+QEvt *evt = Q_NEW(QEvt, RAM_OP_START_SIG);
+QACTIVE_POST(AO_FlashMgr, (QEvt *)(evt), AO_FlashMgr);
+</entry>
+       <tran trig="RAM_OP_START">
+        <action>me-&gt;currRamTest = _CB_RAM_TEST_DATA_BUS;
+me-&gt;currRamAddr = 0;
+uint32_t failedPattern = SDRAM_testDataBus( me-&gt;currRamAddr );</action>
+        <choice target="../../../2">
+         <guard>else</guard>
+         <action>DBG_printf(&quot;No RAM Data bus error found.\n&quot;);
+
+me-&gt;currRamTest = _CB_RAM_TEST_DATA_BUS;
+me-&gt;currRamAddr = 0;</action>
+         <choice_glyph conn="71,113,4,3,-7,13">
+          <action box="1,-9,10,2"/>
+         </choice_glyph>
+        </choice>
+        <choice target="../../../../0">
+         <guard brief="Error?">0 != failedPattern</guard>
+         <action>me-&gt;errorCode = ERR_SDRAM_DATA_BUS;
+ERR_printf(
+    &quot;RAM data bus test failed at addr: 0x%08x on pattern: 0x%08x. Error: 0x%08x\n&quot;,
+    me-&gt;currRamAddr, failedPattern, me-&gt;errorCode 
+);</action>
+         <choice_glyph conn="71,113,4,1,6,-50">
+          <action box="0,2,10,2"/>
+         </choice_glyph>
+        </choice>
+        <tran_glyph conn="47,113,3,-1,24">
+         <action box="0,-2,12,2"/>
+        </tran_glyph>
+       </tran>
+       <state_glyph node="47,103,20,14">
+        <entry box="1,2,6,2"/>
+       </state_glyph>
+      </state>
+      <state_glyph node="42,99,84,54">
+       <entry box="1,2,6,2"/>
+       <exit box="1,4,6,2"/>
+      </state_glyph>
+     </state>
+     <state_glyph node="3,3,130,152">
       <entry box="1,2,5,2"/>
      </state_glyph>
     </state>
-    <state_diagram size="163,101"/>
+    <state_diagram size="137,158"/>
    </statechart>
   </class>
   <attribute name="AO_FlashMgr" type="QActive * const" visibility="0x00" properties="0x00">
@@ -722,7 +916,9 @@ ERR_printf(&quot;Calculated: 0x%08x\n&quot;, crcCheck);</action>
    <code>FlashMgr *me = &amp;l_FlashMgr;
 QActive_ctor(&amp;me-&gt;super, (QStateHandler)&amp;FlashMgr_initial);
 QTimeEvt_ctor(&amp;me-&gt;flashTimerEvt, FLASH_TIMEOUT_SIG);
-QTimeEvt_ctor(&amp;me-&gt;flashOpTimerEvt, FLASH_OP_TIMEOUT_SIG);</code>
+QTimeEvt_ctor(&amp;me-&gt;flashOpTimerEvt, FLASH_OP_TIMEOUT_SIG);
+QTimeEvt_ctor(&amp;me-&gt;ramTimerEvt, RAM_TIMEOUT_SIG);
+QTimeEvt_ctor(&amp;me-&gt;ramOpTimerEvt, RAM_OP_TIMEOUT_SIG);</code>
   </operation>
  </package>
  <directory name=".">
@@ -752,6 +948,7 @@ QTimeEvt_ctor(&amp;me-&gt;flashOpTimerEvt, FLASH_OP_TIMEOUT_SIG);</code>
 #include &quot;flash.h&quot;
 #include &quot;CommMgr.h&quot;
 #include &quot;crc32compat.h&quot;
+#include &quot;sdram.h&quot;
 
 /* Compile-time called macros ------------------------------------------------*/
 Q_DEFINE_THIS_FILE;                 /* For QSPY to know the name of this file */
@@ -761,9 +958,8 @@ DBG_DEFINE_THIS_MODULE( DBG_MODL_FLASH );/* For debug system to ID this module *
 $declare(AOs::FlashMgr)
 
 /* Private defines -----------------------------------------------------------*/
-#define USER_FLASH_FIRST_PAGE_ADDRESS                                 0x08020000
 #define MAX_FLASH_RETRIES                                                      5
-
+#define RAM_TEST_BLOCK_SIZE                                           0x00800000
 /* Private macros ------------------------------------------------------------*/
 /* Private variables and Local objects ---------------------------------------*/
 static FlashMgr l_FlashMgr; /* the single instance of the Interstage active object */

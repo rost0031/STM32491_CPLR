@@ -28,16 +28,6 @@ DBG_DEFINE_THIS_MODULE( DBG_MODL_SDRAM ); /* For dbg system to ID this module */
 /* Private defines -----------------------------------------------------------*/
 
 /**
-  * @brief  FMC SDRAM Timeout
-  */
-#define SDRAM_TIMEOUT     ((uint32_t)0xFFFF)
-
-/**
-  * @brief  FMC SDRAM Bank address
-  */
-#define SDRAM_BANK_ADDR     ((uint32_t)0xC0000000)
-
-/**
   * @brief  FMC SDRAM Mode definition register defines
   */
 #define SDRAM_MODEREG_BURST_LENGTH_1             ((uint16_t)0x0000)
@@ -60,6 +50,7 @@ DBG_DEFINE_THIS_MODULE( DBG_MODL_SDRAM ); /* For dbg system to ID this module */
 __attribute__((section(".sdram"))) uint32_t sdRamTestBuffer[10000];
 
 /* Private function prototypes -----------------------------------------------*/
+static void SDRAM_slowPrintMemRegion( uint32_t startAddr, uint32_t nBytes );
 /* Private functions ---------------------------------------------------------*/
 
 /******************************************************************************/
@@ -489,6 +480,112 @@ void SDRAM_TestDestructive( void )
   DBG_printf("Copied data to large SDRAM buffer.  Value at %u is %u\n",tmpRamIndex , sdRamTestBuffer[tmpRamIndex]);
   DBG_printf("Stack pointer addr: 0x%08x, SDRAM buffer addr: 0x%08x\n", MSPValue, uwRamBufferAddr);
 
+}
+
+/******************************************************************************/
+uint32_t SDRAM_testDataBus( const uint32_t addr )
+{
+   LOG_printf("Testing RAM data bus...\n");
+   for( uint32_t p = 1; p != 0; p <<= 1 ) {
+      *(__IO uint32_t *)(SDRAM_BANK_ADDR + addr) = p; // Write pattern to the address
+
+      if (  *(__IO uint32_t *)(SDRAM_BANK_ADDR + addr ) != p ) {
+         ERR_printf(
+               "RAM data bus test failed. Expected: 0x%08x, read: 0x%08x\n",
+               p,
+               *(__IO uint32_t *)(SDRAM_BANK_ADDR + addr )
+         );
+         return p;
+      }
+   }
+
+   LOG_printf("RAM data bus test finished with no errors.\n");
+   return 0;
+}
+
+/******************************************************************************/
+uint32_t SDRAM_testAddrBus( const uint32_t addr, const uint32_t nBytes )
+{
+   LOG_printf("Testing RAM address bus...\n");
+   uint32_t addrMask = nBytes/sizeof(uint8_t) - 1;
+
+   uint8_t testPattern = (uint8_t) 0xAA;
+   uint8_t antiPattern = (uint8_t) 0x55;
+
+   uint32_t offset = 0;
+   /* Write the default pattern to each of the power of two offsets */
+   for( offset = 1; (offset & addrMask ) != 0; offset <<= 1 ) {
+      *(__IO uint8_t *)(SDRAM_BANK_ADDR + addr + offset) = testPattern;
+   }
+
+   /* Check for address bits stuck high */
+   uint32_t testOffset = 0;
+   *(uint8_t *)(SDRAM_BANK_ADDR + addr + testOffset) = antiPattern;
+
+   LOG_printf("Testing for address lines stuck high...\n");
+
+   for( offset = 1; (offset & addrMask) != 0; offset <<= 1 ) {
+      if ( *(__IO uint8_t *)(SDRAM_BANK_ADDR + addr + offset ) != testPattern ) {
+         ERR_printf(
+               "RAM address bus stuck-high test failed. Expected: 0x%08x, read: 0x%08x\n",
+               testPattern,
+               *(__IO uint8_t *)(SDRAM_BANK_ADDR + addr + offset )
+         );
+         SDRAM_slowPrintMemRegion(SDRAM_BANK_ADDR + addr, 128);
+
+         return( SDRAM_BANK_ADDR + addr + offset );
+      }
+   }
+
+   LOG_printf("Stuck-high test finished with no errors.\n");
+   LOG_printf("Testing for address lines stuck low or shorted...\n");
+
+   *(__IO uint8_t *)(SDRAM_BANK_ADDR + addr + testOffset) = testPattern;
+
+   /* Check for address bits stuck low or shorted */
+   for( testOffset = 1; (testOffset & addrMask) != 0; testOffset <<= 1 ) {
+      *(uint8_t *)(SDRAM_BANK_ADDR + addr + testOffset) = antiPattern;
+
+      if ( *(__IO uint8_t *)(SDRAM_BANK_ADDR + addr + 0) != testPattern ) {
+         ERR_printf(
+               "RAM address bus stuck-low test failed. Expected: 0x%02x, read: 0x%02x\n",
+               testPattern,
+               *(__IO uint8_t *)(SDRAM_BANK_ADDR + addr + 0 )
+         );
+         SDRAM_slowPrintMemRegion(SDRAM_BANK_ADDR + addr, 128);
+         return( SDRAM_BANK_ADDR + addr + 0 );
+      }
+
+      for( offset = 1; (offset & addrMask) != 0; offset <<= 1 ) {
+         if ( offset != testOffset &&
+               *(__IO uint8_t *)(SDRAM_BANK_ADDR + addr + offset) != testPattern ) {
+            ERR_printf(
+                  "Expected: 0x%02x, read: 0x%02x\n",
+                  testPattern,
+                  *(__IO uint8_t *)(SDRAM_BANK_ADDR + addr + offset )
+            );
+            SDRAM_slowPrintMemRegion(SDRAM_BANK_ADDR + addr + offset, 128);
+            return( SDRAM_BANK_ADDR + addr + testOffset );
+         }
+      }
+
+      *(__IO uint8_t *)(SDRAM_BANK_ADDR + addr + testOffset) = testPattern;
+   }
+   LOG_printf("Stuck-low test finished with no errors.\n");
+   LOG_printf("RAM address bus test finished with no errors.\n");
+   return 0;
+}
+
+/******************************************************************************/
+static void SDRAM_slowPrintMemRegion( uint32_t startAddr, uint32_t nBytes )
+{
+   dbg_slow_printf("Memory Region %d bytes from addr 0x%08x\n", nBytes, startAddr);
+   for ( uint32_t i = 0; i <= nBytes; i += 4 ) {
+      if ( i%16 == 0 ) {
+         printf("\nAddr: 0x%08x : ", startAddr + i );
+      }
+      printf("%08x ", *(__IO uint32_t *)(startAddr + i ));
+   }
 }
 
 /******************************************************************************/

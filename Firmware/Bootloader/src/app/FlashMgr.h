@@ -109,6 +109,22 @@ typedef struct {
     CBErrorCode errorCode;
 } FlashStatusEvt;
 
+/**< Event type that transports data about the RAM test */
+/*${Events::RamStatusEvt} ..................................................*/
+typedef struct {
+/* protected: */
+    QEvt super;
+
+    /**< Status of the RAM operation. */
+    CBErrorCode errorCode;
+
+    /**< Which test is running if no error or failed if error. */
+    CBRamTest_t test;
+
+    /**< Address where the test is running if no error or failed at if error. */
+    uint32_t addr;
+} RamStatusEvt;
+
 /* Exported constants --------------------------------------------------------*/
 /* Exported functions --------------------------------------------------------*/
 

@@ -26,6 +26,22 @@ extern "C" {
 #include "CBErrors.h"
 
 /* Exported defines ----------------------------------------------------------*/
+
+/**
+  * @brief  FMC SDRAM Timeout
+  */
+#define SDRAM_TIMEOUT     ((uint32_t)0xFFFF)
+
+/**
+  * @brief  FMC SDRAM Bank address
+  */
+#define SDRAM_BANK_ADDR     ((uint32_t)0xC0000000)
+
+/**
+  * @brief  FMC SDRAM Memory size
+  */
+#define SDRAM_MEM_SIZE      ((uint32_t)0x00800000)
+
 /* Exported types ------------------------------------------------------------*/
 /* Exported macros -----------------------------------------------------------*/
 /* Exported constants --------------------------------------------------------*/
@@ -93,6 +109,41 @@ void SDRAM_ReadBuffer(
  * @retval None
  */
 void SDRAM_TestDestructive( void );
+
+/**
+ * @brief   SDRAM data bus walking ones test.
+ *
+ * Test the data bus wiring in a memory region by performing a walking 1s test
+ * to a selected memory address.  Since only data bus lines are being tested,
+ * this test only needs to be performed on a single address as long as data bus
+ * lines are all going to the same chip.
+ *
+ * @param [in] addr: volatile uint32_t memory address to test.
+ * @return: 0 if sucess,
+ *          1s pattern that failed if error occurred.
+ */
+uint32_t SDRAM_testDataBus( const uint32_t addr );
+
+/**
+ * @brief   SDRAM address bus test.
+ *
+ * Test the address bus wiring in a memory region by performing a walking ones
+ * test on the relevant bits of the address and checking for aliasing. This test
+ * will find single-bit address failures such as stuck-high, stuck-low, and
+ * shorted pins. The base address and the size of the region are selected by the
+ * caller.
+ *
+ * @note: For best results, the selected base address should have enough LSB 0s
+ * to guarantee single address bit changes. For example, to test a 64-Kbyte
+ * region, select a base address on a 64 Kbyte boundary. Also, select the region
+ * size as a power of two.
+ *
+ * @param [in] addr: volatile uint32_t memory base address to test.
+ * @param [in] nBytes: number of bytes to test from the base address.
+ * @return: 0 if sucess,
+ *          address that failed if error occurred.
+ */
+uint32_t SDRAM_testAddrBus( const uint32_t addr, const uint32_t nBytes );
 
 /**
  * @brief   NOR Event callback function
