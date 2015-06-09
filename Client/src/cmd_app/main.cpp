@@ -211,7 +211,7 @@ int main(int argc, char *argv[])
          LOG_out << "UDP connection to: "
                << m_vm["ip_address"].as<string>() << ":"
                << m_vm["remote_port"].as<string>()
-               << "from local port "
+               << " from local port "
                   << m_vm["local_port"].as<string>() << endl;
 
          status = client->setNewConnection(
@@ -633,11 +633,11 @@ int main(int argc, char *argv[])
          uint32_t addr = 0x00000000;
          if( CLI_ERR_NONE == (status = client->DC3_ramTest(&statusDC3, &test, &addr))) {
             ss.clear();
-            ss << "Ram test of DC3 completed ";
+            ss << "Ram test of DC3 ";
             if (ERR_NONE == statusDC3) {
-               ss << " with no errors.";
+               ss << "completed with no errors.";
             } else {
-               ss << " with ERROR: 0x" << setw(8) << setfill('0') << hex << statusDC3
+               ss << "failed with ERROR: 0x" << setw(8) << setfill('0') << hex << statusDC3
                      << " with test " << enumToString(test) << " failing at addr "
                      << "0x" << setw(8) << setfill('0') << hex << addr
                      << dec;
