@@ -32,6 +32,7 @@
 #include "Callbacks.hpp"
 #include "EnumMaps.hpp"
 #include "Utils.hpp"
+#include "Menu.hpp"
 
 /* Lib includes */
 #include "CBSharedDbgLevels.h"
@@ -668,9 +669,9 @@ int main(int argc, char *argv[])
          EXIT_LOG_FLUSH(0);
       }
       else {                  // end of checking for cmdline requested commands.
-         // If we are here, no commands were requested so
-         ERR_out << "TODO: implement menu here";
-         EXIT_LOG_FLUSH(0);
+         // If we are here, no commands were requested so run the menu and let
+         // the user interactively choose what they want to do.
+         status = MENU_run( client );
       }
 
    } catch(po::error& e) {
