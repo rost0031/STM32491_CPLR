@@ -52,23 +52,22 @@ unsigned int Ktree::findDepth( unsigned int currDepth )
 }
 
 /******************************************************************************/
-void Ktree::addChild( Ktree& child )
+void Ktree::addChild( Ktree* child )
 {
-   child.setParent( this );
+   child->setParent( this );
    m_children.push_back( child );
 }
 
 /******************************************************************************/
-Ktree* Ktree::addChild(
-      const string& text,
+void Ktree::addChild(
       const string& selector,
+      const string& text,
       const unsigned int number
 )
 {
-   Ktree *node = new Ktree( text, selector, number );
+   Ktree *node = new Ktree( selector, text, number );
    node->setParent(this);
-   m_children.push_back( *node );
-   return( node );
+   m_children.push_back( node );
 }
 
 ///******************************************************************************/
@@ -87,10 +86,10 @@ Ktree* Ktree::addChild(
 /******************************************************************************/
 Ktree* Ktree::findChild( const string& selector )
 {
-   vector<Ktree>::iterator it = m_children.begin();
+   vector<Ktree*>::iterator it = m_children.begin();
    for( it = m_children.begin(); it != m_children.end(); ++it ) {
-      if( boost::iequals(it->m_selector, selector) ) {
-         return( &(*it) );
+      if( boost::iequals((*it)->m_selector, selector) ) {
+         return( *it );
       }
    }
 
@@ -100,10 +99,10 @@ Ktree* Ktree::findChild( const string& selector )
 /******************************************************************************/
 Ktree* Ktree::findChild( unsigned int number )
 {
-   vector<Ktree>::iterator it = m_children.begin();
+   vector<Ktree*>::iterator it = m_children.begin();
    for( it = m_children.begin(); it != m_children.end(); ++it ) {
-      if( it->m_number == number ) {
-         return( &(*it) );
+      if( (*it)->m_number == number ) {
+         return( *it );
       }
    }
 
@@ -113,11 +112,12 @@ Ktree* Ktree::findChild( unsigned int number )
 /******************************************************************************/
 void Ktree::deleteChild( const string& selector )
 {
-   vector<Ktree>::iterator it = m_children.begin();
+   vector<Ktree*>::iterator it = m_children.begin();
    for( it = m_children.begin(); it != m_children.end(); ++it ) {
-      if( boost::iequals(it->m_selector, selector) ) {
-         it->deleteAllChildren();
+      if( boost::iequals((*it)->m_selector, selector) ) {
+         (*it)->deleteAllChildren();
          m_children.erase(it);
+         delete (*it);
          return;
       }
    }
@@ -126,10 +126,10 @@ void Ktree::deleteChild( const string& selector )
 /******************************************************************************/
 void Ktree::deleteChild( unsigned int number )
 {
-   vector<Ktree>::iterator it = m_children.begin();
+   vector<Ktree*>::iterator it = m_children.begin();
    for( it = m_children.begin(); it != m_children.end(); ++it ) {
-      if( it->m_number == number ) {
-         it->deleteAllChildren();
+      if( (*it)->m_number == number ) {
+         (*it)->deleteAllChildren();
          m_children.erase(it);
          return;
       }
@@ -140,10 +140,10 @@ void Ktree::deleteChild( unsigned int number )
 void Ktree::deleteAllChildren( void )
 {
    // recursively call delete on each child.
-   vector<Ktree>::iterator it = m_children.begin();
+   vector<Ktree*>::iterator it = m_children.begin();
    for( it = m_children.begin(); it != m_children.end(); ++it ) {
-      delete &(*it);
       m_children.erase(it);
+      delete (*it);
    }
 
    m_children.clear();
@@ -154,6 +154,19 @@ void Ktree::setParent( Ktree* node )
 {
    this->m_parent = node;
 }
+
+/******************************************************************************/
+Ktree* Ktree::getParent( void )
+{
+   return( m_parent );
+}
+
+///******************************************************************************/
+//Ktree* Ktree::getParent( vector<Ktree*> vec )
+//{
+//
+//}
+
 
 /******************************************************************************/
 void Ktree::printNode( unsigned int level )
@@ -183,9 +196,9 @@ void Ktree::printNode( unsigned int level )
       ss << "*--";
    }
    ss << "Children ptrs: " << endl;
-   for ( unsigned int i = 0; i < m_children.size(); i++ ) {
-      ss << "Child number " << i <<": " << m_children[i].m_number << endl;
-   }
+//   for ( unsigned int i = 0; i < m_children.size(); i++ ) {
+//      ss << "Child number " << i <<": " << m_children[i].m_number << endl;
+//   }
    CON_print(ss.str());
 }
 
@@ -198,52 +211,64 @@ void Ktree::printTree( void )
 }
 
 /******************************************************************************/
+void Ktree::childrenToStream( std::stringstream& ss )
+{
+   vector<Ktree*>::iterator it = m_children.begin();
+   for( it = m_children.begin(); it != m_children.end(); ++it ) {
+      (*it)->nodeToStream( ss );
+   }
+}
+
+/******************************************************************************/
 void Ktree::nodeToStream( stringstream& ss )
 {
    unsigned int level = this->findDepth(0);
    for ( unsigned int i = 0; i < level; i++ ) {
-      ss << "*--";
+      ss << "   ";
    }
-   ss << "Text: " << m_text << endl;
 
-   for ( unsigned int i = 0; i < level; i++ ) {
-      ss << "*--";
-   }
-   ss << "Selector: " << m_selector << endl;
+   ss << "*--";
+   ss << "** " << std::setw(3) << m_selector << " ** (" << m_number << "): " << m_text << endl;
 
-   for ( unsigned int i = 0; i < level; i++ ) {
-      ss << "*--";
-   }
-   ss << "Number: " << m_number << endl;
-
-   for ( unsigned int i = 0; i < level; i++ ) {
-      ss << "*--";
-   }
-   ss << "Parent ptr: " << m_parent << endl;
-
-   for ( unsigned int i = 0; i < level; i++ ) {
-      ss << "*--";
-   }
-   ss << "Children ptrs: " << endl;
-   for ( unsigned int i = 0; i < m_children.size(); i++ ) {
-      ss << "Child number " << i <<": " << m_children[i].m_number << endl;
-   }
+//   ss << "Text: " << m_text << endl;
+//
+//   for ( unsigned int i = 0; i < level; i++ ) {
+//      ss << "*--";
+//   }
+//   ss << "Selector: " << m_selector << endl;
+//
+//   for ( unsigned int i = 0; i < level; i++ ) {
+//      ss << "*--";
+//   }
+//   ss << "Number: " << m_number << endl;
+//
+//   for ( unsigned int i = 0; i < level; i++ ) {
+//      ss << "*--";
+//   }
+//   ss << "Parent ptr: " << m_parent << endl;
+//
+//   for ( unsigned int i = 0; i < level; i++ ) {
+//      ss << "*--";
+//   }
+//   ss << "Children ptrs: " << endl;
+//   for ( unsigned int i = 0; i < m_children.size(); i++ ) {
+//      ss << "Child number " << i <<": " << m_children[i].m_number << endl;
+//   }
 }
 
 /******************************************************************************/
 void Ktree::treeToStream( stringstream& ss )
 {
    this->nodeToStream(ss);
-   vector<Ktree>::iterator it = m_children.begin();
+   vector<Ktree*>::iterator it = m_children.begin();
    for( it = m_children.begin(); it != m_children.end(); ++it ) {
-      it->treeToStream( ss );
+      (*it)->treeToStream( ss );
    }
 }
 
 /******************************************************************************/
 Ktree::Ktree( void ) :
       m_parent(NULL),
-      m_children(0),
       m_number(0),
       m_text(""),
       m_selector("")
@@ -253,12 +278,11 @@ Ktree::Ktree( void ) :
 
 /******************************************************************************/
 Ktree::Ktree(
-      const std::string& text,
       const std::string& selector,
+      const std::string& text,
       const unsigned int number
 ) :
       m_parent(NULL),
-      m_children(0),
       m_number(0),
       m_text(""),
       m_selector("")

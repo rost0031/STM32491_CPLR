@@ -19,6 +19,7 @@
 #include <vector>
 
 /* App includes */
+#include "Ktree.hpp"
 
 /* Lib includes */
 #include "ClientApi.h"
@@ -46,6 +47,12 @@ ClientError_t MENU_run( ClientApi* client );
  * @return  None
  */
 void MENU_printHelp( void );
+
+/**
+ * @brief   Output current level of the menu to stream
+ */
+void MENU_currLevelToStream( std::stringstream& ss, Ktree* node );
+
 /* Exported classes ----------------------------------------------------------*/
 
 

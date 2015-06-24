@@ -44,17 +44,23 @@ ClientError_t MENU_run( ClientApi *client )
 
    string input;
    unsigned int menuNumber = 0;
-   Ktree *root = new Ktree("Menu", "top", menuNumber++ );
+   Ktree *root = new Ktree( "top", "Menu", menuNumber++ );
    currMenuNode = root;
-   Ktree *dbgMenu = root->addChild("Debug control","DBG", menuNumber++ );
-   Ktree *sysTestMenu = root->addChild("System tests","SYS", menuNumber++ );
-   root->findChild("SYS")->addChild("I2C tests", "I2C", menuNumber++);
-   root->findChild("SYS")->findChild("I2C")->addChild("I2C read", "read", menuNumber++);
-   root->findChild("SYS")->findChild("I2C")->addChild("I2C write", "write", menuNumber++);
 
-   root->printNode(0);
-   dbgMenu->printNode(1);
-   sysTestMenu->printNode(1);
+   root->addChild( "DBG", "Debug control", menuNumber++ );
+   root->addChild( "SYS", "System tests", menuNumber++ );
+
+   root->findChild("SYS")->addChild( "I2C", "I2C tests", menuNumber++);
+   root->findChild("SYS")->findChild("I2C")->addChild( "REE", "Read EEPROM on I2C", menuNumber++);
+   root->findChild("SYS")->findChild("I2C")->addChild( "WEE", "Write EEPROM on I2C", menuNumber++);
+
+   root->findChild("SYS")->addChild( "MEM", "Memory tests", menuNumber++);
+   root->findChild("SYS")->findChild("MEM")->addChild("RAM", "Test RAM", menuNumber++);
+   root->findChild("SYS")->findChild("MEM")->addChild("RAM1", "Test RAM again", menuNumber++);
+
+//   root->printNode(0);
+//   dbgMenu->printNode(1);
+//   sysTestMenu->printNode(1);
 
 //   root->deleteChild("DBG");
 
@@ -82,7 +88,6 @@ ClientError_t MENU_run( ClientApi *client )
             root->printTree();                         // print entire menu tree
       } else if( boost::iequals(input, "print") || boost::iequals(input, "p") ) {
          // print current menu level
-         return CLI_ERR_NONE;
       }
 
    }
@@ -106,6 +111,17 @@ void MENU_printHelp( void )
       << "********************************************************************************" << endl;
    CON_print(ss.str());
 }
+
+/******************************************************************************/
+void MENU_currLevelToStream( stringstream& ss, Ktree* node )
+{
+   Ktree *parent = NULL;
+   if( NULL != (parent = node->getParent()) ) {
+      parent->childrenToStream( ss );
+   }
+
+}
+
 /* Private class prototypes --------------------------------------------------*/
 /* Private classes -----------------------------------------------------------*/
 

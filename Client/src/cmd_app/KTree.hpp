@@ -133,7 +133,7 @@ class Ktree
 
 private:
    Ktree* m_parent;
-   std::vector<Ktree> m_children;
+   std::vector<Ktree*> m_children;
 
 public:
 
@@ -154,16 +154,16 @@ public:
     * @param [in] *child: Ktree pointer to a child node to add.
     * return   None
     */
-   void addChild( Ktree& child );
+   void addChild( Ktree* child );
 
    /**
     * @brief   Create and add a child node to current node.
     * @param [in] *child: Ktree pointer to a child node to add.
     * return   node: pointer to the new Ktree node created (and added to current).
     */
-   Ktree* addChild(
-         const std::string& text,
+   void addChild(
          const std::string& selector,
+         const std::string& text,
          const unsigned int number
    );
 
@@ -204,10 +204,23 @@ public:
 
    /**
     * @brief   Set the current node's parent
-    * @param [in] node: Ktree ref to the parent node to set.
+    * @param [in] node: Ktree pointer to the parent node to set.
     * return   None
     */
    void setParent( Ktree* node );
+
+   /**
+    * @brief   Get the current node's parent
+    * @param   None
+    * return  Ktree pointer to the parent node
+    */
+   Ktree* getParent( void );
+
+   /**
+    * @brief   Get the ancestry of the current node.
+    * @param [in|out]
+    */
+   void getAncestry( std::vector<Ktree*>& vec );
 
    /**
     * @brief   Print current node contents
@@ -225,15 +238,22 @@ public:
    void printTree( void );
 
    /**
+    * @brief   Output all the children of the node to stream
+    * @param [in|out] ss: stringstream ref to output to.
+    * @return  None
+    */
+   void childrenToStream( std::stringstream& ss );
+
+   /**
     * @brief   Output current node contents to passed in stringstream ref.
-    * @param [in] ss; stringstream ref to output to.
+    * @param [in|out] ss; stringstream ref to output to.
     * @return: stringstream with appended contents of node.
     */
    void nodeToStream( std::stringstream& ss );
 
    /**
     * @brief   Output entire tree contents to passed in stringstream ref.
-    * @param [in] ss; stringstream ref to output to.
+    * @param [in|out] ss; stringstream ref to output to.
     * @return: stringstream with appended contents of tree.
     */
    void treeToStream( std::stringstream& ss );
@@ -253,8 +273,8 @@ public:
     * @return  None
     */
    Ktree(
-         const std::string& text,
          const std::string& selector,
+         const std::string& text,
          const unsigned int number
    );
 
