@@ -17,6 +17,7 @@
 #include <cstring>
 #include <string>
 #include <vector>
+#include <iostream>
 
 /* App includes */
 #include "Ktree.hpp"
@@ -49,10 +50,19 @@ ClientError_t MENU_run( ClientApi* client );
 void MENU_printHelp( void );
 
 /**
- * @brief   Output current level of the menu to stream
+ * @brief   Output passed in menu node.
  */
-void MENU_currLevelToStream( std::stringstream& ss, Ktree* node );
+void MENU_printMenuLevel( Ktree* node );
 
+void MENU_printMenuExpAtCurrNode( Ktree* node, Ktree* root );
+
+void MENU_nodeAncestryToStream( Ktree* node, KtreeNav* kNav, std::stringstream& ss);
+
+void MENU_nodeAncestryToStream(
+      Ktree* node,
+      std::vector<Ktree*>::iterator& ancestry_it,
+      std::stringstream& ss
+);
 /* Exported classes ----------------------------------------------------------*/
 
 

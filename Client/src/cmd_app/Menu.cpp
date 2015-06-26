@@ -11,7 +11,6 @@
 /* Includes ------------------------------------------------------------------*/
 /* System includes */
 #include <iomanip>
-#include <iostream>
 
 /* Boost includes */
 #include <boost/algorithm/string.hpp>
@@ -36,6 +35,7 @@ MODULE_NAME( MODULE_EXT );
 /* Private variables and Local objects ---------------------------------------*/
 /* Private function prototypes -----------------------------------------------*/
 /* Private functions ---------------------------------------------------------*/
+
 
 /******************************************************************************/
 ClientError_t MENU_run( ClientApi *client )
@@ -70,26 +70,53 @@ ClientError_t MENU_run( ClientApi *client )
    MENU_printHelp();
    while ( 1 ) {
 
-      CON_print("Enter a command: ");
+      CON_print(" *** Enter a command: ***");
       cin >> input; // Read input again at the end
 
       if( boost::iequals(input, "exit") || boost::iequals(input, "quit") ||
           boost::iequals(input, "x") || boost::iequals(input, "q")  ) {
-         CON_print("Leaving the menu...");
+         CON_print(" *** Leaving the menu... *** ");
          return CLI_ERR_NONE;
       } else if( boost::iequals(input, "help") || boost::iequals(input, "?") ||
                  boost::iequals(input, "h") ) {
          MENU_printHelp();
       } else if( boost::iequals(input, "up") || boost::iequals(input, "u") ) {
          // go up a level
+         Ktree *node = currMenuNode->getParent();
+         if ( NULL != node ) {
+            currMenuNode = node;
+            MENU_printMenuExpAtCurrNode( currMenuNode, root );
+         } else {
+            CON_print(" *** Already at the top of the menu *** ");
+            MENU_printMenuExpAtCurrNode( currMenuNode, root );
+         }
       } else if( boost::iequals(input, "top") || boost::iequals(input, "t") ) {
          // go to the top of the tree
+         currMenuNode = root;
+         MENU_printMenuExpAtCurrNode( currMenuNode, root );
       } else if( boost::iequals(input, "all") || boost::iequals(input, "a") ) {
             root->printTree();                         // print entire menu tree
       } else if( boost::iequals(input, "print") || boost::iequals(input, "p") ) {
          // print current menu level
-      }
+         MENU_printMenuExpAtCurrNode( currMenuNode, root );
+      } else {
+         Ktree *node = currMenuNode->findChild(input);
+         if ( NULL != node ) {
+            if ( !node->isLeaf() ) {
+               currMenuNode = node;
+               MENU_printMenuExpAtCurrNode( currMenuNode, root );
+            } else {
 
+            }
+         } else {
+            stringstream ss;
+            ss << " *** Menu selector '" << input << "' not found among the menu options ***";
+            CON_print(ss.str());
+            MENU_printMenuLevel( currMenuNode );
+
+            MENU_printMenuExpAtCurrNode( currMenuNode, root );
+         }
+      }
    }
 
    return CLI_ERR_NONE;
@@ -113,13 +140,61 @@ void MENU_printHelp( void )
 }
 
 /******************************************************************************/
-void MENU_currLevelToStream( stringstream& ss, Ktree* node )
+void MENU_printMenuLevel( Ktree* node )
 {
-   Ktree *parent = NULL;
-   if( NULL != (parent = node->getParent()) ) {
-      parent->childrenToStream( ss );
+   stringstream ss;
+   node->childrenToStream( ss );
+   CON_print(ss.str());
+}
+
+/******************************************************************************/
+void MENU_printMenuExpAtCurrNode( Ktree* node, Ktree* root )
+{
+   if( NULL == node ) {
+      WRN_out << "Passed in a null menu node";
+      return;
    }
 
+   KtreeNav *kNav = new KtreeNav();
+   kNav->findAncestry( node );
+
+   // increment to start with since we'll skip checking the top node and start
+   // with the children.
+   kNav->m_index++;
+
+   // stream the root node first. This makes the recusive function much simpler
+   stringstream ss;
+   ss << "********************************************************************************" << endl;
+   root->nodeToStream( ss );
+   MENU_nodeAncestryToStream( root, kNav, ss );
+   ss << "********************************************************************************" << endl;
+   CON_print(ss.str());
+
+   delete kNav;
+}
+
+/******************************************************************************/
+void MENU_nodeAncestryToStream( Ktree* node, KtreeNav* kNav, stringstream& ss)
+{
+
+
+   // Iterate over all the children of the current node
+   vector<Ktree*>::iterator it = node->children_begin();
+   for( it = node->children_begin(); it != node->children_end(); ++it ) {
+      (*it)->nodeToStream( ss ); // always print the child node
+
+      if ( !node->isLeaf() && ( kNav->m_index < kNav->m_number_of_elems ) ) {
+         // don't check if leaf node since nowhere else to descend
+         if ( kNav->m_ancestry.at(kNav->m_index) == (*it) ) {
+            // if node matches the node in the nav, descend recursively
+
+            // check if this is the last node (leaf) because if it is, don't
+            // recurse any lower
+            kNav->m_index++;
+            MENU_nodeAncestryToStream( (*it), kNav, ss);
+         }
+      }
+   }
 }
 
 /* Private class prototypes --------------------------------------------------*/

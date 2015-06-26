@@ -70,18 +70,15 @@ void Ktree::addChild(
    m_children.push_back( node );
 }
 
-///******************************************************************************/
-//Ktree* Ktree::addChild(
-//      const char* text,
-//      const char* selector,
-//      unsigned int number
-//)
-//{
-//   Ktree *node = new Ktree( text, selector, number );
-//   node->setParent(this);
-//   m_children.push_back( *node );
-//   return( node );
-//}
+/******************************************************************************/
+bool Ktree::isLeaf( void )
+{
+   if ( m_children.empty() ) {
+      return true;
+   }
+
+   return false;
+}
 
 /******************************************************************************/
 Ktree* Ktree::findChild( const string& selector )
@@ -228,7 +225,7 @@ void Ktree::nodeToStream( stringstream& ss )
    }
 
    ss << "*--";
-   ss << "** " << std::setw(3) << m_selector << " ** (" << m_number << "): " << m_text << endl;
+   ss << "** " << std::setw(3) << m_selector << " (" << m_number << ") ** : " << m_text << endl;
 
 //   ss << "Text: " << m_text << endl;
 //
@@ -301,4 +298,34 @@ Ktree::~Ktree( void )
    m_text.clear();
    m_selector.clear();
 }
+
+
+/******************************************************************************/
+void KtreeNav::findAncestry( Ktree* node )
+{
+   m_ancestry.insert(m_ancestry.begin(), node);
+   ++m_number_of_elems;
+   if (node->getParent()) {
+      findAncestry(node->getParent());
+   }
+   return;
+}
+
+/******************************************************************************/
+KtreeNav::KtreeNav( void ) :
+      m_ancestry(0),
+      m_index(0),
+      m_number_of_elems(0)
+{
+
+}
+
+/******************************************************************************/
+KtreeNav::~KtreeNav( void )
+{
+   m_ancestry.clear();
+   m_index = 0;
+   m_number_of_elems = 0;
+}
+
 /******** Copyright (C) 2015 Datacard. All rights reserved *****END OF FILE****/

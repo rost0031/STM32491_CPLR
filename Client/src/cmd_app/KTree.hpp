@@ -128,6 +128,10 @@
 /* Exported functions --------------------------------------------------------*/
 /* Exported classes ----------------------------------------------------------*/
 
+/**
+ * @class   Ktree
+ * @brief   K-ary tree node class this is used for the menu
+ */
 class Ktree
 {
 
@@ -140,6 +144,21 @@ public:
    unsigned int m_number;
    std::string m_text;
    std::string m_selector;
+
+   /**
+    * @brief   iterator over the private vector
+    */
+   typedef std::vector<Ktree*>::iterator iterator;
+
+   /**
+    * @brief   implementation of the begin() function for the iterator
+    */
+   iterator children_begin() { return m_children.begin(); }
+
+   /**
+    * @brief   implementation of the end() function for the iterator
+    */
+   iterator children_end() { return m_children.end(); }
 
    /**
     * @brief   Recursive method to get the current node's depth in the tree.
@@ -166,6 +185,14 @@ public:
          const std::string& text,
          const unsigned int number
    );
+
+   /**
+    * @brief   Checks if the current node is a leaf (no children)
+    * @return  bool
+    *    @arg true: if leaf (no children)
+    *    @arg false: if not a leaf (children exist)
+    */
+   bool isLeaf( void );
 
    /**
     * @brief   Find a child node given the selector string
@@ -282,10 +309,59 @@ public:
     * @brief   Default destructor.
     */
    ~Ktree( void );
-
-
 };
 
+
+
+/**
+ * @class   KtreeNav
+ * @brief   Navigation helper class to allow printing expanded menu.
+ */
+class KtreeNav
+{
+private:
+
+public:
+
+   std::vector<Ktree*> m_ancestry;
+   unsigned int m_index;
+   unsigned int m_number_of_elems;
+
+   /**
+    * @brief   iterator over the private vector
+    */
+   typedef std::vector<Ktree*>::iterator iterator;
+
+   /**
+    * @brief   implementation of the begin() function for the iterator
+    */
+   iterator ancestry_begin() { return m_ancestry.begin(); }
+
+   /**
+    * @brief   implementation of the end() function for the iterator
+    */
+   iterator ancestry_end() { return m_ancestry.end(); }
+
+   /**
+    * @brief   Finds the path to the top of the tree
+    */
+   void findAncestry( Ktree* node );
+
+   /**
+    * @brief   Default constructor.
+    *
+    * @param   None
+    * @return  None
+    */
+   KtreeNav( void );
+
+   /**
+    * @brief   Default destructor.
+    * @param   None
+    * @return  None
+    */
+   ~KtreeNav( void );
+};
 
 #endif                                                          /* KTREE_HPP_ */
 /******** Copyright (C) 2015 Datacard. All rights reserved *****END OF FILE****/

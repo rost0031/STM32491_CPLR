@@ -251,7 +251,7 @@ ifeq (win32, $(TARGET))
                               -lboost_thread$(BOOST_TH_LIBMOD)$(BOOSTLIBMOD) \
                               -lboost_system$(BOOSTLIBMOD)
     
-    API_STATIC_LIBS             = $(CB_API_LIB_DIR)/libCBCommApi_$(TARGET).a \
+    API_STATIC_LIBS         = $(CB_API_LIB_DIR)/libCBCommApi_$(TARGET).a \
                               $(CB_API_LIB_DIR)/libprotobuf_core_$(TARGET).a \
                               $(QP_PORT_DIR)/$(CONF)/libqp_$(QPLIBMOD)_cs.a \
                               $(BOOST_LIB_DIR)/libboost_thread$(BOOST_TH_LIBMOD)$(BOOSTLIBMOD).a \
