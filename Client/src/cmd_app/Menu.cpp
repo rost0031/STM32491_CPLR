@@ -57,6 +57,9 @@ ClientError_t MENU_run( ClientApi *client )
    root->findChild("SYS")->findChild("MEM")->addChild("RAM", "Test RAM" );
    root->findChild("SYS")->findChild("MEM")->addChild("RAM1", "Test RAM again" );
 
+
+   MENU_finalize( root, 1 ); // Finalize the menu node numbers
+
 //   root->printNode(0);
 //   dbgMenu->printNode(1);
 //   sysTestMenu->printNode(1);
@@ -119,6 +122,21 @@ ClientError_t MENU_run( ClientApi *client )
    }
 
    return CLI_ERR_NONE;
+}
+
+/******************************************************************************/
+void MENU_finalize( Ktree* node, unsigned int number )
+{
+//   node->m_number = number;
+//   ++number;
+   vector<Ktree*>::iterator it = node->children_begin();
+   for( it = node->children_begin(); it != node->children_end(); ++it ) {
+      (*it)->m_number = number;
+      if ( !(*it)->isLeaf() ) {
+         MENU_finalize( (*it), ((*it)->m_number * 10) );
+      }
+      ++number;
+   }
 }
 
 /******************************************************************************/

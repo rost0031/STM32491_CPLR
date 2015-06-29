@@ -43,6 +43,39 @@
 ClientError_t MENU_run( ClientApi* client );
 
 /**
+ * @brief   Finalize the numbers of the menu nodes.
+ * This recursive function should be called after all the menu items have been
+ * added to the menu and if any menu items are ever removed from the menu. It
+ * re-orders the numbers of the menu nodes so that there's a hierarchical number
+ * system used for the tree.  IE:
+ *
+ * Root 0
+ *   Node 1
+ *     Node 11
+ *     Node 12
+ *       Node 121
+ *       Node 122
+ *     Node 13
+ *     Node 14
+ *       Node 141
+ *       Node 142
+ *  Node 2
+ *    Node 21
+ *    Node 22
+ *    Node 23
+ *       Node 231
+ *       Node 232
+ *    Node 24
+ *    etc...
+ *
+ * @param [in] *node: Ktree pointer to root node of the menu
+ * @param [in] number: unsigned int number from which to start numbering from
+ * @note This should be 1 unless there's a particularly good reason otherwise
+ * @return  None.
+ */
+void MENU_finalize( Ktree* node, unsigned int number );
+
+/**
  * @brief   Print help for the menu interface
  * @param   None
  * @return  None
