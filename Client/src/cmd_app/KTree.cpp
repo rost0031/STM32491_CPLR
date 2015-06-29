@@ -61,11 +61,10 @@ void Ktree::addChild( Ktree* child )
 /******************************************************************************/
 void Ktree::addChild(
       const string& selector,
-      const string& text,
-      const unsigned int number
+      const string& text
 )
 {
-   Ktree *node = new Ktree( selector, text, number );
+   Ktree *node = new Ktree( selector, text );
    node->setParent(this);
    m_children.push_back( node );
 }
@@ -74,10 +73,10 @@ void Ktree::addChild(
 bool Ktree::isLeaf( void )
 {
    if ( m_children.empty() ) {
-      return true;
+      return( true );
    }
 
-   return false;
+   return( false );
 }
 
 /******************************************************************************/
@@ -158,13 +157,6 @@ Ktree* Ktree::getParent( void )
    return( m_parent );
 }
 
-///******************************************************************************/
-//Ktree* Ktree::getParent( vector<Ktree*> vec )
-//{
-//
-//}
-
-
 /******************************************************************************/
 void Ktree::printNode( unsigned int level )
 {
@@ -226,31 +218,6 @@ void Ktree::nodeToStream( stringstream& ss )
 
    ss << "*--";
    ss << "** " << std::setw(3) << m_selector << " (" << m_number << ") ** : " << m_text << endl;
-
-//   ss << "Text: " << m_text << endl;
-//
-//   for ( unsigned int i = 0; i < level; i++ ) {
-//      ss << "*--";
-//   }
-//   ss << "Selector: " << m_selector << endl;
-//
-//   for ( unsigned int i = 0; i < level; i++ ) {
-//      ss << "*--";
-//   }
-//   ss << "Number: " << m_number << endl;
-//
-//   for ( unsigned int i = 0; i < level; i++ ) {
-//      ss << "*--";
-//   }
-//   ss << "Parent ptr: " << m_parent << endl;
-//
-//   for ( unsigned int i = 0; i < level; i++ ) {
-//      ss << "*--";
-//   }
-//   ss << "Children ptrs: " << endl;
-//   for ( unsigned int i = 0; i < m_children.size(); i++ ) {
-//      ss << "Child number " << i <<": " << m_children[i].m_number << endl;
-//   }
 }
 
 /******************************************************************************/
@@ -276,8 +243,7 @@ Ktree::Ktree( void ) :
 /******************************************************************************/
 Ktree::Ktree(
       const std::string& selector,
-      const std::string& text,
-      const unsigned int number
+      const std::string& text
 ) :
       m_parent(NULL),
       m_number(0),
@@ -285,7 +251,6 @@ Ktree::Ktree(
       m_selector("")
 {
    m_text = text;
-   m_number = number;
    m_selector = selector;
 }
 

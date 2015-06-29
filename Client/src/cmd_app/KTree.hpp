@@ -177,18 +177,19 @@ public:
 
    /**
     * @brief   Create and add a child node to current node.
-    * @param [in] *child: Ktree pointer to a child node to add.
-    * return   node: pointer to the new Ktree node created (and added to current).
+    * @param [in] selector: const string ref to the selector text to use.
+    * @param [in] text: const string ref to the description text to use.
+    * return   None
     */
    void addChild(
          const std::string& selector,
-         const std::string& text,
-         const unsigned int number
+         const std::string& text
    );
 
    /**
     * @brief   Checks if the current node is a leaf (no children)
-    * @return  bool
+    * @param   None
+    * @return  bool:
     *    @arg true: if leaf (no children)
     *    @arg false: if not a leaf (children exist)
     */
@@ -301,8 +302,7 @@ public:
     */
    Ktree(
          const std::string& selector,
-         const std::string& text,
-         const unsigned int number
+         const std::string& text
    );
 
    /**

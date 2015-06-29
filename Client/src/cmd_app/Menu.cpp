@@ -43,20 +43,19 @@ ClientError_t MENU_run( ClientApi *client )
    Ktree *currMenuNode = NULL;
 
    string input;
-   unsigned int menuNumber = 0;
-   Ktree *root = new Ktree( "top", "Menu", menuNumber++ );
+   Ktree *root = new Ktree( "top", "Menu" );
    currMenuNode = root;
 
-   root->addChild( "DBG", "Debug control", menuNumber++ );
-   root->addChild( "SYS", "System tests", menuNumber++ );
+   root->addChild( "DBG", "Debug control" );
+   root->addChild( "SYS", "System tests" );
 
-   root->findChild("SYS")->addChild( "I2C", "I2C tests", menuNumber++);
-   root->findChild("SYS")->findChild("I2C")->addChild( "REE", "Read EEPROM on I2C", menuNumber++);
-   root->findChild("SYS")->findChild("I2C")->addChild( "WEE", "Write EEPROM on I2C", menuNumber++);
+   root->findChild("SYS")->addChild( "I2C", "I2C tests" );
+   root->findChild("SYS")->findChild("I2C")->addChild( "REE", "Read EEPROM on I2C" );
+   root->findChild("SYS")->findChild("I2C")->addChild( "WEE", "Write EEPROM on I2C" );
 
-   root->findChild("SYS")->addChild( "MEM", "Memory tests", menuNumber++);
-   root->findChild("SYS")->findChild("MEM")->addChild("RAM", "Test RAM", menuNumber++);
-   root->findChild("SYS")->findChild("MEM")->addChild("RAM1", "Test RAM again", menuNumber++);
+   root->findChild("SYS")->addChild( "MEM", "Memory tests" );
+   root->findChild("SYS")->findChild("MEM")->addChild("RAM", "Test RAM" );
+   root->findChild("SYS")->findChild("MEM")->addChild("RAM1", "Test RAM again" );
 
 //   root->printNode(0);
 //   dbgMenu->printNode(1);
@@ -176,8 +175,6 @@ void MENU_printMenuExpAtCurrNode( Ktree* node, Ktree* root )
 /******************************************************************************/
 void MENU_nodeAncestryToStream( Ktree* node, KtreeNav* kNav, stringstream& ss)
 {
-
-
    // Iterate over all the children of the current node
    vector<Ktree*>::iterator it = node->children_begin();
    for( it = node->children_begin(); it != node->children_end(); ++it ) {
