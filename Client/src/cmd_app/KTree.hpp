@@ -210,6 +210,14 @@ public:
    Ktree* findChild( unsigned int number );
 
    /**
+    * @brief   Recursive function to find a child in the entire tree.
+    *
+    * @param [in] number: unsigned int menu node number to find.
+    * @return  found node or null.
+    */
+   Ktree* findChildInTree( const unsigned int number );
+
+   /**
     * @brief   Delete a child node given the selector string
     * @param [in] selector: string ref to the selector text.
     * @return: None

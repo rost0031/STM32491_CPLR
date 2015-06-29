@@ -113,21 +113,30 @@ ClientError_t MENU_run( ClientApi *client )
          } else {
 
             stringstream ssi(input);
-            int menuNode = 0;
+            unsigned int menuNode = 0;
             if ( !(ssi >> menuNode).fail() && (ssi >> std::ws).eof() ) {
-               // input not a number
-               WRN_out << "Input a number: " << menuNode;
-            } else {
                // input a number
-               WRN_out << "Input NOT a number: " << input;
+               WRN_out << "Input a number: " << menuNode;
+               Ktree* node = root->findChildInTree( menuNode );
+               if ( NULL != node ) {
+                  if (node->isLeaf()) {
+                     currMenuNode = node->getParent();
+                  } else {
+                     currMenuNode = node;
+                  }
+                  MENU_printMenuExpAtCurrNode( currMenuNode, root );
+               } else {
+                  WRN_out << "Selected menu node number (" << menuNode << ") not found";
+                  root->printTree();
+               }
+
+            } else { // input not a number
+               stringstream ss;
+               ss << " *** Menu selector '" << input << "' not found among the menu options ***";
+               CON_print(ss.str());
+               MENU_printMenuLevel( currMenuNode );
+               MENU_printMenuExpAtCurrNode( currMenuNode, root );
             }
-
-            stringstream ss;
-            ss << " *** Menu selector '" << input << "' not found among the menu options ***";
-            CON_print(ss.str());
-            MENU_printMenuLevel( currMenuNode );
-
-            MENU_printMenuExpAtCurrNode( currMenuNode, root );
          }
       }
    }
@@ -222,7 +231,6 @@ void MENU_nodeAncestryToStream( Ktree* node, KtreeNav* kNav, stringstream& ss)
       }
    }
 }
-
 
 /* Private class prototypes --------------------------------------------------*/
 /* Private classes -----------------------------------------------------------*/

@@ -105,6 +105,25 @@ Ktree* Ktree::findChild( unsigned int number )
    return( NULL );
 }
 
+
+/******************************************************************************/
+Ktree* Ktree::findChildInTree( const unsigned int number )
+{
+   if ( m_number == number ) {
+      return this;
+   }
+
+   vector<Ktree*>::iterator it = m_children.begin();
+   for( it = m_children.begin(); it != m_children.end(); ++it ) {
+      Ktree *node = (*it)->findChildInTree( number);
+      if (NULL !=  node ) {
+         return node;
+      }
+   }
+
+   return NULL;
+}
+
 /******************************************************************************/
 void Ktree::deleteChild( const string& selector )
 {
