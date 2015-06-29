@@ -84,18 +84,37 @@ void MENU_printHelp( void );
 
 /**
  * @brief   Output passed in menu node.
+ * @param [in] *node: Ktree pointer to node which level to print at.
+ * @return  None.
  */
 void MENU_printMenuLevel( Ktree* node );
 
+/**
+ * @brief   Print menu tree expanded at current node
+ * This function prints out the menu tree expanded around the passed in user
+ * node.  This allows for an easy visualization of where you are in the tree.
+ * @param [in] *node: Ktree pointer to node around which to expand the tree.
+ * @param [in] *root: Ktree pointer to the root of the menu tree.
+ * @return  None
+ */
 void MENU_printMenuExpAtCurrNode( Ktree* node, Ktree* root );
 
-void MENU_nodeAncestryToStream( Ktree* node, KtreeNav* kNav, std::stringstream& ss);
-
+/**
+ * @brief   Output the ancestry of a node to a passed in stringstream.
+ *
+ * @param [in] *node: Ktree pointer to the node from which to start looking at
+ * ancestry.
+ * @param [in] *kNav: KtreeNav pointer to the object used to store the ancestry
+ * of a node.
+ * @param [in|out] ss: stringstream ref to stream to which to output to.
+ * @return  None.
+ */
 void MENU_nodeAncestryToStream(
       Ktree* node,
-      std::vector<Ktree*>::iterator& ancestry_it,
+      KtreeNav* kNav,
       std::stringstream& ss
 );
+
 /* Exported classes ----------------------------------------------------------*/
 
 

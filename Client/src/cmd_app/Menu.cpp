@@ -126,7 +126,9 @@ ClientError_t MENU_run( ClientApi *client )
                   }
                   MENU_printMenuExpAtCurrNode( currMenuNode, root );
                } else {
-                  WRN_out << "Selected menu node number (" << menuNode << ") not found";
+                  stringstream ss;
+                  ss << " *** Menu node number '" << menuNode << "' not found in the menu tree ***";
+                  CON_print(ss.str());
                   root->printTree();
                }
 
@@ -147,8 +149,6 @@ ClientError_t MENU_run( ClientApi *client )
 /******************************************************************************/
 void MENU_finalize( Ktree* node, unsigned int number )
 {
-//   node->m_number = number;
-//   ++number;
    vector<Ktree*>::iterator it = node->children_begin();
    for( it = node->children_begin(); it != node->children_end(); ++it ) {
       (*it)->m_number = number;
