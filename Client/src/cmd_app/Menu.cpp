@@ -111,6 +111,17 @@ ClientError_t MENU_run( ClientApi *client )
 
             }
          } else {
+
+            stringstream ssi(input);
+            int menuNode = 0;
+            if ( !(ssi >> menuNode).fail() && (ssi >> std::ws).eof() ) {
+               // input not a number
+               WRN_out << "Input a number: " << menuNode;
+            } else {
+               // input a number
+               WRN_out << "Input NOT a number: " << input;
+            }
+
             stringstream ss;
             ss << " *** Menu selector '" << input << "' not found among the menu options ***";
             CON_print(ss.str());
@@ -211,6 +222,7 @@ void MENU_nodeAncestryToStream( Ktree* node, KtreeNav* kNav, stringstream& ss)
       }
    }
 }
+
 
 /* Private class prototypes --------------------------------------------------*/
 /* Private classes -----------------------------------------------------------*/
