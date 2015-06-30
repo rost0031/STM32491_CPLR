@@ -125,6 +125,17 @@
 /* Exported defines ----------------------------------------------------------*/
 /* Exported macros -----------------------------------------------------------*/
 /* Exported types ------------------------------------------------------------*/
+
+/**
+ * @brief   Enums that specify the actions that are available in the menu
+ */
+typedef enum MenuActions {
+   MENU_NO_ACTION = 0,
+   MENU_RAM_TEST,
+   MENU_I2C_READ_TEST,
+   MENU_I2C_WRITE_TEST,
+} MenuAction_t;
+
 /* Exported functions --------------------------------------------------------*/
 /* Exported classes ----------------------------------------------------------*/
 
@@ -144,6 +155,7 @@ public:
    unsigned int m_number;
    std::string m_text;
    std::string m_selector;
+   MenuAction_t m_menuAction;
 
    /**
     * @brief   iterator over the private vector
@@ -184,6 +196,19 @@ public:
    void addChild(
          const std::string& selector,
          const std::string& text
+   );
+
+   /**
+    * @brief   Create and add a child node to current node.
+    * @param [in] selector: const string ref to the selector text to use.
+    * @param [in] text: const string ref to the description text to use.
+    * @param [in] menuAction: const MenuAction_t to set the current node to.
+    * return   None
+    */
+   void addChild(
+         const std::string& selector,
+         const std::string& text,
+         const MenuAction_t menuAction
    );
 
    /**
@@ -295,6 +320,20 @@ public:
    void treeToStream( std::stringstream& ss );
 
    /**
+    * @brief   Get the current node's menu action
+    * @param   None
+    * @return  MenuAction_t: current node's assigned menu action.
+    */
+   MenuAction_t getMenuAction( void );
+
+   /**
+    * @brief   Set the current node's menu action
+    * @param [in] menuAction: const MenuAction_t to set the current node to.
+    * @return  None
+    */
+   void setMenuAction( const MenuAction_t menuAction );
+
+   /**
     * @brief   Default constructor for a k-ary tree node.
     *
     * @param   None
@@ -305,12 +344,28 @@ public:
    /**
     * @brief   Constructor for a k-ary tree node given a parent node
     *
-    * @param   None
+    * @param [in] selector: const string ref to the selector text
+    * @param [in] text: const string ref to the description text
     * @return  None
     */
    Ktree(
          const std::string& selector,
          const std::string& text
+   );
+
+   /**
+    * @brief   Constructor for a k-ary tree node given a parent node
+    *
+    * @param [in] selector: const string ref to the selector text
+    * @param [in] text: const string ref to the description text
+    * @param [in] menuAction: const MenuAction_t that specifies what action to
+    * take if this node is selected.
+    * @return  None
+    */
+   Ktree(
+      const std::string& selector,
+      const std::string& text,
+      const MenuAction_t menuAction
    );
 
    /**

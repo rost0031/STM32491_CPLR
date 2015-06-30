@@ -64,7 +64,16 @@ void Ktree::addChild(
       const string& text
 )
 {
-   Ktree *node = new Ktree( selector, text );
+   this->addChild( selector, text, MENU_NO_ACTION );
+}
+
+void Ktree::addChild(
+      const std::string& selector,
+      const std::string& text,
+      const MenuAction_t menuAction
+)
+{
+   Ktree *node = new Ktree( selector, text, menuAction );
    node->setParent(this);
    m_children.push_back( node );
 }
@@ -240,6 +249,18 @@ void Ktree::nodeToStream( stringstream& ss )
 }
 
 /******************************************************************************/
+MenuAction_t Ktree::getMenuAction( void )
+{
+   return m_menuAction;
+}
+
+/******************************************************************************/
+void Ktree::setMenuAction( const MenuAction_t menuAction )
+{
+   m_menuAction = menuAction;
+}
+
+/******************************************************************************/
 void Ktree::treeToStream( stringstream& ss )
 {
    this->nodeToStream(ss);
@@ -254,7 +275,8 @@ Ktree::Ktree( void ) :
       m_parent(NULL),
       m_number(0),
       m_text(""),
-      m_selector("")
+      m_selector(""),
+      m_menuAction(MENU_NO_ACTION)
 {
 
 }
@@ -267,10 +289,28 @@ Ktree::Ktree(
       m_parent(NULL),
       m_number(0),
       m_text(""),
-      m_selector("")
+      m_selector(""),
+      m_menuAction(MENU_NO_ACTION)
 {
    m_text = text;
    m_selector = selector;
+}
+
+/******************************************************************************/
+Ktree::Ktree(
+      const std::string& selector,
+      const std::string& text,
+      const MenuAction_t menuAction
+) :
+      m_parent(NULL),
+      m_number(0),
+      m_text(""),
+      m_selector(""),
+      m_menuAction(MENU_NO_ACTION)
+{
+   m_text = text;
+   m_selector = selector;
+   m_menuAction = menuAction;
 }
 
 /******************************************************************************/

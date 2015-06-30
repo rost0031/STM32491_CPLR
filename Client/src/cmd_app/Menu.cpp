@@ -50,11 +50,11 @@ ClientError_t MENU_run( ClientApi *client )
    root->addChild( "SYS", "System tests" );
 
    root->findChild("SYS")->addChild( "I2C", "I2C tests" );
-   root->findChild("SYS")->findChild("I2C")->addChild( "REE", "Read EEPROM on I2C" );
-   root->findChild("SYS")->findChild("I2C")->addChild( "WEE", "Write EEPROM on I2C" );
+   root->findChild("SYS")->findChild("I2C")->addChild( "REE", "Read EEPROM on I2C", MENU_I2C_READ_TEST );
+   root->findChild("SYS")->findChild("I2C")->addChild( "WEE", "Write EEPROM on I2C", MENU_I2C_WRITE_TEST );
 
    root->findChild("SYS")->addChild( "MEM", "Memory tests" );
-   root->findChild("SYS")->findChild("MEM")->addChild("RAM", "Test RAM" );
+   root->findChild("SYS")->findChild("MEM")->addChild("RAM", "Test RAM", MENU_RAM_TEST );
    root->findChild("SYS")->findChild("MEM")->addChild("RAM1", "Test RAM again" );
 
 
@@ -108,7 +108,7 @@ ClientError_t MENU_run( ClientApi *client )
                currMenuNode = node;
                MENU_printMenuExpAtCurrNode( currMenuNode, root );
             } else {
-
+               // Input is valid, extract the MENU_ACTION and handle it.
             }
          } else {
 
@@ -116,11 +116,15 @@ ClientError_t MENU_run( ClientApi *client )
             unsigned int menuNode = 0;
             if ( !(ssi >> menuNode).fail() && (ssi >> std::ws).eof() ) {
                // input a number
-               WRN_out << "Input a number: " << menuNode;
                Ktree* node = root->findChildInTree( menuNode );
                if ( NULL != node ) {
                   if (node->isLeaf()) {
+                     // Input is valid, extract the MENU_ACTION and handle it.
+
+                     // Save the parent of the menu leaf so the user can still
+                     // orient themselves in the menu tree
                      currMenuNode = node->getParent();
+
                   } else {
                      currMenuNode = node;
                   }
@@ -230,6 +234,24 @@ void MENU_nodeAncestryToStream( Ktree* node, KtreeNav* kNav, stringstream& ss)
          }
       }
    }
+}
+
+/******************************************************************************/
+ClientError_t MENU_parseAndExecAction( MenuAction_t menuAction )
+{
+   ClientError_t status = CLI_ERR_NONE;
+
+   switch( menuAction ) {
+
+      case MENU_NO_ACTION:
+         WRN_out << enumToString(menuAction) <<  " associated with this menu selection";
+         break;
+      default:
+         ERR_out << "Unknown action (" << menuAction << ")";
+   }
+
+
+   return status;
 }
 
 /* Private class prototypes --------------------------------------------------*/

@@ -16,6 +16,7 @@
 /* App includes */
 #include "EnumMaps.hpp"
 #include "Logging.hpp"
+#include "Ktree.hpp"
 
 /* Lib includes */
 #include "CBSharedDbgLevels.h"
@@ -175,6 +176,19 @@ template<> char const* enumStrings<CBRamTest_t>::data[] =  {
          "AddrBusTest",          /**< _CB_RAM_TEST_ADDR_BUS */
          "DeviceTest",           /**< _CB_RAM_TEST_DEV_INT */
          "InvalidTest",          /**< _CB_RAM_TEST_MAX */
+};
+
+/**
+ * @brief String values for MenuAction_t enums
+ * String values for consecutive enums can be placed into const char* arrays
+ * and a template will autogenerate the necessary enumToString function based
+ * on the existence of this ::data[] array.
+ * */
+template<> char const* enumStrings<MenuAction_t>::data[] =  {
+         "No menu action",         /**< MENU_NO_ACTION */
+         "Menu Ram Test",          /**< MENU_RAM_TEST */
+         "Menu I2C Read Test",     /**< MENU_I2C_READ_TEST */
+         "Menu I2C Write Test",    /**< MENU_I2C_WRITE_TEST */
 };
 
 /* Private function prototypes -----------------------------------------------*/
