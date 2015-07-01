@@ -231,7 +231,7 @@ $(TARGET_EXE): build_dll $(CPP_OBJS_EXT) $(C_OBJS_EXT)
 	@echo --- Building CMD Client ---
 	@echo ---------------------------
 	$(LINK) $(LIBS) -o $(TARGET_EXE) $(CPP_OBJS_EXT) $(LIB_LOCATIONS) $(STATIC_LINKFLAGS) $(STATIC_LIBS) $(DYNAMIC_LINKFLAGS) $(DYNAMIC_LIBS)  
-	$(RM) $(BIN_DIR)/*.o
+	#$(RM) $(BIN_DIR)/*.o
     
 build_dll: $(BIN_DIR)
 	@echo ---------------------------

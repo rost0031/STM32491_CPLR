@@ -95,12 +95,10 @@ BOOST_LIB_DIR               = $(EXT_LIB_BIN_DIR)
 
 # Shared Client library directories
 SHARED_LIB_DIR              = ../shared_lib_src
-SHARED_LIB_BIN_DIR          = $(SHARED_LIB_DIR)/$(BIN_DIR)
 
-COMMON_CLI_SRC_DIR          = $(SHARED_LIB_DIR)/Common
+COMMON_CLI_SRC_DIR          = ../../../Common
 
 # app, bsp, and sys directories common between firmware and client
-COMMON_CLI_BSP_DIR          = $(COMMON_CLI_SRC_DIR)/bsp
 COMMON_CLI_SYS_DIR          = $(COMMON_CLI_SRC_DIR)/sys
 
 # app, bsp, sys, dll, and api directories 
@@ -108,15 +106,6 @@ API_DIR                     = $(SHARED_LIB_DIR)/api
 APP_DIR                     = $(SHARED_LIB_DIR)/app
 BSP_DIR                     = $(SHARED_LIB_DIR)/bsp
 SYS_DIR                     = $(SHARED_LIB_DIR)/sys
-
-# QPC directories
-QPC                         = $(COMMON_CLI_SYS_DIR)/qpc_5.3.1
-QP_PORT_INC_DIR             = $(QPC)/ports/$(TARGET)    
-ifeq (win32, $(TARGET))      
-    QP_PORT_DIR             = $(QPC)/ports/$(TARGET)/mingw
-else
-    QP_PORT_DIR             = $(QPC)/ports/$(TARGET)/gnu
-endif
 
 # Coupler Board API directory
 CB_API_DIR                  = $(COMMON_CLI_SYS_DIR)/cb_api
@@ -157,10 +146,6 @@ INCLUDES                    = -I$(SRC_DIR) \
                               \
                               -I$(BASE64_DIR) \
                               \
-                              -I$(QPC)/include \
-                              -I$(QP_PORT_DIR) \
-                              -I$(QP_PORT_INC_DIR) \
-                              \
                               -I$(BOOST_INC_DIR) \
                               \
                               -I$(COMMON_CLI_SYS_DIR) \
@@ -182,20 +167,21 @@ C_SRCS                      = cdecode.c \
                               base64_wrapper.c
 
 # C++ source files
-CPP_SRCS                    = bsp.cpp \
-                              serial.cpp \
+CPP_SRCS                    = serial.cpp \
                               udp.cpp \
                               comm.cpp \
                               fwLdr.cpp \
                               ClientApi.cpp \
-                              MainMgr.cpp \
                               LogStub.cpp \
                               msg_utils.cpp \
                               main.cpp \
                               Callbacks.cpp \
                               Help.cpp \
                               EnumMaps.cpp \
-                              Logging.cpp
+                              Logging.cpp \
+                              Utils.cpp \
+                              KTree.cpp \
+                              Menu.cpp
 
 #-----------------------------------------------------------------------------
 # BUILD OPTIONS FOR VARIOUS CONFIGURATIONS
@@ -236,30 +222,24 @@ ifeq (win32, $(TARGET))
     DYNAMIC_LINKFLAGS       = -Wl,-Bdynamic 
     DYNAMIC_LIBS            = -l$(PROJECT_DLL) -lws2_32
     
-    STATIC_LINKFLAGS        = -Wl,-Bstatic 
+    STATIC_LINKFLAGS        = -Wl,-Bstatic -Wl,-static-libstdc++ -Wl,-static-libgcc
 #    STATIC_LIBS             = -lstdc++ \
 #                              -lboost_program_options$(BOOSTLIBMOD) \
 #                              -lboost_date_time$(BOOSTLIBMOD)
 
-    STATIC_LIBS             = -lstdc++ \
+    STATIC_LIBS             = -lboost_system$(BOOSTLIBMOD) \
                               -lboost_program_options \
                               -lboost_date_time$(BOOSTLIBMOD) \
+                              -lboost_thread$(BOOST_TH_LIBMOD)$(BOOSTLIBMOD) \
                               -lboost_log \
                               -lCBCommApi_$(TARGET) \
-                              -lprotobuf_core_$(TARET) \
-                              -lqp_$(QPLIBMOD)_cs \
-                              -lboost_thread$(BOOST_TH_LIBMOD)$(BOOSTLIBMOD) \
-                              -lboost_system$(BOOSTLIBMOD)
-    
-    API_STATIC_LIBS         = $(CB_API_LIB_DIR)/libCBCommApi_$(TARGET).a \
-                              $(CB_API_LIB_DIR)/libprotobuf_core_$(TARGET).a \
-                              $(QP_PORT_DIR)/$(CONF)/libqp_$(QPLIBMOD)_cs.a \
-                              $(BOOST_LIB_DIR)/libboost_thread$(BOOST_TH_LIBMOD)$(BOOSTLIBMOD).a \
-                              $(BOOST_LIB_DIR)/libboost_system$(BOOSTLIBMOD).a
-    
-    LIB_LOCATIONS           = -L$(BOOST_LIB_DIR) -L$(BIN_DIR) -L$(CB_API_LIB_DIR) -L$(QP_PORT_DIR)
+                              -lprotobuf_core_$(TARGET) \
+                              -lws2_32 -lwsock32
+                              
+        
+    LIB_LOCATIONS           = -L$(BOOST_LIB_DIR) -L$(BIN_DIR) -L$(CB_API_LIB_DIR)
 
-    LIBS                   += -static-libgcc -static-libstdc++
+    LIBS                   += -static -static-libgcc -static-libstdc++
     DEFINES                += -DBOOST_THREAD_USE_LIB -DWIN32COMPILE -DBOOST_ALL_NO_LIB -D_SECURE_SCL=0
 
     DLL_EXT                 = dll
@@ -269,9 +249,15 @@ else
     DYNAMIC_LINKFLAGS       = -fPIC -Wl,-rpath -Wl,\$$ORIGIN -Wl,-Bdynamic 
     DYNAMIC_LIBS            = -l$(PROJECT_DLL) 
     
-    STATIC_LINKFLAGS        = -Wl,-Bstatic 
-    STATIC_LIBS             = -lboost_program_options$(BOOSTLIBMOD) \
-                              -lboost_date_time$(BOOSTLIBMOD)
+    STATIC_LINKFLAGS        = -Wl,-Bstatic -Wl,-static-libstdc++ -Wl,-static-libgcc
+    
+    STATIC_LIBS             = -lboost_system$(BOOSTLIBMOD) \
+                              -lboost_program_options \
+                              -lboost_date_time$(BOOSTLIBMOD) \
+                              -lboost_thread$(BOOST_TH_LIBMOD)$(BOOSTLIBMOD) \
+                              -lboost_log \
+                              -lCBCommApi_$(TARGET) \
+                              -lprotobuf_core_$(TARGET) \
 
     LIB_LOCATIONS           = -L$(BOOST_LIB_DIR) -L$(BIN_DIR)
     LIBS                   += # Nothing needed for posix builds
@@ -296,7 +282,7 @@ CPP_DEPS_EXT                = $(patsubst %.o, %.d, $(CPP_OBJS_EXT))
 # BUILD TARGETS
 #-----------------------------------------------------------------------------
 
-.PHONY: build_dll all clean clean_with_libs build_qpc build_cb_comm_api $(BIN_DIR)
+.PHONY: build_dll all clean clean_with_libs build_cb_comm_api $(BIN_DIR)
 
 all:  $(TARGET_EXE)
 
@@ -306,22 +292,23 @@ $(BIN_DIR):
 	@echo ---------------------------
 	mkdir -p $@
 
-$(TARGET_EXE): build_qpc build_cb_comm_api $(CPP_OBJS_EXT) $(C_OBJS_EXT)
+$(TARGET_EXE):  $(BIN_DIR) build_libs $(CPP_OBJS_EXT) $(C_OBJS_EXT)
 	@echo ---------------------------
 	@echo --- Building CMD Client ---
 	@echo ---------------------------
-	$(LINK) $(LIBS) -o $(TARGET_EXE) $(CPP_OBJS_EXT) $(LIB_LOCATIONS) $(STATIC_LINKFLAGS) $(STATIC_LIBS)
-	$(RM) $(BIN_DIR)/*.o
+	$(LINK) -o $(TARGET_EXE) $(LIBS) $(C_OBJS_EXT) $(CPP_OBJS_EXT) $(LIB_LOCATIONS) $(STATIC_LIBS) 
+#	$(RM) $(BIN_DIR)/*.o
     
-build_dll: $(BIN_DIR)
-	@echo ---------------------------
-	@echo --- Building client dll ---
-	@echo ---------------------------
-	cd $(SHARED_LIB_DIR); make TARGET=$(TARGET) CONF=$(CONF) TRACE=$(TRACE) all
-	@echo --------------------------------------
-	@echo --- Copying client dll and headers ---
-	@echo --------------------------------------
-	cp $(SHARED_LIB_BIN_DIR)/*.* $(BIN_DIR)/.
+build_libs: build_cb_api
+	@echo -----------------------------------
+	@echo --- Building libraries complete ---
+	@echo -----------------------------------
+
+build_cb_api:
+	@echo ------------------------------------
+	@echo --- Building DC3 Comm API lib    ---
+	@echo ------------------------------------
+	$(TRACE_FLAG)cd $(CB_API_DIR); make TARGET=$(TARGET) CONF=$(CONF) TRACE=$(TRACE) all
 		
 $(BIN_DIR)/%.d : %.c
 	$(CPP) -MM -MT $(@:.d=.o) $(CPPFLAGS) $< > $@

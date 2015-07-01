@@ -264,10 +264,10 @@ $(TARGET_DLL):  $(C_OBJS_EXT) $(CPP_OBJS_EXT)
 	@echo --- Creating a dll      ---
 	@echo ---------------------------
 	$(LINK) -shared -o $@ $^ $(LINKFLAGS) $(LIBS)
-	@echo ---------------------------
-	@echo --- Deleting *.o files  ---
-	@echo ---------------------------
-	$(RM) $(BIN_DIR)/*.o
+#	@echo ---------------------------
+#	@echo --- Deleting *.o files  ---
+#	@echo ---------------------------
+#	$(RM) $(BIN_DIR)/*.o
 	@echo ---------------------------
 	@echo --- Copy libs/headers   ---
 	@echo ---------------------------
