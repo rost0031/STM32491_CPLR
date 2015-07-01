@@ -38,7 +38,7 @@ MODULE_NAME( MODULE_EXT );
 
 
 /******************************************************************************/
-ClientError_t MENU_run( ClientApi *client )
+APIError_t MENU_run( ClientApi *client )
 {
    Ktree *currMenuNode = NULL;
 
@@ -237,9 +237,9 @@ void MENU_nodeAncestryToStream( Ktree* node, KtreeNav* kNav, stringstream& ss)
 }
 
 /******************************************************************************/
-ClientError_t MENU_parseAndExecAction( MenuAction_t menuAction )
+APIError_t MENU_parseAndExecAction( MenuAction_t menuAction )
 {
-   ClientError_t status = CLI_ERR_NONE;
+   APIError_t status = CLI_ERR_NONE;
 
    switch( menuAction ) {
 

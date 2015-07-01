@@ -24,7 +24,7 @@
 #include <boost/thread.hpp>
 #include <boost/lockfree/queue.hpp>
 
-#include "ClientShared.h"
+#include "ApiShared.h"
 #include "dfuse.h"
 #include "LogHelper.h"
 #include "LogStub.h"

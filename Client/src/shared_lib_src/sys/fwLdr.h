@@ -64,11 +64,11 @@ private:
     * @brief   Parse version and build date/time from the filename.
     * @param   filename: const char pointer to buffer containing the relative
     * path and filename to the FW image file.
-    * @return: ClientError_t status of the client executing the command.
+    * @return: APIError_t status of the client executing the command.
     *    @arg  CLI_ERR_NONE: success
     *    other error codes if failure.
     */
-   ClientError_t parseFilename( const char *filename );
+   APIError_t parseFilename( const char *filename );
 
 public:
 
@@ -138,11 +138,11 @@ public:
     *
     * @param   filename: const char pointer to buffer containing the relative
     * path and filename to the FW image file.
-    * @return: ClientError_t status of the client executing the command.
+    * @return: APIError_t status of the client executing the command.
     *    @arg  CLI_ERR_NONE: success
     *    other error codes if failure.
     */
-   ClientError_t loadFromFile( const char *filename );
+   APIError_t loadFromFile( const char *filename );
 
    /**
     * @brief   Calculates how many packets there will be in the FW image given

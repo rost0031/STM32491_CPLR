@@ -1,7 +1,7 @@
 /**
- * @file 	ClientShared.h
+ * @file 	ApiShared.h
  * Contains all the Shared Events, Priorities, and any other needed declarations
- * for the CB Clients. This is necessary to make sure there is no overlap in
+ * for the DC3 Client Api. This is necessary to make sure there is no overlap in
  * enumerations between the shared code and the code pulling the shared code in.
  *
  * @date   	03/23/2015
@@ -11,8 +11,8 @@
  */
 
 /* Define to prevent recursive inclusion -------------------------------------*/
-#ifndef CLIENTSHARED_H_
-#define CLIENTSHARED_H_
+#ifndef APISHARED_H_
+#define APISHARED_H_
 
 /* Includes ------------------------------------------------------------------*/
 #include <cstdlib>
@@ -21,12 +21,13 @@
 #include <iostream>
 #include <fcntl.h>
 #include <fstream>
-#include "ClientTimeouts.h"
 
 /* This is necessary since C++ code is pulling in a library compiled as C */
 extern "C" {
 #include "CBCommApi.h"
 }
+
+#include "ApiErrorCodes.h"
 
 /* Exported defines ----------------------------------------------------------*/
 /* Exported macros -----------------------------------------------------------*/
@@ -34,5 +35,5 @@ extern "C" {
 /* Exported constants --------------------------------------------------------*/
 /* Exported functions --------------------------------------------------------*/
 
-#endif                                                     /* CLIENTSHARED_H_ */
+#endif                                                        /* APISHARED_H_ */
 /******** Copyright (C) 2013 Datacard. All rights reserved *****END OF FILE****/

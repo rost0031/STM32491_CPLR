@@ -59,11 +59,11 @@ LogStub::~LogStub( void ) {}
 
 
 /******************************************************************************/
-ClientError_t LogStub::setLibLogCallBack(
+APIError_t LogStub::setLibLogCallBack(
       CB_LibLogHandler_t pCallbackFunction
 )
 {
-   ClientError_t err = CLI_ERR_NONE;
+   APIError_t err = CLI_ERR_NONE;
 
    this->m_pLibLogHandlerCBFunction = pCallbackFunction;
 
@@ -86,11 +86,11 @@ ClientError_t LogStub::setLibLogCallBack(
 }
 
 /******************************************************************************/
-ClientError_t LogStub::setDC3LogCallBack(
+APIError_t LogStub::setDC3LogCallBack(
       CB_DC3LogHandler_t pCallbackFunction
 )
 {
-   ClientError_t err = CLI_ERR_NONE;
+   APIError_t err = CLI_ERR_NONE;
 
    this->m_pDC3LogHandlerCBFunction = pCallbackFunction;
 

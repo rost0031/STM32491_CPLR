@@ -14,7 +14,7 @@
 #include <boost/crc.hpp>
 #include "LogHelper.h"
 #include "msg_utils.h"
-#include "ClientErrorCodes.h"
+#include "ApiShared.h"
 
 /* Namespaces ----------------------------------------------------------------*/
 using namespace std;
@@ -32,9 +32,9 @@ MODULE_NAME( MODULE_FWL );
 /* Private class methods -----------------------------------------------------*/
 
 /******************************************************************************/
-ClientError_t FWLdr::loadFromFile( const char *filename )
+APIError_t FWLdr::loadFromFile( const char *filename )
 {
-   ClientError_t status = CLI_ERR_NONE;
+   APIError_t status = CLI_ERR_NONE;
    string fileName(filename);    /* Set the path and filename */
 
 	ifstream fw_file(              /* open the file stream to read in the file */
@@ -80,9 +80,9 @@ void FWLdr::prepare( void )
 }
 
 /******************************************************************************/
-ClientError_t FWLdr::parseFilename( const char *filename )
+APIError_t FWLdr::parseFilename( const char *filename )
 {
-   ClientError_t status = CLI_ERR_NONE;
+   APIError_t status = CLI_ERR_NONE;
    string filenameStr(filename);
 
    /* strip path from filename */
@@ -238,7 +238,7 @@ unsigned int FWLdr::toString( char *strBuffer, size_t strBufSize )
 {
    unsigned int bytes_printed = 0;
 
-   ClientError_t convertStatus = MSG_hexToStr(
+   APIError_t convertStatus = MSG_hexToStr(
          (uint8_t*)m_buffer,
          m_size,
          strBuffer,

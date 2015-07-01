@@ -24,7 +24,7 @@
 
 /* Lib includes */
 #include "ClientApi.h"
-#include "ClientErrorCodes.h"
+#include "ApiShared.h"
 
 /* Namespaces ----------------------------------------------------------------*/
 /* Exported defines ----------------------------------------------------------*/
@@ -36,11 +36,11 @@
  * @brief   Loop that runs the menu until user exits.
  * @param [in] *client: ClientApi pointer to the client object.  This should be
  * instantiated outside and already set up for connection at this point.
- * @return ClientError_t:
+ * @return APIError_t:
  *    @arg CLI_ERR_NONE: if user ordered an exit
  *    other codes if errors occur in the client itself.
  */
-ClientError_t MENU_run( ClientApi* client );
+APIError_t MENU_run( ClientApi* client );
 
 /**
  * @brief   Finalize the numbers of the menu nodes.

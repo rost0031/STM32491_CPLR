@@ -13,8 +13,8 @@
 #define MSG_UTILS_H_
 
 /* Includes ------------------------------------------------------------------*/
-#include "ClientShared.h"
-#include "ClientErrorCodes.h"
+#include "ApiShared.h"
+
 
 /* Exported defines ----------------------------------------------------------*/
 /* Exported macros -----------------------------------------------------------*/
@@ -52,9 +52,9 @@ typedef struct MsgEvtTag {
  * @param [in] sep: char that will be used to separate all the printed hex numbers.
  * @param [in] bPrintX: bool that specifies whether to print 0x in front of each
  * hex number.
- * @return ClientError_t: CLI_ERR_NONE if OK.
+ * @return APIError_t: CLI_ERR_NONE if OK.
  */
-ClientError_t MSG_hexToStr(
+APIError_t MSG_hexToStr(
       const uint8_t* hexData,
       uint16_t hexDataLen,
       char* strDataBuffer,

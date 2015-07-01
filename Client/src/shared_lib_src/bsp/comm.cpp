@@ -30,7 +30,7 @@ MODULE_NAME( MODULE_COM );
 /* Private class methods -----------------------------------------------------*/
 
 /******************************************************************************/
-ClientError_t Comm::write_some( char* message, uint16_t len )
+APIError_t Comm::write_some( char* message, uint16_t len )
 {
    if ( this->m_pSer ) {
       /* Serial messages have to be base64 encoded */

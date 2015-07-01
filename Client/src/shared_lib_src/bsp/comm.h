@@ -51,9 +51,9 @@ public:
     * @param[in]   message: pointer to the buffer containing the data to write.
     * @param[in]   len: number of bytes in the buffer that need to be sent.
     *
-    * @return:    ClientError_t status of the write.
+    * @return:    APIError_t status of the write.
     */
-   ClientError_t write_some( char* message, uint16_t len );
+   APIError_t write_some( char* message, uint16_t len );
 
    /**
     * @brief   Sets a new LogStub pointer.

@@ -19,7 +19,7 @@
 /* Includes ------------------------------------------------------------------*/
 #include "CBSharedDbgLevels.h"
 #include "ClientModules.h"
-#include "ClientErrorCodes.h"
+#include "ApiErrorCodes.h"
 #include "CallbackTypes.h"
 #include <cstddef>
 
@@ -90,11 +90,11 @@ public:
     * @param  [in]  pCallbackFunction: a CB_LibLogHandler_t pointer to the
     * callback function that is implemented outside the library.
     *
-    * @return ClientError_t:
+    * @return APIError_t:
     *    @arg CLI_ERR_NONE: no errors were detected
     *    else some error code indicating what went wrong
     */
-   ClientError_t setLibLogCallBack( CB_LibLogHandler_t pCallbackFunction );
+   APIError_t setLibLogCallBack( CB_LibLogHandler_t pCallbackFunction );
 
    /**
     * @brief   Set a callback to handle the log msgs coming from DC3 board.
@@ -102,11 +102,11 @@ public:
     * @param  [in]  pCallbackFunction: a CB_DC3LogHandler_t pointer to the
     * callback function that is implemented outside the library.
     *
-    * @return ClientError_t:
+    * @return APIError_t:
     *    @arg CLI_ERR_NONE: no errors were detected
     *    else some error code indicating what went wrong
     */
-   ClientError_t setDC3LogCallBack( CB_DC3LogHandler_t pCallbackFunction );
+   APIError_t setDC3LogCallBack( CB_DC3LogHandler_t pCallbackFunction );
 
    /**
     * @brief   Enable logging for a given module of the library.

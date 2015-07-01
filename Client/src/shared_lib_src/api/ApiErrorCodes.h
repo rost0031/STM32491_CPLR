@@ -54,7 +54,7 @@ extern "C" {
  * specify.  Each category gets 0xFFFF error codes (65535) dedicated to it.
  *
  */
-typedef enum ClientErrors
+typedef enum APIErrors
 {
    CLI_ERR_NONE                                                = 0x00000000,
 
@@ -96,7 +96,7 @@ typedef enum ClientErrors
    /* Reserved errors                            0xFFFFFFFE - 0xFFFFFFFF */
    CLI_ERR_UNIMPLEMENTED                                       = 0xFFFFFFFE,
    CLI_ERR_UNKNOWN                                             = 0xFFFFFFFF
-} ClientError_t;
+} APIError_t;
 
 
 /* Exported functions --------------------------------------------------------*/

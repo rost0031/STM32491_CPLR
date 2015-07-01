@@ -60,7 +60,7 @@ MODULE_NAME( MODULE_EXT );
 /******************************************************************************/
 int main(int argc, char *argv[])
 {
-   ClientError_t status = CLI_ERR_NONE;                  // Keep track of status
+   APIError_t status = CLI_ERR_NONE;                  // Keep track of status
    string appName = argv[0];
    unsigned found = appName.find_last_of("/\\");
    appName = appName.substr(found+1);

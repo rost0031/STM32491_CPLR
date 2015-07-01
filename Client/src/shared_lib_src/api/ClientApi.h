@@ -89,11 +89,11 @@ private:
     * of all the payload msgs that will contain the correct portion of itself
     * filled on output.  This union is indexed by the contents of the
     * basicMsg._msgPayload.
-    * @return: ClientError_t status of the client executing the command.
+    * @return: APIError_t status of the client executing the command.
     *    @arg  CLI_ERR_NONE: success
     *    other error codes if failure.
     */
-   ClientError_t pollForResp(
+   APIError_t pollForResp(
          CBBasicMsg *basicMsg,
          CBPayloadMsgUnion_t *payloadMsgUnion
    );
@@ -106,11 +106,11 @@ private:
     * of all the payload msgs that will contain the correct portion of itself
     * filled on output.  This union is indexed by the contents of the
     * basicMsg._msgPayload.
-    * @return: ClientError_t status of the client executing the command.
+    * @return: APIError_t status of the client executing the command.
     *    @arg  CLI_ERR_NONE: success
     *    other error codes if failure.
     */
-   ClientError_t waitForResp(
+   APIError_t waitForResp(
          CBBasicMsg *basicMsg,
          CBPayloadMsgUnion_t *payloadMsgUnion,
          uint16_t timeoutSecs
@@ -134,11 +134,11 @@ public:
     * DC3 board.
     *    @arg  _CB_Bootloader: the DC3 board is currently in bootloader mode.
     *    @arg  _CB_Application: the DC3 board is currently in application mode.
-    * @return: ClientError_t status of the client executing the command.
+    * @return: APIError_t status of the client executing the command.
     *    @arg  CLI_ERR_NONE: success
     *    other error codes if failure.
     */
-   ClientError_t DC3_getMode( CBErrorCode *status, CBBootMode *mode );
+   APIError_t DC3_getMode( CBErrorCode *status, CBBootMode *mode );
 
    /**
     * @brief   Blocking cmd to set the current boot mode of DC3.
@@ -152,11 +152,11 @@ public:
     * @param [in] mode: CBBootMode to the mode to set the DC3 board to.
     *    @arg  _CB_Bootloader: the DC3 board is currently in bootloader mode.
     *    @arg  _CB_Application: the DC3 board is currently in application mode.
-    * @return: ClientError_t status of the client executing the command.
+    * @return: APIError_t status of the client executing the command.
     *    @arg  CLI_ERR_NONE: success
     *    other error codes if failure.
     */
-   ClientError_t DC3_setMode(CBErrorCode *status, CBBootMode mode);
+   APIError_t DC3_setMode(CBErrorCode *status, CBBootMode mode);
 
    /**
     * @brief   Blocking cmd to get the current boot mode of DC3.
@@ -173,12 +173,12 @@ public:
     * @param [in] *filename: const char pointer to a path and file where the
     * FW image file can be found.
     *
-    * @return: ClientError_t status of the client executing the command.
+    * @return: APIError_t status of the client executing the command.
     *    @arg  CLI_ERR_NONE: success
     *    other error codes if failure.
     *
     */
-   ClientError_t DC3_flashFW(
+   APIError_t DC3_flashFW(
          CBErrorCode *status,
          CBBootMode type,
          const char *filename
@@ -208,11 +208,11 @@ public:
     *    @arg _CB_ACCESS_FRT: use event driven FreeRTOS access.  Available in
     *    Application only.
     *
-    * @return: ClientError_t status of the client executing the command.
+    * @return: APIError_t status of the client executing the command.
     *    @arg  CLI_ERR_NONE: success
     *    other error codes if failures.
     */
-   ClientError_t DC3_readI2C(
+   APIError_t DC3_readI2C(
          CBErrorCode *status,
          uint16_t *pBytesRead,
          uint8_t *pBuffer,
@@ -245,11 +245,11 @@ public:
     *    @arg _CB_ACCESS_FRT: use event driven FreeRTOS access.  Available in
     *    Application only.
     *
-    * @return: ClientError_t status of the client executing the command.
+    * @return: APIError_t status of the client executing the command.
     *    @arg  CLI_ERR_NONE: success
     *    other error codes if failures.
     */
-   ClientError_t DC3_writeI2C(
+   APIError_t DC3_writeI2C(
          CBErrorCode *status,
          const uint8_t* const pBuffer,
          const int bytes,
@@ -277,11 +277,11 @@ public:
     *    @arg _CB_RAM_TEST_DEV_INT:  ram test failed in the device integrity
     *                                test
     * @param [out] *addr: address at which the ram address saw an error.
-    * @return: ClientError_t status of the client executing the command.
+    * @return: APIError_t status of the client executing the command.
     *    @arg  CLI_ERR_NONE: success
     *    other error codes if failure.
     */
-   ClientError_t DC3_ramTest(
+   APIError_t DC3_ramTest(
          CBErrorCode *status,
          CBRamTest_t* test,
          uint32_t* addr
@@ -297,7 +297,7 @@ public:
     * @param[in]   *pLocPort: pointer to the local port number string.
     * @return  None.
     */
-   ClientError_t setNewConnection(
+   APIError_t setNewConnection(
          const char *ipAddress,
          const char *pRemPort,
          const char *pLocPort
@@ -313,7 +313,7 @@ public:
     *   @arg  FALSE: set up serial for regular serial comms.
     * @return  None.
     */
-   ClientError_t setNewConnection(
+   APIError_t setNewConnection(
          const char *dev_name,
          int baud_rate,
          bool bDFUSEComm
@@ -332,11 +332,11 @@ public:
     * @param  [in]  pCallbackFunction: a CB_ReqLogHandler_t pointer to the
     * callback function that is implemented outside the library.
     *
-    * @return ClientError_t:
+    * @return APIError_t:
     *    @arg CLI_ERR_NONE: no errors were detected
     *    else some error code indicating what went wrong
     */
-   ClientError_t setReqCallBack( CB_ReqMsgHandler_t pCallbackFunction );
+   APIError_t setReqCallBack( CB_ReqMsgHandler_t pCallbackFunction );
 
    /**
     * This method sets a callback to handle Ack msgs.
@@ -344,11 +344,11 @@ public:
     * @param  [in]  pCallbackFunction: a CB_AckLogHandler_t pointer to the
     * callback function that is implemented outside the library.
     *
-    * @return ClientError_t:
+    * @return APIError_t:
     *    @arg CLI_ERR_NONE: no errors were detected
     *    else some error code indicating what went wrong
     */
-   ClientError_t setAckCallBack( CB_AckMsgHandler_t pCallbackFunction );
+   APIError_t setAckCallBack( CB_AckMsgHandler_t pCallbackFunction );
 
    /**
     * This method sets a callback to handle Done msgs.
@@ -356,11 +356,11 @@ public:
     * @param  [in]  pCallbackFunction: a CB_DoneLogHandler_t pointer to the
     * callback function that is implemented outside the library.
     *
-    * @return ClientError_t:
+    * @return APIError_t:
     *    @arg CLI_ERR_NONE: no errors were detected
     *    else some error code indicating what went wrong
     */
-   ClientError_t setDoneCallBack( CB_DoneMsgHandler_t pCallbackFunction );
+   APIError_t setDoneCallBack( CB_DoneMsgHandler_t pCallbackFunction );
 
    /**
     * @brief   Enable all the callbacks (if set) for Req, Ack, Prog, and Done msgs.

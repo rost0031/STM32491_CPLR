@@ -25,7 +25,7 @@ MODULE_NAME( MODULE_MSG );
 
 
 /******************************************************************************/
-ClientError_t MSG_hexToStr(
+APIError_t MSG_hexToStr(
       const uint8_t* hexData,
       uint16_t hexDataLen,
       char* strDataBuffer,
@@ -36,7 +36,7 @@ ClientError_t MSG_hexToStr(
       const bool bPrintX
 )
 {
-   ClientError_t status = CLI_ERR_NONE;
+   APIError_t status = CLI_ERR_NONE;
 
    if ( NULL == hexData ) {
       return( CLI_ERR_MEM_NULL_VALUE );

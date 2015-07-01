@@ -25,7 +25,7 @@
 
 #include "LogHelper.h"
 #include "LogStub.h"
-#include "ClientShared.h"
+#include "ApiShared.h"
 #include "msg_utils.h"
 
 /* Exported defines ----------------------------------------------------------*/

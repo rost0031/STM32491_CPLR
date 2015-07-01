@@ -25,7 +25,7 @@
 #include "base64_wrapper.h"
 
 /* Api includes */
-#include "ClientShared.h"
+#include "ApiShared.h"
 
 /* Namespaces ----------------------------------------------------------------*/
 using namespace std;
@@ -58,7 +58,7 @@ boost::lockfree::queue<MsgData_t> queue(128);
 /* Private classes -----------------------------------------------------------*/
 
 /******************************************************************************/
-ClientError_t ClientApi::DC3_getMode(CBErrorCode *status, CBBootMode *mode)
+APIError_t ClientApi::DC3_getMode(CBErrorCode *status, CBBootMode *mode)
 {
    this->enableMsgCallbacks();
 
@@ -86,7 +86,7 @@ ClientError_t ClientApi::DC3_getMode(CBErrorCode *status, CBBootMode *mode)
 
    memset(&basicMsg, 0, sizeof(basicMsg));
    memset(&payloadMsgUnion, 0, sizeof(payloadMsgUnion));
-   ClientError_t clientStatus = waitForResp(                  /* Wait for Ack */
+   APIError_t clientStatus = waitForResp(                  /* Wait for Ack */
          &basicMsg,
          &payloadMsgUnion,
          HL_MAX_TOUT_SEC_CLI_WAIT_FOR_ACK
@@ -100,7 +100,7 @@ ClientError_t ClientApi::DC3_getMode(CBErrorCode *status, CBBootMode *mode)
 
 //   char *tmp = (char *)malloc(sizeof(char) * 1000);
 //   uint16_t tmpStrLen;
-//   ClientError_t convertStatus = MSG_hexToStr(
+//   APIError_t convertStatus = MSG_hexToStr(
 //         evt->dataBuf,
 //         evt->dataLen,
 //         tmp,
@@ -134,7 +134,7 @@ ClientError_t ClientApi::DC3_getMode(CBErrorCode *status, CBBootMode *mode)
 }
 
 /******************************************************************************/
-ClientError_t ClientApi::DC3_setMode(CBErrorCode *status, CBBootMode mode)
+APIError_t ClientApi::DC3_setMode(CBErrorCode *status, CBBootMode mode)
 {
    this->enableMsgCallbacks();
 
@@ -166,7 +166,7 @@ ClientError_t ClientApi::DC3_setMode(CBErrorCode *status, CBBootMode mode)
 
    memset(&basicMsg, 0, sizeof(basicMsg));
    memset(&payloadMsgUnion, 0, sizeof(payloadMsgUnion));
-   ClientError_t clientStatus = waitForResp(                  /* Wait for Ack */
+   APIError_t clientStatus = waitForResp(                  /* Wait for Ack */
          &basicMsg,
          &payloadMsgUnion,
          HL_MAX_TOUT_SEC_CLI_WAIT_FOR_ACK
@@ -197,7 +197,7 @@ ClientError_t ClientApi::DC3_setMode(CBErrorCode *status, CBBootMode mode)
 }
 
 /******************************************************************************/
-ClientError_t ClientApi::DC3_flashFW(
+APIError_t ClientApi::DC3_flashFW(
       CBErrorCode *status,
       CBBootMode type,
       const char* filename
@@ -209,7 +209,7 @@ ClientError_t ClientApi::DC3_flashFW(
    /* These will be used for responses */
    CBBasicMsg basicMsg;
    CBPayloadMsgUnion_t payloadMsgUnion;
-   ClientError_t clientStatus = CLI_ERR_NONE;
+   APIError_t clientStatus = CLI_ERR_NONE;
 
 
    /* First, check if DC3 is in bootloader mode and if not, send a SetMode cmd
@@ -450,7 +450,7 @@ ClientError_t ClientApi::DC3_flashFW(
 }
 
 /******************************************************************************/
-ClientError_t ClientApi::DC3_readI2C(
+APIError_t ClientApi::DC3_readI2C(
       CBErrorCode *status,
       uint16_t *pBytesRead,
       uint8_t *pBuffer,
@@ -498,7 +498,7 @@ ClientError_t ClientApi::DC3_readI2C(
 
    memset(&basicMsg, 0, sizeof(basicMsg));
    memset(&payloadMsgUnion, 0, sizeof(payloadMsgUnion));
-   ClientError_t clientStatus = waitForResp(                  /* Wait for Ack */
+   APIError_t clientStatus = waitForResp(                  /* Wait for Ack */
          &basicMsg,
          &payloadMsgUnion,
          HL_MAX_TOUT_SEC_CLI_WAIT_FOR_ACK
@@ -536,7 +536,7 @@ ClientError_t ClientApi::DC3_readI2C(
 }
 
 /******************************************************************************/
-ClientError_t ClientApi::DC3_writeI2C(
+APIError_t ClientApi::DC3_writeI2C(
       CBErrorCode *status,
       const uint8_t* const pBuffer,
       const int bytes,
@@ -583,7 +583,7 @@ ClientError_t ClientApi::DC3_writeI2C(
 
    memset(&basicMsg, 0, sizeof(basicMsg));
    memset(&payloadMsgUnion, 0, sizeof(payloadMsgUnion));
-   ClientError_t clientStatus = waitForResp(                  /* Wait for Ack */
+   APIError_t clientStatus = waitForResp(                  /* Wait for Ack */
          &basicMsg,
          &payloadMsgUnion,
          HL_MAX_TOUT_SEC_CLI_WAIT_FOR_ACK
@@ -614,7 +614,7 @@ ClientError_t ClientApi::DC3_writeI2C(
 }
 
 /******************************************************************************/
-ClientError_t ClientApi::DC3_ramTest(
+APIError_t ClientApi::DC3_ramTest(
       CBErrorCode *status,
       CBRamTest_t* test,
       uint32_t* addr
@@ -646,7 +646,7 @@ ClientError_t ClientApi::DC3_ramTest(
 
    memset(&basicMsg, 0, sizeof(basicMsg));
    memset(&payloadMsgUnion, 0, sizeof(payloadMsgUnion));
-   ClientError_t clientStatus = waitForResp(                  /* Wait for Ack */
+   APIError_t clientStatus = waitForResp(                  /* Wait for Ack */
          &basicMsg,
          &payloadMsgUnion,
          HL_MAX_TOUT_SEC_CLI_WAIT_FOR_ACK
@@ -681,7 +681,7 @@ ClientError_t ClientApi::DC3_ramTest(
 }
 
 /******************************************************************************/
-ClientError_t ClientApi::setNewConnection(
+APIError_t ClientApi::setNewConnection(
       const char *ipAddress,
       const char *pRemPort,
       const char *pLocPort
@@ -702,7 +702,7 @@ ClientError_t ClientApi::setNewConnection(
 }
 
 /******************************************************************************/
-ClientError_t ClientApi::setNewConnection(
+APIError_t ClientApi::setNewConnection(
       const char *dev_name,
       int baud_rate,
       bool bDFUSEComm
@@ -732,7 +732,7 @@ void ClientApi::setLogging( LogStub *log )
 }
 
 /******************************************************************************/
-ClientError_t ClientApi::pollForResp(
+APIError_t ClientApi::pollForResp(
       CBBasicMsg *basicMsg,
       CBPayloadMsgUnion_t *payloadMsgUnion
 )
@@ -740,7 +740,7 @@ ClientError_t ClientApi::pollForResp(
 
    /* This code indicates to the caller that the function is didn't find any
     * events in the queue this call. */
-   ClientError_t status = CLI_ERR_MSG_WAITING_FOR_RESP;
+   APIError_t status = CLI_ERR_MSG_WAITING_FOR_RESP;
    if ( queue.empty() ) {
       return status;
    }
@@ -831,14 +831,14 @@ ClientError_t ClientApi::pollForResp(
 }
 
 /******************************************************************************/
-ClientError_t ClientApi::waitForResp(
+APIError_t ClientApi::waitForResp(
       CBBasicMsg *basicMsg,
       CBPayloadMsgUnion_t *payloadMsgUnion,
       uint16_t timeoutSecs
 )
 {
    int timeout_ms = timeoutSecs * 1000;
-   ClientError_t status = CLI_ERR_NONE;
+   APIError_t status = CLI_ERR_NONE;
    while (timeout_ms > 0) {                         /* Beginning of the thread forever loop */
       status = pollForResp(basicMsg, payloadMsgUnion);
       if (CLI_ERR_MSG_WAITING_FOR_RESP != status ) {
@@ -852,11 +852,11 @@ ClientError_t ClientApi::waitForResp(
 }
 
 /******************************************************************************/
-ClientError_t ClientApi::setReqCallBack(
+APIError_t ClientApi::setReqCallBack(
       CB_ReqMsgHandler_t pCallbackFunction
 )
 {
-   ClientError_t err = CLI_ERR_NONE;
+   APIError_t err = CLI_ERR_NONE;
 
    this->m_pReqHandlerCBFunction = pCallbackFunction;
 
@@ -873,11 +873,11 @@ ClientError_t ClientApi::setReqCallBack(
 }
 
 /******************************************************************************/
-ClientError_t ClientApi::setAckCallBack(
+APIError_t ClientApi::setAckCallBack(
       CB_AckMsgHandler_t pCallbackFunction
 )
 {
-   ClientError_t err = CLI_ERR_NONE;
+   APIError_t err = CLI_ERR_NONE;
    this->m_pAckHandlerCBFunction = pCallbackFunction;
 
    if ( NULL == this->m_pAckHandlerCBFunction ) {
@@ -892,11 +892,11 @@ ClientError_t ClientApi::setAckCallBack(
 }
 
 /******************************************************************************/
-ClientError_t ClientApi::setDoneCallBack(
+APIError_t ClientApi::setDoneCallBack(
       CB_DoneMsgHandler_t pCallbackFunction
 )
 {
-   ClientError_t err = CLI_ERR_NONE;
+   APIError_t err = CLI_ERR_NONE;
 
    this->m_pDoneHandlerCBFunction = pCallbackFunction;
 
