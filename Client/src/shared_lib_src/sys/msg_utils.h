@@ -52,7 +52,7 @@ typedef struct MsgEvtTag {
  * @param [in] sep: char that will be used to separate all the printed hex numbers.
  * @param [in] bPrintX: bool that specifies whether to print 0x in front of each
  * hex number.
- * @return APIError_t: CLI_ERR_NONE if OK.
+ * @return APIError_t: API_ERR_NONE if OK.
  */
 APIError_t MSG_hexToStr(
       const uint8_t* hexData,

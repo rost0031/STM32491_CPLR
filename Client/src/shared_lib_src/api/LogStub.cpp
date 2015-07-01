@@ -63,7 +63,7 @@ APIError_t LogStub::setLibLogCallBack(
       CB_LibLogHandler_t pCallbackFunction
 )
 {
-   APIError_t err = CLI_ERR_NONE;
+   APIError_t err = API_ERR_NONE;
 
    this->m_pLibLogHandlerCBFunction = pCallbackFunction;
 
@@ -74,11 +74,11 @@ APIError_t LogStub::setLibLogCallBack(
       if ( NULL != this->m_pLibLogHandlerCBFunction ) {
          LOG_printf(this, "Successfully set callback in LogStub");
       } else {
-         err = CLI_ERR_INVALID_CALLBACK;
+         err = API_ERR_INVALID_CALLBACK;
          cerr << "Invalid Library Logging callback passed in by user" << endl;
       }
    } catch ( ... ) {
-      err = CLI_ERR_INVALID_CALLBACK;
+      err = API_ERR_INVALID_CALLBACK;
       cerr << "Invalid Library Logging callback passed in by user" << endl;
    }
 
@@ -90,7 +90,7 @@ APIError_t LogStub::setDC3LogCallBack(
       CB_DC3LogHandler_t pCallbackFunction
 )
 {
-   APIError_t err = CLI_ERR_NONE;
+   APIError_t err = API_ERR_NONE;
 
    this->m_pDC3LogHandlerCBFunction = pCallbackFunction;
 
@@ -101,11 +101,11 @@ APIError_t LogStub::setDC3LogCallBack(
       if ( NULL != this->m_pDC3LogHandlerCBFunction ) {
          LOG_printf(this, "Successfully set callback in LogStub");
       } else {
-         err = CLI_ERR_INVALID_CALLBACK;
+         err = API_ERR_INVALID_CALLBACK;
          cerr << "Invalid DC3 Logging callback passed in by user" << endl;
       }
    } catch ( ... ) {
-      err = CLI_ERR_INVALID_CALLBACK;
+      err = API_ERR_INVALID_CALLBACK;
       cerr << "Invalid DC3 Logging callback passed in by user" << endl;
    }
 

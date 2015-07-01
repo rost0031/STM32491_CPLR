@@ -90,7 +90,7 @@ private:
     * filled on output.  This union is indexed by the contents of the
     * basicMsg._msgPayload.
     * @return: APIError_t status of the client executing the command.
-    *    @arg  CLI_ERR_NONE: success
+    *    @arg  API_ERR_NONE: success
     *    other error codes if failure.
     */
    APIError_t pollForResp(
@@ -107,7 +107,7 @@ private:
     * filled on output.  This union is indexed by the contents of the
     * basicMsg._msgPayload.
     * @return: APIError_t status of the client executing the command.
-    *    @arg  CLI_ERR_NONE: success
+    *    @arg  API_ERR_NONE: success
     *    other error codes if failure.
     */
    APIError_t waitForResp(
@@ -135,7 +135,7 @@ public:
     *    @arg  _CB_Bootloader: the DC3 board is currently in bootloader mode.
     *    @arg  _CB_Application: the DC3 board is currently in application mode.
     * @return: APIError_t status of the client executing the command.
-    *    @arg  CLI_ERR_NONE: success
+    *    @arg  API_ERR_NONE: success
     *    other error codes if failure.
     */
    APIError_t DC3_getMode( CBErrorCode *status, CBBootMode *mode );
@@ -153,7 +153,7 @@ public:
     *    @arg  _CB_Bootloader: the DC3 board is currently in bootloader mode.
     *    @arg  _CB_Application: the DC3 board is currently in application mode.
     * @return: APIError_t status of the client executing the command.
-    *    @arg  CLI_ERR_NONE: success
+    *    @arg  API_ERR_NONE: success
     *    other error codes if failure.
     */
    APIError_t DC3_setMode(CBErrorCode *status, CBBootMode mode);
@@ -174,7 +174,7 @@ public:
     * FW image file can be found.
     *
     * @return: APIError_t status of the client executing the command.
-    *    @arg  CLI_ERR_NONE: success
+    *    @arg  API_ERR_NONE: success
     *    other error codes if failure.
     *
     */
@@ -209,7 +209,7 @@ public:
     *    Application only.
     *
     * @return: APIError_t status of the client executing the command.
-    *    @arg  CLI_ERR_NONE: success
+    *    @arg  API_ERR_NONE: success
     *    other error codes if failures.
     */
    APIError_t DC3_readI2C(
@@ -246,7 +246,7 @@ public:
     *    Application only.
     *
     * @return: APIError_t status of the client executing the command.
-    *    @arg  CLI_ERR_NONE: success
+    *    @arg  API_ERR_NONE: success
     *    other error codes if failures.
     */
    APIError_t DC3_writeI2C(
@@ -278,7 +278,7 @@ public:
     *                                test
     * @param [out] *addr: address at which the ram address saw an error.
     * @return: APIError_t status of the client executing the command.
-    *    @arg  CLI_ERR_NONE: success
+    *    @arg  API_ERR_NONE: success
     *    other error codes if failure.
     */
    APIError_t DC3_ramTest(
@@ -333,7 +333,7 @@ public:
     * callback function that is implemented outside the library.
     *
     * @return APIError_t:
-    *    @arg CLI_ERR_NONE: no errors were detected
+    *    @arg API_ERR_NONE: no errors were detected
     *    else some error code indicating what went wrong
     */
    APIError_t setReqCallBack( CB_ReqMsgHandler_t pCallbackFunction );
@@ -345,7 +345,7 @@ public:
     * callback function that is implemented outside the library.
     *
     * @return APIError_t:
-    *    @arg CLI_ERR_NONE: no errors were detected
+    *    @arg API_ERR_NONE: no errors were detected
     *    else some error code indicating what went wrong
     */
    APIError_t setAckCallBack( CB_AckMsgHandler_t pCallbackFunction );
@@ -357,7 +357,7 @@ public:
     * callback function that is implemented outside the library.
     *
     * @return APIError_t:
-    *    @arg CLI_ERR_NONE: no errors were detected
+    *    @arg API_ERR_NONE: no errors were detected
     *    else some error code indicating what went wrong
     */
    APIError_t setDoneCallBack( CB_DoneMsgHandler_t pCallbackFunction );

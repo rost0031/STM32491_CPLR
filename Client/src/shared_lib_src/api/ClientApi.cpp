@@ -92,7 +92,7 @@ APIError_t ClientApi::DC3_getMode(CBErrorCode *status, CBBootMode *mode)
          HL_MAX_TOUT_SEC_CLI_WAIT_FOR_ACK
    );
 
-   if ( CLI_ERR_NONE != clientStatus ) {                    /* Check response */
+   if ( API_ERR_NONE != clientStatus ) {                    /* Check response */
       ERR_printf(m_pLog,
             "Waiting for Ack received client Error: 0x%08x", clientStatus);
       return clientStatus;
@@ -121,7 +121,7 @@ APIError_t ClientApi::DC3_getMode(CBErrorCode *status, CBBootMode *mode)
          &payloadMsgUnion,
          HL_MAX_TOUT_SEC_CLI_WAIT_FOR_SIMPLE_MSG_DONE
    );
-   if ( CLI_ERR_NONE != clientStatus ) {                    /* Check response */
+   if ( API_ERR_NONE != clientStatus ) {                    /* Check response */
       ERR_printf(m_pLog,
             "Waiting for Done received client Error: 0x%08x", clientStatus);
       return clientStatus;
@@ -172,7 +172,7 @@ APIError_t ClientApi::DC3_setMode(CBErrorCode *status, CBBootMode mode)
          HL_MAX_TOUT_SEC_CLI_WAIT_FOR_ACK
    );
 
-   if ( CLI_ERR_NONE != clientStatus ) {                    /* Check response */
+   if ( API_ERR_NONE != clientStatus ) {                    /* Check response */
       ERR_printf(m_pLog,
             "Waiting for Ack received client Error: 0x%08x", clientStatus);
       return clientStatus;
@@ -185,7 +185,7 @@ APIError_t ClientApi::DC3_setMode(CBErrorCode *status, CBBootMode mode)
          &payloadMsgUnion,
          HL_MAX_TOUT_SEC_CLI_WAIT_FOR_SIMPLE_MSG_DONE
    );
-   if ( CLI_ERR_NONE != clientStatus ) {                    /* Check response */
+   if ( API_ERR_NONE != clientStatus ) {                    /* Check response */
       ERR_printf(m_pLog,
             "Waiting for Done received client Error: 0x%08x", clientStatus);
       return clientStatus;
@@ -209,7 +209,7 @@ APIError_t ClientApi::DC3_flashFW(
    /* These will be used for responses */
    CBBasicMsg basicMsg;
    CBPayloadMsgUnion_t payloadMsgUnion;
-   APIError_t clientStatus = CLI_ERR_NONE;
+   APIError_t clientStatus = API_ERR_NONE;
 
 
    /* First, check if DC3 is in bootloader mode and if not, send a SetMode cmd
@@ -220,7 +220,7 @@ APIError_t ClientApi::DC3_flashFW(
    while ( currentBootMode != _CB_Bootloader && curRetry++ <= maxRetries ) {
       DBG_printf(m_pLog, "Sending %d out of %d max possible get_mode to see if DC3 is in Bootloader mode", curRetry, maxRetries);
       clientStatus = this->DC3_getMode(status, &currentBootMode);
-      if ( clientStatus != CLI_ERR_NONE ) {
+      if ( clientStatus != API_ERR_NONE ) {
          ERR_printf(m_pLog, "Unable to get current DC3 bootmode. Client Error: 0x%08x", clientStatus);
          return clientStatus;
       }
@@ -232,7 +232,7 @@ APIError_t ClientApi::DC3_flashFW(
       /* If the DC3 is not in bootloader mode, reset it */
       if ( currentBootMode != _CB_Bootloader ) {
          clientStatus = this->DC3_setMode(status, _CB_Bootloader);
-         if ( clientStatus != CLI_ERR_NONE ) {
+         if ( clientStatus != API_ERR_NONE ) {
             ERR_printf(m_pLog, "Unable to set DC3 to Bootloader mode. Client Error: 0x%08x", clientStatus);
             return clientStatus;
          }
@@ -313,7 +313,7 @@ APIError_t ClientApi::DC3_flashFW(
          HL_MAX_TOUT_SEC_CLI_WAIT_FOR_ACK
    );
 
-   if ( CLI_ERR_NONE != clientStatus ) {                    /* Check response */
+   if ( API_ERR_NONE != clientStatus ) {                    /* Check response */
       ERR_printf(m_pLog,
             "Waiting for Ack received client Error: 0x%08x", clientStatus);
       return clientStatus;
@@ -328,7 +328,7 @@ APIError_t ClientApi::DC3_flashFW(
          LL_MAX_TOUT_SEC_CLI_FW_META_WAIT
    );
 
-   if ( CLI_ERR_NONE != clientStatus ) {                    /* Check response */
+   if ( API_ERR_NONE != clientStatus ) {                    /* Check response */
       ERR_printf(m_pLog,
             "Waiting for Done received client Error: 0x%08x", clientStatus);
       return clientStatus;
@@ -387,7 +387,7 @@ APIError_t ClientApi::DC3_flashFW(
             HL_MAX_TOUT_SEC_CLI_WAIT_FOR_ACK
       );
 
-      if ( CLI_ERR_NONE != clientStatus ) {                 /* Check response */
+      if ( API_ERR_NONE != clientStatus ) {                 /* Check response */
          ERR_printf(m_pLog,
                "Waiting for Ack received client Error: 0x%08x", clientStatus);
          return clientStatus;
@@ -403,7 +403,7 @@ APIError_t ClientApi::DC3_flashFW(
       );
 
       /* Make sure there were no intenal client errors. */
-      if ( CLI_ERR_NONE != clientStatus ) {
+      if ( API_ERR_NONE != clientStatus ) {
          ERR_printf(
                m_pLog,
                "DC3 client failed with error 0x%08x during FW update while "
@@ -504,7 +504,7 @@ APIError_t ClientApi::DC3_readI2C(
          HL_MAX_TOUT_SEC_CLI_WAIT_FOR_ACK
    );
 
-   if ( CLI_ERR_NONE != clientStatus ) {                    /* Check response */
+   if ( API_ERR_NONE != clientStatus ) {                    /* Check response */
       ERR_printf(m_pLog,
             "Waiting for Ack received client Error: 0x%08x", clientStatus);
       return clientStatus;
@@ -517,7 +517,7 @@ APIError_t ClientApi::DC3_readI2C(
          &payloadMsgUnion,
          HL_MAX_TOUT_SEC_CLI_WAIT_FOR_SIMPLE_MSG_DONE
    );
-   if ( CLI_ERR_NONE != clientStatus ) {                    /* Check response */
+   if ( API_ERR_NONE != clientStatus ) {                    /* Check response */
       ERR_printf(m_pLog,
             "Waiting for Done received client Error: 0x%08x", clientStatus);
       return clientStatus;
@@ -589,7 +589,7 @@ APIError_t ClientApi::DC3_writeI2C(
          HL_MAX_TOUT_SEC_CLI_WAIT_FOR_ACK
    );
 
-   if ( CLI_ERR_NONE != clientStatus ) {                    /* Check response */
+   if ( API_ERR_NONE != clientStatus ) {                    /* Check response */
       ERR_printf(m_pLog,
             "Waiting for Ack received client Error: 0x%08x", clientStatus);
       return clientStatus;
@@ -602,7 +602,7 @@ APIError_t ClientApi::DC3_writeI2C(
          &payloadMsgUnion,
          HL_MAX_TOUT_SEC_CLI_WAIT_FOR_SIMPLE_MSG_DONE
    );
-   if ( CLI_ERR_NONE != clientStatus ) {                    /* Check response */
+   if ( API_ERR_NONE != clientStatus ) {                    /* Check response */
       ERR_printf(m_pLog,
             "Waiting for Done received client Error: 0x%08x", clientStatus);
       return clientStatus;
@@ -652,7 +652,7 @@ APIError_t ClientApi::DC3_ramTest(
          HL_MAX_TOUT_SEC_CLI_WAIT_FOR_ACK
    );
 
-   if ( CLI_ERR_NONE != clientStatus ) {                    /* Check response */
+   if ( API_ERR_NONE != clientStatus ) {                    /* Check response */
       ERR_printf(m_pLog,
             "Waiting for Ack received client Error: 0x%08x", clientStatus);
       return clientStatus;
@@ -665,7 +665,7 @@ APIError_t ClientApi::DC3_ramTest(
          &payloadMsgUnion,
          HL_MAX_TOUT_SEC_CLI_WAIT_FOR_RAM_TEST
    );
-   if ( CLI_ERR_NONE != clientStatus ) {                       // Check response
+   if ( API_ERR_NONE != clientStatus ) {                       // Check response
       ERR_printf(m_pLog,
             "Waiting for Done received client Error: 0x%08x", clientStatus);
       return clientStatus;
@@ -694,11 +694,11 @@ APIError_t ClientApi::setNewConnection(
             m_pLog,"Exception trying to open UDP connection: %s",
             e.what()
       );
-      return( CLI_ERR_UDP_EXCEPTION_CAUGHT );
+      return( API_ERR_UDP_EXCEPTION_CAUGHT );
    }
 
    m_msgRoute = _CB_EthCli;
-   return( CLI_ERR_NONE );
+   return( API_ERR_NONE );
 }
 
 /******************************************************************************/
@@ -716,11 +716,11 @@ APIError_t ClientApi::setNewConnection(
             "Exception trying to open serial connection: %s",
             e.what()
       );
-      return( CLI_ERR_SER_EXCEPTION_CAUGHT );
+      return( API_ERR_SER_EXCEPTION_CAUGHT );
    }
 
    m_msgRoute = _CB_Serial;
-   return( CLI_ERR_NONE );
+   return( API_ERR_NONE );
 }
 
 
@@ -740,7 +740,7 @@ APIError_t ClientApi::pollForResp(
 
    /* This code indicates to the caller that the function is didn't find any
     * events in the queue this call. */
-   APIError_t status = CLI_ERR_MSG_WAITING_FOR_RESP;
+   APIError_t status = API_ERR_MSG_WAITING_FOR_RESP;
    if ( queue.empty() ) {
       return status;
    }
@@ -758,23 +758,23 @@ APIError_t ClientApi::pollForResp(
       /* If this is an Ack msg, don't bother checking for a payload.  There
        * shouldn't be one.*/
       if ( _CB_Ack == basicMsg->_msgType ) {
-         return CLI_ERR_NONE;
+         return API_ERR_NONE;
       }
 
       /* We should never get a request from DC3 */
       if ( _CB_Req == basicMsg->_msgType ) {
-         return CLI_ERR_MSG_UNEXPECTED_REQ_RECEIVED;
+         return API_ERR_MSG_UNEXPECTED_REQ_RECEIVED;
       }
 
       /* Extract the payload (if exists) since this buffer is going away the moment we get
        * into a state.  We'll figure out later if it's valid, right before we send an Ack */
       switch( basicMsg->_msgPayload ) {
          case _CBNoMsg:
-            status = CLI_ERR_MSG_MISSING_EXPECTED_PAYLOAD;
+            status = API_ERR_MSG_MISSING_EXPECTED_PAYLOAD;
             break;
          case _CBStatusPayloadMsg:
             //                  DBG_printf( m_pLog, "Status payload detected");
-            status = CLI_ERR_NONE;
+            status = API_ERR_NONE;
             CBStatusPayloadMsg_read_delimited_from(
                   (void*)msg.dataBuf,
                   &(payloadMsgUnion->statusPayload),
@@ -782,7 +782,7 @@ APIError_t ClientApi::pollForResp(
             );
             break;
          case _CBVersionPayloadMsg:
-            status = CLI_ERR_NONE;
+            status = API_ERR_NONE;
             DBG_printf( m_pLog, "Version payload detected");
             CBVersionPayloadMsg_read_delimited_from(
                   (void*)msg.dataBuf,
@@ -791,7 +791,7 @@ APIError_t ClientApi::pollForResp(
             );
             break;
          case _CBBootModePayloadMsg:
-            status = CLI_ERR_NONE;
+            status = API_ERR_NONE;
             DBG_printf( m_pLog, "BootMode payload detected");
             CBBootModePayloadMsg_read_delimited_from(
                   (void*)msg.dataBuf,
@@ -800,7 +800,7 @@ APIError_t ClientApi::pollForResp(
             );
             break;
          case _CBI2CDataPayloadMsg:
-            status = CLI_ERR_NONE;
+            status = API_ERR_NONE;
             DBG_printf( m_pLog, "I2CData payload detected");
             CBI2CDataPayloadMsg_read_delimited_from(
                   (void*)msg.dataBuf,
@@ -809,7 +809,7 @@ APIError_t ClientApi::pollForResp(
             );
             break;
          case _CBRamTestPayloadMsg:
-            status = CLI_ERR_NONE;
+            status = API_ERR_NONE;
             DBG_printf( m_pLog, "RamTest payload detected");
             CBRamTestPayloadMsg_read_delimited_from(
                   (void*)msg.dataBuf,
@@ -818,12 +818,12 @@ APIError_t ClientApi::pollForResp(
             );
             break;
          default:
-            status = CLI_ERR_MSG_UNKNOWN_PAYLOAD;
+            status = API_ERR_MSG_UNKNOWN_PAYLOAD;
             ERR_printf( m_pLog, "Unknown payload detected. Error: 0x%08x", status);
             break;
       }
    } else {
-      status = CLI_ERR_MSG_UNABLE_TO_GET_FROM_QUEUE;
+      status = API_ERR_MSG_UNABLE_TO_GET_FROM_QUEUE;
       ERR_printf( m_pLog, "Unable to get msg from queue. Error: 0x%08x", status);
    }
 
@@ -838,17 +838,17 @@ APIError_t ClientApi::waitForResp(
 )
 {
    int timeout_ms = timeoutSecs * 1000;
-   APIError_t status = CLI_ERR_NONE;
+   APIError_t status = API_ERR_NONE;
    while (timeout_ms > 0) {                         /* Beginning of the thread forever loop */
       status = pollForResp(basicMsg, payloadMsgUnion);
-      if (CLI_ERR_MSG_WAITING_FOR_RESP != status ) {
+      if (API_ERR_MSG_WAITING_FOR_RESP != status ) {
          return status;
       }
       /* Sleep for TIME_POLLING_MSEC ms and decrement timeout counter. */
       boost::this_thread::sleep(boost::posix_time::milliseconds(TIME_POLLING_MSEC));
       timeout_ms -= TIME_POLLING_MSEC;
    }
-   return CLI_ERR_TIMEOUT_WAITING_FOR_RESP;
+   return API_ERR_TIMEOUT_WAITING_FOR_RESP;
 }
 
 /******************************************************************************/
@@ -856,12 +856,12 @@ APIError_t ClientApi::setReqCallBack(
       CB_ReqMsgHandler_t pCallbackFunction
 )
 {
-   APIError_t err = CLI_ERR_NONE;
+   APIError_t err = API_ERR_NONE;
 
    this->m_pReqHandlerCBFunction = pCallbackFunction;
 
    if ( NULL == this->m_pReqHandlerCBFunction ) {
-      err = CLI_ERR_INVALID_CALLBACK;
+      err = API_ERR_INVALID_CALLBACK;
       ERR_printf(m_pLog, "Unable to set Req callback, err: 0x%08x",err);
    } else {
       DBG_printf(m_pLog, "Req callback set to addr: 0x%08x",
@@ -877,11 +877,11 @@ APIError_t ClientApi::setAckCallBack(
       CB_AckMsgHandler_t pCallbackFunction
 )
 {
-   APIError_t err = CLI_ERR_NONE;
+   APIError_t err = API_ERR_NONE;
    this->m_pAckHandlerCBFunction = pCallbackFunction;
 
    if ( NULL == this->m_pAckHandlerCBFunction ) {
-      err = CLI_ERR_INVALID_CALLBACK;
+      err = API_ERR_INVALID_CALLBACK;
       ERR_printf(m_pLog, "Unable to set Ack callback, err: 0x%08x",err);
    } else {
       DBG_printf(m_pLog, "Ack callback set to addr: 0x%08x",
@@ -896,12 +896,12 @@ APIError_t ClientApi::setDoneCallBack(
       CB_DoneMsgHandler_t pCallbackFunction
 )
 {
-   APIError_t err = CLI_ERR_NONE;
+   APIError_t err = API_ERR_NONE;
 
    this->m_pDoneHandlerCBFunction = pCallbackFunction;
 
    if ( NULL == this->m_pDoneHandlerCBFunction ) {
-      err = CLI_ERR_INVALID_CALLBACK;
+      err = API_ERR_INVALID_CALLBACK;
       ERR_printf(m_pLog, "Unable to set Done callback, err: 0x%08x",err);
    } else {
       DBG_printf(m_pLog, "Done callback set to addr: 0x%08x",

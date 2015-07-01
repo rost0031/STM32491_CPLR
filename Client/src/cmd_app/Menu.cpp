@@ -78,7 +78,7 @@ APIError_t MENU_run( ClientApi *client )
       if( boost::iequals(input, "exit") || boost::iequals(input, "quit") ||
           boost::iequals(input, "x") || boost::iequals(input, "q")  ) {
          CON_print(" *** Leaving the menu... *** ");
-         return CLI_ERR_NONE;
+         return API_ERR_NONE;
       } else if( boost::iequals(input, "help") || boost::iequals(input, "?") ||
                  boost::iequals(input, "h") ) {
          MENU_printHelp();
@@ -147,7 +147,7 @@ APIError_t MENU_run( ClientApi *client )
       }
    }
 
-   return CLI_ERR_NONE;
+   return API_ERR_NONE;
 }
 
 /******************************************************************************/
@@ -239,7 +239,7 @@ void MENU_nodeAncestryToStream( Ktree* node, KtreeNav* kNav, stringstream& ss)
 /******************************************************************************/
 APIError_t MENU_parseAndExecAction( MenuAction_t menuAction )
 {
-   APIError_t status = CLI_ERR_NONE;
+   APIError_t status = API_ERR_NONE;
 
    switch( menuAction ) {
 

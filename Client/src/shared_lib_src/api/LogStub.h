@@ -91,7 +91,7 @@ public:
     * callback function that is implemented outside the library.
     *
     * @return APIError_t:
-    *    @arg CLI_ERR_NONE: no errors were detected
+    *    @arg API_ERR_NONE: no errors were detected
     *    else some error code indicating what went wrong
     */
    APIError_t setLibLogCallBack( CB_LibLogHandler_t pCallbackFunction );
@@ -103,7 +103,7 @@ public:
     * callback function that is implemented outside the library.
     *
     * @return APIError_t:
-    *    @arg CLI_ERR_NONE: no errors were detected
+    *    @arg API_ERR_NONE: no errors were detected
     *    else some error code indicating what went wrong
     */
    APIError_t setDC3LogCallBack( CB_DC3LogHandler_t pCallbackFunction );

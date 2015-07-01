@@ -56,46 +56,46 @@ extern "C" {
  */
 typedef enum APIErrors
 {
-   CLI_ERR_NONE                                                = 0x00000000,
+   API_ERR_NONE                                                = 0x00000000,
 
    /* General error category.                     0x00000001 - 0x0000FFFF */
-   CLI_ERR_INVALID_CALLBACK                                    = 0x00000001,
-   CLI_ERR_TIMEOUT_WAITING_FOR_RESP                            = 0x00000002,
+   API_ERR_INVALID_CALLBACK                                    = 0x00000001,
+   API_ERR_TIMEOUT_WAITING_FOR_RESP                            = 0x00000002,
 
    /* Serial error category.                     0x00010000 - 0x0001FFFF */
-   CLI_ERR_SER_EXCEPTION_CAUGHT                                = 0x00010000,
-   CLI_ERR_SER_MSG_BASE64_ENC_FAILED                           = 0x00010001,
+   API_ERR_SER_EXCEPTION_CAUGHT                                = 0x00010000,
+   API_ERR_SER_MSG_BASE64_ENC_FAILED                           = 0x00010001,
 
    /* UDP error category.                        0x00020000 - 0x0002FFFF */
-   CLI_ERR_UDP_EXCEPTION_CAUGHT                                = 0x00020000,
+   API_ERR_UDP_EXCEPTION_CAUGHT                                = 0x00020000,
 
    /* Comm error category                        0x00030000 - 0x0003FFFF */
-   CLI_ERR_COMM_NOT_SET                                        = 0x00030000,
+   API_ERR_COMM_NOT_SET                                        = 0x00030000,
 
    /* Message error category                     0x00040000 - 0x0004FFFF */
-   CLI_ERR_MSG_WAITING_FOR_RESP                                = 0x00040000,
-   CLI_ERR_MSG_INVALID                                         = 0x00040001,
-   CLI_ERR_MSG_ACK_WAIT_TIMED_OUT                              = 0x00040002,
-   CLI_ERR_MSG_DONE_WAIT_TIMED_OUT                             = 0x00040003,
-   CLI_ERR_MSG_UNEXPECTED_REQ_RECEIVED                         = 0x00040004,
-   CLI_ERR_MSG_MISSING_EXPECTED_PAYLOAD                        = 0x00040005,
-   CLI_ERR_MSG_UNKNOWN_PAYLOAD                                 = 0x00040006,
-   CLI_ERR_MSG_UNABLE_TO_GET_FROM_QUEUE                        = 0x00040007,
+   API_ERR_MSG_WAITING_FOR_RESP                                = 0x00040000,
+   API_ERR_MSG_INVALID                                         = 0x00040001,
+   API_ERR_MSG_ACK_WAIT_TIMED_OUT                              = 0x00040002,
+   API_ERR_MSG_DONE_WAIT_TIMED_OUT                             = 0x00040003,
+   API_ERR_MSG_UNEXPECTED_REQ_RECEIVED                         = 0x00040004,
+   API_ERR_MSG_MISSING_EXPECTED_PAYLOAD                        = 0x00040005,
+   API_ERR_MSG_UNKNOWN_PAYLOAD                                 = 0x00040006,
+   API_ERR_MSG_UNABLE_TO_GET_FROM_QUEUE                        = 0x00040007,
 
    /* Memory error category                      0x00005000 - 0x0005FFFF */
-   CLI_ERR_MEM_NULL_VALUE                                      = 0x00050000,
-   CLI_ERR_MEM_BUFFER_LEN                                      = 0x00050001,
+   API_ERR_MEM_NULL_VALUE                                      = 0x00050000,
+   API_ERR_MEM_BUFFER_LEN                                      = 0x00050001,
 
    /* FW loader error category                   0x00006000 - 0x0006FFFF */
-   CLI_ERR_FW_FILENAME_INVALID                                 = 0x00060000,
-   CLI_ERR_FW_FILENAME_INVALID_EXT                             = 0x00060001,
-   CLI_ERR_FW_FILENAME_MISSING_VER                             = 0x00060002,
-   CLI_ERR_FW_FILENAME_MISSING_DATETIME                        = 0x00060003,
-   CLI_ERR_FW_UNABLE_TO_OPEN                                   = 0x00060004,
+   API_ERR_FW_FILENAME_INVALID                                 = 0x00060000,
+   API_ERR_FW_FILENAME_INVALID_EXT                             = 0x00060001,
+   API_ERR_FW_FILENAME_MISSING_VER                             = 0x00060002,
+   API_ERR_FW_FILENAME_MISSING_DATETIME                        = 0x00060003,
+   API_ERR_FW_UNABLE_TO_OPEN                                   = 0x00060004,
 
    /* Reserved errors                            0xFFFFFFFE - 0xFFFFFFFF */
-   CLI_ERR_UNIMPLEMENTED                                       = 0xFFFFFFFE,
-   CLI_ERR_UNKNOWN                                             = 0xFFFFFFFF
+   API_ERR_UNIMPLEMENTED                                       = 0xFFFFFFFE,
+   API_ERR_UNKNOWN                                             = 0xFFFFFFFF
 } APIError_t;
 
 

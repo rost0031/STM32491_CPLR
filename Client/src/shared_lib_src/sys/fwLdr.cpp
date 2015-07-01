@@ -34,7 +34,7 @@ MODULE_NAME( MODULE_FWL );
 /******************************************************************************/
 APIError_t FWLdr::loadFromFile( const char *filename )
 {
-   APIError_t status = CLI_ERR_NONE;
+   APIError_t status = API_ERR_NONE;
    string fileName(filename);    /* Set the path and filename */
 
 	ifstream fw_file(              /* open the file stream to read in the file */
@@ -45,7 +45,7 @@ APIError_t FWLdr::loadFromFile( const char *filename )
    this->prepare();                             /* Clear out all current data */
 
 	if (!fw_file) {
-	   status = CLI_ERR_FW_UNABLE_TO_OPEN;
+	   status = API_ERR_FW_UNABLE_TO_OPEN;
       ERR_printf(this->m_pLog,"Unable to open file %s", filename);
       return status;
 	}
@@ -59,7 +59,7 @@ APIError_t FWLdr::loadFromFile( const char *filename )
 	fw_file.close();                                             /* Close file */
 
 	status = parseFilename(filename);
-	if( CLI_ERR_NONE != status ) {
+	if( API_ERR_NONE != status ) {
 	   ERR_printf(this->m_pLog,
 	         "Unable to parse filename %s for version and build datetime. Error: 0x%08x",
 	         filename, status
@@ -82,7 +82,7 @@ void FWLdr::prepare( void )
 /******************************************************************************/
 APIError_t FWLdr::parseFilename( const char *filename )
 {
-   APIError_t status = CLI_ERR_NONE;
+   APIError_t status = API_ERR_NONE;
    string filenameStr(filename);
 
    /* strip path from filename */
@@ -92,7 +92,7 @@ APIError_t FWLdr::parseFilename( const char *filename )
    /* Check for FW filename for all the expected data before attempting to parse
     * it */
    if( string::npos == filenameStr.find("DC3")) {
-      status = CLI_ERR_FW_FILENAME_INVALID;
+      status = API_ERR_FW_FILENAME_INVALID;
       ERR_printf(
             this->m_pLog,
             "FW filename Invalid: Missing 'DC3', error: 0x%08x",
@@ -102,7 +102,7 @@ APIError_t FWLdr::parseFilename( const char *filename )
    }
 
    if( string::npos == filenameStr.find(".bin")) {
-      status = CLI_ERR_FW_FILENAME_INVALID_EXT;
+      status = API_ERR_FW_FILENAME_INVALID_EXT;
       ERR_printf(
             this->m_pLog,
             "FW filename extension invalid. Expecting '.bin', error: 0x%08x",
@@ -112,7 +112,7 @@ APIError_t FWLdr::parseFilename( const char *filename )
    }
 
    if( string::npos == filenameStr.find("_v")) {
-      status = CLI_ERR_FW_FILENAME_MISSING_VER;
+      status = API_ERR_FW_FILENAME_MISSING_VER;
       ERR_printf(
             this->m_pLog,
             "FW filename version missing: Missing '_vXY.WZ'), error: 0x%08x",
@@ -122,7 +122,7 @@ APIError_t FWLdr::parseFilename( const char *filename )
    }
 
    if( string::npos == filenameStr.find("_v")) {
-      status = CLI_ERR_FW_FILENAME_MISSING_DATETIME;
+      status = API_ERR_FW_FILENAME_MISSING_DATETIME;
       ERR_printf(
             this->m_pLog,
             "FW filename build datetime missing: Missing '_20YYMMDDhhmmss'), error: 0x%08x",
@@ -249,7 +249,7 @@ unsigned int FWLdr::toString( char *strBuffer, size_t strBufSize )
          true
    );
 
-   if ( CLI_ERR_NONE != convertStatus ) {
+   if ( API_ERR_NONE != convertStatus ) {
       return 0;
    }
 

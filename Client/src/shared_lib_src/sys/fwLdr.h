@@ -65,7 +65,7 @@ private:
     * @param   filename: const char pointer to buffer containing the relative
     * path and filename to the FW image file.
     * @return: APIError_t status of the client executing the command.
-    *    @arg  CLI_ERR_NONE: success
+    *    @arg  API_ERR_NONE: success
     *    other error codes if failure.
     */
    APIError_t parseFilename( const char *filename );
@@ -139,7 +139,7 @@ public:
     * @param   filename: const char pointer to buffer containing the relative
     * path and filename to the FW image file.
     * @return: APIError_t status of the client executing the command.
-    *    @arg  CLI_ERR_NONE: success
+    *    @arg  API_ERR_NONE: success
     *    other error codes if failure.
     */
    APIError_t loadFromFile( const char *filename );

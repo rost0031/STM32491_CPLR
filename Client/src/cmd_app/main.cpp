@@ -60,7 +60,7 @@ MODULE_NAME( MODULE_EXT );
 /******************************************************************************/
 int main(int argc, char *argv[])
 {
-   APIError_t status = CLI_ERR_NONE;                  // Keep track of status
+   APIError_t status = API_ERR_NONE;                  // Keep track of status
    string appName = argv[0];
    unsigned found = appName.find_last_of("/\\");
    appName = appName.substr(found+1);
@@ -74,13 +74,13 @@ int main(int argc, char *argv[])
    // 2. Set the callback functions which allow the library to log to this
    // cmdline client.
    status = pLogStub->setLibLogCallBack( CLI_LibLogCallback );
-   if ( CLI_ERR_NONE != status ) {
+   if ( API_ERR_NONE != status ) {
       ERR_out << "Failed to set library logging callback function. Exiting...";
       EXIT_LOG_FLUSH(1);
    }
 
    status = pLogStub->setDC3LogCallBack( CLI_DC3LogCallback );
-   if ( CLI_ERR_NONE != status ) {
+   if ( API_ERR_NONE != status ) {
       ERR_out << "Failed to set DC3 logging callback function. Exiting...";
       EXIT_LOG_FLUSH(1);
    }
@@ -100,15 +100,15 @@ int main(int argc, char *argv[])
    ClientApi *client = new ClientApi( pLogStub );
 
    // 5. Set callbacks for Req, Ack, and Done msg types.
-   if ( CLI_ERR_NONE != (status = client->setReqCallBack(CLI_ReqCallback)) ) {
+   if ( API_ERR_NONE != (status = client->setReqCallBack(CLI_ReqCallback)) ) {
       WRN_out << "Failed to set library callback function for Req msgs.";
    }
 
-   if ( CLI_ERR_NONE != (status = client->setAckCallBack(CLI_AckCallback)) ) {
+   if ( API_ERR_NONE != (status = client->setAckCallBack(CLI_AckCallback)) ) {
       WRN_out << "Failed to set library callback function for Ack msgs.";
    }
 
-   if ( CLI_ERR_NONE != (status = client->setDoneCallBack(CLI_DoneCallback)) ) {
+   if ( API_ERR_NONE != (status = client->setDoneCallBack(CLI_DoneCallback)) ) {
       WRN_out << "Failed to set library callback function for Done msgs.";
    }
 
@@ -221,7 +221,7 @@ int main(int argc, char *argv[])
                m_vm["local_port"].as<string>().c_str()
          );
 
-         if ( CLI_ERR_NONE != status ) {
+         if ( API_ERR_NONE != status ) {
             ERR_out << "Unable to open UDP connection. Error: 0x"
                   << setfill('0') << setw(8) << hex << status;
             EXIT_LOG_FLUSH(1);
@@ -241,7 +241,7 @@ int main(int argc, char *argv[])
                m_dfuse
          );
 
-         if ( CLI_ERR_NONE != status ) {
+         if ( API_ERR_NONE != status ) {
             ERR_out << "Unable to open Serial connection. Error: 0x"
                   << setfill('0') << setw(8) << hex << status << dec;
             CON_print("!!! Make sure you're using the correct serial port and nothing else is using it !!!");
@@ -277,7 +277,7 @@ int main(int argc, char *argv[])
          CBBootMode mode = _CB_NoBootMode;       /**< Store the bootmode here */
 
          // Execute (and block) on this command
-         if( CLI_ERR_NONE == (status = client->DC3_getMode(&statusDC3, &mode))) {
+         if( API_ERR_NONE == (status = client->DC3_getMode(&statusDC3, &mode))) {
             ss.clear();
             ss << "Got back DC3 bootmode: " << enumToString(mode);
             if (ERR_NONE == statusDC3) {
@@ -312,7 +312,7 @@ int main(int argc, char *argv[])
          DBG_out << "Got arg value " << enumToString(mode) << " for arg name: mode";
 
          // Execute (and block) on this command
-         if( CLI_ERR_NONE == (status = client->DC3_setMode(&statusDC3, mode))) {
+         if( API_ERR_NONE == (status = client->DC3_setMode(&statusDC3, mode))) {
             ss.clear();
             ss << "DC3 bootmode ";
             if (ERR_NONE == statusDC3) {
@@ -368,7 +368,7 @@ int main(int argc, char *argv[])
          // If we got here, we have a valid filename/path and valid FW image
          // type. Execute (and block) on this command
          status = client->DC3_flashFW(&statusDC3, type, filename.c_str());
-         if( CLI_ERR_NONE == status) {
+         if( API_ERR_NONE == status) {
             ss.clear();
             ss << "FW flashing of DC3 ";
             if (ERR_NONE == statusDC3) {
@@ -488,7 +488,7 @@ int main(int argc, char *argv[])
                &statusDC3, &bytesRead, buffer,
                bufferSize, bytes, start, dev, acc
          );
-         if( CLI_ERR_NONE == status) {
+         if( API_ERR_NONE == status) {
             ss.clear();
             ss << "Reading of I2C device on DC3 ";
             if (ERR_NONE == statusDC3) {
@@ -607,7 +607,7 @@ int main(int argc, char *argv[])
 
          delete[] data;
 
-         if( CLI_ERR_NONE == status) {
+         if( API_ERR_NONE == status) {
             ss.clear();
             ss << "Writing of I2C device on DC3 ";
             if (ERR_NONE == statusDC3) {
@@ -632,7 +632,7 @@ int main(int argc, char *argv[])
          // Execute (and block) on this command
          CBRamTest_t test = _CB_RAM_TEST_NONE;
          uint32_t addr = 0x00000000;
-         if( CLI_ERR_NONE == (status = client->DC3_ramTest(&statusDC3, &test, &addr))) {
+         if( API_ERR_NONE == (status = client->DC3_ramTest(&statusDC3, &test, &addr))) {
             ss.clear();
             ss << "Ram test of DC3 ";
             if (ERR_NONE == statusDC3) {

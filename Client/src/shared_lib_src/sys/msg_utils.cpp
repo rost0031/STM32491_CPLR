@@ -36,22 +36,22 @@ APIError_t MSG_hexToStr(
       const bool bPrintX
 )
 {
-   APIError_t status = CLI_ERR_NONE;
+   APIError_t status = API_ERR_NONE;
 
    if ( NULL == hexData ) {
-      return( CLI_ERR_MEM_NULL_VALUE );
+      return( API_ERR_MEM_NULL_VALUE );
    }
 
    if ( 0 == hexDataLen ) {
-      return( CLI_ERR_MEM_BUFFER_LEN );
+      return( API_ERR_MEM_BUFFER_LEN );
    }
 
    if ( 0 == strDataBufferSize ) {
-      return( CLI_ERR_MEM_BUFFER_LEN );
+      return( API_ERR_MEM_BUFFER_LEN );
    } else if ( bPrintX == true && strDataBufferSize < 5 * hexDataLen ) {
-      status = CLI_ERR_MEM_BUFFER_LEN;
+      status = API_ERR_MEM_BUFFER_LEN;
    } else if ( bPrintX == false && strDataBufferSize < 3 * hexDataLen ) {
-      status = CLI_ERR_MEM_BUFFER_LEN;
+      status = API_ERR_MEM_BUFFER_LEN;
    }
    /* Index used to keep track of how far into the buffer we've printed */
    *strDataLen = 0;
@@ -87,7 +87,7 @@ APIError_t MSG_hexToStr(
       }
 
       if ( *strDataLen >= strDataBufferSize ) {
-         return( CLI_ERR_MEM_BUFFER_LEN );
+         return( API_ERR_MEM_BUFFER_LEN );
       }
    }
    return( status );

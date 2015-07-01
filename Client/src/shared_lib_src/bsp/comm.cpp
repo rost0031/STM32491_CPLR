@@ -39,16 +39,16 @@ APIError_t Comm::write_some( char* message, uint16_t len )
 
       if(encDataLen < 1) {
          ERR_printf(this->m_pLog,"Encoding failed\n");
-         return CLI_ERR_SER_MSG_BASE64_ENC_FAILED;
+         return API_ERR_SER_MSG_BASE64_ENC_FAILED;
       }
       this->m_pSer->write_some( enDataBuf, encDataLen );
    } else if ( this->m_pUdp ) {
       this->m_pUdp->write_some( message, len );
    } else {
       ERR_printf(this->m_pLog, "No comm interface have been set up.");
-      return CLI_ERR_COMM_NOT_SET;
+      return API_ERR_COMM_NOT_SET;
    }
-   return CLI_ERR_NONE;
+   return API_ERR_NONE;
 }
 
 /******************************************************************************/

@@ -37,7 +37,7 @@
  * @param [in] *client: ClientApi pointer to the client object.  This should be
  * instantiated outside and already set up for connection at this point.
  * @return APIError_t:
- *    @arg CLI_ERR_NONE: if user ordered an exit
+ *    @arg API_ERR_NONE: if user ordered an exit
  *    other codes if errors occur in the client itself.
  */
 APIError_t MENU_run( ClientApi* client );
