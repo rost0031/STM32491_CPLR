@@ -33,6 +33,7 @@
 #include "EnumMaps.hpp"
 #include "Utils.hpp"
 #include "Menu.hpp"
+#include "Cmds.hpp"
 
 /* Lib includes */
 #include "CBSharedDbgLevels.h"
@@ -632,24 +633,7 @@ int main(int argc, char *argv[])
          // No need to extract the value from the arg=value pair for this cmd.
 
          // Execute (and block) on this command
-         CBRamTest_t test = _CB_RAM_TEST_NONE;
-         uint32_t addr = 0x00000000;
-         if( API_ERR_NONE == (status = client->DC3_ramTest(&statusDC3, &test, &addr))) {
-            ss.clear();
-            ss << "Ram test of DC3 ";
-            if (ERR_NONE == statusDC3) {
-               ss << "completed with no errors.";
-            } else {
-               ss << "failed with ERROR: 0x" << setw(8) << setfill('0') << hex << statusDC3
-                     << " with test " << enumToString(test) << " failing at addr "
-                     << "0x" << setw(8) << setfill('0') << hex << addr
-                     << dec;
-            }
-            CON_print(ss.str());
-         } else {
-            ERR_out << "Got DC3 error " << "0x" << std::hex
-               << status << std::dec << " when trying to run RAM test.";
-         }
+         status = CMD_runRamTest( client );
       }
 
       // Now check if the user requested general help.  This has to be done

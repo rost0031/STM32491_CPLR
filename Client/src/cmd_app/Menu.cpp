@@ -20,6 +20,7 @@
 #include "Logging.hpp"
 #include "EnumMaps.hpp"
 #include "KTree.hpp"
+#include "Cmds.hpp"
 
 /* Lib includes */
 
@@ -60,14 +61,6 @@ APIError_t MENU_run( ClientApi *client )
 
 
    MENU_finalize( root, 1 ); // Finalize the menu node numbers
-
-//   root->printNode(0);
-//   dbgMenu->printNode(1);
-//   sysTestMenu->printNode(1);
-
-//   root->deleteChild("DBG");
-
-//   root->printNode(0);
 
    root->printTree();
    MENU_printHelp();
@@ -243,35 +236,13 @@ APIError_t MENU_parseAndExecAction(
 )
 {
    APIError_t status = API_ERR_NONE; // Keep track of API errors
-   CBErrorCode statusDC3 = ERR_NONE; // Keep track of DC3 errors
 
    stringstream ss;
 
    switch( menuAction ) {
-      case MENU_RAM_TEST: {
-         // no extra arguments or options are required from the user for this
-         CBRamTest_t test = _CB_RAM_TEST_NONE;
-         uint32_t addr = 0x00000000;
-         CON_print(" *** Running memory test of external RAM of DC3... ***");
-         if( API_ERR_NONE == (status = client->DC3_ramTest(&statusDC3, &test, &addr))) {
-            ss.clear();
-            ss << " *** Ram test of DC3 ";
-            if (ERR_NONE == statusDC3) {
-               ss << "completed with no errors.";
-            } else {
-               ss << "failed with ERROR: 0x" << setw(8) << setfill('0') << hex << statusDC3
-                     << " with test " << enumToString(test) << " failing at addr "
-                     << "0x" << setw(8) << setfill('0') << hex << addr
-                     << dec;
-            }
-            ss << " ***";
-            CON_print(ss.str());
-         } else {
-            ERR_out << " *** Got DC3 error " << "0x" << std::hex
-               << status << std::dec << " when trying to run RAM test. ***";
-         }
+      case MENU_RAM_TEST:
+         status = CMD_runRamTest( client );
          break;
-      }
       case MENU_NO_ACTION:
          WRN_out << enumToString(menuAction) <<  " associated with this menu selection";
          break;

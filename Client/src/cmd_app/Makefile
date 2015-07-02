@@ -126,7 +126,8 @@ CPP_SRCS                    = main.cpp \
                               Logging.cpp \
                               Utils.cpp \
                               KTree.cpp \
-                              Menu.cpp
+                              Menu.cpp \
+                              Cmds.cpp
 
 #-----------------------------------------------------------------------------
 # BUILD OPTIONS FOR VARIOUS CONFIGURATIONS
