@@ -74,9 +74,6 @@ APIError_t MENU_run( ClientApi *client )
 
    while ( 1 ) { // Loop forever until a user uses the menu to quit.
 
-      APIError_t status = API_ERR_NONE; // keep track of API status
-
-
       CON_print(" *** Enter a command: ***");
       cin >> input; // Read input again at the end
 
@@ -107,8 +104,28 @@ APIError_t MENU_run( ClientApi *client )
          // print current menu level
          MENU_printMenuExpAtCurrNode( currMenuNode, root );
       } else {
+
+         // try and find the node based on the selector user put in
          Ktree *node = currMenuNode->findChild(input);
-         if ( NULL != node ) {
+
+         if ( NULL == node ) {
+            // if no results are found, check if user entered a number to go to
+            // node directly
+            stringstream ssi(input);
+            unsigned int menuNode = 0;
+            if ( !(ssi >> menuNode).fail() && (ssi >> std::ws).eof() ) {
+               // input was a number, find the right node recursively
+               node = root->findChildInTree( menuNode );
+            }
+         }
+
+         // Check again if the node is still null since numeric input could have
+         // selected it and it could be valid now.
+         if ( NULL == node ) {
+            stringstream ss;
+            ss << " *** Menu selector '" << input << "' not found among the menu options ***";
+            CON_print(ss.str());
+         } else {
             if ( !node->isLeaf() ) {
                currMenuNode = node;
             } else {
@@ -121,51 +138,12 @@ APIError_t MENU_run( ClientApi *client )
                // Extract the action associated with the menu item
                MenuAction_t menuAction = node->m_menuAction;
 
-               status = MENU_parseAndExecAction( menuAction, client );
-            }
-
-            // print the menu in both cases
-            MENU_printMenuExpAtCurrNode( currMenuNode, root );
-
-         } else {
-
-            stringstream ssi(input);
-            unsigned int menuNode = 0;
-            if ( !(ssi >> menuNode).fail() && (ssi >> std::ws).eof() ) {
-               // input a number
-               Ktree* node = root->findChildInTree( menuNode );
-               if ( NULL != node ) {
-                  if (node->isLeaf()) {
-                     // Input is valid, extract the MENU_ACTION and handle it.
-
-                     // Save the parent of the menu leaf so the user can still
-                     // orient themselves in the menu tree
-                     currMenuNode = node->getParent();
-
-                     // Extract the action associated with the menu item
-                     MenuAction_t menuAction = node->m_menuAction;
-
-                     status = MENU_parseAndExecAction( menuAction, client );
-
-                  } else {
-                     currMenuNode = node;
-                  }
-                  MENU_printMenuExpAtCurrNode( currMenuNode, root );
-               } else {
-                  stringstream ss;
-                  ss << " *** Menu node number '" << menuNode << "' not found in the menu tree ***";
-                  CON_print(ss.str());
-                  root->printTree();
-               }
-
-            } else { // input not a number
-               stringstream ss;
-               ss << " *** Menu selector '" << input << "' not found among the menu options ***";
-               CON_print(ss.str());
-               MENU_printMenuLevel( currMenuNode );
-               MENU_printMenuExpAtCurrNode( currMenuNode, root );
+               MENU_parseAndExecAction( menuAction, client );
             }
          }
+         // Always print the expanded menu regardless of whether an option was
+         // successfully chosen or user error occurred.
+         MENU_printMenuExpAtCurrNode( currMenuNode, root );
       }
    }
 
