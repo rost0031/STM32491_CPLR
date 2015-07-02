@@ -60,7 +60,9 @@ MODULE_NAME( MODULE_EXT );
 /******************************************************************************/
 int main(int argc, char *argv[])
 {
-   APIError_t status = API_ERR_NONE;                  // Keep track of status
+   // Keep track of status of the API responses
+   APIError_t status = API_ERR_NONE;
+
    string appName = argv[0];
    unsigned found = appName.find_last_of("/\\");
    appName = appName.substr(found+1);

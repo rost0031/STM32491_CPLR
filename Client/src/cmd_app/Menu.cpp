@@ -40,6 +40,7 @@ MODULE_NAME( MODULE_EXT );
 /******************************************************************************/
 APIError_t MENU_run( ClientApi *client )
 {
+
    Ktree *currMenuNode = NULL;
 
    string input;
@@ -70,7 +71,11 @@ APIError_t MENU_run( ClientApi *client )
 
    root->printTree();
    MENU_printHelp();
-   while ( 1 ) {
+
+   while ( 1 ) { // Loop forever until a user uses the menu to quit.
+
+      APIError_t status = API_ERR_NONE; // keep track of API status
+
 
       CON_print(" *** Enter a command: ***");
       cin >> input; // Read input again at the end
@@ -106,10 +111,22 @@ APIError_t MENU_run( ClientApi *client )
          if ( NULL != node ) {
             if ( !node->isLeaf() ) {
                currMenuNode = node;
-               MENU_printMenuExpAtCurrNode( currMenuNode, root );
             } else {
                // Input is valid, extract the MENU_ACTION and handle it.
+
+               // Save the parent of the menu leaf so the user can still
+               // orient themselves in the menu tree
+               currMenuNode = node->getParent();
+
+               // Extract the action associated with the menu item
+               MenuAction_t menuAction = node->m_menuAction;
+
+               status = MENU_parseAndExecAction( menuAction, client );
             }
+
+            // print the menu in both cases
+            MENU_printMenuExpAtCurrNode( currMenuNode, root );
+
          } else {
 
             stringstream ssi(input);
@@ -124,6 +141,11 @@ APIError_t MENU_run( ClientApi *client )
                      // Save the parent of the menu leaf so the user can still
                      // orient themselves in the menu tree
                      currMenuNode = node->getParent();
+
+                     // Extract the action associated with the menu item
+                     MenuAction_t menuAction = node->m_menuAction;
+
+                     status = MENU_parseAndExecAction( menuAction, client );
 
                   } else {
                      currMenuNode = node;
@@ -237,17 +259,47 @@ void MENU_nodeAncestryToStream( Ktree* node, KtreeNav* kNav, stringstream& ss)
 }
 
 /******************************************************************************/
-APIError_t MENU_parseAndExecAction( MenuAction_t menuAction )
+APIError_t MENU_parseAndExecAction(
+      MenuAction_t menuAction,
+      ClientApi* client
+)
 {
-   APIError_t status = API_ERR_NONE;
+   APIError_t status = API_ERR_NONE; // Keep track of API errors
+   CBErrorCode statusDC3 = ERR_NONE; // Keep track of DC3 errors
+
+   stringstream ss;
 
    switch( menuAction ) {
-
+      case MENU_RAM_TEST: {
+         // no extra arguments or options are required from the user for this
+         CBRamTest_t test = _CB_RAM_TEST_NONE;
+         uint32_t addr = 0x00000000;
+         CON_print(" *** Running memory test of external RAM of DC3... ***");
+         if( API_ERR_NONE == (status = client->DC3_ramTest(&statusDC3, &test, &addr))) {
+            ss.clear();
+            ss << " *** Ram test of DC3 ";
+            if (ERR_NONE == statusDC3) {
+               ss << "completed with no errors.";
+            } else {
+               ss << "failed with ERROR: 0x" << setw(8) << setfill('0') << hex << statusDC3
+                     << " with test " << enumToString(test) << " failing at addr "
+                     << "0x" << setw(8) << setfill('0') << hex << addr
+                     << dec;
+            }
+            ss << " ***";
+            CON_print(ss.str());
+         } else {
+            ERR_out << " *** Got DC3 error " << "0x" << std::hex
+               << status << std::dec << " when trying to run RAM test. ***";
+         }
+         break;
+      }
       case MENU_NO_ACTION:
          WRN_out << enumToString(menuAction) <<  " associated with this menu selection";
          break;
       default:
          ERR_out << "Unknown action (" << menuAction << ")";
+         break;
    }
 
 

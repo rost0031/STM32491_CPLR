@@ -115,6 +115,25 @@ void MENU_nodeAncestryToStream(
       std::stringstream& ss
 );
 
+/**
+ * @brief   Parse and execute a menu selection
+ *
+ * This function will parse the menuAction item, collect any additional data
+ * that may be required interactively, and run the appropriate API function to
+ * perform the task.
+ *
+ * @param [in] menuAction: const MenuAction_t enum specifying what action to
+ * take.
+ * @param [in] *client: const ClientApi pointer to the API.
+ * @return  ApiError_t:
+ *    @arg API_ERR_NONE: if no error occurred
+ *    @arg API_ERR_XXXX: other error codes indicating the error that occurred.
+ */
+APIError_t MENU_parseAndExecAction(
+      MenuAction_t menuAction,
+      ClientApi* client
+);
+
 /* Exported classes ----------------------------------------------------------*/
 
 
