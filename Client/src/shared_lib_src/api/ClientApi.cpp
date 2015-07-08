@@ -723,6 +723,15 @@ APIError_t ClientApi::setNewConnection(
    return( API_ERR_NONE );
 }
 
+/******************************************************************************/
+bool ClientApi::isConnectionSet( void )
+{
+   if (m_msgRoute != _CB_NoRoute ) {
+      return true;
+   }
+
+   return false;
+}
 
 /******************************************************************************/
 void ClientApi::setLogging( LogStub *log )

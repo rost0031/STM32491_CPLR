@@ -41,6 +41,23 @@
  */
 APIError_t CMD_runRamTest(  ClientApi* client );
 
+
+/**
+ * @brief   Wrapper around the UI for get_mode command
+ *
+ * @param [in] *client: ClientApi pointer to the API object to provide access to
+ * the DC3
+ * @param [out] *mode: CBBootMode pointer where to store the retrieved mode
+ * @return  ApiError_t:
+ *    @arg API_ERR_NONE: if no error occurred
+ *    @arg API_ERR_XXXX: other error codes indicating the error that occurred.
+ */
+APIError_t CMD_runGetMode(
+      ClientApi* client,
+      CBErrorCode* statusDC3,
+      CBBootMode* mode
+);
+
 /* Exported classes ----------------------------------------------------------*/
 
 

@@ -127,8 +127,9 @@ CPP_SRCS                    = main.cpp \
                               Utils.cpp \
                               KTree.cpp \
                               Menu.cpp \
-                              Cmds.cpp
-
+                              Cmds.cpp \
+                              ArgParse.cpp
+                              
 #-----------------------------------------------------------------------------
 # BUILD OPTIONS FOR VARIOUS CONFIGURATIONS
 #-----------------------------------------------------------------------------

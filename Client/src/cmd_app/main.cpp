@@ -34,6 +34,7 @@
 #include "Utils.hpp"
 #include "Menu.hpp"
 #include "Cmds.hpp"
+#include "ArgParse.hpp"
 
 /* Lib includes */
 #include "CBSharedDbgLevels.h"
@@ -274,34 +275,41 @@ int main(int argc, char *argv[])
          m_parsed_cmd = "get_mode";
 
          // Check for command specific help req
-         UTIL_checkForCmdSpecificHelp( m_parsed_cmd, appName, m_vm, m_conn_set );
+         UTIL_checkForCmdSpecificHelp(
+               m_parsed_cmd,
+               appName,
+               m_vm,
+               client->isConnectionSet()
+         );
 
          // No need to extract the value from the arg=value pair for this cmd.
+         statusDC3 = ERR_NONE;
          CBBootMode mode = _CB_NoBootMode;       /**< Store the bootmode here */
 
-         // Execute (and block) on this command
-         if( API_ERR_NONE == (status = client->DC3_getMode(&statusDC3, &mode))) {
-            ss.clear();
-            ss << "Got back DC3 bootmode: " << enumToString(mode);
-            if (ERR_NONE == statusDC3) {
-               ss << " with no errors.";
-            } else {
-               ss << " with ERROR: 0x" << setw(8) << setfill('0') << hex << statusDC3 << dec;
-            }
-            CON_print(ss.str());
-         } else {
-            ERR_out << "Got DC3 error " << "0x" << std::hex
-               << status << std::dec << " when trying to get bootmode.";
-         }
+         // All the error handling and output to console happens inside this
+         // function so there's no need to do it here
+         status = CMD_runGetMode(  client, &statusDC3, &mode );
+
       } else if (m_vm.count("set_mode")) {            // "set_mode" cmd handling
          m_parsed_cmd = "set_mode";
 
          // Check for command specific help req
          UTIL_checkForCmdSpecificHelp( m_parsed_cmd, appName, m_vm, m_conn_set );
 
+
          // Extract the value from the arg=value pair
          CBBootMode mode = _CB_NoBootMode;
          string value = "";
+
+         ARG_parseCBBootMode(
+               &mode,
+               "mode",
+               m_parsed_cmd,
+               appName,
+               m_vm[m_parsed_cmd].as<vector<string>>()
+         );
+
+
          UTIL_getArgValue( value, "mode", m_parsed_cmd, appName, m_vm );
          if (0 == value.compare("Bootloader")) {
             mode = _CB_Bootloader;

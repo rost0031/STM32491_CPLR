@@ -320,6 +320,15 @@ public:
    );
 
    /**
+    * @brief   Returns true if connection is set
+    * @param   None
+    * @return  bool
+    *    @arg  true: connection has been set
+    *    @arg  false: connection has not been set
+    */
+   bool isConnectionSet( void );
+
+   /**
     * @brief   Sets a new LogStub pointer.
     * @param [in]  *log: LogStub pointer to a LogStub instance.
     * @return: None.
