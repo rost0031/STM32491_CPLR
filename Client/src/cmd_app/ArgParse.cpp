@@ -52,38 +52,10 @@ template<> std::map<CBMsgRoute, std::vector<std::string>> allowedStrings<CBMsgRo
 
 
 /* Private function prototypes -----------------------------------------------*/
-
-/**
- * @brief   Breaks apart a 'arg=value' pairs that are read in from the cmd line.
- *
- * @param [in] str: string& containing the text to break apart
- * @param [out] tokens: vector that will contain the tokens
- * @param [in] delims: a string of one or more delimiters.  Defaults to
- * whitespace.
- * @return: None
- */
-static void ARG_split(
-      const std::string& str,
-      std::vector<string>& tokens,
-      const std::string& delims
-);
-
-/**
- * @brief   Extract the value from an arg=value pair.
- * @param [out] value: string ref to where to store the output of the value
- * @param [in] appName: const string ref that contains the application name.
- * Used for printing command specific help
- */
-static bool ARG_getValue(
-      string& value,
-      const string& argName,
-      const vector<string>& argVector
-);
-
 /* Private functions ---------------------------------------------------------*/
 
 /******************************************************************************/
-static void ARG_split(
+void ARG_split(
       const std::string& str,
       std::vector<string>& tokens,
       const std::string& delims
@@ -107,7 +79,7 @@ static void ARG_split(
 }
 
 /******************************************************************************/
-static bool ARG_getValue(
+bool ARG_getValue(
       string& value,
       const string& argName,
       const vector<string>& argVector

@@ -33,6 +33,34 @@
 /* Exported types ------------------------------------------------------------*/
 /* Exported functions --------------------------------------------------------*/
 
+
+/**
+ * @brief   Breaks apart a 'arg=value' pairs that are read in from the cmd line.
+ *
+ * @param [in] str: string& containing the text to break apart
+ * @param [out] tokens: vector that will contain the tokens
+ * @param [in] delims: a string of one or more delimiters.  Defaults to
+ * whitespace.
+ * @return: None
+ */
+void ARG_split(
+      const std::string& str,
+      std::vector<string>& tokens,
+      const std::string& delims
+);
+
+/**
+ * @brief   Extract the value from an arg=value pair.
+ * @param [out] value: string ref to where to store the output of the value
+ * @param [in] appName: const string ref that contains the application name.
+ * Used for printing command specific help
+ */
+bool ARG_getValue(
+      string& value,
+      const string& argName,
+      const vector<string>& argVector
+);
+
 void ARG_parseCBBootMode(
        CBBootMode* value,
       const string& arg,
@@ -40,6 +68,9 @@ void ARG_parseCBBootMode(
       const string& appName,
       const vector<string>& args
 );
+
+
+
 
 //void ARG_parseSetMode(
 //      ClientApi* client,
@@ -53,6 +84,8 @@ void ARG_parseSetMode(
       const string& cmd,
       const string& appName
 );
+
+
 
 /* Exported classes ----------------------------------------------------------*/
 
@@ -129,6 +162,51 @@ template<typename T> T getEnumFromAllowedStr(
    throw std::invalid_argument(ss.str());
 //   return (begin->first);
 //   return(-1);
+}
+
+
+/**
+ * @brief   A template function that can parse any enum
+ *
+ * @note:   Parsable enums must have associated maps created in the *.cpp file.
+ *
+ * @throw <std::exception> if passed in string is not found in the map of
+ * allowed strings for a given enum type.
+ *
+ * @param [in] arg: argument name of the "arg=value" pair.
+ * @param [in] cmd: parsed command.  Used for printing cmd specific help.
+ * @param [in] appName: application name. Used for printing cmd specific help.
+ * @param [in] args: vector of arguments for the parsed command.  Derived from
+ * the program options vm map.
+ *
+ * @return  T value: enumeration of type T that was parsed
+ */
+template<typename T> bool ARG_parseEnumStr(
+      T* value,
+      const string& arg,
+      const string& cmd,
+      const string& appName,
+      const vector<string>& args
+)
+{
+   // Extract the value from the arg=value pair
+   string valueStr = "";
+   bool isExtracted = ARG_getValue( valueStr, arg, args );
+
+   if( !isExtracted ) {   // if error happened, print cmd specific help and exit
+      HELP_printCmdSpecific( cmd, appName );
+   }
+
+   // The template function getEnumFromAllowedStr will throw an exception of
+   // the passed in value is not found in the appropriate map.  We'll rethrow it
+   // if that happens.
+   try {
+      *value = getEnumFromAllowedStr(valueStr, allowedStrings<T>::m_allowedStrings);
+      return true;
+   } catch (exception& e) {
+      throw e;
+   }
+   return false;
 }
 
 /**

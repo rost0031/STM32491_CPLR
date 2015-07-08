@@ -301,14 +301,25 @@ int main(int argc, char *argv[])
          CBBootMode mode = _CB_NoBootMode;
          string value = "";
 
-         ARG_parseCBBootMode(
+//         ARG_parseCBBootMode(
+//               &mode,
+//               "mode",
+//               m_parsed_cmd,
+//               appName,
+//               m_vm[m_parsed_cmd].as<vector<string>>()
+//         );
+
+         try {
+         ARG_parseEnumStr(
                &mode,
                "mode",
                m_parsed_cmd,
                appName,
                m_vm[m_parsed_cmd].as<vector<string>>()
          );
-
+         } catch (exception& e) {
+            ERR_out << "Caught exception";
+         }
 
          UTIL_getArgValue( value, "mode", m_parsed_cmd, appName, m_vm );
          if (0 == value.compare("Bootloader")) {
