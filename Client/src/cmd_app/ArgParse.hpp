@@ -103,44 +103,32 @@ template<typename T> T getEnumFromAllowedStr(
       std::map< T, std::vector<std::string>>& m_allowedStrings //enumRefHolder1<T> const& m_allowedStrings
 )
 {
-//   std::map<T, std::vector<std::string>>::const_iterator begin = allowedStrings<T>::m_allowedStrings.begin();
-//   std::map<T, std::vector<std::string>>::const_iterator end = allowedStrings<T>::m_allowedStrings.end();
-//   std::map<T, std::vector<std::string>>::const_iterator itr;
-
+   // iterate over the map elements
    auto begin  = std::begin(allowedStrings<T>::m_allowedStrings);
    auto end    = std::end(allowedStrings<T>::m_allowedStrings);
    auto itr    = begin;
 
    for( itr = begin; itr != end; ++itr ) {
 
-      std::vector<std::string> tmpVector = itr->second;
-
-      std::vector<std::string>::const_iterator v_begin = tmpVector.begin();
-      std::vector<std::string>::const_iterator v_end = tmpVector.end();
-      std::vector<std::string>::const_iterator v_itr;
-
-//      std::vector<std::string>::const_iterator v_begin = itr->begin();
-//      std::vector<std::string>::const_iterator v_end = itr->end();
-//      std::vector<std::string>::const_iterator v_itr;
+      // iterate over the elements of the vector
+      auto v_begin  = std::begin(itr->second);
+      auto v_end    = std::end(itr->second);
+      auto v_itr    = v_begin;
 
       for( v_itr = v_begin; v_itr != v_end; ++v_itr ) {
+
+         // found match
          if ( boost::iequals((*v_itr), str) ) {
-            return( itr->first );
+            return( (itr->first) );
          }
       }
    }
 
-   return (begin->first);
-
-   // These two can be made easier to read in C++11
-   // using std::begin() and std::end()
-   //
-
-
-//   if (find != end) {
-//      data.enumVal = static_cast<T>(std::distance(begin, find));
-//   }
-//   return str;
+   std::stringstream ss;
+   ss << "value " << str << " not found in any of the allowed strings";
+   throw std::invalid_argument(ss.str());
+//   return (begin->first);
+//   return(-1);
 }
 
 /**
@@ -149,11 +137,11 @@ template<typename T> T getEnumFromAllowedStr(
 * Use the ability of function to deduce their template type without being
 * explicitly told to create the correct type of enumRefHolder<T>
 */
-template<typename T>
-enumConstRefHolder1<T>  enumToString1(T const& e) {return enumConstRefHolder1<T>(e);}
-
-template<typename T>
-enumRefHolder1<T>       enumFromString1(T& e)     {return enumRefHolder1<T>(e);}
+//template<typename T>
+//enumConstRefHolder1<T>  enumToString1(T const& e) {return enumConstRefHolder1<T>(e);}
+//
+//template<typename T>
+//enumRefHolder1<T>       enumFromString1(T& e)     {return enumRefHolder1<T>(e);}
 
 #endif                                                       /* ARGPARSE_HPP_ */
 /******** Copyright (C) 2015 Datacard. All rights reserved *****END OF FILE****/

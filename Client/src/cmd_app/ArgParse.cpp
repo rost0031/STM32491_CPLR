@@ -153,10 +153,16 @@ void ARG_parseCBBootMode(
    }
 
 
+   try {
+      *value = getEnumFromAllowedStr(valueStr, allowedStrings<CBBootMode>::m_allowedStrings);
+      DBG_out << "*value =" << *value << " with string value: " << enumToString(*value);
+   } catch (exception& e) {
+      ERR_out << "Caught exception: " << e.what();
+   }
 
-   *value = getEnumFromAllowedStr(valueStr, allowedStrings<CBBootMode>::m_allowedStrings);
+//   int someVal = getEnumFromAllowedStr(valueStr, allowedStrings<CBBootMode>::m_allowedStrings);
+//   DBG_out << "*someVal =" << someVal << " with string value: " << enumToString((CBBootMode)someVal);
 
-   DBG_out << "*value =" << *value << " with string value: " << enumToString(*value);
 
    // be very forgiving with what we allow for arguments
 //   if(   boost::iequals(valueStr, "bootloader") ||
