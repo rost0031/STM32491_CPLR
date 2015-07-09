@@ -14,6 +14,7 @@
 #include <vector>
 #include <iterator>
 #include <map>
+#include <fstream>
 
 /* Boost includes */
 #include <boost/algorithm/string.hpp>
@@ -23,6 +24,8 @@
 
 /* Namespaces ----------------------------------------------------------------*/
 using namespace std;
+namespace po = boost::program_options;
+using namespace po;
 
 /* Compile-time called macros ------------------------------------------------*/
 /* Private typedefs ----------------------------------------------------------*/
@@ -32,24 +35,25 @@ MODULE_NAME( MODULE_EXT );
 
 /* Private variables and Local objects ---------------------------------------*/
 
-
+/**
+ * @brief All allowed strings for specifying CBBootMode enums
+ */
 template<> std::map<CBBootMode, std::vector<std::string>> allowedStrings<CBBootMode>::m_allowedStrings = {
       { _CB_NoBootMode   , {"None","invalid"} },
       { _CB_Bootloader   , {"boot", "bootloader", "bootldr", "btldr" } },
       { _CB_Application  , {"app", "application", "appl", "scips", "scipsiii", "scips3" } }
-}; //End of map
+};
 
-
+/**
+ * @brief All allowed strings for specifying CBMsgRoute enums
+ */
 template<> std::map<CBMsgRoute, std::vector<std::string>> allowedStrings<CBMsgRoute>::m_allowedStrings = {
       { _CB_NoRoute   , {"None","no route"} },
       { _CB_Serial   , {"serial", "ser"} },
       { _CB_EthSys  , {"sys", "sys_eth", "system_eth", "system_ethernet", "eth_sys", "ethernet_system", "eth_system"} },
       { _CB_EthLog  , {"log", "log_eth", "logging_eth", "logging_ethernet", "eth_log", "ethernet_logging", "eth_logging"} },
       { _CB_EthCli  , {"cli", "cli_eth", "client_eth", "client_ethernet", "eth_cli", "ethernet_client", "eth_client"} }
-}; //End of m_ModuleSrc map
-
-
-
+};
 
 /* Private function prototypes -----------------------------------------------*/
 /* Private functions ---------------------------------------------------------*/
@@ -107,8 +111,30 @@ bool ARG_getValue(
 }
 
 /******************************************************************************/
-void ARG_parseCBBootMode(
-      CBBootMode* value,
+void ARG_checkCmdSpecificHelp(
+      const string& cmd,
+      const string& appName,
+      const po::variables_map& vm,
+      const bool isConnSet
+)
+{
+   if (vm.count("help") || !isConnSet) {  // Check for command specific help req
+      HELP_printCmdSpecific( cmd, appName );
+   }
+
+   vector<string>::const_iterator begin = vm[cmd].as<vector<string>>().begin();
+   vector<string>::const_iterator end = vm[cmd].as<vector<string>>().end();
+   vector<string>::const_iterator itr;
+   // Check for command specific help req
+   if( find(begin, end, "--help") != end ||
+       find(begin, end, "help") != end  || !isConnSet ) {
+      HELP_printCmdSpecific( cmd, appName );
+   }
+}
+
+/******************************************************************************/
+void ARG_parseFilenameStr(
+      string& value,
       const string& arg,
       const string& cmd,
       const string& appName,
@@ -116,7 +142,6 @@ void ARG_parseCBBootMode(
 )
 {
    // Extract the value from the arg=value pair
-//   CBBootMode mode = _CB_NoBootMode;
    string valueStr = "";
    bool isExtracted = ARG_getValue( valueStr, arg, args );
 
@@ -124,81 +149,18 @@ void ARG_parseCBBootMode(
       HELP_printCmdSpecific( cmd, appName );
    }
 
-
-   try {
-      *value = getEnumFromAllowedStr(valueStr, allowedStrings<CBBootMode>::m_allowedStrings);
-      DBG_out << "*value =" << *value << " with string value: " << enumToString(*value);
-   } catch (exception& e) {
-      ERR_out << "Caught exception: " << e.what();
+   ifstream fw_file (                  // open file stream to read in file
+         valueStr.c_str(),
+         ios::in | ios::binary | ios::ate
+   );
+   if (fw_file) {                           // if the file exists, read it
+      fw_file.close();                                       // Close file
+      value = valueStr;
+   } else {
+      std::stringstream ss;
+      ss << "Unable to open file " << valueStr << "... check your path and filename";
+      throw std::invalid_argument(ss.str());
    }
-
-//   int someVal = getEnumFromAllowedStr(valueStr, allowedStrings<CBBootMode>::m_allowedStrings);
-//   DBG_out << "*someVal =" << someVal << " with string value: " << enumToString((CBBootMode)someVal);
-
-
-   // be very forgiving with what we allow for arguments
-//   if(   boost::iequals(valueStr, "bootloader") ||
-//         boost::iequals(valueStr, "boot") ||
-//         boost::iequals(valueStr, "btldr") ) {
-//      *value = _CB_Bootloader;
-//   } else if ( boost::iequals(valueStr, "application") ||
-//               boost::iequals(valueStr, "app") ||
-//               boost::iequals(valueStr, "appl") ||
-//               boost::iequals(valueStr, "scipsiii") ||
-//               boost::iequals(valueStr, "scips") ) {
-//      *value = _CB_Application;
-//   } else {
-//      ERR_out << "Only " << enumToString(_CB_Bootloader) << " and "
-//            << enumToString(_CB_Application) << " boot modes supported.";
-//      HELP_printCmdSpecific( cmd, appName );
-//   }
-}
-
-
-///******************************************************************************/
-//template< typename T> void ARG_parseEnum(
-//      typename T* value,
-//      const string& arg,
-//      const string& cmd,
-//      const string& appName,
-//      const vector<string>& args
-//)
-//{
-//   // Extract the value from the arg=value pair
-////   CBBootMode mode = _CB_NoBootMode;
-//   string valueStr = "";
-//   bool isExtracted = ARG_getValue( valueStr, arg, args );
-//
-//   if( !isExtracted ) {   // if error happened, print cmd specific help and exit
-//      HELP_printCmdSpecific( cmd, appName );
-//   }
-//
-//   // be very forgiving with what we allow for arguments
-//   if(   boost::iequals(value, "bootloader") ||
-//         boost::iequals(value, "boot") ||
-//         boost::iequals(value, "btldr") ) {
-//      *value = _CB_Bootloader;
-//   } else if ( boost::iequals(value, "application") ||
-//               boost::iequals(value, "app") ||
-//               boost::iequals(value, "appl") ||
-//               boost::iequals(value, "scipsiii") ||
-//               boost::iequals(value, "scips") ) {
-//      *value = _CB_Application;
-//   } else {
-//      ERR_out << "Only " << enumToString(_CB_Bootloader) << " and "
-//            << enumToString(_CB_Application) << " boot modes supported.";
-//      HELP_printCmdSpecific( cmd, appName );
-//   }
-//}
-
-/******************************************************************************/
-void ARG_parseSetMode(
-      ClientApi* client,
-      const string& cmd,
-      const string& appName
-)
-{
-
 }
 
 /* Private class prototypes --------------------------------------------------*/

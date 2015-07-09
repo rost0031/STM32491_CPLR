@@ -19,6 +19,7 @@
 
 /* Boost includes */
 #include <boost/algorithm/string.hpp>
+#include <boost/program_options.hpp>
 
 /* App includes */
 #include "Logging.hpp"
@@ -28,6 +29,9 @@
 #include "ClientApi.h"
 
 /* Namespaces ----------------------------------------------------------------*/
+namespace po = boost::program_options;
+using namespace po;
+
 /* Exported defines ----------------------------------------------------------*/
 /* Exported macros -----------------------------------------------------------*/
 /* Exported types ------------------------------------------------------------*/
@@ -61,36 +65,51 @@ bool ARG_getValue(
       const vector<string>& argVector
 );
 
-void ARG_parseCBBootMode(
-       CBBootMode* value,
+/**
+ * @brief   Check a vector type boost arg list for cmd specific help.
+ * This utility function checks a vector type boost arg list for cmd specific
+ * help and prints it if it exists.
+ * @note: currently, the cmd specific help exits after quitting.
+ *
+ * @param [in] cmd: ref to a string containing the parsed command.
+ * @param [in] appName: ref to a string containing the name of the application.
+ * @param [in] vm: boost program options variables map that contains all the
+ * parsed arguments.
+ * @param [in] isConnSet: bool that specifies whether the connection options
+ * have been specified.
+ * @return  None.
+ */
+void ARG_checkCmdSpecificHelp(
+      const string& cmd,
+      const string& appName,
+      const po::variables_map& vm,
+      const bool isConnSet
+);
+
+/**
+ * @brief   Function that can parse and check a filename with path.
+ *
+ * @throw <std::exception> if passed filename doesn't exist or can't be opened
+ *
+ * @param [out] value: string that will contain verified filename and path
+ * @param [in] arg: argument name of the "arg=value" pair.
+ * @param [in] cmd: parsed command.  Used for printing cmd specific help.
+ * @param [in] appName: application name. Used for printing cmd specific help.
+ * @param [in] args: vector of arguments for the parsed command.  Derived from
+ * the program options vm map.
+ *
+ * @return  None
+ */
+void ARG_parseFilenameStr(
+      string& value,
       const string& arg,
       const string& cmd,
       const string& appName,
       const vector<string>& args
 );
 
-
-
-
-//void ARG_parseSetMode(
-//      ClientApi* client,
-//      const string& cmd,
-//      const string& appName,
-//      const po::variables_map& vm
-//);
-
-void ARG_parseSetMode(
-      ClientApi* client,
-      const string& cmd,
-      const string& appName
-);
-
-
-
-/* Exported classes ----------------------------------------------------------*/
-
 /**
- * @brief   Storage for all the maps.
+ * @brief   Storage for all the maps of vectors of allowed strings for enums.
  *
  * This is the type that will hold all the strings. Each enumerate type will
  * declare its own specialization. Any enum that does not have a specialization
@@ -100,26 +119,6 @@ void ARG_parseSetMode(
 template<typename T> struct allowedStrings
 {
     static std::map<T, std::vector<std::string>> m_allowedStrings;
-};
-
-/**
- * @brief   Utility type
- * Created automatically. Should not be used directly.
- */
-template<typename T> struct enumRefHolder1
-{
-    T& enumVal1;
-    enumRefHolder1(T& enumVal1): enumVal1(enumVal1) {}
-};
-
-/**
- * @brief   Utility type
- * Created automatically. Should not be used directly.
- */
-template<typename T> struct enumConstRefHolder1
-{
-    T const& enumVal1;
-    enumConstRefHolder1(T const& enumVal1): enumVal1(enumVal1) {}
 };
 
 
@@ -157,13 +156,11 @@ template<typename T> T getEnumFromAllowedStr(
       }
    }
 
+   // Throw an exception if string was not found in the map.
    std::stringstream ss;
    ss << "value " << str << " not found in any of the allowed strings";
    throw std::invalid_argument(ss.str());
-//   return (begin->first);
-//   return(-1);
 }
-
 
 /**
  * @brief   A template function that can parse any enum
@@ -204,22 +201,14 @@ template<typename T> bool ARG_parseEnumStr(
       *value = getEnumFromAllowedStr(valueStr, allowedStrings<T>::m_allowedStrings);
       return true;
    } catch (exception& e) {
-      throw e;
+      throw;
    }
    return false;
 }
 
-/**
-* @class Template class that converts enums to strings and back.
-*
-* Use the ability of function to deduce their template type without being
-* explicitly told to create the correct type of enumRefHolder<T>
-*/
-//template<typename T>
-//enumConstRefHolder1<T>  enumToString1(T const& e) {return enumConstRefHolder1<T>(e);}
-//
-//template<typename T>
-//enumRefHolder1<T>       enumFromString1(T& e)     {return enumRefHolder1<T>(e);}
+/* Exported classes ----------------------------------------------------------*/
+
+
 
 #endif                                                       /* ARGPARSE_HPP_ */
 /******** Copyright (C) 2015 Datacard. All rights reserved *****END OF FILE****/

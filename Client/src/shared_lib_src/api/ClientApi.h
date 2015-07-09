@@ -326,7 +326,7 @@ public:
     *    @arg  true: connection has been set
     *    @arg  false: connection has not been set
     */
-   bool isConnectionSet( void );
+   bool isConnected( void );
 
    /**
     * @brief   Sets a new LogStub pointer.

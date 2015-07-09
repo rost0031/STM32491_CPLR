@@ -724,7 +724,7 @@ APIError_t ClientApi::setNewConnection(
 }
 
 /******************************************************************************/
-bool ClientApi::isConnectionSet( void )
+bool ClientApi::isConnected( void )
 {
    if (m_msgRoute != _CB_NoRoute ) {
       return true;

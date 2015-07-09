@@ -132,11 +132,7 @@ int main(int argc, char *argv[])
    string  m_local_port;                         /**< IP port to connect from */
    string  m_serial_dev;                     /**< serial device to connect to */
    int     m_serial_baud;                  /**< serial device baudrate to use */
-   bool    m_conn_set = false;  /* A flag to make sure that user set the
-                                 connection.  This is used to allow you to ask
-                                 for command specific help without specifying
-                                 connection options.  It's a bit of a hack but
-                                 I can't think of a better way of doing this */
+
    po::options_description desc("Global options");
 
    stringstream ss;        /**< Stream for some helpful comments to help user */
@@ -230,7 +226,6 @@ int main(int argc, char *argv[])
                   << setfill('0') << setw(8) << hex << status;
             EXIT_LOG_FLUSH(1);
          }
-         m_conn_set = true;
       } else if (m_vm.count("serial_dev") && !m_vm.count("ip_address")) {
          LOG_out << "Serial connection on "
                << m_vm["serial_dev"].as<string>()
@@ -251,7 +246,6 @@ int main(int argc, char *argv[])
             CON_print("!!! Make sure you're using the correct serial port and nothing else is using it !!!");
             EXIT_LOG_FLUSH(1);
          }
-         m_conn_set = true;
       } else if (m_vm.count("serial_dev") && m_vm.count("ip_address")) {
          // User specified specified both connection options. Let's not allow
          // that. */
@@ -275,16 +269,14 @@ int main(int argc, char *argv[])
          m_parsed_cmd = "get_mode";
 
          // Check for command specific help req
-         UTIL_checkForCmdSpecificHelp(
-               m_parsed_cmd,
-               appName,
-               m_vm,
-               client->isConnectionSet()
-         );
+         ARG_checkCmdSpecificHelp( m_parsed_cmd, appName, m_vm, client->isConnected() );
+
+         // Store status of DC3 cmd and bootmode even though we don't need it
+         // since it's all parsed and handled in CMD_ functions to reduce clutter.
+         statusDC3 = ERR_NONE;
+         CBBootMode mode = _CB_NoBootMode;
 
          // No need to extract the value from the arg=value pair for this cmd.
-         statusDC3 = ERR_NONE;
-         CBBootMode mode = _CB_NoBootMode;       /**< Store the bootmode here */
 
          // All the error handling and output to console happens inside this
          // function so there's no need to do it here
@@ -294,120 +286,62 @@ int main(int argc, char *argv[])
          m_parsed_cmd = "set_mode";
 
          // Check for command specific help req
-         UTIL_checkForCmdSpecificHelp( m_parsed_cmd, appName, m_vm, m_conn_set );
+         ARG_checkCmdSpecificHelp( m_parsed_cmd, appName, m_vm, client->isConnected() );
 
-
-         // Extract the value from the arg=value pair
+         // Store status of DC3 cmd and bootmode even though we don't need it
+         // since it's all parsed and handled in CMD_ functions to reduce clutter.
+         statusDC3 = ERR_NONE;
          CBBootMode mode = _CB_NoBootMode;
-         string value = "";
 
-//         ARG_parseCBBootMode(
-//               &mode,
-//               "mode",
-//               m_parsed_cmd,
-//               appName,
-//               m_vm[m_parsed_cmd].as<vector<string>>()
-//         );
-
-         try {
-         ARG_parseEnumStr(
-               &mode,
-               "mode",
-               m_parsed_cmd,
-               appName,
-               m_vm[m_parsed_cmd].as<vector<string>>()
-         );
+         try {                      // Extract the value from the arg=value pair
+            ARG_parseEnumStr( &mode, "mode", m_parsed_cmd, appName,
+                  m_vm[m_parsed_cmd].as<vector<string>>() );
          } catch (exception& e) {
-            ERR_out << "Caught exception";
-         }
-
-         UTIL_getArgValue( value, "mode", m_parsed_cmd, appName, m_vm );
-         if (0 == value.compare("Bootloader")) {
-            mode = _CB_Bootloader;
-         } else if (0 == value.compare("Application")) {
-            mode = _CB_Application;
-         } else {
-            ERR_out << "Only " << enumToString(_CB_Bootloader) << " and "
-                  << enumToString(_CB_Application) << " boot modes supported.";
+            ERR_out << "Caught exception parsing arguments: " << e.what();
             HELP_printCmdSpecific( m_parsed_cmd, appName );
          }
-         DBG_out << "Got arg value " << enumToString(mode) << " for arg name: mode";
 
-         // Execute (and block) on this command
-         if( API_ERR_NONE == (status = client->DC3_setMode(&statusDC3, mode))) {
-            ss.clear();
-            ss << "DC3 bootmode ";
-            if (ERR_NONE == statusDC3) {
-               ss << "was successfully set to " << enumToString(mode) << " with no errors.";
-            } else {
-               ss << "FAILED to be set with ERROR: 0x" << setw(8) << setfill('0') << hex << statusDC3 << dec;
-            }
-            CON_print(ss.str());
-         } else {
-            ERR_out << "Got DC3 error " << "0x" << std::hex
-               << status << std::dec << " when trying to set bootmode.";
-         }
+         // All the error handling and output to console happens inside this
+         // function so there's no need to do it here
+         status = CMD_runSetMode( client, &statusDC3, mode );
+
       } else if (m_vm.count("flash")) {                  // "flash" cmd handling
          m_parsed_cmd = "flash";
 
          // Check for command specific help req
-         UTIL_checkForCmdSpecificHelp( m_parsed_cmd, appName, m_vm, m_conn_set );
+         ARG_checkCmdSpecificHelp( m_parsed_cmd, appName, m_vm, client->isConnected() );
 
-         // Extract the value from the arg=value pair
+         // Store status of DC3 cmd and bootmode even though we don't need it
+         // since it's all parsed and handled in CMD_ functions to reduce clutter.
+         statusDC3 = ERR_NONE;
          CBBootMode type = _CB_NoBootMode;
          string filename = "";
-         string value = "";
 
-         UTIL_getArgValue( value, "type", m_parsed_cmd, appName, m_vm );
-         if (0 == value.compare("Application")) {
-            type = _CB_Application;
-         } else {
-            ERR_out << "Currently, only " << enumToString(_CB_Application)
-                  << " FW image flashing is supported.";
-            HELP_printCmdSpecific( m_parsed_cmd, appName );
-         }
-         DBG_out << "Got arg value " << enumToString(type) << " for arg name: type";
-
-         UTIL_getArgValue( filename, "file", m_parsed_cmd, appName, m_vm );
-         ifstream fw_file (                  // open file stream to read in file
-               filename.c_str(),
-               ios::in | ios::binary | ios::ate
-         );
-
-         if (fw_file) {                           // if the file exists, read it
-            fw_file.close();                                       // Close file
-         } else {
-            ERR_out << "Unable to open file " << filename;
+         try {                      // Extract the value from the arg=value pair
+            ARG_parseEnumStr( &type, "type", m_parsed_cmd, appName,
+                  m_vm[m_parsed_cmd].as<vector<string>>() );
+         } catch (exception& e) {
+            ERR_out << "Caught exception parsing arguments: " << e.what();
             HELP_printCmdSpecific( m_parsed_cmd, appName );
          }
 
-         // Check if everything has been parsed correctly
-         if ( _CB_NoBootMode == type || 0 == filename.compare("") ) {
-            ERR_out << "Failed to parse args. ";
+         try {      // Extract and validate the filename from the arg=value pair
+            ARG_parseFilenameStr( filename, "file", m_parsed_cmd, appName,
+                  m_vm[m_parsed_cmd].as<vector<string>>() );
+         } catch (exception& e) {
+            ERR_out << "Caught exception parsing arguments: " << e.what();
             HELP_printCmdSpecific( m_parsed_cmd, appName );
          }
 
-         // If we got here, we have a valid filename/path and valid FW image
-         // type. Execute (and block) on this command
-         status = client->DC3_flashFW(&statusDC3, type, filename.c_str());
-         if( API_ERR_NONE == status) {
-            ss.clear();
-            ss << "FW flashing of DC3 ";
-            if (ERR_NONE == statusDC3) {
-               ss << "completed successfully.";
-            } else {
-               ss << "FAILED with ERROR: 0x" << setw(8) << setfill('0') << hex << statusDC3 << dec;
-            }
-            CON_print(ss.str());
-         } else {
-            ERR_out << "Got client error " << "0x" << std::hex
-               << status << std::dec << " when trying to flash FW.";
-         }
+         // All the error handling and output to console happens inside this
+         // function so there's no need to do it here
+         status = CMD_runFlash( client, &statusDC3, type, filename );
+
       } else if (m_vm.count("read_i2c")) {            // "read_i2c" cmd handling
          m_parsed_cmd = "read_i2c";
 
          // Check for command specific help req
-         UTIL_checkForCmdSpecificHelp( m_parsed_cmd, appName, m_vm, m_conn_set );
+         ARG_checkCmdSpecificHelp( m_parsed_cmd, appName, m_vm, client->isConnected() );
 
          // Extract the value from the arg=value pair
          int bytes = -1, start = -1;
@@ -535,7 +469,7 @@ int main(int argc, char *argv[])
          m_parsed_cmd = "write_i2c";
 
          // Check for command specific help req
-         UTIL_checkForCmdSpecificHelp( m_parsed_cmd, appName, m_vm, m_conn_set );
+         ARG_checkCmdSpecificHelp( m_parsed_cmd, appName, m_vm, client->isConnected() );
 
          // Extract the value from the arg=value pair
          int bytes = -1, start = -1;
@@ -647,7 +581,7 @@ int main(int argc, char *argv[])
          m_parsed_cmd = "ram_test";
 
          // Check for command specific help req
-         UTIL_checkForCmdSpecificHelp( m_parsed_cmd, appName, m_vm, m_conn_set );
+         ARG_checkCmdSpecificHelp( m_parsed_cmd, appName, m_vm, client->isConnected() );
 
          // No need to extract the value from the arg=value pair for this cmd.
 

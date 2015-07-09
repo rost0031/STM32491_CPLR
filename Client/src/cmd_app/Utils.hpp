@@ -54,12 +54,12 @@ using namespace po;
  * have been specified.
  * @return  None.
  */
-void UTIL_checkForCmdSpecificHelp(
-      const string& cmd,
-      const string& appName,
-      const po::variables_map& vm,
-      const bool isConnSet
-);
+//void UTIL_checkForCmdSpecificHelp(
+//      const string& cmd,
+//      const string& appName,
+//      const po::variables_map& vm,
+//      const bool isConnSet
+//);
 
 /**
  * @brief   Breaks apart a 'arg=value' pairs that are read in from the cmd line.

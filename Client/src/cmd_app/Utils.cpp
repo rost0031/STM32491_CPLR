@@ -36,27 +36,27 @@ MODULE_NAME( MODULE_EXT );
 /* Private function prototypes -----------------------------------------------*/
 /* Private functions ---------------------------------------------------------*/
 
-/******************************************************************************/
-void UTIL_checkForCmdSpecificHelp(
-      const string& cmd,
-      const string& appName,
-      const po::variables_map& vm,
-      const bool isConnSet
-)
-{
-   if (vm.count("help") || !isConnSet) {  // Check for command specific help req
-      HELP_printCmdSpecific( cmd, appName );
-   }
-
-   vector<string>::const_iterator begin = vm[cmd].as<vector<string>>().begin();
-   vector<string>::const_iterator end = vm[cmd].as<vector<string>>().end();
-   vector<string>::const_iterator itr;
-   // Check for command specific help req
-   if( find(begin, end, "--help") != end ||
-       find(begin, end, "help") != end  || !isConnSet ) {
-      HELP_printCmdSpecific( cmd, appName );
-   }
-}
+///******************************************************************************/
+//void UTIL_checkForCmdSpecificHelp(
+//      const string& cmd,
+//      const string& appName,
+//      const po::variables_map& vm,
+//      const bool isConnSet
+//)
+//{
+//   if (vm.count("help") || !isConnSet) {  // Check for command specific help req
+//      HELP_printCmdSpecific( cmd, appName );
+//   }
+//
+//   vector<string>::const_iterator begin = vm[cmd].as<vector<string>>().begin();
+//   vector<string>::const_iterator end = vm[cmd].as<vector<string>>().end();
+//   vector<string>::const_iterator itr;
+//   // Check for command specific help req
+//   if( find(begin, end, "--help") != end ||
+//       find(begin, end, "help") != end  || !isConnSet ) {
+//      HELP_printCmdSpecific( cmd, appName );
+//   }
+//}
 
 /******************************************************************************/
 void UTIL_splitArgs(
