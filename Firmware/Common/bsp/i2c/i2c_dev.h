@@ -44,6 +44,33 @@ extern "C" {
    (DEV) == EUI_ROM                                                           \
 )
 
+/**
+ * @brief   Macro to determine if an I2C device is writable
+ * @param [in] DEV:  I2C_Dev_t type I2C device specifier.
+ * @retval
+ *    1: Device writable
+ *    0: Device is read only
+ */
+#define IS_I2C_DEVICE_RW( DEV )                                               \
+(                                                                             \
+   (DEV) == EEPROM                                                            \
+)
+
+/**
+ * @brief   Macro to determine if an I2C operation is defined in the system
+ * @param [in] OP:  I2C_Operation_t type I2C operation specifier.
+ * @retval
+ *    1: Device operation and is valid
+ *    0: Device operation doesn't exist or isn't valid
+ */
+#define IS_I2C_OP( OP )                                                       \
+(                                                                             \
+   (OP) == I2C_OP_MEM_READ  ||                                                \
+   (OP) == I2C_OP_MEM_WRITE ||                                                \
+   (OP) == I2C_OP_REG_READ  ||                                                \
+   (OP) == I2C_OP_REG_READ                                                    \
+)
+
 /* Exported constants --------------------------------------------------------*/
 /* Exported variables --------------------------------------------------------*/
 /* Exported functions --------------------------------------------------------*/
@@ -161,12 +188,24 @@ const I2C_Bus_t I2C_getBus( const I2C_Dev_t iDev );
  * @brief   Get the string representation of the I2C device.
  *
  * @param [in]  iDev: I2C_Dev_t identifier to choose device
- *    @arg EEPROM: get the EEPROM device address
- *    @arg SN_ROM: get the SN_ROM device address
- *    @arg UIE_ROM: get the UIE_ROM device address
+ *    @arg EEPROM
+ *    @arg SN_ROM
+ *    @arg UIE_ROM
  * @return: string representation of the I2C device.
  */
 const char* const I2C_devToStr( const I2C_Dev_t iDev );
+
+/**
+ * @brief   Get the string representation of the I2C operation
+ *
+ * @param [in]  iOp: I2C_Operation_t identifier to choose device
+ *    @arg I2C_OP_MEM_READ
+ *    @arg I2C_OP_MEM_WRITE
+ *    @arg I2C_OP_REG_READ
+ *    @arg I2C_OP_REG_WRITE
+ * @return: string representation of the I2C operation.
+ */
+const char* const I2C_opToStr( const I2C_Operation_t iOp );
 
 /**
  * @brief   Calculate how to properly write large data over page boundaries in EEPROM.

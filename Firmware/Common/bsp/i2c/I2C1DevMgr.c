@@ -287,6 +287,18 @@ static QState I2C1DevMgr_PostWriteWait(I2C1DevMgr * const me, QEvt const * const
 static QState I2C1DevMgr_CheckingBus(I2C1DevMgr * const me, QEvt const * const e);
 
 /**
+ * @brief   This state checks passed in parameters to the AO and makes sure that
+ * nothing dangerous is being requested, such as writes over memory boundaries or
+ * buffer overflows.
+ *
+ * @param  [in,out] me: Pointer to the state machine
+ * @param  [in,out] e:  Pointer to the event being processed.
+ * @return status: QState type that specifies where the state
+ * machine is going next.
+ */
+static QState I2C1DevMgr_ValidateRequest(I2C1DevMgr * const me, QEvt const * const e);
+
+/**
  * @brief This state indicates that the I2C bus is currently idle and the
  * incoming msg can be handled.
  * This state is the default rest state of the state machine and can handle
@@ -445,6 +457,9 @@ static QState I2C1DevMgr_Busy(I2C1DevMgr * const me, QEvt const * const e) {
         /* ${AOs::I2C1DevMgr::SM::Active::Busy} */
         case Q_EXIT_SIG: {
             QTimeEvt_disarm( &me->i2cTimerEvt ); /* Disarm timer on exit */
+
+            LOG_printf( "Finished %s op on dev %s on I2CBus%d to at addr 0x%02x via Acc: %d\n",
+                I2C_opToStr( me->i2cDevOp ), I2C_devToStr(me->iDev), me->iDev+1, me->addrStart, me->accessType );
 
             if ( I2C_OP_MEM_READ == me->i2cDevOp || I2C_OP_REG_READ == me->i2cDevOp ) {
                 /* Change only the fields that could have changed since */
@@ -1139,6 +1154,167 @@ static QState I2C1DevMgr_CheckingBus(I2C1DevMgr * const me, QEvt const * const e
 }
 
 /**
+ * @brief   This state checks passed in parameters to the AO and makes sure that
+ * nothing dangerous is being requested, such as writes over memory boundaries or
+ * buffer overflows.
+ *
+ * @param  [in,out] me: Pointer to the state machine
+ * @param  [in,out] e:  Pointer to the event being processed.
+ * @return status: QState type that specifies where the state
+ * machine is going next.
+ */
+/*${AOs::I2C1DevMgr::SM::Active::Busy::ValidateRequest} ....................*/
+static QState I2C1DevMgr_ValidateRequest(I2C1DevMgr * const me, QEvt const * const e) {
+    QState status_;
+    switch (e->sig) {
+        /* ${AOs::I2C1DevMgr::SM::Active::Busy::ValidateRequest} */
+        case Q_ENTRY_SIG: {
+            /* Set error code to none.  If any of the checks fail, they'll set the error code */
+            me->errorCode = ERR_NONE;
+
+            /* no timer needed in this state since there is no waiting on anyone */
+
+            /* Check if the inputs are going to cause any problems. */
+
+            /* Make sure the device requested is valid */
+            if ( !IS_I2C_DEVICE(me->iDev) ) {
+                me->errorCode = ERR_I2C1DEV_INVALID_DEVICE;
+                ERR_printf("Invalid I2C device: %d. Error: 0x%08x\n", me->iDev, me->errorCode);
+                goto I2CDEV1_VALIDATE_FINISH_TAG;
+            }
+
+            /* Any request for a totalBytes being zero is definitely wrong.  Attempting to read
+             * or write 0 bytes will cause problems. */
+            if( 0 == me->bytesTotal ) {
+                me->errorCode = ERR_I2C1DEV_0_BYTE_REQUEST;
+                ERR_printf("%s Request on %s for a 0 byte access. Error: 0x%08x\n",
+                    I2C_opToStr( me->i2cDevOp ), I2C_devToStr(me->iDev), me->errorCode);
+                goto I2CDEV1_VALIDATE_FINISH_TAG;
+            }
+
+            /* Make sure the local buffer is not overflowed by the request */
+            if( me->bytesTotal > MAX_I2C_READ_LEN || me->bytesTotal > MAX_I2C_WRITE_LEN) {
+                me->errorCode = ERR_I2C1DEV_OVERFLOW_REQUEST;
+                ERR_printf(
+                    "%s Request on %s for a %d byte access. Max allowed is %d. Error: 0x%08x\n",
+                    I2C_opToStr( me->i2cDevOp ), I2C_devToStr(me->iDev), me->bytesTotal,
+                    ( I2C_OP_MEM_READ == me->i2cDevOp || I2C_OP_REG_READ == me->i2cDevOp ) ? MAX_I2C_READ_LEN : MAX_I2C_WRITE_LEN,
+                    me->errorCode
+                );
+                goto I2CDEV1_VALIDATE_FINISH_TAG;
+            }
+
+            /* Don't allow reads or writes over the end of the device memory since bad things
+             * can happen, especially with writes. */
+            if( ( me->addrStart + me->bytesTotal ) > I2C_getMaxMemAddr(me->iDev) ) {
+                me->errorCode = ERR_I2C1DEV_ACCESS_OVER_END_OF_DEVICE_MEM;
+                ERR_printf("%s op for %s access will cross over device mem boundary. Error: 0x%08x\n",
+                    I2C_opToStr( me->i2cDevOp ),  I2C_devToStr(me->iDev), 	me->errorCode);
+                ERR_printf("Dev min addr: 0x%02x, max addr: 0x%02x, requested start addr: 0x%02x for %d bytes.\n",
+                    I2C_getMinMemAddr(me->iDev), I2C_getMaxMemAddr(me->iDev), me->addrStart, me->bytesTotal );
+                goto I2CDEV1_VALIDATE_FINISH_TAG;
+            }
+
+            switch( me->i2cDevOp ) {
+                case I2C_OP_MEM_READ:  /* Read device memory of I2C device */
+                    /* Nothing to be done here */
+                    break;
+
+                case I2C_OP_MEM_WRITE:  /* Write device memory of I2C device */
+                    /* Only allow writes to writable devices */
+                    if ( !IS_I2C_DEVICE_RW(me->iDev) ) {
+                        me->errorCode = ERR_I2C1DEV_READ_ONLY_DEVICE;
+                        ERR_printf("%s op for %s access attempt to write to RO device. Error: 0x%08x\n",
+                            I2C_opToStr( me->i2cDevOp ),  I2C_devToStr(me->iDev), me->errorCode);
+                        goto I2CDEV1_VALIDATE_FINISH_TAG;
+                    }
+
+                    /* Use the state machine buffer to do a print out of the data we are attempting to
+                     * write so  we don't have to have a separate buffer just for that. After printing,
+                     * the buffer can be used to do its actual purpose of storing data for when a later
+                     * state will send it to be written. */
+
+                    /* Figure out the write sizes of pages if number of bytes desired to be written is
+                     bigger than the page size. */
+                    me->errorCode = I2C_calcPageWriteSizes(
+                        &(me->writeSizeFirstPage),
+                        &(me->writeSizeLastPage),
+                        &(me->writeTotalPages),
+                        me->addrStart,
+                        me->bytesTotal,
+                        I2C_getPageSize( me->iDev )
+                    );
+
+                    if( ERR_NONE != me->errorCode ) {
+                        ERR_printf("%s op for %s write: unable to calculate page writes. Aborting write. Error: 0x%08x\n",
+                            I2C_opToStr( me->i2cDevOp ),  I2C_devToStr(me->iDev), me->errorCode);
+                        goto I2CDEV1_VALIDATE_FINISH_TAG;
+                    }
+
+                    LOG_printf( "write sizes: 1st page: %d, lst page: %d, tot pages: %d\n",
+                        me->writeSizeFirstPage, me->writeSizeLastPage, me->writeTotalPages );
+
+                    /* This is the first iteration through the "loop" which writes several pages */
+                    me->writeCurrPage    = 1;
+                    me->writeSizeCurr    = me->writeSizeFirstPage;
+                    me->writeBufferIndex = 0;
+                    me->writeMemAddrCurr = me->addrStart;
+
+                    DBG_printf("Writing page %d (%d bytes) out of %d total to addr 0x%02x\n",
+                        me->writeCurrPage, me->writeSizeCurr, me->writeTotalPages, me->writeMemAddrCurr);
+
+                break;
+
+                case I2C_OP_REG_READ:     /* Intentionally fall through */
+                case I2C_OP_REG_WRITE:
+                    /* TODO: these operations may be needed later if any register based devices
+                     * on I2C bus are ever added.  For now, this is an error. */
+                    me->errorCode = ERR_UNIMPLEMENTED;
+                    ERR_printf("%s op for %s access is currently unimplemented. Error: 0x%08x\n",
+                        I2C_opToStr( me->i2cDevOp ),  I2C_devToStr(me->iDev), me->errorCode);
+                    goto I2CDEV1_VALIDATE_FINISH_TAG;
+                    break;
+                default:                 /* Undefined I2C operation. */
+                    me->errorCode = ERR_I2C1DEV_INVALID_OPERATION;
+                    ERR_printf("%d (Unable to translate to string) op for %s is undefined. Error: 0x%08x\n",
+                        me->i2cDevOp,  I2C_devToStr(me->iDev), me->errorCode);
+                    goto I2CDEV1_VALIDATE_FINISH_TAG;
+                    break;
+            }
+
+            /* Tag that can be jumped to if an error is encountered or reached naturally */
+            I2CDEV1_VALIDATE_FINISH_TAG:
+            ; // workaround for a label can't be a statement due to a comment after the label
+
+            /* Post an event to self to proceed to the next state */
+            QEvt *evt = Q_NEW( QEvt, I2C1_DEV_PRIVATE_SIG );
+            QACTIVE_POST(AO_I2C1DevMgr, (QEvt *)(evt), me);
+            status_ = Q_HANDLED();
+            break;
+        }
+        /* ${AOs::I2C1DevMgr::SM::Active::Busy::ValidateRequest::I2C1_DEV_PRIVATE} */
+        case I2C1_DEV_PRIVATE_SIG: {
+            /* Internal signal with no data with it.  Just check if checking inputs for I2C req
+             * produced an error that was recorded */
+            /* ${AOs::I2C1DevMgr::SM::Active::Busy::ValidateRequest::I2C1_DEV_PRIVATE::[NoErr?]} */
+            if (ERR_NONE == me->errorCode) {
+                status_ = Q_TRAN(&I2C1DevMgr_CheckingBus);
+            }
+            /* ${AOs::I2C1DevMgr::SM::Active::Busy::ValidateRequest::I2C1_DEV_PRIVATE::[else]} */
+            else {
+                status_ = Q_TRAN(&I2C1DevMgr_Idle);
+            }
+            break;
+        }
+        default: {
+            status_ = Q_SUPER(&I2C1DevMgr_Busy);
+            break;
+        }
+    }
+    return status_;
+}
+
+/**
  * @brief This state indicates that the I2C bus is currently idle and the
  * incoming msg can be handled.
  * This state is the default rest state of the state machine and can handle
@@ -1170,15 +1346,22 @@ static QState I2C1DevMgr_Idle(I2C1DevMgr * const me, QEvt const * const e) {
         }
         /* ${AOs::I2C1DevMgr::SM::Active::Idle::I2C1_DEV_RAW_MEM~} */
         case I2C1_DEV_RAW_MEM_READ_SIG: {
+            /* Store all the data from the event and look up a few things */
+
+            /* I2C1Dev AO assumes that the addresses that are passed in are already correct
+             * for the device they are being sent for.  Most of access happen via the DB
+             * which does all the work of figuring out the correct addresses and sizes.  If
+             * direct access of I2C1Dev AO is being performed, it's the role of the user to
+             * know the correct addresses. */
             me->iDev       = ((I2CReadReqEvt const *)e)->i2cDev;
             me->addrStart  = ((I2CReadReqEvt const *)e)->addr;
-            me->bytesTotal = ((I2CReadReqEvt const *)e)->bytes;
             me->accessType = ((I2CReadReqEvt const *)e)->accessType;
+            me->bytesTotal = ((I2CReadReqEvt const *)e)->bytes;
             me->addrSize   = I2C_getMemAddrSize(me->iDev);
             me->i2cDevOp   = I2C_OP_MEM_READ;
 
-            LOG_printf("Attempt to read %d bytes from %s on from addr 0x%02x via Acc %d\n",
-                me->bytesTotal, I2C_devToStr(me->iDev), me->addrStart, me->accessType);
+            LOG_printf( "Trying %s op to read %d bytes from dev %s on I2CBus%d to at addr 0x%02x via Acc: %d\n",
+                I2C_opToStr( me->i2cDevOp ), me->bytesTotal, I2C_devToStr(me->iDev), me->iDev+1, me->addrStart, me->accessType );
 
             /* Allocate a ReadDone evt that will ALWAYS be sent out upon exit of the Busy state
              * for read operations. */
@@ -1187,38 +1370,30 @@ static QState I2C1DevMgr_Idle(I2C1DevMgr * const me, QEvt const * const e) {
             /* Fill out the fields that won't change or to just safe values in case of failure */
             me->i2cReadDoneEvt->i2cDev = me->iDev;
             me->i2cReadDoneEvt->bytes  = 0;
-            status_ = Q_TRAN(&I2C1DevMgr_CheckingBus);
+            status_ = Q_TRAN(&I2C1DevMgr_ValidateRequest);
             break;
         }
         /* ${AOs::I2C1DevMgr::SM::Active::Idle::I2C1_DEV_RAW_MEM~} */
         case I2C1_DEV_RAW_MEM_WRITE_SIG: {
             /* Store all the data from the event and look up a few things */
+
+            /* I2C1Dev AO assumes that the addresses that are passed in are already correct
+             * for the device they are being sent for.  Most of access happen via the DB
+             * which does all the work of figuring out the correct addresses and sizes.  If
+             * direct access of I2C1Dev AO is being performed, it's the role of the user to
+             * know the correct addresses. */
             me->iDev       = ((I2CWriteReqEvt const *)e)->i2cDev;
             me->addrStart  = ((I2CWriteReqEvt const *)e)->addr;
-            me->addrSize   = I2C_getMemAddrSize(me->iDev);
-            me->i2cDevOp   = I2C_OP_MEM_WRITE;
             me->accessType = ((I2CWriteReqEvt const *)e)->accessType;
             me->bytesTotal = ((I2CWriteReqEvt const *)e)->bytes;
+            me->addrSize   = I2C_getMemAddrSize(me->iDev);
+            me->i2cDevOp   = I2C_OP_MEM_WRITE;
 
-            /* Use the state machine buffer to do a print out of the data we are attempting to
-             * write so  we don't have to have a separate buffer just for that. After printing,
-             * the buffer can be used to do its actual purpose of storing data for when a later
-             * state will send it to be written. */
-
-            /* Figure out the write sizes of pages if number of bytes desired to be written is
-             bigger than the page size. */
-            me->errorCode = I2C_calcPageWriteSizes(
-                &(me->writeSizeFirstPage),
-                &(me->writeSizeLastPage),
-                &(me->writeTotalPages),
-                me->addrStart,
-                me->bytesTotal,
-                I2C_getPageSize( me->iDev )
-            );
-
+            /* If we are to print out the data we, need to do it before we copy it to the local
+             * buffer or we'll end up losing it. */
             uint16_t tmpLen = 0;
             CBErrorCode err = CON_hexToStr(
-                (const uint8_t *)me->dataBuf,        // data to convert
+                ((I2CWriteReqEvt const *)e)->dataBuf,// data to convert
                 me->bytesTotal,                      // length of data to convert
                 (char *)me->dataBuf,                 // where to write output
                 sizeof(me->dataBuf),                 // max size of output buffer
@@ -1228,69 +1403,28 @@ static QState I2C1DevMgr_Idle(I2C1DevMgr * const me, QEvt const * const e) {
                 true                                 // bPrintX
             );
 
-            LOG_printf( "Attempt to write %d bytes to %s at I2C addr 0x%02x\n",
-                me->bytesTotal, I2C_devToStr(me->iDev), me->addrStart );
+            LOG_printf( "Trying %s op to write to dev %s on I2CBus%d to at addr 0x%02x via Acc: %d\n",
+                I2C_opToStr( me->i2cDevOp ), I2C_devToStr(me->iDev), me->iDev+1, me->addrStart, me->accessType );
             if ( ERR_NONE == err ) {
                 LOG_printf( "Data to write (%d bytes): %s\n",
                     me->bytesTotal, me->dataBuf );
             } else {
-                WRN_printf( "Data to write too big for printing due to buffer size. Not shown\n",
-                    ((I2CBusDataEvt const *)e)->dataLen );
+                WRN_printf( "Data to write (%d bytes) too big to print due to buffer size (%d). Not shown\n",
+                    ((I2CBusDataEvt const *)e)->dataLen,  sizeof(me->dataBuf) );
             }
-            LOG_printf( "write sizes: 1st page: %d, lst page: %d, tot pages: %d\n",
-                me->writeSizeFirstPage, me->writeSizeLastPage, me->writeTotalPages );
 
-            /* Now copy the data into the state machine buffer. */
-            MEMCPY(
-                me->dataBuf,
-                ((I2CWriteReqEvt const *)e)->dataBuf,
-                me->bytesTotal
-            );
-            /* ${AOs::I2C1DevMgr::SM::Active::Idle::I2C1_DEV_RAW_MEM~::[NoErr?]} */
-            if (ERR_NONE == me->errorCode) {
-                /* This is the first iteration through the "loop" which writes several pages */
-                me->writeCurrPage    = 1;
-                me->writeSizeCurr    = me->writeSizeFirstPage;
-                me->writeBufferIndex = 0;
-                me->writeMemAddrCurr = me->addrStart;
+            /* This event will disappear after it's handled so the data must be copied to local buffer*/
+            MEMCPY( me->dataBuf, ((I2CWriteReqEvt const *)e)->dataBuf, me->bytesTotal );
 
-                DBG_printf("Writing page %d (%d bytes) out of %d total to addr 0x%02x\n",
-                    me->writeCurrPage, me->writeSizeCurr, me->writeTotalPages, me->writeMemAddrCurr);
+            /* Allocate a WriteDone evt that will ALWAYS be sent out upon exit of the Busy state
+             * for write operations. */
+            me->i2cWriteDoneEvt = Q_NEW(I2CWriteDoneEvt, I2C1_DEV_WRITE_DONE_SIG);
 
-                /* Allocate a WriteDone evt that will ALWAYS be sent out upon exit of the Busy state
-                 * for write operations. */
-                me->i2cWriteDoneEvt = Q_NEW(I2CWriteDoneEvt, I2C1_DEV_WRITE_DONE_SIG);
+            /* Fill out the fields that won't change or to just safe values in case of failure */
+            me->i2cWriteDoneEvt->i2cDev = me->iDev;
+            me->i2cWriteDoneEvt->bytes  = 0;
 
-                /* Fill out the fields that won't change or to just safe values in case of failure */
-                me->i2cWriteDoneEvt->bytes  = 0;
-                me->i2cWriteDoneEvt->i2cDev = me->iDev;
-                status_ = Q_TRAN(&I2C1DevMgr_CheckingBus);
-            }
-            /* ${AOs::I2C1DevMgr::SM::Active::Idle::I2C1_DEV_RAW_MEM~::[else]} */
-            else {
-                ERR_printf("Unable to calculate page boundaries, aborting write. Error: 0x%08x\n", me->errorCode);
-                I2CWriteDoneEvt *i2cWriteDoneEvt = Q_NEW(I2CWriteDoneEvt, I2C1_DEV_WRITE_DONE_SIG);
-                i2cWriteDoneEvt->status = me->errorCode;
-                i2cWriteDoneEvt->bytes = 0;
-                i2cWriteDoneEvt->i2cDev = me->iDev;
-
-                if ( ACCESS_FREERTOS == me->accessType ) {
-                #if CPLR_APP
-                    /* Post directly to the "raw" queue for FreeRTOS task to read */
-                    QEQueue_postFIFO(&CPLR_evtQueue, (QEvt *)me->i2cReadDoneEvt);
-                    vTaskResume( xHandle_CPLR );
-                #elif CPLR_BOOT
-                    /* Publish the event so other AOs can get it if they want */
-                    QF_PUBLISH((QEvt *)me->i2cReadDoneEvt, AO_I2C1DevMgr);
-                #else
-                #error "Invalid build.  CPLR_APP or CPLR_BOOT must be specified"
-                #endif
-                } else {
-                    /* Publish the event so other AOs can get it if they want */
-                    QF_PUBLISH((QEvt *)me->i2cReadDoneEvt, AO_I2C1DevMgr);
-                }
-                status_ = Q_TRAN(&I2C1DevMgr_Idle);
-            }
+            status_ = Q_TRAN(&I2C1DevMgr_ValidateRequest);
             break;
         }
         default: {

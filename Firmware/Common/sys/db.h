@@ -40,8 +40,8 @@
 #include "i2c_defs.h"                                /* for I2C functionality */
 #include "CBCommApi.h"
 
- /* Exported defines ----------------------------------------------------------*/
-#define MAX_DB_ELEM_SIZE   20               /**< Max size of an element in DB */
+/* Exported defines ----------------------------------------------------------*/
+#define MAX_DB_ELEM_SIZE   64               /**< Max size of an element in DB */
 
  /**< Magic word that will be stored at the head of the DB.  If this is not
  * there, the DB needs to be initialized to a default and updated after. */

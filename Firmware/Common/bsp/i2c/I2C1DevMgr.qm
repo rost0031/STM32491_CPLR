@@ -238,6 +238,9 @@ QTimeEvt_rearm(
 );</entry>
       <exit>QTimeEvt_disarm( &amp;me-&gt;i2cTimerEvt ); /* Disarm timer on exit */
 
+LOG_printf( &quot;Finished %s op on dev %s on I2CBus%d to at addr 0x%02x via Acc: %d\n&quot;,
+    I2C_opToStr( me-&gt;i2cDevOp ), I2C_devToStr(me-&gt;iDev), me-&gt;iDev+1, me-&gt;addrStart, me-&gt;accessType );
+
 if ( I2C_OP_MEM_READ == me-&gt;i2cDevOp || I2C_OP_REG_READ == me-&gt;i2cDevOp ) {
     /* Change only the fields that could have changed since */
     me-&gt;i2cReadDoneEvt-&gt;status = me-&gt;errorCode;
@@ -281,8 +284,8 @@ if ( I2C_OP_MEM_READ == me-&gt;i2cDevOp || I2C_OP_REG_READ == me-&gt;i2cDevOp ) 
 }</exit>
       <tran trig="I2C1_DEV_TIMEOUT" target="../../1">
        <action>ERR_printf(&quot;I2C1Dev timeout occurred with error: 0x%08x\n&quot;, me-&gt;errorCode);</action>
-       <tran_glyph conn="54,11,3,1,-28">
-        <action box="-17,-2,16,2"/>
+       <tran_glyph conn="44,11,3,1,-18">
+        <action box="-14,-2,16,2"/>
        </tran_glyph>
       </tran>
       <tran trig="I2C1_DEV_RAW_MEM_READ, I2C1_DEV_RAW_MEM_WRITE">
@@ -295,14 +298,14 @@ if ( I2C_OP_MEM_READ == me-&gt;i2cDevOp || I2C_OP_REG_READ == me-&gt;i2cDevOp ) 
    /* notify the request sender that the request was ignored.. */
    ERR_printf(&quot;Unable to defer I2C request\n&quot;);
 }</action>
-       <tran_glyph conn="54,90,3,-1,43">
+       <tran_glyph conn="44,90,3,-1,23">
         <action box="0,-4,23,4"/>
        </tran_glyph>
       </tran>
       <tran trig="I2C1_DEV_OP_TIMEOUT" target="../../1">
        <action>ERR_printf(&quot;I2C1Dev Op timeout occurred with error: 0x%08x\n&quot;, me-&gt;errorCode);</action>
-       <tran_glyph conn="54,13,3,1,-28">
-        <action box="-20,-2,21,2"/>
+       <tran_glyph conn="44,13,3,1,-18">
+        <action box="-16,-2,17,2"/>
        </tran_glyph>
       </tran>
       <state name="GenerateStart">
@@ -332,21 +335,21 @@ QACTIVE_POST(AO_I2CBusMgr[me-&gt;iBus], &amp;qEvt, me);</entry>
 me-&gt;errorCode = ((I2CStatusEvt const *)e)-&gt;errorCode;</action>
         <choice target="../../../../1">
          <guard>else</guard>
-         <choice_glyph conn="102,22,4,1,5,-76">
+         <choice_glyph conn="105,22,4,1,5,-79">
           <action box="0,2,10,2"/>
          </choice_glyph>
         </choice>
         <choice target="../../../4">
          <guard brief="NoErr?">ERR_NONE == ((I2CStatusEvt const *)e)-&gt;errorCode</guard>
-         <choice_glyph conn="102,22,5,3,5,1,3">
+         <choice_glyph conn="105,22,5,3,5,1,3">
           <action box="1,-2,10,2"/>
          </choice_glyph>
         </choice>
-        <tran_glyph conn="88,22,3,-1,14">
+        <tran_glyph conn="91,22,3,-1,14">
          <action box="0,-2,14,2"/>
         </tran_glyph>
        </tran>
-       <state_glyph node="88,12,16,13">
+       <state_glyph node="91,12,16,13">
         <entry box="1,2,6,2"/>
         <exit box="1,4,6,2"/>
        </state_glyph>
@@ -383,21 +386,21 @@ QACTIVE_POST(AO_I2CBusMgr[me-&gt;iBus], (QEvt *)i2cAddrEvt, me);</entry>
 me-&gt;errorCode = ((I2CStatusEvt const *)e)-&gt;errorCode;</action>
         <choice target="../../../../1">
          <guard>else</guard>
-         <choice_glyph conn="124,22,4,1,6,-98">
+         <choice_glyph conn="127,22,4,1,6,-101">
           <action box="0,2,10,2"/>
          </choice_glyph>
         </choice>
         <choice target="../../../5">
          <guard brief="NoErr?">ERR_NONE == ((I2CStatusEvt const *)e)-&gt;errorCode</guard>
-         <choice_glyph conn="124,22,5,3,5,1,3">
+         <choice_glyph conn="127,22,5,3,5,1,3">
           <action box="1,-2,10,2"/>
          </choice_glyph>
         </choice>
-        <tran_glyph conn="110,22,3,-1,14">
+        <tran_glyph conn="113,22,3,-1,14">
          <action box="0,-2,14,2"/>
         </tran_glyph>
        </tran>
-       <state_glyph node="110,12,16,13">
+       <state_glyph node="113,12,16,13">
         <entry box="1,2,6,2"/>
         <exit box="1,4,6,2"/>
        </state_glyph>
@@ -434,7 +437,7 @@ QACTIVE_POST(AO_I2CBusMgr[me-&gt;iBus], (QEvt *)i2cAddrEvt, me);</entry>
 me-&gt;errorCode = ((I2CStatusEvt const *)e)-&gt;errorCode;</action>
         <choice target="../../../../1">
          <guard>else</guard>
-         <choice_glyph conn="146,22,4,1,7,-120">
+         <choice_glyph conn="149,22,4,1,7,-123">
           <action box="0,2,10,2"/>
          </choice_glyph>
         </choice>
@@ -442,25 +445,25 @@ me-&gt;errorCode = ((I2CStatusEvt const *)e)-&gt;errorCode;</action>
          <guard brief="NoErr?">ERR_NONE == ((I2CStatusEvt const *)e)-&gt;errorCode</guard>
          <choice target="../../../../6">
           <guard brief="Read?">I2C_OP_MEM_READ == me-&gt;i2cDevOp || I2C_OP_REG_READ == me-&gt;i2cDevOp</guard>
-          <choice_glyph conn="154,22,4,0,10,-86,2">
+          <choice_glyph conn="157,22,4,0,10,-86,2">
            <action box="-6,10,7,2"/>
           </choice_glyph>
          </choice>
          <choice target="../../../../9">
           <guard brief="Write?">I2C_OP_MEM_WRITE == me-&gt;i2cDevOp || I2C_OP_REG_WRITE == me-&gt;i2cDevOp</guard>
-          <choice_glyph conn="154,22,4,3,-7,7">
+          <choice_glyph conn="157,22,4,3,-7,7">
            <action box="0,-9,10,2"/>
           </choice_glyph>
          </choice>
-         <choice_glyph conn="146,22,5,-1,8">
+         <choice_glyph conn="149,22,5,-1,8">
           <action box="1,-2,10,2"/>
          </choice_glyph>
         </choice>
-        <tran_glyph conn="132,22,3,-1,14">
+        <tran_glyph conn="135,22,3,-1,14">
          <action box="0,-2,14,2"/>
         </tran_glyph>
        </tran>
-       <state_glyph node="132,12,16,13">
+       <state_glyph node="135,12,16,13">
         <entry box="1,2,6,2"/>
         <exit box="1,4,6,2"/>
        </state_glyph>
@@ -493,21 +496,21 @@ QACTIVE_POST(AO_I2CBusMgr[me-&gt;iBus], &amp;qEvt, me);</entry>
 me-&gt;errorCode = ((I2CStatusEvt const *)e)-&gt;errorCode;</action>
         <choice target="../../../../1">
          <guard>else</guard>
-         <choice_glyph conn="80,44,4,1,5,-54">
+         <choice_glyph conn="83,44,4,1,5,-57">
           <action box="0,2,10,2"/>
          </choice_glyph>
         </choice>
         <choice target="../../../7">
          <guard brief="NoErr?">ERR_NONE == ((I2CStatusEvt const *)e)-&gt;errorCode</guard>
-         <choice_glyph conn="80,44,5,3,8,1,2">
+         <choice_glyph conn="83,44,5,3,8,1,2">
           <action box="1,-2,10,2"/>
          </choice_glyph>
         </choice>
-        <tran_glyph conn="66,44,3,-1,14">
+        <tran_glyph conn="69,44,3,-1,14">
          <action box="0,-2,14,2"/>
         </tran_glyph>
        </tran>
-       <state_glyph node="66,34,18,13">
+       <state_glyph node="69,34,18,13">
         <entry box="1,2,6,2"/>
         <exit box="1,4,6,2"/>
        </state_glyph>
@@ -544,21 +547,21 @@ QACTIVE_POST(AO_I2CBusMgr[me-&gt;iBus], (QEvt *)i2cAddrEvt, me);</entry>
 me-&gt;errorCode = ((I2CStatusEvt const *)e)-&gt;errorCode;</action>
         <choice target="../../../../1">
          <guard>else</guard>
-         <choice_glyph conn="104,44,4,1,6,-78">
+         <choice_glyph conn="107,44,4,1,6,-81">
           <action box="0,2,10,2"/>
          </choice_glyph>
         </choice>
         <choice target="../../../8">
          <guard brief="NoErr?">ERR_NONE == ((I2CStatusEvt const *)e)-&gt;errorCode</guard>
-         <choice_glyph conn="104,44,5,3,8,1,2">
+         <choice_glyph conn="107,44,5,3,8,1,2">
           <action box="1,-2,10,2"/>
          </choice_glyph>
         </choice>
-        <tran_glyph conn="90,44,3,-1,14">
+        <tran_glyph conn="93,44,3,-1,14">
          <action box="0,-2,14,2"/>
         </tran_glyph>
        </tran>
-       <state_glyph node="90,34,18,13">
+       <state_glyph node="93,34,18,13">
         <entry box="1,2,6,2"/>
         <exit box="1,4,6,2"/>
        </state_glyph>
@@ -596,7 +599,7 @@ QACTIVE_POST(AO_I2CBusMgr[me-&gt;iBus], (QEvt *)i2cReadMemEvt, me);</entry>
 me-&gt;errorCode = ((I2CStatusEvt const *)e)-&gt;errorCode;</action>
         <choice target="../../../../1">
          <guard>else</guard>
-         <choice_glyph conn="128,44,4,1,7,-102">
+         <choice_glyph conn="131,44,4,1,7,-105">
           <action box="0,2,10,2"/>
          </choice_glyph>
         </choice>
@@ -638,15 +641,15 @@ MEMCPY(
     ((I2CBusDataEvt const *)e)-&gt;dataBuf,
     me-&gt;i2cReadDoneEvt-&gt;bytes
 );</action>
-         <choice_glyph conn="128,44,5,1,9,11,-111">
+         <choice_glyph conn="131,44,5,1,9,11,-114">
           <action box="1,-2,10,2"/>
          </choice_glyph>
         </choice>
-        <tran_glyph conn="114,44,3,-1,14">
+        <tran_glyph conn="117,44,3,-1,14">
          <action box="0,-2,14,2"/>
         </tran_glyph>
        </tran>
-       <state_glyph node="114,34,18,13">
+       <state_glyph node="117,34,18,13">
         <entry box="1,2,6,2"/>
         <exit box="1,4,6,2"/>
        </state_glyph>
@@ -690,21 +693,21 @@ me-&gt;errorCode = ((I2CStatusEvt const *)e)-&gt;errorCode;
 </action>
         <choice target="../../../../1">
          <guard>else</guard>
-         <choice_glyph conn="175,22,4,1,8,-17,22,-132">
+         <choice_glyph conn="178,22,4,1,8,-17,22,-135">
           <action box="-6,6,7,2"/>
          </choice_glyph>
         </choice>
         <choice target="../../../10">
          <guard brief="NoErr?">ERR_NONE == me-&gt;errorCode</guard>
-         <choice_glyph conn="175,22,5,1,13,19,-2">
+         <choice_glyph conn="178,22,5,1,13,19,-2">
           <action box="1,-2,10,2"/>
          </choice_glyph>
         </choice>
-        <tran_glyph conn="161,22,3,-1,14">
+        <tran_glyph conn="164,22,3,-1,14">
          <action box="0,-2,14,2"/>
         </tran_glyph>
        </tran>
-       <state_glyph node="161,12,18,13">
+       <state_glyph node="164,12,18,13">
         <entry box="1,2,6,2"/>
         <exit box="1,4,6,2"/>
        </state_glyph>
@@ -744,7 +747,7 @@ me-&gt;addrStart         = me-&gt;writeMemAddrCurr;</action>
 //I2CWriteDoneEvt *i2cWriteDoneEvt = Q_NEW(I2CWriteDoneEvt, I2C1_DEV_WRITE_DONE_SIG);
 me-&gt;i2cWriteDoneEvt-&gt;status = me-&gt;errorCode;
 me-&gt;i2cWriteDoneEvt-&gt;bytes  = me-&gt;bytesTotal;</action>
-         <choice_glyph conn="58,59,5,1,-32">
+         <choice_glyph conn="66,59,5,1,-40">
           <action box="-10,0,6,2"/>
          </choice_glyph>
         </choice>
@@ -758,15 +761,15 @@ me-&gt;i2cWriteDoneEvt-&gt;bytes  = me-&gt;bytesTotal;</action>
 
 DBG_printf(&quot;Writing page %d (%d bytes) out of %d total to addr 0x%02x\n&quot;, 
     me-&gt;writeCurrPage, me-&gt;writeSizeCurr, me-&gt;writeTotalPages, me-&gt;writeMemAddrCurr);</action>
-         <choice_glyph conn="58,59,4,3,-36,8">
+         <choice_glyph conn="66,59,4,3,-35,3">
           <action box="0,-3,10,2"/>
          </choice_glyph>
         </choice>
-        <tran_glyph conn="162,47,3,-1,26,12,-130">
+        <tran_glyph conn="165,47,3,-1,26,12,-125">
          <action box="0,-2,24,2"/>
         </tran_glyph>
        </tran>
-       <state_glyph node="162,37,24,12">
+       <state_glyph node="165,37,24,12">
         <entry box="1,2,6,2"/>
         <exit box="1,4,6,2"/>
        </state_glyph>
@@ -802,26 +805,180 @@ QACTIVE_POST(AO_I2CBusMgr[me-&gt;iBus], (QEvt *)(i2cAddrEvt), me);</entry>
 me-&gt;errorCode = ((I2CStatusEvt const *)e)-&gt;errorCode;</action>
         <choice target="../../../../1">
          <guard>else</guard>
-         <choice_glyph conn="80,22,4,1,4,-54">
+         <choice_glyph conn="83,22,4,1,4,-57">
           <action box="0,2,10,2"/>
          </choice_glyph>
         </choice>
         <choice target="../../../3">
          <guard brief="NoErr?">ERR_NONE == me-&gt;errorCode</guard>
-         <choice_glyph conn="80,22,5,3,5,1,3">
+         <choice_glyph conn="83,22,5,3,5,1,3">
           <action box="1,-2,10,2"/>
          </choice_glyph>
         </choice>
-        <tran_glyph conn="66,22,3,-1,14">
+        <tran_glyph conn="69,22,3,-1,14">
          <action box="0,-2,14,2"/>
         </tran_glyph>
        </tran>
-       <state_glyph node="66,12,16,13">
+       <state_glyph node="69,12,16,13">
         <entry box="1,2,6,2"/>
         <exit box="1,4,6,2"/>
        </state_glyph>
       </state>
-      <state_glyph node="54,7,141,85">
+      <state name="ValidateRequest">
+       <documentation>/**
+ * @brief   This state checks passed in parameters to the AO and makes sure that
+ * nothing dangerous is being requested, such as writes over memory boundaries or
+ * buffer overflows.
+ *
+ * @param  [in,out] me: Pointer to the state machine
+ * @param  [in,out] e:  Pointer to the event being processed.
+ * @return status: QState type that specifies where the state
+ * machine is going next.
+ */</documentation>
+       <entry>/* Set error code to none.  If any of the checks fail, they'll set the error code */
+me-&gt;errorCode = ERR_NONE;
+
+/* no timer needed in this state since there is no waiting on anyone */
+
+/* Check if the inputs are going to cause any problems. */
+
+/* Make sure the device requested is valid */
+if ( !IS_I2C_DEVICE(me-&gt;iDev) ) {
+    me-&gt;errorCode = ERR_I2C1DEV_INVALID_DEVICE;
+    ERR_printf(&quot;Invalid I2C device: %d. Error: 0x%08x\n&quot;, me-&gt;iDev, me-&gt;errorCode);
+    goto I2CDEV1_VALIDATE_FINISH_TAG;
+}
+
+/* Any request for a totalBytes being zero is definitely wrong.  Attempting to read
+ * or write 0 bytes will cause problems. */
+if( 0 == me-&gt;bytesTotal ) {
+    me-&gt;errorCode = ERR_I2C1DEV_0_BYTE_REQUEST;
+    ERR_printf(&quot;%s Request on %s for a 0 byte access. Error: 0x%08x\n&quot;,
+        I2C_opToStr( me-&gt;i2cDevOp ), I2C_devToStr(me-&gt;iDev), me-&gt;errorCode);
+    goto I2CDEV1_VALIDATE_FINISH_TAG;
+}
+
+/* Make sure the local buffer is not overflowed by the request */
+if( me-&gt;bytesTotal &gt; MAX_I2C_READ_LEN || me-&gt;bytesTotal &gt; MAX_I2C_WRITE_LEN) {
+    me-&gt;errorCode = ERR_I2C1DEV_OVERFLOW_REQUEST;
+    ERR_printf(
+        &quot;%s Request on %s for a %d byte access. Max allowed is %d. Error: 0x%08x\n&quot;,
+        I2C_opToStr( me-&gt;i2cDevOp ), I2C_devToStr(me-&gt;iDev), me-&gt;bytesTotal,
+        ( I2C_OP_MEM_READ == me-&gt;i2cDevOp || I2C_OP_REG_READ == me-&gt;i2cDevOp ) ? MAX_I2C_READ_LEN : MAX_I2C_WRITE_LEN, 
+        me-&gt;errorCode
+    );
+    goto I2CDEV1_VALIDATE_FINISH_TAG;
+}
+
+/* Don't allow reads or writes over the end of the device memory since bad things
+ * can happen, especially with writes. */
+if( ( me-&gt;addrStart + me-&gt;bytesTotal ) &gt; I2C_getMaxMemAddr(me-&gt;iDev) ) {
+    me-&gt;errorCode = ERR_I2C1DEV_ACCESS_OVER_END_OF_DEVICE_MEM;
+    ERR_printf(&quot;%s op for %s access will cross over device mem boundary. Error: 0x%08x\n&quot;,
+        I2C_opToStr( me-&gt;i2cDevOp ),  I2C_devToStr(me-&gt;iDev), 	me-&gt;errorCode);
+    ERR_printf(&quot;Dev min addr: 0x%02x, max addr: 0x%02x, requested start addr: 0x%02x for %d bytes.\n&quot;,
+        I2C_getMinMemAddr(me-&gt;iDev), I2C_getMaxMemAddr(me-&gt;iDev), me-&gt;addrStart, me-&gt;bytesTotal );
+    goto I2CDEV1_VALIDATE_FINISH_TAG;
+}
+
+switch( me-&gt;i2cDevOp ) {
+    case I2C_OP_MEM_READ:  /* Read device memory of I2C device */
+        /* Nothing to be done here */
+        break;
+
+    case I2C_OP_MEM_WRITE:  /* Write device memory of I2C device */
+        /* Only allow writes to writable devices */
+        if ( !IS_I2C_DEVICE_RW(me-&gt;iDev) ) {
+            me-&gt;errorCode = ERR_I2C1DEV_READ_ONLY_DEVICE;
+            ERR_printf(&quot;%s op for %s access attempt to write to RO device. Error: 0x%08x\n&quot;,
+                I2C_opToStr( me-&gt;i2cDevOp ),  I2C_devToStr(me-&gt;iDev), me-&gt;errorCode);
+            goto I2CDEV1_VALIDATE_FINISH_TAG;
+        }
+
+        /* Use the state machine buffer to do a print out of the data we are attempting to
+         * write so  we don't have to have a separate buffer just for that. After printing,
+         * the buffer can be used to do its actual purpose of storing data for when a later
+         * state will send it to be written. */
+
+        /* Figure out the write sizes of pages if number of bytes desired to be written is
+         bigger than the page size. */
+        me-&gt;errorCode = I2C_calcPageWriteSizes(
+            &amp;(me-&gt;writeSizeFirstPage),
+            &amp;(me-&gt;writeSizeLastPage),
+            &amp;(me-&gt;writeTotalPages),
+            me-&gt;addrStart,
+            me-&gt;bytesTotal,
+            I2C_getPageSize( me-&gt;iDev )
+        );
+
+        if( ERR_NONE != me-&gt;errorCode ) {
+            ERR_printf(&quot;%s op for %s write: unable to calculate page writes. Aborting write. Error: 0x%08x\n&quot;,
+                I2C_opToStr( me-&gt;i2cDevOp ),  I2C_devToStr(me-&gt;iDev), me-&gt;errorCode);
+            goto I2CDEV1_VALIDATE_FINISH_TAG;
+        }
+
+        LOG_printf( &quot;write sizes: 1st page: %d, lst page: %d, tot pages: %d\n&quot;,
+            me-&gt;writeSizeFirstPage, me-&gt;writeSizeLastPage, me-&gt;writeTotalPages );
+
+        /* This is the first iteration through the &quot;loop&quot; which writes several pages */
+        me-&gt;writeCurrPage    = 1;
+        me-&gt;writeSizeCurr    = me-&gt;writeSizeFirstPage;
+        me-&gt;writeBufferIndex = 0;
+        me-&gt;writeMemAddrCurr = me-&gt;addrStart;
+
+        DBG_printf(&quot;Writing page %d (%d bytes) out of %d total to addr 0x%02x\n&quot;,
+            me-&gt;writeCurrPage, me-&gt;writeSizeCurr, me-&gt;writeTotalPages, me-&gt;writeMemAddrCurr);
+
+    break;
+
+    case I2C_OP_REG_READ:     /* Intentionally fall through */
+    case I2C_OP_REG_WRITE:
+        /* TODO: these operations may be needed later if any register based devices
+         * on I2C bus are ever added.  For now, this is an error. */
+        me-&gt;errorCode = ERR_UNIMPLEMENTED;
+        ERR_printf(&quot;%s op for %s access is currently unimplemented. Error: 0x%08x\n&quot;,
+            I2C_opToStr( me-&gt;i2cDevOp ),  I2C_devToStr(me-&gt;iDev), me-&gt;errorCode);
+        goto I2CDEV1_VALIDATE_FINISH_TAG;
+        break;
+    default:                 /* Undefined I2C operation. */
+        me-&gt;errorCode = ERR_I2C1DEV_INVALID_OPERATION;
+        ERR_printf(&quot;%d (Unable to translate to string) op for %s is undefined. Error: 0x%08x\n&quot;,
+            me-&gt;i2cDevOp,  I2C_devToStr(me-&gt;iDev), me-&gt;errorCode);
+        goto I2CDEV1_VALIDATE_FINISH_TAG;
+        break;
+}
+
+/* Tag that can be jumped to if an error is encountered or reached naturally */
+I2CDEV1_VALIDATE_FINISH_TAG:
+; // workaround for a label can't be a statement due to a comment after the label
+
+/* Post an event to self to proceed to the next state */
+QEvt *evt = Q_NEW( QEvt, I2C1_DEV_PRIVATE_SIG );
+QACTIVE_POST(AO_I2C1DevMgr, (QEvt *)(evt), me);</entry>
+       <tran trig="I2C1_DEV_PRIVATE">
+        <action>/* Internal signal with no data with it.  Just check if checking inputs for I2C req
+ * produced an error that was recorded */</action>
+        <choice target="../../../../1">
+         <guard>else</guard>
+         <choice_glyph conn="61,22,4,1,3,-35">
+          <action box="0,2,10,2"/>
+         </choice_glyph>
+        </choice>
+        <choice target="../../../11">
+         <guard brief="NoErr?">ERR_NONE == me-&gt;errorCode</guard>
+         <choice_glyph conn="61,22,5,3,5,1,3">
+          <action box="1,-2,10,2"/>
+         </choice_glyph>
+        </choice>
+        <tran_glyph conn="47,22,3,-1,14">
+         <action box="0,-2,14,2"/>
+        </tran_glyph>
+       </tran>
+       <state_glyph node="47,12,16,12">
+        <entry box="1,2,6,2"/>
+       </state_glyph>
+      </state>
+      <state_glyph node="44,7,154,85">
        <entry box="1,2,5,2"/>
        <exit box="1,4,5,2"/>
       </state_glyph>
@@ -848,16 +1005,23 @@ QActive_recall(
 );
 
 DBG_printf(&quot;Back in Idle state.\n&quot;);</entry>
-      <tran trig="I2C1_DEV_RAW_MEM_READ" target="../../0/11">
-       <action>me-&gt;iDev       = ((I2CReadReqEvt const *)e)-&gt;i2cDev;
+      <tran trig="I2C1_DEV_RAW_MEM_READ" target="../../0/12">
+       <action>/* Store all the data from the event and look up a few things */
+
+/* I2C1Dev AO assumes that the addresses that are passed in are already correct
+ * for the device they are being sent for.  Most of access happen via the DB
+ * which does all the work of figuring out the correct addresses and sizes.  If
+ * direct access of I2C1Dev AO is being performed, it's the role of the user to
+ * know the correct addresses. */
+me-&gt;iDev       = ((I2CReadReqEvt const *)e)-&gt;i2cDev;
 me-&gt;addrStart  = ((I2CReadReqEvt const *)e)-&gt;addr;
-me-&gt;bytesTotal = ((I2CReadReqEvt const *)e)-&gt;bytes;
 me-&gt;accessType = ((I2CReadReqEvt const *)e)-&gt;accessType;
+me-&gt;bytesTotal = ((I2CReadReqEvt const *)e)-&gt;bytes;
 me-&gt;addrSize   = I2C_getMemAddrSize(me-&gt;iDev);
 me-&gt;i2cDevOp   = I2C_OP_MEM_READ;
 
-LOG_printf(&quot;Attempt to read %d bytes from %s on from addr 0x%02x via Acc %d\n&quot;,
-    me-&gt;bytesTotal, I2C_devToStr(me-&gt;iDev), me-&gt;addrStart, me-&gt;accessType);
+LOG_printf( &quot;Trying %s op to read %d bytes from dev %s on I2CBus%d to at addr 0x%02x via Acc: %d\n&quot;,
+    I2C_opToStr( me-&gt;i2cDevOp ), me-&gt;bytesTotal, I2C_devToStr(me-&gt;iDev), me-&gt;iDev+1, me-&gt;addrStart, me-&gt;accessType );
 
 /* Allocate a ReadDone evt that will ALWAYS be sent out upon exit of the Busy state
  * for read operations. */
@@ -866,38 +1030,30 @@ me-&gt;i2cReadDoneEvt = Q_NEW(I2CReadDoneEvt, I2C1_DEV_READ_DONE_SIG);
 /* Fill out the fields that won't change or to just safe values in case of failure */
 me-&gt;i2cReadDoneEvt-&gt;i2cDev = me-&gt;iDev;
 me-&gt;i2cReadDoneEvt-&gt;bytes  = 0;</action>
-       <tran_glyph conn="5,15,3,3,61">
+       <tran_glyph conn="5,15,3,3,42">
         <action box="0,-2,23,2"/>
        </tran_glyph>
       </tran>
-      <tran trig="I2C1_DEV_RAW_MEM_WRITE">
+      <tran trig="I2C1_DEV_RAW_MEM_WRITE" target="../../0/12">
        <action>/* Store all the data from the event and look up a few things */
+
+/* I2C1Dev AO assumes that the addresses that are passed in are already correct
+ * for the device they are being sent for.  Most of access happen via the DB
+ * which does all the work of figuring out the correct addresses and sizes.  If
+ * direct access of I2C1Dev AO is being performed, it's the role of the user to
+ * know the correct addresses. */
 me-&gt;iDev       = ((I2CWriteReqEvt const *)e)-&gt;i2cDev;
 me-&gt;addrStart  = ((I2CWriteReqEvt const *)e)-&gt;addr;
-me-&gt;addrSize   = I2C_getMemAddrSize(me-&gt;iDev);
-me-&gt;i2cDevOp   = I2C_OP_MEM_WRITE;
 me-&gt;accessType = ((I2CWriteReqEvt const *)e)-&gt;accessType;
 me-&gt;bytesTotal = ((I2CWriteReqEvt const *)e)-&gt;bytes;
+me-&gt;addrSize   = I2C_getMemAddrSize(me-&gt;iDev);
+me-&gt;i2cDevOp   = I2C_OP_MEM_WRITE;
 
-/* Use the state machine buffer to do a print out of the data we are attempting to
- * write so  we don't have to have a separate buffer just for that. After printing,
- * the buffer can be used to do its actual purpose of storing data for when a later
- * state will send it to be written. */
-
-/* Figure out the write sizes of pages if number of bytes desired to be written is
- bigger than the page size. */
-me-&gt;errorCode = I2C_calcPageWriteSizes(
-    &amp;(me-&gt;writeSizeFirstPage),
-    &amp;(me-&gt;writeSizeLastPage),
-    &amp;(me-&gt;writeTotalPages),
-    me-&gt;addrStart,
-    me-&gt;bytesTotal,
-    I2C_getPageSize( me-&gt;iDev )
-);
-
+/* If we are to print out the data we, need to do it before we copy it to the local
+ * buffer or we'll end up losing it. */
 uint16_t tmpLen = 0;
 CBErrorCode err = CON_hexToStr(
-    (const uint8_t *)me-&gt;dataBuf,        // data to convert
+    ((I2CWriteReqEvt const *)e)-&gt;dataBuf,// data to convert
     me-&gt;bytesTotal,                      // length of data to convert
     (char *)me-&gt;dataBuf,                 // where to write output
     sizeof(me-&gt;dataBuf),                 // max size of output buffer
@@ -907,74 +1063,28 @@ CBErrorCode err = CON_hexToStr(
     true                                 // bPrintX
 );
 
-LOG_printf( &quot;Attempt to write %d bytes to %s at I2C addr 0x%02x\n&quot;,
-    me-&gt;bytesTotal, I2C_devToStr(me-&gt;iDev), me-&gt;addrStart );
+LOG_printf( &quot;Trying %s op to write to dev %s on I2CBus%d to at addr 0x%02x via Acc: %d\n&quot;,
+    I2C_opToStr( me-&gt;i2cDevOp ), I2C_devToStr(me-&gt;iDev), me-&gt;iDev+1, me-&gt;addrStart, me-&gt;accessType );
 if ( ERR_NONE == err ) {
     LOG_printf( &quot;Data to write (%d bytes): %s\n&quot;,
         me-&gt;bytesTotal, me-&gt;dataBuf );
 } else {
-    WRN_printf( &quot;Data to write too big for printing due to buffer size. Not shown\n&quot;,
-        ((I2CBusDataEvt const *)e)-&gt;dataLen );
+    WRN_printf( &quot;Data to write (%d bytes) too big to print due to buffer size (%d). Not shown\n&quot;,
+        ((I2CBusDataEvt const *)e)-&gt;dataLen,  sizeof(me-&gt;dataBuf) );
 }
-LOG_printf( &quot;write sizes: 1st page: %d, lst page: %d, tot pages: %d\n&quot;,
-    me-&gt;writeSizeFirstPage, me-&gt;writeSizeLastPage, me-&gt;writeTotalPages );
 
-/* Now copy the data into the state machine buffer. */
-MEMCPY(
-    me-&gt;dataBuf,
-    ((I2CWriteReqEvt const *)e)-&gt;dataBuf,
-    me-&gt;bytesTotal
-);</action>
-       <choice target="../../../0/11">
-        <guard brief="NoErr?">ERR_NONE == me-&gt;errorCode</guard>
-        <action>/* This is the first iteration through the &quot;loop&quot; which writes several pages */
-me-&gt;writeCurrPage    = 1;
-me-&gt;writeSizeCurr    = me-&gt;writeSizeFirstPage;
-me-&gt;writeBufferIndex = 0;
-me-&gt;writeMemAddrCurr = me-&gt;addrStart;
-
-DBG_printf(&quot;Writing page %d (%d bytes) out of %d total to addr 0x%02x\n&quot;,
-    me-&gt;writeCurrPage, me-&gt;writeSizeCurr, me-&gt;writeTotalPages, me-&gt;writeMemAddrCurr);
+/* This event will disappear after it's handled so the data must be copied to local buffer*/
+MEMCPY( me-&gt;dataBuf, ((I2CWriteReqEvt const *)e)-&gt;dataBuf, me-&gt;bytesTotal );
 
 /* Allocate a WriteDone evt that will ALWAYS be sent out upon exit of the Busy state
  * for write operations. */
 me-&gt;i2cWriteDoneEvt = Q_NEW(I2CWriteDoneEvt, I2C1_DEV_WRITE_DONE_SIG);
 
 /* Fill out the fields that won't change or to just safe values in case of failure */
+me-&gt;i2cWriteDoneEvt-&gt;i2cDev = me-&gt;iDev;
 me-&gt;i2cWriteDoneEvt-&gt;bytes  = 0;
-me-&gt;i2cWriteDoneEvt-&gt;i2cDev = me-&gt;iDev;</action>
-        <choice_glyph conn="32,18,5,3,34">
-         <action box="1,0,10,2"/>
-        </choice_glyph>
-       </choice>
-       <choice target="../..">
-        <guard>else</guard>
-        <action>ERR_printf(&quot;Unable to calculate page boundaries, aborting write. Error: 0x%08x\n&quot;, me-&gt;errorCode);
-I2CWriteDoneEvt *i2cWriteDoneEvt = Q_NEW(I2CWriteDoneEvt, I2C1_DEV_WRITE_DONE_SIG);
-i2cWriteDoneEvt-&gt;status = me-&gt;errorCode;
-i2cWriteDoneEvt-&gt;bytes = 0;
-i2cWriteDoneEvt-&gt;i2cDev = me-&gt;iDev;
-
-if ( ACCESS_FREERTOS == me-&gt;accessType ) {
-#if CPLR_APP
-    /* Post directly to the &quot;raw&quot; queue for FreeRTOS task to read */
-    QEQueue_postFIFO(&amp;CPLR_evtQueue, (QEvt *)me-&gt;i2cReadDoneEvt);
-    vTaskResume( xHandle_CPLR );
-#elif CPLR_BOOT
-    /* Publish the event so other AOs can get it if they want */
-    QF_PUBLISH((QEvt *)me-&gt;i2cReadDoneEvt, AO_I2C1DevMgr);
-#else
-#error &quot;Invalid build.  CPLR_APP or CPLR_BOOT must be specified&quot;
-#endif
-} else {
-    /* Publish the event so other AOs can get it if they want */
-    QF_PUBLISH((QEvt *)me-&gt;i2cReadDoneEvt, AO_I2C1DevMgr);
-}</action>
-        <choice_glyph conn="32,18,4,1,7,-6">
-         <action box="-5,2,6,2"/>
-        </choice_glyph>
-       </choice>
-       <tran_glyph conn="5,18,3,-1,27">
+</action>
+       <tran_glyph conn="5,18,3,3,42">
         <action box="0,-2,22,2"/>
        </tran_glyph>
       </tran>
@@ -982,7 +1092,7 @@ if ( ACCESS_FREERTOS == me-&gt;accessType ) {
        <entry box="1,2,5,2"/>
       </state_glyph>
      </state>
-     <state_glyph node="3,3,194,91">
+     <state_glyph node="3,3,196,91">
       <entry box="1,2,6,2"/>
      </state_glyph>
     </state>

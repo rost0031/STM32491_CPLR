@@ -61,7 +61,7 @@ APIError_t CMD_runRamTest( ClientApi* client )
                << dec;
       }
    } else {
-      ss << "Unable to finish memory test of external RAM of DC3 due to API error: "
+      ss << "Unable to complete memory test of external RAM of DC3 due to API error: "
             << "0x" << setw(8) << setfill('0') << std::hex << statusAPI << std::dec;
    }
 
@@ -97,7 +97,7 @@ APIError_t CMD_runGetMode(
       }
 
    } else {
-      ss << "Unable to finish get_mode cmd to DC3 due to API error: "
+      ss << "Unable to complete get_mode cmd to DC3 due to API error: "
             << "0x" << setw(8) << setfill('0') << hex << statusAPI << dec;
    }
 
@@ -132,7 +132,7 @@ APIError_t CMD_runSetMode(
          ss << "FAILED with ERROR: 0x" << setw(8) << setfill('0') << hex << *statusDC3 << dec;
       }
    } else {
-      ss << "Unable to finish set_mode cmd to DC3 due to API error: "
+      ss << "Unable to complete set_mode cmd to DC3 due to API error: "
             << "0x" << setw(8) << setfill('0') << hex << statusAPI << dec;
    }
 
@@ -173,7 +173,7 @@ APIError_t CMD_runFlash(
          ss << "FAILED with ERROR: 0x" << setw(8) << setfill('0') << hex << *statusDC3 << dec;
       }
    } else {
-      ss << "Unable to finish flash cmd to DC3 due to API error: "
+      ss << "Unable to complete flash cmd to DC3 due to API error: "
             << "0x" << setw(8) << setfill('0') << hex << statusAPI << dec;
    }
 
@@ -183,6 +183,45 @@ APIError_t CMD_runFlash(
    return( statusAPI );
 }
 
+/******************************************************************************/
+APIError_t CMD_runReadI2C(
+      ClientApi* client,
+      CBErrorCode* statusDC3,
+      uint16_t* pBytesRead,
+      uint8_t* pBuffer,
+      const size_t nMaxBufferSize,
+      const size_t nBytesToRead,
+      const size_t nStart,
+      const CBI2CDevices dev,
+      const CBAccessType acc
+)
+{
+   APIError_t statusAPI = API_ERR_NONE;
+
+   CON_print("*** Starting read_i2c cmd to read an I2C device on DC3... ***");
+
+   stringstream ss;
+   ss << "*** "; // Prepend so start and end of command output are easily visible
+
+   // Execute (and block) on this command
+   if( API_ERR_NONE == (statusAPI = client->DC3_readI2C( statusDC3, pBytesRead,
+            pBuffer, nMaxBufferSize, nBytesToRead, nStart, dev, acc) )) {
+      ss << "Finished read_i2c cmd. Command ";
+      if (ERR_NONE == *statusDC3) {
+         ss << "completed with no errors. DC3 ";
+      } else {
+         ss << "FAILED with ERROR: 0x" << setw(8) << setfill('0') << hex << *statusDC3 << dec;
+      }
+   } else {
+      ss << "Unable to complete read_i2c cmd to DC3 due to API error: "
+            << "0x" << setw(8) << setfill('0') << hex << statusAPI << dec;
+   }
+
+   ss << " ***"; // Append so start and end of command output are easily visible
+   CON_print(ss.str());                                      // output to screen
+
+   return( statusAPI );
+}
 /* Private class prototypes --------------------------------------------------*/
 /* Private classes -----------------------------------------------------------*/
 

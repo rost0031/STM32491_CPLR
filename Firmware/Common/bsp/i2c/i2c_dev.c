@@ -170,14 +170,23 @@ const I2C_Bus_t I2C_getBus( const I2C_Dev_t iDev )
 /******************************************************************************/
 const char* const I2C_devToStr( const I2C_Dev_t iDev )
 {
-   /* Check inputs */
-   assert_param( IS_I2C_DEVICE( iDev ) );
-
    switch ( iDev ) {
       case EEPROM: return("EEPROM"); break;
       case SN_ROM: return("SN_ROM"); break;
       case EUI_ROM: return("EUI_ROM"); break;
       default: return(""); break;
+   }
+}
+
+/******************************************************************************/
+const char* const I2C_opToStr( const I2C_Operation_t iOp )
+{
+   switch ( iOp ) {
+      case I2C_OP_MEM_READ: return("I2C_MEM_READ"); break;
+      case I2C_OP_MEM_WRITE: return("I2C_MEM_WRITE"); break;
+      case I2C_OP_REG_READ: return("I2C_REG_READ"); break;
+      case I2C_OP_REG_WRITE: return("I2C_REG_WRITE"); break;
+      default: return("Invalid I2C operation"); break;
    }
 }
 

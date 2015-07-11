@@ -16,6 +16,7 @@
 /* Includes ------------------------------------------------------------------*/
 /* System includes */
 #include <cstring>
+#include <typeinfo>
 
 /* Boost includes */
 #include <boost/algorithm/string.hpp>
@@ -203,6 +204,56 @@ template<typename T> bool ARG_parseEnumStr(
    } catch (exception& e) {
       throw;
    }
+   return false;
+}
+
+/**
+ * @brief   A template function that can parse any enum
+ *
+ * @note:   Parsable enums must have associated maps created in the *.cpp file.
+ *
+ * @throw <std::exception> if passed in string is not found in the map of
+ * allowed strings for a given enum type.
+ *
+ * @param [in] arg: argument name of the "arg=value" pair.
+ * @param [in] cmd: parsed command.  Used for printing cmd specific help.
+ * @param [in] appName: application name. Used for printing cmd specific help.
+ * @param [in] args: vector of arguments for the parsed command.  Derived from
+ * the program options vm map.
+ *
+ * @return  T value: enumeration of type T that was parsed
+ */
+template<typename T> bool ARG_parseNumStr(
+      T* value,
+      const string& arg,
+      const string& cmd,
+      const string& appName,
+      const vector<string>& args
+)
+{
+   // Extract the value from the arg=value pair
+   string valueStr = "";
+   bool isExtracted = ARG_getValue( valueStr, arg, args );
+
+   if( !isExtracted ) {   // if error happened, print cmd specific help and exit
+      HELP_printCmdSpecific( cmd, appName );
+   }
+
+   if ( ( typeid(T) == typeid( int ) ) || ( typeid(T) == typeid( unsigned int ) ) ||
+        ( typeid(T) == typeid( uint8_t ) ) || ( typeid(T) == typeid( uint16_t ) ) ||
+        ( typeid(T) == typeid( uint32_t ) ) || ( typeid(T) == typeid( int8_t ) )  ||
+        ( typeid(T) == typeid( int16_t ) )|| ( typeid(T) == typeid( int32_t ) ) ||
+        ( typeid(T) == typeid( size_t ) )
+      ) {
+      if( (valueStr.find_first_not_of( "0123456789" ) != string::npos) ) {
+         std::stringstream ss;
+         ss << "Input '"<< arg << "=" << valueStr << "' is not numeric as expected";
+         throw std::invalid_argument(ss.str());
+      }
+      *value = atoi(valueStr.c_str());
+      return true;
+   }
+
    return false;
 }
 

@@ -1039,8 +1039,37 @@ static QState SysMgr_BootLdrBuildDTCheck(SysMgr * const me, QEvt const * const e
                 me->errorCode = DB_checkDTMatch( ((I2CReadDoneEvt const *) e)->dataBuf, (uint8_t *)BUILD_DATE );
                 /* ${AOs::SysMgr::SM::Active::Busy::AccessingDB::BootLdrBuildDTCh~::I2C1_DEV_READ_DO~::[NoError?]::[DatetimeDiff?]} */
                 if (ERR_NONE != me->errorCode) {
-                    WRN_printf("Bootloader datetime mismatch. DB: %s, Compiled: %s\n",
-                        ((I2CReadDoneEvt const *) e)->dataBuf, BUILD_DATE
+                    WRN_printf("Bootloader datetime mismatch.\n");
+
+                    uint16_t tmpLen = 0;
+                    CON_hexToStr(
+                        ((I2CReadDoneEvt const *) e)->dataBuf, // data to convert
+                        ((I2CReadDoneEvt const *) e)->bytes, // length of data to convert
+                        (char *)me->dataBuf,                 // where to write output
+                        sizeof(me->dataBuf),                 // max size of output buffer
+                        &tmpLen,                             // size of the resulting output
+                        0,                                   // no columns
+                        ' ',                                 // separator
+                        false                                // bPrintX
+                    );
+
+                    WRN_printf("In DB:    bytes: %s, string: %s\n",
+                        me->dataBuf, ((I2CReadDoneEvt const *) e)->dataBuf
+                    );
+
+                    CON_hexToStr(
+                        (uint8_t *)BUILD_DATE,               // data to convert
+                        strlen(BUILD_DATE),                  // length of data to convert
+                        (char *)me->dataBuf,                 // where to write output
+                        sizeof(me->dataBuf),                 // max size of output buffer
+                        &tmpLen,                             // size of the resulting output
+                        0,                                   // no columns
+                        ' ',                                 // separator
+                        false                                 // bPrintX
+                    );
+
+                    WRN_printf("Compiled: bytes: %s, string: %s\n",
+                        me->dataBuf, BUILD_DATE
                     );
                     status_ = Q_TRAN(&SysMgr_SetBootLdrDatetime);
                 }

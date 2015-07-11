@@ -721,8 +721,37 @@ if ( ERR_NONE == me-&gt;errorCode ) {
           <action>me-&gt;errorCode = DB_checkDTMatch( ((I2CReadDoneEvt const *) e)-&gt;dataBuf, (uint8_t *)BUILD_DATE );</action>
           <choice target="../../../../11">
            <guard brief="DatetimeDiff?">ERR_NONE != me-&gt;errorCode</guard>
-           <action>WRN_printf(&quot;Bootloader datetime mismatch. DB: %s, Compiled: %s\n&quot;, 
-    ((I2CReadDoneEvt const *) e)-&gt;dataBuf, BUILD_DATE
+           <action>WRN_printf(&quot;Bootloader datetime mismatch.\n&quot;);
+
+uint16_t tmpLen = 0;
+CON_hexToStr(
+    ((I2CReadDoneEvt const *) e)-&gt;dataBuf, // data to convert
+    ((I2CReadDoneEvt const *) e)-&gt;bytes, // length of data to convert
+    (char *)me-&gt;dataBuf,                 // where to write output
+    sizeof(me-&gt;dataBuf),                 // max size of output buffer
+    &amp;tmpLen,                             // size of the resulting output
+    0,                                   // no columns
+    ' ',                                 // separator
+    false                                // bPrintX
+);
+
+WRN_printf(&quot;In DB:    bytes: %s, string: %s\n&quot;,
+    me-&gt;dataBuf, ((I2CReadDoneEvt const *) e)-&gt;dataBuf
+);
+
+CON_hexToStr(
+    (uint8_t *)BUILD_DATE,               // data to convert
+    strlen(BUILD_DATE),                  // length of data to convert
+    (char *)me-&gt;dataBuf,                 // where to write output
+    sizeof(me-&gt;dataBuf),                 // max size of output buffer
+    &amp;tmpLen,                             // size of the resulting output
+    0,                                   // no columns
+    ' ',                                 // separator
+    false                                 // bPrintX
+);
+
+WRN_printf(&quot;Compiled: bytes: %s, string: %s\n&quot;,
+    me-&gt;dataBuf, BUILD_DATE
 );</action>
            <choice_glyph conn="97,40,5,3,16,-12,3">
             <action box="1,-2,9,2"/>

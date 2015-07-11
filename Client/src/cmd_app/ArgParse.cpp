@@ -55,6 +55,25 @@ template<> std::map<CBMsgRoute, std::vector<std::string>> allowedStrings<CBMsgRo
       { _CB_EthCli  , {"cli", "cli_eth", "client_eth", "client_ethernet", "eth_cli", "ethernet_client", "eth_client"} }
 };
 
+/**
+ * @brief All allowed strings for specifying CBI2CDevices enums
+ */
+template<> std::map<CBI2CDevices, std::vector<std::string>> allowedStrings<CBI2CDevices>::m_allowedStrings = {
+      { _CB_EEPROM   , {"eeprom","eprom"} },
+      { _CB_SNROM   , {"snrom", "sn", "ser_rom", "srom", "serial_rom", "serial_number_rom", } },
+      { _CB_EUIROM  , {"euirom", "eui", "ui", "uie", "uierom", "eurom", "uirom", } },
+};
+
+/**
+ * @brief All allowed strings for specifying CBAccessType enums
+ */
+template<> std::map<CBAccessType, std::vector<std::string>> allowedStrings<CBAccessType>::m_allowedStrings = {
+      { _CB_ACCESS_BARE, {"b", "bare","metal", "bare_metal", "baremetal"} },
+      { _CB_ACCESS_QPC , {"q", "qp", "qpc", } },
+      { _CB_ACCESS_FRT , {"f", "fr", "frt", "freertos", "frtos", "free", } },
+
+};
+
 /* Private function prototypes -----------------------------------------------*/
 /* Private functions ---------------------------------------------------------*/
 

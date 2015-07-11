@@ -135,6 +135,13 @@ typedef enum CBErrors
    ERR_I2C1DEV_ACK_DIS_TIMEOUT                                 = 0x00070008,
    ERR_I2C1DEV_ACK_EN_TIMEOUT                                  = 0x00070009,
    ERR_I2C1DEV_MEM_OUT_BOUNDS                                  = 0x0007000A,
+   ERR_I2C1DEV_0_BYTE_REQUEST                                  = 0x0007000B,
+   ERR_I2C1DEV_OVERFLOW_REQUEST                                = 0x0007000C,
+   ERR_I2C1DEV_INVALID_DEVICE                                  = 0x0007000D,
+   ERR_I2C1DEV_READ_ONLY_DEVICE                                = 0x0007000E,
+   ERR_I2C1DEV_ACCESS_OVER_END_OF_DEVICE_MEM                   = 0x0007000F,
+   ERR_I2C1DEV_INVALID_OPERATION                               = 0x00070010,
+
 
    /* Settings Database error category           0x00080000 - 0x0008FFFF */
    ERR_DB_NOT_INIT                                             = 0x00080000,
