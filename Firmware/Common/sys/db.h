@@ -302,49 +302,6 @@ const CBErrorCode DB_readEEPROM(
 );
 
 /**
- * @brief   Checks if the passed in db magic word matches the compiled in one.
- *
- * This function simply checks if the compiled in DB magic word matches the one
- * passed in as a parameter.
- * @param  [in] dbMagicWord: uint32_t magic number
- * @return CBErrorCode: status of the read operation
- *    @arg ERR_NONE: if no errors occurred
- *    @arg ERR_DB_NOT_INIT: if there is a mismatch
- */
-const CBErrorCode DB_isMagicWordValid( const uint32_t dbMagicWord );
-
-/**
- * @brief   Checks if the passed in db version matches the compiled in one.
- *
- * This function simply checks if the compiled in DB version matches the one
- * passed in as a parameter.
-
- * @param  [in] dbMagicWord: uint32_t magic number
- * @return CBErrorCode: status of the read operation
- *    @arg ERR_NONE: if no errors occurred
- *    @arg ERR_DB_NOT_INIT: if there is a mismatch
- */
-const CBErrorCode DB_isVersionValid( const uint16_t dbVersion );
-
-/**
- * @brief   Checks if the passed in db version matches the compiled in one.
- *
- * This function simply checks if the compiled in DB version matches the one
- * passed in as a parameter.
- * @param  [in] dt1: uint8_t pointer to array of CB_DATETIME_LEN length that
- * contains the first datetime string.
- * @param  [in] dt2: uint8_t pointer to array of CB_DATETIME_LEN length that
- * contains the second datetime string.
- * @return CBErrorCode: status of the read operation
- *    @arg ERR_NONE: if exact match
- *    @other errors if differences found
- */
-const CBErrorCode DB_checkDTMatch(
-      const uint8_t* const dt1,
-      const uint8_t* const dt2
-);
-
-/**
  * @brief   Checks 2 arrays of same length to see if their contents match.
  *
  * This function simply checks if 2 arrays of the same length have the same

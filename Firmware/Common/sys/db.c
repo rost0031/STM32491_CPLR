@@ -421,46 +421,6 @@ const CBErrorCode DB_readEEPROM(
 }
 
 /******************************************************************************/
-const CBErrorCode DB_isMagicWordValid( const uint32_t dbMagicWord )
-{
-   CBErrorCode status = ERR_NONE;            /* keep track of success/failure */
-
-   if ( dbMagicWord != DB_MAGIC_WORD_DEF ) {
-      status = ERR_DB_NOT_INIT;
-   }
-
-   return( status );
-}
-
-/******************************************************************************/
-const CBErrorCode DB_isVersionValid( const uint16_t dbVersion )
-{
-   CBErrorCode status = ERR_NONE;            /* keep track of success/failure */
-
-   if ( dbVersion != DB_VERSION_DEF ) {
-      status = ERR_DB_NOT_INIT;
-   }
-
-   return( status );
-}
-
-/******************************************************************************/
-const CBErrorCode DB_checkDTMatch(
-      const uint8_t* const dt1,
-      const uint8_t* const dt2
-)
-{
-   for(uint8_t i = CB_DATETIME_LEN - 1; i != 0; i-- ) {
-      if (dt1[i] != dt2[i]) {
-         ERR_printf("dt1[%d]: %c dt2[%d]: %c\n", i, dt1[i], i, dt2[i]);
-         return ERR_DB_DATETIME_MISMATCH;
-      }
-   }
-
-   return ERR_NONE;
-}
-
-/******************************************************************************/
 const bool DB_isArraysMatch(
       const uint8_t*  dt1,
       const uint8_t*  dt2,
