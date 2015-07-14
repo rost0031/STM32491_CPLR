@@ -352,8 +352,9 @@ int main(int argc, char *argv[])
          try {                      // Extract the value from the arg=value pair
             ARG_parseEnumStr( &dev, "dev", m_parsed_cmd, appName,
                   m_vm[m_parsed_cmd].as<vector<string>>() );
-            ARG_parseEnumStr( &acc, "acc", m_parsed_cmd, appName,
-                  m_vm[m_parsed_cmd].as<vector<string>>() );
+            // This call passes in a default value for an optional argument
+            ARG_parseEnumStr( &acc, _CB_ACCESS_QPC, "acc", m_parsed_cmd,
+                  appName, m_vm[m_parsed_cmd].as<vector<string>>() );
             ARG_parseNumStr( &start, "start", m_parsed_cmd, appName,
                   m_vm[m_parsed_cmd].as<vector<string>>() );
             ARG_parseNumStr( &bytes, "bytes", m_parsed_cmd, appName,
@@ -363,13 +364,13 @@ int main(int argc, char *argv[])
             HELP_printCmdSpecific( m_parsed_cmd, appName );
          }
 
-         // Check if everything has been parsed correctly
+         // Don't allow negatives in our numeric input
          if ( start < 0 ) {
             ERR_out << "Invalid start specified: " << start;
-               HELP_printCmdSpecific( m_parsed_cmd, appName );
+            HELP_printCmdSpecific( m_parsed_cmd, appName );
          } else if ( bytes < 0 ) {
             ERR_out << "Invalid number of bytes specified: " << bytes;
-               HELP_printCmdSpecific( m_parsed_cmd, appName );
+            HELP_printCmdSpecific( m_parsed_cmd, appName );
          }
 
          DBG_out << "Issuing read_i2c cmd with start=" << start
@@ -381,17 +382,9 @@ int main(int argc, char *argv[])
          uint8_t *buffer = new uint8_t[nMaxBufferSize];
          uint16_t bytesRead = 0;
 
-         status = CMD_runReadI2C(
-               client,
-               &statusDC3,
-               &bytesRead,
-               buffer,
-               nMaxBufferSize,
-               bytes,
-               start,
-               dev,
-               acc
-         );
+         status = CMD_runReadI2C( client, &statusDC3, &bytesRead, buffer,
+               nMaxBufferSize, bytes, start, dev, acc );
+
          delete[] buffer;
 
       } else if (m_vm.count("write_i2c")) {           // "read_i2c" cmd handling
@@ -404,107 +397,136 @@ int main(int argc, char *argv[])
          int bytes = -1, start = -1;
          CBI2CDevices dev = _CB_MaxI2CDev;
          CBAccessType acc = _CB_ACCESS_QPC;       // set to a default arg of QPC
-         uint8_t *data;
+
          string value = "";
 
-         // Get the "bytes" arg and make sure it's numeric
-         UTIL_getArgValue( value, "bytes", m_parsed_cmd, appName, m_vm );
-         if( (value.find_first_not_of( "0123456789" ) != string::npos) ) {
-            ERR_out << "ERROR: only numbers are allowed for this argument. "
-                  "Got: bytes=" << value;
-            HELP_printCmdSpecific( m_parsed_cmd, appName );
-         }
-         bytes = atoi(value.c_str());
-         if ( 0 > bytes && 128 < bytes ) {
-            ERR_out << "Invalid range for bytes: " << bytes << " is not between 0 and 128";
-            HELP_printCmdSpecific( m_parsed_cmd, appName );
-         }
-
-         // Get the "start" arg and make sure it's numeric
-         UTIL_getArgValue( value, "start", m_parsed_cmd, appName, m_vm );
-         if( (value.find_first_not_of( "0123456789" ) != string::npos) ) {
-            ERR_out << "ERROR: only numbers are allowed for this argument. "
-                  "Got: start=" << value;
-            HELP_printCmdSpecific( m_parsed_cmd, appName );
-         }
-         start = atoi(value.c_str());
-         if ( 0 > start && 128 < start ) {
-            ERR_out << "Invalid range for start: " << start << " is not between 0 and 128";
+         try {                      // Extract the value from the arg=value pair
+            ARG_parseEnumStr( &dev, "dev", m_parsed_cmd, appName,
+                  m_vm[m_parsed_cmd].as<vector<string>>() );
+            // This call passes in a default value for an optional argument
+            ARG_parseEnumStr( &acc, _CB_ACCESS_QPC, "acc", m_parsed_cmd,
+                  appName, m_vm[m_parsed_cmd].as<vector<string>>() );
+            ARG_parseNumStr( &start, "start", m_parsed_cmd, appName,
+                  m_vm[m_parsed_cmd].as<vector<string>>() );
+            ARG_parseNumStr( &bytes, "bytes", m_parsed_cmd, appName,
+                  m_vm[m_parsed_cmd].as<vector<string>>() );
+         } catch (exception& e) {
+            ERR_out << "Caught exception parsing arguments: " << e.what();
             HELP_printCmdSpecific( m_parsed_cmd, appName );
          }
 
-         // Get the "dev" arg and make sure it's one of the I2C devices
-         UTIL_getArgValue( value, "dev", m_parsed_cmd, appName, m_vm );
-         if( 0 == value.compare("EEPROM") ) {
-            dev = _CB_EEPROM;
-         } else {
-            ERR_out << "ERROR: can only write to I2C device: "
-                  << enumToString(_CB_EEPROM);
-            HELP_printCmdSpecific( m_parsed_cmd, appName );
-         }
-
-         // Get the "acc" arg and make sure it's one of the I2C devices.  This
-         // is an optional arg so keep the default if user didn't specify.
-         if( UTIL_getArgValue( value, "acc", m_parsed_cmd, appName, m_vm ) ) {
-            if( 0 == value.compare("QPC") ) {
-               acc = _CB_ACCESS_QPC;
-            } else if ( 0 == value.compare("FRT") ) {
-               acc = _CB_ACCESS_FRT;
-            } else if ( 0 == value.compare("BARE") ) {
-               acc = _CB_ACCESS_BARE;
-            } else {
-               ERR_out << "ERROR: device access must be one of: "
-                     << enumToString(_CB_ACCESS_QPC) << ", "
-                     << enumToString(_CB_ACCESS_FRT) << ", or "
-                     << enumToString(_CB_ACCESS_BARE);
-               HELP_printCmdSpecific( m_parsed_cmd, appName );
-            }
-         }
-
-         // Check if everything has been parsed correctly
-         if ( dev == _CB_EEPROM ) {
-            if ( (start + bytes) > 128 ) {
-               ERR_out << "Read range requested will attempt to read past the device boundary";
-               HELP_printCmdSpecific( m_parsed_cmd, appName );
-            }
-         } else if ( start < 0 ) {
+         // Don't allow negatives in our numeric input
+         if ( start < 0 ) {
             ERR_out << "Invalid start specified: " << start;
-               HELP_printCmdSpecific( m_parsed_cmd, appName );
+            HELP_printCmdSpecific( m_parsed_cmd, appName );
          } else if ( bytes < 0 ) {
             ERR_out << "Invalid number of bytes specified: " << bytes;
-               HELP_printCmdSpecific( m_parsed_cmd, appName );
+            HELP_printCmdSpecific( m_parsed_cmd, appName );
          }
+
+         // create a default array and fill it number of bytes user requested
+         uint8_t *data = new uint8_t[bytes];
+         for (uint8_t i = 0; i < bytes; i++ ) {
+            data[i] = i;
+         }
+
+//         // Get the "bytes" arg and make sure it's numeric
+//         UTIL_getArgValue( value, "bytes", m_parsed_cmd, appName, m_vm );
+//         if( (value.find_first_not_of( "0123456789" ) != string::npos) ) {
+//            ERR_out << "ERROR: only numbers are allowed for this argument. "
+//                  "Got: bytes=" << value;
+//            HELP_printCmdSpecific( m_parsed_cmd, appName );
+//         }
+//         bytes = atoi(value.c_str());
+//         if ( 0 > bytes && 128 < bytes ) {
+//            ERR_out << "Invalid range for bytes: " << bytes << " is not between 0 and 128";
+//            HELP_printCmdSpecific( m_parsed_cmd, appName );
+//         }
+//
+//         // Get the "start" arg and make sure it's numeric
+//         UTIL_getArgValue( value, "start", m_parsed_cmd, appName, m_vm );
+//         if( (value.find_first_not_of( "0123456789" ) != string::npos) ) {
+//            ERR_out << "ERROR: only numbers are allowed for this argument. "
+//                  "Got: start=" << value;
+//            HELP_printCmdSpecific( m_parsed_cmd, appName );
+//         }
+//         start = atoi(value.c_str());
+//         if ( 0 > start && 128 < start ) {
+//            ERR_out << "Invalid range for start: " << start << " is not between 0 and 128";
+//            HELP_printCmdSpecific( m_parsed_cmd, appName );
+//         }
+//
+//         // Get the "dev" arg and make sure it's one of the I2C devices
+//         UTIL_getArgValue( value, "dev", m_parsed_cmd, appName, m_vm );
+//         if( 0 == value.compare("EEPROM") ) {
+//            dev = _CB_EEPROM;
+//         } else {
+//            ERR_out << "ERROR: can only write to I2C device: "
+//                  << enumToString(_CB_EEPROM);
+//            HELP_printCmdSpecific( m_parsed_cmd, appName );
+//         }
+
+//         // Get the "acc" arg and make sure it's one of the I2C devices.  This
+//         // is an optional arg so keep the default if user didn't specify.
+//         if( UTIL_getArgValue( value, "acc", m_parsed_cmd, appName, m_vm ) ) {
+//            if( 0 == value.compare("QPC") ) {
+//               acc = _CB_ACCESS_QPC;
+//            } else if ( 0 == value.compare("FRT") ) {
+//               acc = _CB_ACCESS_FRT;
+//            } else if ( 0 == value.compare("BARE") ) {
+//               acc = _CB_ACCESS_BARE;
+//            } else {
+//               ERR_out << "ERROR: device access must be one of: "
+//                     << enumToString(_CB_ACCESS_QPC) << ", "
+//                     << enumToString(_CB_ACCESS_FRT) << ", or "
+//                     << enumToString(_CB_ACCESS_BARE);
+//               HELP_printCmdSpecific( m_parsed_cmd, appName );
+//            }
+//         }
+
+//         // Check if everything has been parsed correctly
+//         if ( dev == _CB_EEPROM ) {
+//            if ( (start + bytes) > 128 ) {
+//               ERR_out << "Read range requested will attempt to read past the device boundary";
+//               HELP_printCmdSpecific( m_parsed_cmd, appName );
+//            }
+//         } else if ( start < 0 ) {
+//            ERR_out << "Invalid start specified: " << start;
+//               HELP_printCmdSpecific( m_parsed_cmd, appName );
+//         } else if ( bytes < 0 ) {
+//            ERR_out << "Invalid number of bytes specified: " << bytes;
+//               HELP_printCmdSpecific( m_parsed_cmd, appName );
+//         }
 
          DBG_out << "Issuing write_i2c cmd with start=" << start
                << " bytes=" << bytes
                << " to dev=" << enumToString(dev)
                << " with acc=" << enumToString(acc) << "...";
 
-         data = new uint8_t[bytes];
+         status = CMD_runWriteI2C( client, &statusDC3, data, bytes,
+               start, dev, acc );
 
-         for (uint8_t i = 0; i < bytes; i++ ) {
-            data[i] = i;
-         }
-         status = client->DC3_writeI2C(
-               &statusDC3, data,
-               bytes, start, dev, acc
-         );
+
+//         status = client->DC3_writeI2C(
+//               &statusDC3, data,
+//               bytes, start, dev, acc
+//         );
 
          delete[] data;
 
-         if( API_ERR_NONE == status) {
-            ss.clear();
-            ss << "Writing of I2C device on DC3 ";
-            if (ERR_NONE == statusDC3) {
-               ss << "completed successfully." << endl;
-            } else {
-               ss << "FAILED with ERROR: 0x" << setw(8) << setfill('0') << hex << statusDC3 << dec;
-            }
-            CON_print(ss.str());
-         } else {
-            ERR_out << "Got client error " << "0x" << std::hex
-                  << status << std::dec << " when trying to read I2C.";
-         }
+//         if( API_ERR_NONE == status) {
+//            ss.clear();
+//            ss << "Writing of I2C device on DC3 ";
+//            if (ERR_NONE == statusDC3) {
+//               ss << "completed successfully." << endl;
+//            } else {
+//               ss << "FAILED with ERROR: 0x" << setw(8) << setfill('0') << hex << statusDC3 << dec;
+//            }
+//            CON_print(ss.str());
+//         } else {
+//            ERR_out << "Got client error " << "0x" << std::hex
+//                  << status << std::dec << " when trying to read I2C.";
+//         }
 
       } else if (m_vm.count("ram_test")) {            // "ram_test" cmd handling
          m_parsed_cmd = "ram_test";

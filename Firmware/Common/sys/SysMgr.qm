@@ -533,12 +533,24 @@ if ( ERR_NONE == me-&gt;errorCode ) {
     } else {
         MEMCPY(me-&gt;dataBuf, ((I2CReadDoneEvt const *) e)-&gt;dataBuf, me-&gt;dataLen);
     }
-}</action>
+}
+
+DBG_printf(&quot;Got I2C1_DEV_READ_DONE\n&quot;);</action>
          <choice>
           <guard brief="NoError?">ERR_NONE == me-&gt;errorCode</guard>
-          <action>uint32_t dbMagicWord = 0;
-MEMCPY( &amp;dbMagicWord, ((I2CReadDoneEvt const *)e)-&gt;dataBuf, ((I2CReadDoneEvt const *)e)-&gt;bytes );
-me-&gt;errorCode = DB_isMagicWordValid( dbMagicWord );
+          <action>/* Can't use defines directly.  Have to copy them to a real location first */
+uint32_t dbMagicWord = DB_MAGIC_WORD_DEF;
+
+DBG_printf(&quot;Checking DB magic word...\n&quot;);
+if( !DB_isArraysMatch(
+    ((I2CReadDoneEvt const *) e)-&gt;dataBuf,
+    (uint8_t *)&amp;dbMagicWord,
+    ((I2CReadDoneEvt const *) e)-&gt;bytes ) ) {
+    /* If the check fails, set the error code */
+    me-&gt;errorCode = ERR_DB_NOT_INIT;
+}
+
+
 
 
 
@@ -546,8 +558,23 @@ me-&gt;errorCode = DB_isMagicWordValid( dbMagicWord );
 </action>
           <choice target="../../../../7">
            <guard>else</guard>
-           <action>WRN_printf(&quot;Invalid DB magic word; expected: 0x%08x read: 0x%08x. Resetting DB. Error: 0x%08x\n&quot;,
-    DB_MAGIC_WORD_DEF, dbMagicWord, me-&gt;errorCode);
+           <action>WRN_printf(&quot;Invalid DB magic word.\n&quot;);
+WRN_printf(&quot;Compiled: bytes: %x\n&quot;, DB_MAGIC_WORD_DEF );
+
+uint16_t tmpLen = 0;
+CON_hexToStr(
+    ((I2CReadDoneEvt const *) e)-&gt;dataBuf, // data to convert
+    ((I2CReadDoneEvt const *) e)-&gt;bytes, // length of data to convert
+    (char *)me-&gt;dataBuf,                 // where to write output
+    sizeof(me-&gt;dataBuf),                 // max size of output buffer
+    &amp;tmpLen,                             // size of the resulting output
+    0,                                   // no columns
+    ' ',                                 // separator
+    false                                // bPrintX
+);
+
+WRN_printf(&quot;In DB   : bytes: %s\n&quot;, me-&gt;dataBuf );
+
 
 /* Need to reset the DB */</action>
            <choice_glyph conn="43,49,5,3,17,-11,2">
@@ -592,12 +619,14 @@ me-&gt;errorCode = DB_isMagicWordValid( dbMagicWord );
  */</documentation>
         <entry>WRN_printf(&quot;Resetting DB magic word to default...\n&quot;);
 
+uint32_t dbMagicWord = DB_MAGIC_WORD_DEF;
+
 /* Post to SysMgr to set the build datetime since it doesn't match the compiled one */
 DBWriteReqEvt *evt = Q_NEW(DBWriteReqEvt, DB_WRITE_SIG);
 evt-&gt;accessType = ACCESS_QPC;
 evt-&gt;dbElem = DB_MAGIC_WORD;
 evt-&gt;dataLen =  DB_getElemSize(DB_MAGIC_WORD);
-MEMCPY(evt-&gt;dataBuf, (uint8_t *)DB_MAGIC_WORD_DEF,evt-&gt;dataLen);
+MEMCPY(evt-&gt;dataBuf, (uint8_t *)&amp;dbMagicWord, evt-&gt;dataLen);
 QACTIVE_POST(AO_SysMgr, (QEvt *)(evt), me);</entry>
         <tran trig="DB_OP_DONE" target="../../10">
          <tran_glyph conn="64,40,2,0,12">
@@ -661,7 +690,7 @@ me-&gt;errorCode = DB_isVersionValid( dbVersion );
           </choice>
           <choice target="../../../../../../0">
            <guard brief="NoError?">ERR_NONE == me-&gt;errorCode</guard>
-           <action>LOG_printf(&quot;DB validation complete.\n&quot;);
+           <action>LOG_printf(&quot;DB integrity and version validation complete.\n&quot;);
 me-&gt;isDBValid = true;</action>
            <choice_glyph conn="43,70,5,1,-23">
             <action box="-7,0,7,2"/>
@@ -798,7 +827,8 @@ DBWriteReqEvt *evt = Q_NEW(DBWriteReqEvt, DB_WRITE_SIG);
 evt-&gt;accessType = ACCESS_QPC;
 evt-&gt;dbElem = DB_VERSION;
 evt-&gt;dataLen =  DB_getElemSize(DB_VERSION);
-MEMCPY(evt-&gt;dataBuf, (uint8_t *)DB_VERSION_DEF,evt-&gt;dataLen);
+uint16_t dbVersion = DB_VERSION_DEF;
+MEMCPY(evt-&gt;dataBuf, (uint8_t *)&amp;dbVersion, evt-&gt;dataLen);
 QACTIVE_POST(AO_SysMgr, (QEvt *)(evt), me);</entry>
         <tran trig="DB_OP_DONE">
          <action>me-&gt;currRetry++;</action>
@@ -984,7 +1014,7 @@ if ( ERR_NONE == me-&gt;errorCode ) {
           </choice>
           <choice target="../../../../../../0">
            <guard>else</guard>
-           <action>DBG_printf(&quot;Bootloader major version match\n&quot;);</action>
+           <action>LOG_printf(&quot;Bootloader version and build datetime validation complete\n&quot;);</action>
            <choice_glyph conn="97,75,4,1,9,-77">
             <action box="-4,2,6,2"/>
            </choice_glyph>

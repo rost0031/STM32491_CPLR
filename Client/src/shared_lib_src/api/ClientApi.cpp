@@ -558,8 +558,8 @@ APIError_t ClientApi::DC3_writeI2C(
 
    /* Settings specific to this message */
    this->m_basicMsg._msgType     = _CB_Req;
-   this->m_basicMsg._msgName     = _CBRamTestMsg;
-   this->m_basicMsg._msgPayload  = _CBNoMsg;
+   this->m_basicMsg._msgName     = _CBI2CWriteMsg;
+   this->m_basicMsg._msgPayload  = _CBI2CDataPayloadMsg;
 
    this->m_i2cDataPayloadMsg._accType = acc;
    this->m_i2cDataPayloadMsg._i2cDev = dev;

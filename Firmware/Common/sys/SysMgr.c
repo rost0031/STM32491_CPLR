@@ -833,11 +833,23 @@ static QState SysMgr_DBMagicWordCheck(SysMgr * const me, QEvt const * const e) {
                     MEMCPY(me->dataBuf, ((I2CReadDoneEvt const *) e)->dataBuf, me->dataLen);
                 }
             }
+
+            DBG_printf("Got I2C1_DEV_READ_DONE\n");
             /* ${AOs::SysMgr::SM::Active::Busy::AccessingDB::DBMagicWordCheck::I2C1_DEV_READ_DO~::[NoError?]} */
             if (ERR_NONE == me->errorCode) {
-                uint32_t dbMagicWord = 0;
-                MEMCPY( &dbMagicWord, ((I2CReadDoneEvt const *)e)->dataBuf, ((I2CReadDoneEvt const *)e)->bytes );
-                me->errorCode = DB_isMagicWordValid( dbMagicWord );
+                /* Can't use defines directly.  Have to copy them to a real location first */
+                uint32_t dbMagicWord = DB_MAGIC_WORD_DEF;
+
+                DBG_printf("Checking DB magic word...\n");
+                if( !DB_isArraysMatch(
+                    ((I2CReadDoneEvt const *) e)->dataBuf,
+                    (uint8_t *)&dbMagicWord,
+                    ((I2CReadDoneEvt const *) e)->bytes ) ) {
+                    /* If the check fails, set the error code */
+                    me->errorCode = ERR_DB_NOT_INIT;
+                }
+
+
 
 
 
@@ -849,8 +861,23 @@ static QState SysMgr_DBMagicWordCheck(SysMgr * const me, QEvt const * const e) {
                 }
                 /* ${AOs::SysMgr::SM::Active::Busy::AccessingDB::DBMagicWordCheck::I2C1_DEV_READ_DO~::[NoError?]::[else]} */
                 else {
-                    WRN_printf("Invalid DB magic word; expected: 0x%08x read: 0x%08x. Resetting DB. Error: 0x%08x\n",
-                        DB_MAGIC_WORD_DEF, dbMagicWord, me->errorCode);
+                    WRN_printf("Invalid DB magic word.\n");
+                    WRN_printf("Compiled: bytes: %x\n", DB_MAGIC_WORD_DEF );
+
+                    uint16_t tmpLen = 0;
+                    CON_hexToStr(
+                        ((I2CReadDoneEvt const *) e)->dataBuf, // data to convert
+                        ((I2CReadDoneEvt const *) e)->bytes, // length of data to convert
+                        (char *)me->dataBuf,                 // where to write output
+                        sizeof(me->dataBuf),                 // max size of output buffer
+                        &tmpLen,                             // size of the resulting output
+                        0,                                   // no columns
+                        ' ',                                 // separator
+                        false                                // bPrintX
+                    );
+
+                    WRN_printf("In DB   : bytes: %s\n", me->dataBuf );
+
 
                     /* Need to reset the DB */
                     status_ = Q_TRAN(&SysMgr_ResetDBMagicWord);
@@ -888,12 +915,14 @@ static QState SysMgr_ResetDBMagicWord(SysMgr * const me, QEvt const * const e) {
         case Q_ENTRY_SIG: {
             WRN_printf("Resetting DB magic word to default...\n");
 
+            uint32_t dbMagicWord = DB_MAGIC_WORD_DEF;
+
             /* Post to SysMgr to set the build datetime since it doesn't match the compiled one */
             DBWriteReqEvt *evt = Q_NEW(DBWriteReqEvt, DB_WRITE_SIG);
             evt->accessType = ACCESS_QPC;
             evt->dbElem = DB_MAGIC_WORD;
             evt->dataLen =  DB_getElemSize(DB_MAGIC_WORD);
-            MEMCPY(evt->dataBuf, (uint8_t *)DB_MAGIC_WORD_DEF,evt->dataLen);
+            MEMCPY(evt->dataBuf, (uint8_t *)&dbMagicWord, evt->dataLen);
             QACTIVE_POST(AO_SysMgr, (QEvt *)(evt), me);
             status_ = Q_HANDLED();
             break;
@@ -969,7 +998,7 @@ static QState SysMgr_DBVersionCheck(SysMgr * const me, QEvt const * const e) {
 
                 /* ${AOs::SysMgr::SM::Active::Busy::AccessingDB::DBVersionCheck::I2C1_DEV_READ_DO~::[NoError?]::[NoError?]} */
                 if (ERR_NONE == me->errorCode) {
-                    LOG_printf("DB validation complete.\n");
+                    LOG_printf("DB integrity and version validation complete.\n");
                     me->isDBValid = true;
                     status_ = Q_TRAN(&SysMgr_Idle);
                 }
@@ -1114,7 +1143,8 @@ static QState SysMgr_ResetDBVersion(SysMgr * const me, QEvt const * const e) {
             evt->accessType = ACCESS_QPC;
             evt->dbElem = DB_VERSION;
             evt->dataLen =  DB_getElemSize(DB_VERSION);
-            MEMCPY(evt->dataBuf, (uint8_t *)DB_VERSION_DEF,evt->dataLen);
+            uint16_t dbVersion = DB_VERSION_DEF;
+            MEMCPY(evt->dataBuf, (uint8_t *)&dbVersion, evt->dataLen);
             QACTIVE_POST(AO_SysMgr, (QEvt *)(evt), me);
             status_ = Q_HANDLED();
             break;
@@ -1335,7 +1365,7 @@ static QState SysMgr_BootLdrMinVerCheck(SysMgr * const me, QEvt const * const e)
                 }
                 /* ${AOs::SysMgr::SM::Active::Busy::AccessingDB::BootLdrMinVerChe~::I2C1_DEV_READ_DO~::[NoError?]::[else]} */
                 else {
-                    DBG_printf("Bootloader major version match\n");
+                    LOG_printf("Bootloader version and build datetime validation complete\n");
                     status_ = Q_TRAN(&SysMgr_Idle);
                 }
             }

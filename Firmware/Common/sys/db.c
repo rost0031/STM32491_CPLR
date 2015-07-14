@@ -460,6 +460,25 @@ const CBErrorCode DB_checkDTMatch(
    return ERR_NONE;
 }
 
+/******************************************************************************/
+const bool DB_isArraysMatch(
+      const uint8_t*  dt1,
+      const uint8_t*  dt2,
+      const uint16_t  len
+)
+{
+   /* iterate arrays backwards and check if they match.  The reason for
+    * iterating backwards is because most checks will involve changes in the
+    * LSByte so this should be faster for most cases */
+   for(int i = len - 1; i >= 0; i-- ) {
+      if (dt1[i] != dt2[i]) {
+         ERR_printf("dt1[%d]: %02x dt2[%d]: %02x\n", i, dt1[i], i, dt2[i]);
+         return false;
+      }
+   }
+   return true;
+}
+
 /**
  * @}
  * end addtogroup groupSettings

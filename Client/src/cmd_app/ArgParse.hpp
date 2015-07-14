@@ -171,15 +171,16 @@ template<typename T> T getEnumFromAllowedStr(
  * @throw <std::exception> if passed in string is not found in the map of
  * allowed strings for a given enum type.
  *
+ * @param [out] *value: T pointer to where to output the parsed value.
  * @param [in] arg: argument name of the "arg=value" pair.
  * @param [in] cmd: parsed command.  Used for printing cmd specific help.
  * @param [in] appName: application name. Used for printing cmd specific help.
  * @param [in] args: vector of arguments for the parsed command.  Derived from
  * the program options vm map.
  *
- * @return  T value: enumeration of type T that was parsed
+ * @return  None
  */
-template<typename T> bool ARG_parseEnumStr(
+template<typename T> void ARG_parseEnumStr(
       T* value,
       const string& arg,
       const string& cmd,
@@ -189,9 +190,9 @@ template<typename T> bool ARG_parseEnumStr(
 {
    // Extract the value from the arg=value pair
    string valueStr = "";
-   bool isExtracted = ARG_getValue( valueStr, arg, args );
 
-   if( !isExtracted ) {   // if error happened, print cmd specific help and exit
+   if( !ARG_getValue( valueStr, arg, args ) ) {
+      // if error happened, print cmd specific help and exit
       HELP_printCmdSpecific( cmd, appName );
    }
 
@@ -200,11 +201,9 @@ template<typename T> bool ARG_parseEnumStr(
    // if that happens.
    try {
       *value = getEnumFromAllowedStr(valueStr, allowedStrings<T>::m_allowedStrings);
-      return true;
    } catch (exception& e) {
       throw;
    }
-   return false;
 }
 
 /**
@@ -215,15 +214,94 @@ template<typename T> bool ARG_parseEnumStr(
  * @throw <std::exception> if passed in string is not found in the map of
  * allowed strings for a given enum type.
  *
+ * @param [out] *value: T pointer to where to output the parsed value.
+ * @param [in] defaultValue: T default value to set if the argument can't be
+ * parsed (because it was not included).
  * @param [in] arg: argument name of the "arg=value" pair.
  * @param [in] cmd: parsed command.  Used for printing cmd specific help.
  * @param [in] appName: application name. Used for printing cmd specific help.
  * @param [in] args: vector of arguments for the parsed command.  Derived from
  * the program options vm map.
  *
- * @return  T value: enumeration of type T that was parsed
+ * @return  None
  */
-template<typename T> bool ARG_parseNumStr(
+template<typename T> void ARG_parseEnumStr(
+      T* value,
+      T defaultValue,
+      const string& arg,
+      const string& cmd,
+      const string& appName,
+      const vector<string>& args
+)
+{
+   // Extract the value from the arg=value pair
+   string valueStr = "";
+
+   if( !ARG_getValue( valueStr, arg, args ) ) {
+      // if error happened, set the default value to output and return
+      *value = defaultValue;
+      return;
+   }
+
+   // The template function getEnumFromAllowedStr will throw an exception of
+   // the passed in value is not found in the appropriate map.  We'll rethrow it
+   // if that happens.
+   try {
+      *value = getEnumFromAllowedStr(valueStr, allowedStrings<T>::m_allowedStrings);
+   } catch (exception& e) {
+      throw;
+   }
+}
+
+/**
+ * @brief   A template function that can parse any number
+ *
+ * @throw <std::exception> if passed in string is not one of alpha-numeric chars
+ * or a - sign.
+ *
+ * @param [out] *value: T pointer to where to output the parsed value.
+ * @param [in] arg: argument name of the "arg=value" pair.
+ * @param [in] cmd: parsed command.  Used for printing cmd specific help.
+ * @param [in] appName: application name. Used for printing cmd specific help.
+ * @param [in] args: vector of arguments for the parsed command.  Derived from
+ * the program options vm map.
+ *
+ * @return  None
+ */
+template<typename T> void ARG_parseNumber( T* value, std::string str )
+{
+   if ( ( typeid(T) == typeid( int ) ) || ( typeid(T) == typeid( unsigned int ) ) ||
+         ( typeid(T) == typeid( uint8_t ) ) || ( typeid(T) == typeid( uint16_t ) ) ||
+         ( typeid(T) == typeid( uint32_t ) ) || ( typeid(T) == typeid( int8_t ) )  ||
+         ( typeid(T) == typeid( int16_t ) )|| ( typeid(T) == typeid( int32_t ) ) ||
+         ( typeid(T) == typeid( size_t ) )
+   ) {
+      if( (str.find_first_not_of( "0123456789abcdefABCDEFxX-" ) != string::npos) ) {
+         std::stringstream ss;
+         ss << "String '"<< str << "' is not numeric as expected";
+         throw std::invalid_argument(ss.str());
+      }
+      char *end;
+      *value = strtol(str.c_str(), &end, 0);
+   }
+}
+
+/**
+ * @brief   A template function that can parse any "arg=value" for numeric types
+ *
+ * @throw <std::exception> if passed in string is not found in the map of
+ * allowed strings for a given enum type.
+ *
+ * @param [out] *value: T pointer to where to output the parsed value.
+ * @param [in] arg: argument name of the "arg=value" pair.
+ * @param [in] cmd: parsed command.  Used for printing cmd specific help.
+ * @param [in] appName: application name. Used for printing cmd specific help.
+ * @param [in] args: vector of arguments for the parsed command.  Derived from
+ * the program options vm map.
+ *
+ * @return  None
+ */
+template<typename T> void ARG_parseNumStr(
       T* value,
       const string& arg,
       const string& cmd,
@@ -233,28 +311,16 @@ template<typename T> bool ARG_parseNumStr(
 {
    // Extract the value from the arg=value pair
    string valueStr = "";
-   bool isExtracted = ARG_getValue( valueStr, arg, args );
-
-   if( !isExtracted ) {   // if error happened, print cmd specific help and exit
+   if( !ARG_getValue( valueStr, arg, args ) ) {
+      // if error happened, print cmd specific help and exit
       HELP_printCmdSpecific( cmd, appName );
    }
 
-   if ( ( typeid(T) == typeid( int ) ) || ( typeid(T) == typeid( unsigned int ) ) ||
-        ( typeid(T) == typeid( uint8_t ) ) || ( typeid(T) == typeid( uint16_t ) ) ||
-        ( typeid(T) == typeid( uint32_t ) ) || ( typeid(T) == typeid( int8_t ) )  ||
-        ( typeid(T) == typeid( int16_t ) )|| ( typeid(T) == typeid( int32_t ) ) ||
-        ( typeid(T) == typeid( size_t ) )
-      ) {
-      if( (valueStr.find_first_not_of( "0123456789" ) != string::npos) ) {
-         std::stringstream ss;
-         ss << "Input '"<< arg << "=" << valueStr << "' is not numeric as expected";
-         throw std::invalid_argument(ss.str());
-      }
-      *value = atoi(valueStr.c_str());
-      return true;
+   try {
+      ARG_parseNumber(value, valueStr);
+   } catch ( exception &e ) {
+      throw;
    }
-
-   return false;
 }
 
 /* Exported classes ----------------------------------------------------------*/

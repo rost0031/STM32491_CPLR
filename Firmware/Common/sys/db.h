@@ -331,7 +331,6 @@ const CBErrorCode DB_isVersionValid( const uint16_t dbVersion );
  *
  * This function simply checks if the compiled in DB version matches the one
  * passed in as a parameter.
-
  * @param  [in] dt1: uint8_t pointer to array of CB_DATETIME_LEN length that
  * contains the first datetime string.
  * @param  [in] dt2: uint8_t pointer to array of CB_DATETIME_LEN length that
@@ -343,6 +342,33 @@ const CBErrorCode DB_isVersionValid( const uint16_t dbVersion );
 const CBErrorCode DB_checkDTMatch(
       const uint8_t* const dt1,
       const uint8_t* const dt2
+);
+
+/**
+ * @brief   Checks 2 arrays of same length to see if their contents match.
+ *
+ * This function simply checks if 2 arrays of the same length have the same
+ * contents by iterating backwards through them. The reason for iterating
+ * backwards is because most checks will involve changes in the LSByte so this
+ * should be faster for most cases.  For example, in datetime array,
+ * YYYYMMDDhhmmss, the seconds and minutes of a build are more likely to differ
+ * than the year and the month and the check will finish faster.  In others, it
+ * doesn't matter so the worst case is still the same.
+ *
+ * @param  [in] dt1: uint8_t pointer to array 1
+ * @param  [in] dt2: uint8_t pointer to array 2
+ * @param  [in] len: uint16_t length of both arrays.
+ *    @note: if the lengths of both arrays are not the same, the results will
+ *    probably be incorrect.
+ *
+ * @return boo:
+ *    @arg true: if exact match
+ *    @arg false: if differences found
+ */
+const bool DB_isArraysMatch(
+      const uint8_t*  dt1,
+      const uint8_t*  dt2,
+      const uint16_t  len
 );
 
 #ifdef __cplusplus

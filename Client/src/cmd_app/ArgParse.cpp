@@ -70,7 +70,7 @@ template<> std::map<CBI2CDevices, std::vector<std::string>> allowedStrings<CBI2C
 template<> std::map<CBAccessType, std::vector<std::string>> allowedStrings<CBAccessType>::m_allowedStrings = {
       { _CB_ACCESS_BARE, {"b", "bare","metal", "bare_metal", "baremetal"} },
       { _CB_ACCESS_QPC , {"q", "qp", "qpc", } },
-      { _CB_ACCESS_FRT , {"f", "fr", "frt", "freertos", "frtos", "free", } },
+      { _CB_ACCESS_FRT , {"f", "fr", "frt", "freertos", "frtos", "free"} },
 
 };
 
