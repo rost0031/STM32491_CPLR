@@ -288,7 +288,7 @@ const I2C_Dev_t DB_getI2CDev( const DB_ElemLoc_t loc );
  * @param  [in] bufSize: size of the pBuffer.
  * @param  [out] *pBuffer: uint8_t pointer to a buffer where to store the
  *                         retrieved element.
- * @param  [out] resultLen: uint8_t pointer to the length of data stored in the
+ * @param  [out] resultLen: uint16_t pointer to the length of data stored in the
  *                         buffer on return.
  * @return CBErrorCode: status of the read operation
  *    @arg ERR_NONE: if no errors occurred
@@ -298,7 +298,7 @@ const CBErrorCode DB_readEEPROM(
       const DB_Elem_t elem,
       const uint8_t bufferSize,
       uint8_t* const buffer,
-      uint8_t* resultLen
+      uint16_t* resultLen
 );
 
 /**

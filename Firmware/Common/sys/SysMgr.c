@@ -88,7 +88,7 @@ typedef struct {
     uint8_t dataBuf[MAX_DB_ELEM_SIZE];
 
     /**< Length of data in dataBuf */
-    uint8_t dataLen;
+    uint16_t dataLen;
 
     /**< DB element to get or set with the current request (used for DB access to guarantee a reply) */
     DB_Elem_t dbElem;
@@ -100,6 +100,14 @@ typedef struct {
     /**< Current retry number. Used throughout the state machine to make sure we don't
      * get stuck in an inf loop when retrying */
     uint8_t currRetry;
+
+    /**< Compiled in version of the DB. This is set only once at the beginning and used for
+     * verification and validation of the DB on startup */
+    uint16_t dbVersionDef;
+
+    /**< Compiled in magic word that specifies if the DB is intact. This is set only once
+     * at the beginning and used for verification and validation of the DB on startup */
+    uint32_t dbMagicWordDef;
 } SysMgr;
 
 /* protected: */
@@ -334,6 +342,8 @@ static QState SysMgr_initial(SysMgr * const me, QEvt const * const e) {
     QActive_subscribe((QActive *)me, DB_SET_ELEM_SIG);
 
     me->isDBValid = false;
+    me->dbVersionDef = DB_VERSION_DEF;
+    me->dbMagicWordDef = DB_MAGIC_WORD_DEF;
 
     /* Post to self to validate DB on startup */
     QEvt *evt = Q_NEW(QEvt, DB_CHECK_SIG);
@@ -825,68 +835,57 @@ static QState SysMgr_DBMagicWordCheck(SysMgr * const me, QEvt const * const e) {
         /* ${AOs::SysMgr::SM::Active::Busy::AccessingDB::DBMagicWordCheck::I2C1_DEV_READ_DO~} */
         case I2C1_DEV_READ_DONE_SIG: {
             me->errorCode = ((I2CReadDoneEvt const *) e)->status;
-            if ( ERR_NONE == me->errorCode ) {
-                me->dataLen = ((I2CReadDoneEvt const *) e)->bytes;
-                if ( me->dataLen > MAX_DB_ELEM_SIZE ) {
-                    me->errorCode = ERR_DB_ELEM_SIZE_OVERFLOW;
-                } else {
-                    MEMCPY(me->dataBuf, ((I2CReadDoneEvt const *) e)->dataBuf, me->dataLen);
-                }
+
+            if ( ERR_NONE != me->errorCode ) {
+                ERR_printf("Unable to read Magic Word from DB, need to reset DB. Error: 0x%08x\n", me->errorCode);
+                goto END_ERROR_CHECK;
             }
 
-            DBG_printf("Got I2C1_DEV_READ_DONE\n");
+            if ( ((I2CReadDoneEvt const *) e)->bytes > MAX_DB_ELEM_SIZE ) {
+                /* This should be considered a pretty critical error. */
+                me->errorCode = ERR_DB_ELEM_SIZE_OVERFLOW;
+                ERR_printf("DB elem size overflow, need to reset DB. Error: 0x%08x\n", me->errorCode);
+                goto END_ERROR_CHECK;
+            }
+
+            if( !DB_isArraysMatch(
+                ((I2CReadDoneEvt const *) e)->dataBuf,
+                (uint8_t *)&(me->dbMagicWordDef),
+                ((I2CReadDoneEvt const *) e)->bytes ) ) {
+                /* If the check fails, set the error code */
+                me->errorCode = ERR_DB_NOT_INIT;
+
+                WRN_printf("Invalid DB magic word. Error 0x%08x\n", me->errorCode);
+                WRN_printf("Compiled: bytes: %x\n", me->dbMagicWordDef );
+
+                CON_hexToStr(
+                    ((I2CReadDoneEvt const *) e)->dataBuf, // data to convert
+                    ((I2CReadDoneEvt const *) e)->bytes, // length of data to convert
+                    (char *)me->dataBuf,                 // where to write output
+                    sizeof(me->dataBuf),                 // max size of output buffer
+                    &(me->dataLen),                      // size of the resulting output
+                    0,                                   // no columns
+                    ' ',                                 // separator
+                    false                                // bPrintX
+                );
+
+                WRN_printf("In DB   : bytes: %s\n", me->dataBuf );
+
+                goto END_ERROR_CHECK;
+            }
+
+            /* Local tag to jump to if an error is found or to reach naturally
+             * once all the checks are complete */
+            END_ERROR_CHECK:
             /* ${AOs::SysMgr::SM::Active::Busy::AccessingDB::DBMagicWordCheck::I2C1_DEV_READ_DO~::[NoError?]} */
             if (ERR_NONE == me->errorCode) {
-                /* Can't use defines directly.  Have to copy them to a real location first */
-                uint32_t dbMagicWord = DB_MAGIC_WORD_DEF;
-
-                DBG_printf("Checking DB magic word...\n");
-                if( !DB_isArraysMatch(
-                    ((I2CReadDoneEvt const *) e)->dataBuf,
-                    (uint8_t *)&dbMagicWord,
-                    ((I2CReadDoneEvt const *) e)->bytes ) ) {
-                    /* If the check fails, set the error code */
-                    me->errorCode = ERR_DB_NOT_INIT;
-                }
 
 
 
-
-
-
-
-                /* ${AOs::SysMgr::SM::Active::Busy::AccessingDB::DBMagicWordCheck::I2C1_DEV_READ_DO~::[NoError?]::[NoError?]} */
-                if (ERR_NONE == me->errorCode) {
-                    status_ = Q_TRAN(&SysMgr_DBVersionCheck);
-                }
-                /* ${AOs::SysMgr::SM::Active::Busy::AccessingDB::DBMagicWordCheck::I2C1_DEV_READ_DO~::[NoError?]::[else]} */
-                else {
-                    WRN_printf("Invalid DB magic word.\n");
-                    WRN_printf("Compiled: bytes: %x\n", DB_MAGIC_WORD_DEF );
-
-                    uint16_t tmpLen = 0;
-                    CON_hexToStr(
-                        ((I2CReadDoneEvt const *) e)->dataBuf, // data to convert
-                        ((I2CReadDoneEvt const *) e)->bytes, // length of data to convert
-                        (char *)me->dataBuf,                 // where to write output
-                        sizeof(me->dataBuf),                 // max size of output buffer
-                        &tmpLen,                             // size of the resulting output
-                        0,                                   // no columns
-                        ' ',                                 // separator
-                        false                                // bPrintX
-                    );
-
-                    WRN_printf("In DB   : bytes: %s\n", me->dataBuf );
-
-
-                    /* Need to reset the DB */
-                    status_ = Q_TRAN(&SysMgr_ResetDBMagicWord);
-                }
+                status_ = Q_TRAN(&SysMgr_DBVersionCheck);
             }
             /* ${AOs::SysMgr::SM::Active::Busy::AccessingDB::DBMagicWordCheck::I2C1_DEV_READ_DO~::[else]} */
             else {
-                ERR_printf("Unable to read Magic Word from DB, need to reset DB. Error: 0x%08x\n", me->errorCode);
-                /* Need to reset the DB */
                 status_ = Q_TRAN(&SysMgr_ResetDBMagicWord);
             }
             break;
@@ -977,43 +976,56 @@ static QState SysMgr_DBVersionCheck(SysMgr * const me, QEvt const * const e) {
         /* ${AOs::SysMgr::SM::Active::Busy::AccessingDB::DBVersionCheck::I2C1_DEV_READ_DO~} */
         case I2C1_DEV_READ_DONE_SIG: {
             me->errorCode = ((I2CReadDoneEvt const *) e)->status;
-            if ( ERR_NONE == me->errorCode ) {
-                me->dataLen = ((I2CReadDoneEvt const *) e)->bytes;
-                if ( me->dataLen > MAX_DB_ELEM_SIZE ) {
-                    me->errorCode = ERR_DB_ELEM_SIZE_OVERFLOW;
-                } else {
-                    MEMCPY(me->dataBuf, ((I2CReadDoneEvt const *) e)->dataBuf, me->dataLen);
-                }
+
+            if ( ERR_NONE != me->errorCode ) {
+                ERR_printf("Unable to read version from DB, need to reset DB. Error: 0x%08x\n", me->errorCode);
+                goto END_ERROR_CHECK;
             }
+
+            if ( ((I2CReadDoneEvt const *) e)->bytes > MAX_DB_ELEM_SIZE ) {
+                /* This should be considered a pretty critical error. */
+                me->errorCode = ERR_DB_ELEM_SIZE_OVERFLOW;
+                ERR_printf("DB elem size overflow, need to reset DB. Error: 0x%08x\n", me->errorCode);
+                goto END_ERROR_CHECK;
+            }
+
+            if( !DB_isArraysMatch(
+                ((I2CReadDoneEvt const *) e)->dataBuf,
+                (uint8_t *)&(me->dbVersionDef),
+                ((I2CReadDoneEvt const *) e)->bytes ) ) {
+                /* If the check fails, set the error code */
+                me->errorCode = ERR_DB_NOT_INIT;
+
+                WRN_printf("Invalid DB version. Error 0x%08x\n", me->errorCode);
+                WRN_printf("Compiled: bytes: %x\n", me->dbVersionDef );
+
+                CON_hexToStr(
+                    ((I2CReadDoneEvt const *) e)->dataBuf, // data to convert
+                    ((I2CReadDoneEvt const *) e)->bytes, // length of data to convert
+                    (char *)me->dataBuf,                 // where to write output
+                    sizeof(me->dataBuf),                 // max size of output buffer
+                    &(me->dataLen),                      // size of the resulting output
+                    0,                                   // no columns
+                    ' ',                                 // separator
+                    false                                // bPrintX
+                );
+
+                WRN_printf("In DB   : bytes: %s\n", me->dataBuf );
+
+                goto END_ERROR_CHECK;
+            }
+
+            /* Local tag to jump to if an error is found or to reach naturally
+             * once all the checks are complete */
+            END_ERROR_CHECK:
             /* ${AOs::SysMgr::SM::Active::Busy::AccessingDB::DBVersionCheck::I2C1_DEV_READ_DO~::[NoError?]} */
             if (ERR_NONE == me->errorCode) {
-                uint16_t dbVersion = 0;
-                MEMCPY( &dbVersion, ((I2CReadDoneEvt const *)e)->dataBuf, ((I2CReadDoneEvt const *)e)->bytes );
-
-                me->errorCode = DB_isVersionValid( dbVersion );
-
-
-
-
-
-                /* ${AOs::SysMgr::SM::Active::Busy::AccessingDB::DBVersionCheck::I2C1_DEV_READ_DO~::[NoError?]::[NoError?]} */
-                if (ERR_NONE == me->errorCode) {
-                    LOG_printf("DB integrity and version validation complete.\n");
-                    me->isDBValid = true;
-                    status_ = Q_TRAN(&SysMgr_Idle);
-                }
-                /* ${AOs::SysMgr::SM::Active::Busy::AccessingDB::DBVersionCheck::I2C1_DEV_READ_DO~::[NoError?]::[else]} */
-                else {
-                    WRN_printf("Invalid DB version; expected: 0x%04x read: 0x%04x. Resetting DB. Error: 0x%08x\n",
-                        DB_VERSION_DEF, dbVersion, me->errorCode);
-                    /* Need to reset the DB */
-                    status_ = Q_TRAN(&SysMgr_ResetDBVersion);
-                }
+                LOG_printf("DB integrity and version validation complete.\n");
+                me->isDBValid = true;
+                status_ = Q_TRAN(&SysMgr_Idle);
             }
             /* ${AOs::SysMgr::SM::Active::Busy::AccessingDB::DBVersionCheck::I2C1_DEV_READ_DO~::[else]} */
             else {
-                ERR_printf("Unable to version from DB, need to reset DB. Error: 0x%08x\n", me->errorCode);
-                /* Need to reset the DB */
                 status_ = Q_TRAN(&SysMgr_ResetDBVersion);
             }
             break;
@@ -1054,63 +1066,74 @@ static QState SysMgr_BootLdrBuildDTCheck(SysMgr * const me, QEvt const * const e
         /* ${AOs::SysMgr::SM::Active::Busy::AccessingDB::BootLdrBuildDTCh~::I2C1_DEV_READ_DO~} */
         case I2C1_DEV_READ_DONE_SIG: {
             me->errorCode = ((I2CReadDoneEvt const *) e)->status;
-            if ( ERR_NONE == me->errorCode ) {
-                me->dataLen = ((I2CReadDoneEvt const *) e)->bytes;
-                if ( me->dataLen > MAX_DB_ELEM_SIZE ) {
-                    me->errorCode = ERR_DB_ELEM_SIZE_OVERFLOW;
-                    WRN_printf("Read Bootloader datetime and it's longer than max size\n");
-                } else {
-                    MEMCPY(me->dataBuf, ((I2CReadDoneEvt const *) e)->dataBuf, me->dataLen);
-                }
+
+            if ( ERR_NONE != me->errorCode ) {
+                ERR_printf("Unable to read Bootloader build datetime from DB, need to reset DB. Error: 0x%08x\n", me->errorCode);
+                goto END_ERROR_CHECK;
             }
+
+            if ( ((I2CReadDoneEvt const *) e)->bytes > MAX_DB_ELEM_SIZE ) {
+                /* This should be considered a pretty critical error. */
+                me->errorCode = ERR_DB_ELEM_SIZE_OVERFLOW;
+                ERR_printf("DB elem size overflow, need to reset DB. Error: 0x%08x\n", me->errorCode);
+                goto END_ERROR_CHECK;
+            }
+
+            if( !DB_isArraysMatch(
+                ((I2CReadDoneEvt const *) e)->dataBuf,
+                (uint8_t *)BUILD_DATE,
+                ((I2CReadDoneEvt const *) e)->bytes ) ) {
+                /* If the check fails, set the error code */
+                me->errorCode = ERR_DB_DATETIME_MISMATCH;
+
+                WRN_printf("Bootloader datetime mismatch. Error 0x%08x\n", me->errorCode);
+                LOG_printf("Note, this error is expected on first boot after a new bootloader was just flashed\n");
+
+                CON_hexToStr(
+                    ((I2CReadDoneEvt const *) e)->dataBuf, // data to convert
+                    ((I2CReadDoneEvt const *) e)->bytes, // length of data to convert
+                    (char *)me->dataBuf,                 // where to write output
+                    sizeof(me->dataBuf),                 // max size of output buffer
+                    &me->dataLen,                        // size of the resulting output
+                    0,                                   // no columns
+                    ' ',                                 // separator
+                    false                                // bPrintX
+                );
+
+                WRN_printf("In DB:    bytes: %s, string: %s\n",
+                    me->dataBuf, ((I2CReadDoneEvt const *) e)->dataBuf
+                );
+
+                CON_hexToStr(
+                    (uint8_t *)BUILD_DATE,               // data to convert
+                    strlen(BUILD_DATE),                  // length of data to convert
+                    (char *)me->dataBuf,                 // where to write output
+                    sizeof(me->dataBuf),                 // max size of output buffer
+                    &me->dataLen,                        // size of the resulting output
+                    0,                                   // no columns
+                    ' ',                                 // separator
+                    false                                 // bPrintX
+                );
+
+                WRN_printf("Compiled: bytes: %s, string: %s\n",
+                    me->dataBuf, BUILD_DATE
+                );
+
+                goto END_ERROR_CHECK;
+            }
+
+            /* Local tag to jump to if an error is found or to reach naturally
+             * once all the checks are complete */
+            END_ERROR_CHECK:
             /* ${AOs::SysMgr::SM::Active::Busy::AccessingDB::BootLdrBuildDTCh~::I2C1_DEV_READ_DO~::[NoError?]} */
             if (me->errorCode == ERR_NONE) {
-                me->errorCode = DB_checkDTMatch( ((I2CReadDoneEvt const *) e)->dataBuf, (uint8_t *)BUILD_DATE );
-                /* ${AOs::SysMgr::SM::Active::Busy::AccessingDB::BootLdrBuildDTCh~::I2C1_DEV_READ_DO~::[NoError?]::[DatetimeDiff?]} */
-                if (ERR_NONE != me->errorCode) {
-                    WRN_printf("Bootloader datetime mismatch.\n");
+                //me->errorCode = DB_checkDTMatch( ((I2CReadDoneEvt const *) e)->dataBuf, (uint8_t *)BUILD_DATE );
 
-                    uint16_t tmpLen = 0;
-                    CON_hexToStr(
-                        ((I2CReadDoneEvt const *) e)->dataBuf, // data to convert
-                        ((I2CReadDoneEvt const *) e)->bytes, // length of data to convert
-                        (char *)me->dataBuf,                 // where to write output
-                        sizeof(me->dataBuf),                 // max size of output buffer
-                        &tmpLen,                             // size of the resulting output
-                        0,                                   // no columns
-                        ' ',                                 // separator
-                        false                                // bPrintX
-                    );
-
-                    WRN_printf("In DB:    bytes: %s, string: %s\n",
-                        me->dataBuf, ((I2CReadDoneEvt const *) e)->dataBuf
-                    );
-
-                    CON_hexToStr(
-                        (uint8_t *)BUILD_DATE,               // data to convert
-                        strlen(BUILD_DATE),                  // length of data to convert
-                        (char *)me->dataBuf,                 // where to write output
-                        sizeof(me->dataBuf),                 // max size of output buffer
-                        &tmpLen,                             // size of the resulting output
-                        0,                                   // no columns
-                        ' ',                                 // separator
-                        false                                 // bPrintX
-                    );
-
-                    WRN_printf("Compiled: bytes: %s, string: %s\n",
-                        me->dataBuf, BUILD_DATE
-                    );
-                    status_ = Q_TRAN(&SysMgr_SetBootLdrDatetime);
-                }
-                /* ${AOs::SysMgr::SM::Active::Busy::AccessingDB::BootLdrBuildDTCh~::I2C1_DEV_READ_DO~::[NoError?]::[else]} */
-                else {
-                    DBG_printf("Bootloader datetime match\n");
-                    status_ = Q_TRAN(&SysMgr_BootLdrMajVerCheck);
-                }
+                DBG_printf("Bootloader datetime match\n");
+                status_ = Q_TRAN(&SysMgr_BootLdrMajVerCheck);
             }
             /* ${AOs::SysMgr::SM::Active::Busy::AccessingDB::BootLdrBuildDTCh~::I2C1_DEV_READ_DO~::[else]} */
             else {
-                ERR_printf("DB access resulted in error 0x%08x, aborting attempt to validating the DB\n", me->errorCode);
                 status_ = Q_TRAN(&SysMgr_SetBootLdrDatetime);
             }
             break;
@@ -1279,34 +1302,37 @@ static QState SysMgr_BootLdrMajVerCheck(SysMgr * const me, QEvt const * const e)
         /* ${AOs::SysMgr::SM::Active::Busy::AccessingDB::BootLdrMajVerChe~::I2C1_DEV_READ_DO~} */
         case I2C1_DEV_READ_DONE_SIG: {
             me->errorCode = ((I2CReadDoneEvt const *) e)->status;
-            if ( ERR_NONE == me->errorCode ) {
-                me->dataLen = ((I2CReadDoneEvt const *) e)->bytes;
-                if ( me->dataLen > MAX_DB_ELEM_SIZE ) {
-                    me->errorCode = ERR_DB_ELEM_SIZE_OVERFLOW;
-                    WRN_printf("Read Bootloader major version and it's longer than max size\n");
-                } else {
-                    MEMCPY(me->dataBuf, ((I2CReadDoneEvt const *) e)->dataBuf, me->dataLen);
-                }
+
+            if ( ERR_NONE != me->errorCode ) {
+                ERR_printf("Unable to read Bootloader major version from DB, need to reset DB. Error: 0x%08x\n", me->errorCode);
+                goto END_ERROR_CHECK;
             }
+
+            if ( ((I2CReadDoneEvt const *) e)->bytes > MAX_DB_ELEM_SIZE ) {
+                /* This should be considered a pretty critical error. */
+                me->errorCode = ERR_DB_ELEM_SIZE_OVERFLOW;
+                ERR_printf("DB elem size overflow, need to reset DB. Error: 0x%08x\n", me->errorCode);
+                goto END_ERROR_CHECK;
+            }
+
+            if( ((I2CReadDoneEvt const *) e)->dataBuf[0] != FW_VER_MAJOR ) {
+                me->errorCode = ERR_DB_INVALID_MAJ_VER_MISMATCH;
+                WRN_printf("Bootloader major version mismatch. DB: %d, Compiled: %d\n",
+                    ((I2CReadDoneEvt const *) e)->dataBuf[0], FW_VER_MAJOR
+                );
+                goto END_ERROR_CHECK;
+            }
+
+
+            /* Local tag to jump to if an error is found or to reach naturally
+             * once all the checks are complete */
+            END_ERROR_CHECK:
             /* ${AOs::SysMgr::SM::Active::Busy::AccessingDB::BootLdrMajVerChe~::I2C1_DEV_READ_DO~::[NoError?]} */
             if (me->errorCode == ERR_NONE) {
-                /* ${AOs::SysMgr::SM::Active::Busy::AccessingDB::BootLdrMajVerChe~::I2C1_DEV_READ_DO~::[NoError?]::[MajVerDiff?]} */
-                if (((I2CReadDoneEvt const *) e)->dataBuf[0] != FW_VER_MAJOR) {
-                    me->errorCode = ERR_DB_INVALID_MAJ_VER_MISMATCH;
-                    WRN_printf("Bootloader datetime mismatch. DB: %d, Compiled: %d\n",
-                        ((I2CReadDoneEvt const *) e)->dataBuf[0], FW_VER_MAJOR
-                    );
-                    status_ = Q_TRAN(&SysMgr_SetBootLdrMajVer);
-                }
-                /* ${AOs::SysMgr::SM::Active::Busy::AccessingDB::BootLdrMajVerChe~::I2C1_DEV_READ_DO~::[NoError?]::[else]} */
-                else {
-                    DBG_printf("Bootloader major version match\n");
-                    status_ = Q_TRAN(&SysMgr_BootLdrMinVerCheck);
-                }
+                status_ = Q_TRAN(&SysMgr_BootLdrMinVerCheck);
             }
             /* ${AOs::SysMgr::SM::Active::Busy::AccessingDB::BootLdrMajVerChe~::I2C1_DEV_READ_DO~::[else]} */
             else {
-                ERR_printf("DB access resulted in error 0x%08x, aborting attempt to validating the DB\n", me->errorCode);
                 status_ = Q_TRAN(&SysMgr_SetBootLdrMajVer);
             }
             break;
@@ -1345,33 +1371,38 @@ static QState SysMgr_BootLdrMinVerCheck(SysMgr * const me, QEvt const * const e)
         /* ${AOs::SysMgr::SM::Active::Busy::AccessingDB::BootLdrMinVerChe~::I2C1_DEV_READ_DO~} */
         case I2C1_DEV_READ_DONE_SIG: {
             me->errorCode = ((I2CReadDoneEvt const *) e)->status;
-            if ( ERR_NONE == me->errorCode ) {
-                me->dataLen = ((I2CReadDoneEvt const *) e)->bytes;
-                if ( me->dataLen > MAX_DB_ELEM_SIZE ) {
-                    me->errorCode = ERR_DB_ELEM_SIZE_OVERFLOW;
-                    WRN_printf("Read Bootloader minor version and it's longer than max size\n");
-                } else {
-                    MEMCPY(me->dataBuf, ((I2CReadDoneEvt const *) e)->dataBuf, me->dataLen);
-                }
+
+            if ( ERR_NONE != me->errorCode ) {
+                ERR_printf("Unable to read Bootloader minor version from DB, need to reset DB. Error: 0x%08x\n", me->errorCode);
+                goto END_ERROR_CHECK;
             }
+
+            if ( ((I2CReadDoneEvt const *) e)->bytes > MAX_DB_ELEM_SIZE ) {
+                /* This should be considered a pretty critical error. */
+                me->errorCode = ERR_DB_ELEM_SIZE_OVERFLOW;
+                ERR_printf("DB elem size overflow, need to reset DB. Error: 0x%08x\n", me->errorCode);
+                goto END_ERROR_CHECK;
+            }
+
+            if( ((I2CReadDoneEvt const *) e)->dataBuf[0] != FW_VER_MINOR ) {
+                me->errorCode = ERR_DB_INVALID_MIN_VER_MISMATCH;
+                WRN_printf("Bootloader minor version mismatch. DB: %d, Compiled: %d\n",
+                    ((I2CReadDoneEvt const *) e)->dataBuf[0], FW_VER_MINOR
+                );
+                goto END_ERROR_CHECK;
+            }
+
+
+            /* Local tag to jump to if an error is found or to reach naturally
+             * once all the checks are complete */
+            END_ERROR_CHECK:
             /* ${AOs::SysMgr::SM::Active::Busy::AccessingDB::BootLdrMinVerChe~::I2C1_DEV_READ_DO~::[NoError?]} */
             if (me->errorCode == ERR_NONE) {
-                /* ${AOs::SysMgr::SM::Active::Busy::AccessingDB::BootLdrMinVerChe~::I2C1_DEV_READ_DO~::[NoError?]::[MinVerDiff?]} */
-                if (((I2CReadDoneEvt const *) e)->dataBuf[0] != FW_VER_MINOR) {
-                    WRN_printf("Bootloader minor version mismatch. DB: %d, Compiled: %d\n",
-                        ((I2CReadDoneEvt const *) e)->dataBuf[0], FW_VER_MINOR
-                    );
-                    status_ = Q_TRAN(&SysMgr_SetBootLdrMinVer);
-                }
-                /* ${AOs::SysMgr::SM::Active::Busy::AccessingDB::BootLdrMinVerChe~::I2C1_DEV_READ_DO~::[NoError?]::[else]} */
-                else {
-                    LOG_printf("Bootloader version and build datetime validation complete\n");
-                    status_ = Q_TRAN(&SysMgr_Idle);
-                }
+                LOG_printf("Bootloader version and build datetime validation complete\n");
+                status_ = Q_TRAN(&SysMgr_Idle);
             }
             /* ${AOs::SysMgr::SM::Active::Busy::AccessingDB::BootLdrMinVerChe~::I2C1_DEV_READ_DO~::[else]} */
             else {
-                ERR_printf("DB access resulted in error 0x%08x, aborting attempt to validating the DB\n", me->errorCode);
                 status_ = Q_TRAN(&SysMgr_SetBootLdrMinVer);
             }
             break;

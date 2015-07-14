@@ -265,7 +265,7 @@ const CBErrorCode DB_getElemBLK(
       case DB_FLASH:
          ; // need this or we get "a label can only be part of a statement and
            // a declaration is not a statement" compile error
-         uint8_t resultLen = 0;
+         uint16_t resultLen = 0;
          status = DB_readEEPROM(
                elem,
                bufSize,
@@ -385,7 +385,7 @@ const CBErrorCode DB_readEEPROM(
       const DB_Elem_t elem,
       const uint8_t bufferSize,
       uint8_t* const buffer,
-      uint8_t* resultLen
+      uint16_t* resultLen
 )
 {
    if( NULL == buffer ) {
