@@ -117,7 +117,6 @@ bool ARG_getValue(
    for( itr = begin; itr != end; ++itr ) {
       if ( (*itr).find("=") ) {
          vector<string> arg_pair;
-
          ARG_split( (*itr), arg_pair, "=" );
          if (2 != arg_pair.size()) {                       // invalid arg format
             return false;
@@ -233,8 +232,6 @@ void ARG_parseHexStr(
    boost::erase_all(valueStr, "\"" );
    boost::erase_all(valueStr, "'" );
 
-   DBG_out << "str after stripping: " << valueStr;
-
    // tokenize the string using , ; . or spaces
    typedef boost::tokenizer<boost::char_separator<char> > hexTokenizer;
    boost::char_separator<char> tokenSep(",;. ", "", boost::drop_empty_tokens);
@@ -248,8 +245,6 @@ void ARG_parseHexStr(
       pDataArr[index++] = currNum;
    }
    *pDataArrLen = index;
-
-
 }
 /* Private class prototypes --------------------------------------------------*/
 /* Private classes -----------------------------------------------------------*/

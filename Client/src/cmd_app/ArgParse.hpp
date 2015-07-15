@@ -371,6 +371,46 @@ template<typename T> void ARG_parseNumStr(
    }
 }
 
+/**
+ * @brief   A template function that can parse any "arg=value" for numeric types
+ *
+ * @throw <std::exception> if passed in string is not found in the map of
+ * allowed strings for a given enum type.
+ *
+ * @param [out] *value: T pointer to where to output the parsed value.
+ * @param [in] defaultValueStr: const string ref to default string value to use
+ * if the user value can't be parsed.
+ * @param [in] arg: argument name of the "arg=value" pair.
+ * @param [in] cmd: parsed command.  Used for printing cmd specific help.
+ * @param [in] appName: application name. Used for printing cmd specific help.
+ * @param [in] args: vector of arguments for the parsed command.  Derived from
+ * the program options vm map.
+ *
+ * @return  None
+ */
+template<typename T> void ARG_parseNumStr(
+      T* value,
+      const string& defaultValueStr,
+      const string& arg,
+      const string& cmd,
+      const string& appName,
+      const vector<string>& args
+)
+{
+   // Extract the value from the arg=value pair
+   string valueStr = "";
+   if( !ARG_getValue( valueStr, arg, args ) ) {
+      // if error happened, set the default value to output and return
+      ARG_parseNumber(value, defaultValueStr);
+      return;
+   }
+
+   try {
+      ARG_parseNumber(value, valueStr);
+   } catch ( exception &e ) {
+      throw;
+   }
+}
 /* Exported classes ----------------------------------------------------------*/
 
 
