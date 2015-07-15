@@ -110,6 +110,54 @@ void ARG_parseFilenameStr(
 );
 
 /**
+ * @brief   Function that can parse and check a string hex array
+ *
+ * @throw <std::exception> if array can't be parsed and converted
+ *
+ * @param [out] *pDataArr: uint8_t pointer to array where to store the output
+ * @param [out] *pDataArrLen: size_t pointer to how long the resulting array is.
+ * @param [in] nDataArrMaxSize: size_t of max storage in pDataArr.
+ * @param [in] defaultDataStr: string ref to the default string to parse
+ * if there's an error parsing the user arg=value pair. This allows this param
+ * to be optional.
+ * @param [in] arg: argument name of the "arg=value" pair.
+ * @param [in] cmd: parsed command.  Used for printing cmd specific help.
+ * @param [in] appName: application name. Used for printing cmd specific help.
+ * @param [in] args: vector of arguments for the parsed command.  Derived from
+ * the program options vm map.
+ *
+ * @return  None
+ */
+void ARG_parseHexArr(
+      uint8_t* pDataArr,
+      size_t* pDataArrLen,
+      const size_t nDataArrMaxSize,
+      string& defaultDataStr,
+      const string& arg,
+      const string& cmd,
+      const string& appName,
+      const vector<string>& args
+);
+
+/**
+ * @brief   Function that can parse and check a string hex array
+ *
+ * @throw <std::exception> if array can't be parsed and converted
+ *
+ * @param [out] *pDataArr: uint8_t pointer to array where to store the output
+ * @param [out] *pDataArrLen: size_t pointer to how long the resulting array is.
+ * @param [in] nDataArrMaxSize: size_t of max storage in pDataArr.
+ * @param [in] valueStr: const string ref to string containing hex values
+ *
+ * @return  None
+ */
+void ARG_parseHexStr(
+      uint8_t* pDataArr,
+      size_t* pDataArrLen,
+      const size_t nDataArrMaxSize,
+      string& valueStr
+);
+/**
  * @brief   Storage for all the maps of vectors of allowed strings for enums.
  *
  * This is the type that will hold all the strings. Each enumerate type will
@@ -131,7 +179,7 @@ template<typename T> struct allowedStrings
  *
  * @note: THIS ONLY WORKS IN C++11 and above.
  */
-template<typename T> T getEnumFromAllowedStr(
+template<typename T> T ARG_getEnumFromAllowedStr(
       std::string& str,
       std::map< T, std::vector<std::string>>& m_allowedStrings //enumRefHolder1<T> const& m_allowedStrings
 )
@@ -196,11 +244,11 @@ template<typename T> void ARG_parseEnumStr(
       HELP_printCmdSpecific( cmd, appName );
    }
 
-   // The template function getEnumFromAllowedStr will throw an exception of
+   // The template function ARG_getEnumFromAllowedStr will throw an exception of
    // the passed in value is not found in the appropriate map.  We'll rethrow it
    // if that happens.
    try {
-      *value = getEnumFromAllowedStr(valueStr, allowedStrings<T>::m_allowedStrings);
+      *value = ARG_getEnumFromAllowedStr(valueStr, allowedStrings<T>::m_allowedStrings);
    } catch (exception& e) {
       throw;
    }
@@ -243,11 +291,11 @@ template<typename T> void ARG_parseEnumStr(
       return;
    }
 
-   // The template function getEnumFromAllowedStr will throw an exception of
+   // The template function ARG_getEnumFromAllowedStr will throw an exception of
    // the passed in value is not found in the appropriate map.  We'll rethrow it
    // if that happens.
    try {
-      *value = getEnumFromAllowedStr(valueStr, allowedStrings<T>::m_allowedStrings);
+      *value = ARG_getEnumFromAllowedStr(valueStr, allowedStrings<T>::m_allowedStrings);
    } catch (exception& e) {
       throw;
    }

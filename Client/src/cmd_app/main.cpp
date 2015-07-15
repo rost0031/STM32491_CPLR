@@ -426,9 +426,33 @@ int main(int argc, char *argv[])
 
          // create a default array and fill it number of bytes user requested
          uint8_t *data = new uint8_t[bytes];
-         for (uint8_t i = 0; i < bytes; i++ ) {
-            data[i] = i;
+
+         // form the default array of the length user wants but still have our
+         // code parse it instead of just making the data array directly.  This
+         // allows the same code path to be taken for both default and user
+         // arrays.
+         string defaultArrayStr = "{";
+         stringstream ss_tmp;
+         for (int i = 0; i < bytes; i++ ) {
+//            data[i] = i;
+            ss_tmp << "0x" << hex << setfill('0') << setw(2) << unsigned(i);
+            if (i < (bytes - 1) ) {
+               // append a comma unless it's the last element
+               ss_tmp << ",";
+            }
          }
+         defaultArrayStr.append(ss_tmp.str());
+         defaultArrayStr.append("}");
+
+         size_t dataLen = 0;
+         try {
+            ARG_parseHexArr( data, &dataLen, bytes, defaultArrayStr, "data", m_parsed_cmd,
+                  appName, m_vm[m_parsed_cmd].as<vector<string>>() );
+         } catch (exception &e) {
+            ERR_out << "Caught exception parsing arguments: " << e.what();
+            HELP_printCmdSpecific( m_parsed_cmd, appName );
+         }
+
 
          DBG_out << "Issuing write_i2c cmd with start=" << start
                << " bytes=" << bytes

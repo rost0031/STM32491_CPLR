@@ -18,6 +18,8 @@
 
 /* Boost includes */
 #include <boost/algorithm/string.hpp>
+#include <boost/tokenizer.hpp>
+#include <boost/range/algorithm/remove_if.hpp>
 
 /* App includes */
 #include "ArgParse.hpp"
@@ -182,6 +184,73 @@ void ARG_parseFilenameStr(
    }
 }
 
+/******************************************************************************/
+void ARG_parseHexArr(
+      uint8_t* pDataArr,
+      size_t* pDataArrLen,
+      const size_t nDataArrMaxSize,
+      string& defaultDataStr,
+      const string& arg,
+      const string& cmd,
+      const string& appName,
+      const vector<string>& args
+)
+{
+   // Extract the value from the arg=value pair
+   string valueStr = "";
+
+   if( !ARG_getValue( valueStr, arg, args ) ) {
+      // if error happened, set the default value to output and return
+      ARG_parseHexStr(pDataArr, pDataArrLen, nDataArrMaxSize, defaultDataStr);
+      return;
+   }
+
+   // The template function ARG_getEnumFromAllowedStr will throw an exception of
+   // the passed in value is not found in the appropriate map.  We'll rethrow it
+   // if that happens.
+   try {
+      ARG_parseHexStr(pDataArr, pDataArrLen, nDataArrMaxSize, valueStr);
+   } catch (exception& e) {
+      throw;
+   }
+}
+
+/******************************************************************************/
+void ARG_parseHexStr(
+      uint8_t* pDataArr,
+      size_t* pDataArrLen,
+      const size_t nDataArrMaxSize,
+      string& valueStr
+)
+{
+   // check the string for surrounding [], (), {}, '', <>, or "" and strip them
+   boost::erase_all(valueStr, "[" );
+   boost::erase_all(valueStr, "]" );
+   boost::erase_all(valueStr, "{" );
+   boost::erase_all(valueStr, "}" );
+   boost::erase_all(valueStr, "(" );
+   boost::erase_all(valueStr, ")" );
+   boost::erase_all(valueStr, "\"" );
+   boost::erase_all(valueStr, "'" );
+
+   DBG_out << "str after stripping: " << valueStr;
+
+   // tokenize the string using , ; . or spaces
+   typedef boost::tokenizer<boost::char_separator<char> > hexTokenizer;
+   boost::char_separator<char> tokenSep(",;. ", "", boost::drop_empty_tokens);
+
+   hexTokenizer tok(valueStr, tokenSep);
+
+   int index = 0;
+   for(hexTokenizer::iterator curTok=tok.begin(); curTok != tok.end(); ++curTok) {
+      uint8_t currNum = 0;
+      ARG_parseNumber( &currNum, *curTok );
+      pDataArr[index++] = currNum;
+   }
+   *pDataArrLen = index;
+
+
+}
 /* Private class prototypes --------------------------------------------------*/
 /* Private classes -----------------------------------------------------------*/
 
