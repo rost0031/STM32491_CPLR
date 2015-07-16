@@ -822,13 +822,14 @@ static QState CommMgr_ValidateMsg(CommMgr * const me, QEvt const * const e) {
                     if (_CB_Application == me->payloadMsgUnion.bootmodePayload._bootMode) {
                         /* Read the application CRC */
                         uint32_t storedCRC = FLASH_readApplCRC();
+                        DBG_printf("Stored CRC: 0x%08x\n", storedCRC);
                         /* ${AOs::CommMgr::SM::Active::Busy::ValidateMsg::MSG_PROCESS::[SetBootMode?]::[ValidPayload?]::[Application?]::[ValidCRC?]} */
-                        if (storedCRC != 0xFFFFFFFF || storedCRC != 0x00000000) {
+                        if (storedCRC != 0xFFFFFFFF && storedCRC != 0x00000000) {
                             /* Read the application size */
                             uint32_t storedSize = FLASH_readApplSize();
-
+                            DBG_printf("Stored size: 0x%08x\n", storedSize);
                             /* ${AOs::CommMgr::SM::Active::Busy::ValidateMsg::MSG_PROCESS::[SetBootMode?]::[ValidPayload?]::[Application?]::[ValidCRC?]::[ValidSize?]} */
-                            if (storedSize != 0xFFFFFFFF || storedSize != 0x00000000) {
+                            if (storedSize != 0xFFFFFFFF && storedSize != 0x00000000) {
                                 CRC_ResetDR();
                                 uint32_t crcCheck = CRC32_Calc(
                                     (uint8_t *)FLASH_APPL_START_ADDR,
