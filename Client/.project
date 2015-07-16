@@ -34,7 +34,7 @@
 		<link>
 			<name>CliCommon</name>
 			<type>2</type>
-			<location>C:/Users/rostovh/workspace/STM324391_QP_CPLR_DK/Common</location>
+			<locationURI>$%7BPARENT-1-PROJECT_LOC%7D/Common</locationURI>
 		</link>
 	</linkedResources>
 </projectDescription>
