@@ -20,7 +20,7 @@
 #include <iostream>
 
 /* App includes */
-#include "Ktree.hpp"
+#include "KTree.hpp"
 
 /* Lib includes */
 #include "ClientApi.h"

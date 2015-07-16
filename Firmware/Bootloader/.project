@@ -28,12 +28,12 @@
 		<link>
 			<name>CliCommon</name>
 			<type>2</type>
-			<location>C:/Users/rostovh/workspace/STM324391_QP_CPLR_DK/Common</location>
+			<location>/home/rostovh/workspace/DC3_STM32491_devKit/Common</location>
 		</link>
 		<link>
 			<name>FWCommon</name>
 			<type>2</type>
-			<location>C:/Users/rostovh/workspace/STM324391_QP_CPLR_DK/Firmware/Common</location>
+			<location>/home/rostovh/workspace/DC3_STM32491_devKit/Firmware/Common</location>
 		</link>
 	</linkedResources>
 </projectDescription>

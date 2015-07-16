@@ -16,7 +16,7 @@
 /* App includes */
 #include "EnumMaps.hpp"
 #include "Logging.hpp"
-#include "Ktree.hpp"
+#include "KTree.hpp"
 
 /* Lib includes */
 #include "CBSharedDbgLevels.h"

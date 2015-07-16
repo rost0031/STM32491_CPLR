@@ -20,7 +20,7 @@
 #include <boost/algorithm/string.hpp>
 
 /* App includes */
-#include "Ktree.hpp"
+#include "KTree.hpp"
 #include "Logging.hpp"
 #include "EnumMaps.hpp"
 

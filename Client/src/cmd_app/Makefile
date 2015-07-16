@@ -193,7 +193,7 @@ else
     
     STATIC_LINKFLAGS        = -Wl,-Bstatic 
     STATIC_LIBS             = -lboost_program_options$(BOOSTLIBMOD) \
-                              -lboost_date_time$(BOOSTLIBMOD)
+                              -lboost_date_time$(BOOSTLIBMOD) -lboost_log$(BOOSTLIBMOD) -lpthread
 
     LIB_LOCATIONS           = -L$(BOOST_LIB_DIR) -L$(BIN_DIR)
     LIBS                   += # Nothing needed for posix builds
