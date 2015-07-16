@@ -454,22 +454,7 @@ int main(int argc, char *argv[])
             HELP_printCmdSpecific( m_parsed_cmd, appName );
          }
 
-         bytes = dataLen;
-
-         stringstream ss_data_out;
-         for (int i = 0; i < bytes; i++ ) {
-            ss_data_out << "0x" << hex << setfill('0') << setw(2) << unsigned(data[i]);
-            if (i < (bytes - 1) ) {
-               ss_data_out << ",";     // append a comma unless it's the last element
-            }
-         }
-
-         DBG_out << "Issuing write_i2c cmd with start=" << start
-               << " bytes=" << bytes
-               << " to dev=" << enumToString(dev)
-               << " with acc=" << enumToString(acc)
-               << " data={" << ss_data_out.str() << "} ...";
-
+         bytes = dataLen; // update the bytes argument with how many were read
 
          status = CMD_runWriteI2C( client, &statusDC3, data, bytes, start, dev, acc );
 

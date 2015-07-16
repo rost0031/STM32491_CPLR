@@ -39,13 +39,14 @@ void HELP_printCmdSpecific(
    string description;
    string prototype;
    string example;
+   vector<string> cmd_arg_options;
    /* Yeah, it's a little annoying that you can't just append streams like the
     * rest of the strings.  I'll eventually figure out how to properly implement
     * a template + operator in the Enum Maps but until then, this is how you do
     * it.*/
    stringstream ss_params;
 
-   if( 0 == parsed_cmd.compare("get_mode") ) {           /* get_mode cmd help */
+   if( 0 == parsed_cmd.compare("get_mode") ) {              // get_mode cmd help
       description = parsed_cmd + " command sends a request to the DC3 to get "
             "its current boot mode. The command returns the status of the "
             "request and the current boot mode. The possible return for: "
@@ -56,65 +57,264 @@ void HELP_printCmdSpecific(
             << enumToString(_CB_Bootloader) << "|"
             << enumToString(_CB_Application) << "]";
       description += ss_params.str();
+
+      cmd_arg_options.push_back(" * None");
+
       prototype = appName + " [connection options] --" + parsed_cmd;
       example = appName + " -i 207.27.0.75 --" + parsed_cmd;
-   } else  if( 0 == parsed_cmd.compare("set_mode") ) {   /* set_mode cmd help */
+   } else  if( 0 == parsed_cmd.compare("set_mode") ) {      // set_mode cmd help
       description = parsed_cmd + " command sends a request to the DC3 to set "
-            "its current boot mode. Options are:";
-      ss_params << "[" << enumToString(_CB_Bootloader) << "|"
-                << enumToString(_CB_Application) << "]. ";
-      description += ss_params.str();
+            "its current boot mode.";
       description +=
             "The command returns the status of the "
             "request. The possible return for: "
             "status: 0x00000000 for success or other codes for failure.\n";
 
-      prototype = appName + " [connection options] --" + parsed_cmd + " mode=";
-      prototype += ss_params.str();
+      ss_params.str(string());
+      ss_params <<" * [mode=" << enumToString(_CB_Bootloader) << "|"
+                << enumToString(_CB_Application) << "]";
+      cmd_arg_options.push_back(ss_params.str());
+
+      cmd_arg_options.push_back(" --- Note that instead of typing out the entire "
+            "word, you can pretty safely use abbreviations. For example, instead "
+            "of 'Application', you can type something as short as 'app' or 'a'. "
+            "Capitalization doesn't matter.");
+
+
+      prototype = appName + " [connection options] --" + parsed_cmd + "[mode=";
+      prototype += enumToString(_CB_Application);
+      prototype += "|";
+      prototype += enumToString(_CB_Bootloader);
+      prototype += "]";
+
       example = appName + " -i 207.27.0.75 --" + parsed_cmd + " mode=";
-      example += ss_params.str();
-   } else if (  0 == parsed_cmd.compare("flash") ) {        /* flash cmd help */
+      example += enumToString(_CB_Application);
+   } else if (  0 == parsed_cmd.compare("flash") ) {           // flash cmd help
       description = parsed_cmd + " command initiates a FW upgrade on the DC3 "
             "board. You have to specify the location of the FW upgrade *bin "
             "file and which FW image is going to be upgraded. File can be "
             "specified using a relative path to " + appName + " or a full path. "
             "The options for the FW image type are: ";
-      ss_params << "[" << enumToString(_CB_Bootloader) << "|"
-            << enumToString(_CB_Application) << "]";
-      description += ss_params.str();
+
+      ss_params.str(string());
+      ss_params << " * [type=" << enumToString(_CB_Application) << "]";
+      cmd_arg_options.push_back(ss_params.str());
+
+      cmd_arg_options.push_back(" --- Note that instead of typing out the entire word, you "
+            "can pretty safely use abbreviations. Instead of Application, you can "
+            "type something as short as 'app' or 'a'. Capitalization doesn't matter.");
+
+      cmd_arg_options.push_back(" * [file=path/to/filename.bin]");
+      cmd_arg_options.push_back(" --- Note that the filename must follow the "
+            "format of DC3<Name>_vYY.ZZ_YYYYMMDDhhmmss.bin because the Bootloader "
+            "expects the version (vYY.ZZ) and build datetime "
+            "(YYYYMMDDhhmmss) to be in the filename.");
+
 
       prototype = appName + " [connection options] --" + parsed_cmd
-            + " file=<relative path to *.bin file> " + "type=";
-      prototype += ss_params.str();
+            + " [file=<relative path to *.bin file>] " + "[type=";
+      prototype += enumToString(_CB_Application);
+      prototype += "|";
+      prototype += enumToString(_CB_Bootloader);
+      prototype += "]";
 
       example = appName + " -i 207.27.0.75 --" + parsed_cmd +
-            " file=../../DC3Appl.bin " + "type=Application";
-   } else if (  0 == parsed_cmd.compare("read_i2c") ) {  /* read_i2c cmd help */
-      description = parsed_cmd + " command initiates an I2C device read.  You "
+            " file=../../DC3Appl_v01.03_20150715142540.bin " + "type=";
+      example += enumToString(_CB_Application);
+   } else if (  0 == parsed_cmd.compare("read_i2c") ) {     // read_i2c cmd help
+      description = parsed_cmd + " command initiates an I2C device read. You "
             "have to specify the I2C device (dev=), number of bytes to read "
-            "(bytes=), and a start offset (start=)."
-            "The options for the I2C devices are: ";
-      ss_params << "[" << enumToString(_CB_EEPROM) << "|"
-            << enumToString(_CB_SNROM) << "|" << enumToString(_CB_EUIROM) << "]";
-      description += ss_params.str();
+            "(bytes=), and an offset from the start of device memory (start=). ";
 
-      description += ". Number of bytes is specified with 'bytes=<0 < int <= "
-            "128>'.  Offset from the start is specified with 'start=<0 < int "
-            "<= 128>'.  Depending on the device selected, size restrictions "
-            "apply to prevent reading past the memory boundaries.  EEPROM is 128"
-            " bytes, SNROM is 8 bytes, and EUIROM is 8 bytes.  start + bytes "
-            "must be less than the remaining memory.  There is also an optional "
-            "arg acc=<> which can be used to specify the type of access the board "
-            "attempts to the I2C device. By default, event driven (QPC) will be "
-            "used but acc= can be used to specify BARE and FRT (available in "
-            "Application only";
+      ss_params.str(string());
+      ss_params << "* [dev=<" << enumToString(_CB_EEPROM)
+                << "|" << enumToString(_CB_SNROM)
+                << "|" << enumToString(_CB_EUIROM) << ">]";
+      cmd_arg_options.push_back(ss_params.str());
+
+      ss_params.str(string());
+      ss_params << " --- " << enumToString(_CB_EEPROM) << " is a 256 byte R/W "
+            "device that contains a database of various settings stored in a "
+            "binary format. Some settings include an IP address last assigned "
+            "to the DC3 and the version and build datetime of the Bootloader FW "
+            "image.";
+      cmd_arg_options.push_back(ss_params.str());
+
+      ss_params.str(string());
+      ss_params << " --- " << enumToString(_CB_SNROM) << " is a 16 byte RO "
+            "device that contains a unique 64 bit serial number.";
+      cmd_arg_options.push_back(ss_params.str());
+
+      ss_params.str(string());
+      ss_params << " --- " << enumToString(_CB_EUIROM) << " is an 8 byte RO "
+            "device that contains a unique 48 bit number that is used as the MAC "
+            "address for the DC3.";
+      cmd_arg_options.push_back(ss_params.str());
+
+      cmd_arg_options.push_back("* [start=<0 - N>] where N depends on the device.");
+      cmd_arg_options.push_back("* {bytes=<1 - N>} where N depends on the device and "
+            "'start' param. Note that this parameter is optional if 'data=' parameter "
+            "is specified. If 'data=' is not specified, 'bytes=' should be specified.");
+
+      ss_params.str(string());
+      ss_params << " --- " << enumToString(_CB_EEPROM) << " max start is 255 (0xFF)";
+      cmd_arg_options.push_back(ss_params.str());
+
+      ss_params.str(string());
+      ss_params << " --- " << enumToString(_CB_SNROM) << " max start is 15 (0x0F)";
+      cmd_arg_options.push_back(ss_params.str());
+
+      ss_params.str(string());
+      ss_params << " --- " << enumToString(_CB_EUIROM) << " max start is 7 (0x07)";
+      cmd_arg_options.push_back(ss_params.str());
+
+      ss_params.str(string());
+      ss_params << " --- " << " start + bytes should be less than the maximum "
+            "storage size of the devices";
+      cmd_arg_options.push_back(ss_params.str());
+
+      ss_params.str(string());
+      ss_params << "* {acc=<(" << enumToString(_CB_ACCESS_QPC) << ")"
+                << "|" << enumToString(_CB_ACCESS_FRT)
+                << "|" << enumToString(_CB_ACCESS_BARE) << ">}";
+      cmd_arg_options.push_back(ss_params.str());
+
+      ss_params.str(string());
+      ss_params << " --- " << enumToString(_CB_ACCESS_QPC) << " - data is accessed "
+            "via the QPC event driven framework.  This is the default option.";
+      cmd_arg_options.push_back(ss_params.str());
+
+      ss_params.str(string());
+      ss_params << " --- " << enumToString(_CB_ACCESS_FRT) << " - data is accessed "
+            "via the FreeRTOS events. This option is only available when the DC3 "
+            "is in " << enumToString(_CB_Application) << " mode.";
+      cmd_arg_options.push_back(ss_params.str());
+
+      ss_params.str(string());
+      ss_params << " --- " << enumToString(_CB_ACCESS_FRT) << " - data is accessed "
+            "via bare-metal, bypassing all event interfaces except for the delivery "
+            "to and from the active object that handles that particular HW "
+            "interface. This option should only be used for debugging.";
+      cmd_arg_options.push_back(ss_params.str());
+
 
       prototype = appName + " [connection options] --" + parsed_cmd
-            + " start=<0 - 128> bytes=<0-128>" + "dev=";
+            + " [start=<0 - 128>] {bytes=<0-128>}";
+      ss_params.str(string());
+      ss_params << "[dev=<" << enumToString(_CB_EEPROM)
+                << "|" << enumToString(_CB_SNROM)
+                << "|" << enumToString(_CB_EUIROM) << ">]";
+      prototype += ss_params.str();
+      prototype += " ";
+      ss_params.str(string());
+      ss_params << "{acc=<(" << enumToString(_CB_ACCESS_QPC) << ")"
+                << "|" << enumToString(_CB_ACCESS_FRT)
+                << "|" << enumToString(_CB_ACCESS_BARE) << ">}";
       prototype += ss_params.str();
 
       example = appName + " -i 207.27.0.75 --" + parsed_cmd +
-            " start=0 bytes=20" + "dev=EEPROM";
+            " start=0 bytes=20 " + "dev=";
+      example += enumToString(_CB_EEPROM);
+
+   } else if (  0 == parsed_cmd.compare("write_i2c") ) {   // write_i2c cmd help
+
+      description = parsed_cmd + " command initiates an I2C device write. You "
+            "have to specify the I2C device (dev=), number of bytes to read "
+            "(bytes=), and an offset from the start of device memory (start=). "
+            "You can also optionally specify the data to write. If you do not, "
+            "an array of increasing numbers will be automatically generated and "
+            "used.";
+
+      ss_params.str(string());
+      ss_params << "* [dev=<" << enumToString(_CB_EEPROM)<< ">]";
+      cmd_arg_options.push_back(ss_params.str());
+
+      ss_params.str(string());
+      ss_params << " --- " << enumToString(_CB_EEPROM) << " is a 256 byte R/W "
+            "device that contains a database of various settings stored in a "
+            "binary format. Some settings include an IP address last assigned "
+            "to the DC3 and the version and build datetime of the Bootloader FW "
+            "image.";
+      cmd_arg_options.push_back(ss_params.str());
+
+      cmd_arg_options.push_back("* [start=<0 - N>] where N depends on the device.");
+      cmd_arg_options.push_back("* {bytes=<1 - N>} where N depends on the device and "
+            "'start' param. Note that this parameter is optional if 'data=' parameter "
+            "is specified. If 'data=' is not specified, 'bytes=' should be specified.");
+
+      ss_params.str(string());
+      ss_params << " --- " << enumToString(_CB_EEPROM) << " max start is 255 (0xFF)";
+      cmd_arg_options.push_back(ss_params.str());
+
+      ss_params.str(string());
+      ss_params << " --- " << " start + bytes should be less than the maximum "
+            "storage size of the devices";
+      cmd_arg_options.push_back(ss_params.str());
+
+      ss_params.str(string());
+      ss_params << "* {acc=<(" << enumToString(_CB_ACCESS_QPC) << ")"
+                << "|" << enumToString(_CB_ACCESS_FRT)
+                << "|" << enumToString(_CB_ACCESS_BARE) << ">}";
+      cmd_arg_options.push_back(ss_params.str());
+
+      ss_params.str(string());
+      ss_params << " --- " << enumToString(_CB_ACCESS_QPC) << " - data is accessed "
+            "via the QPC event driven framework.  This is the default option.";
+      cmd_arg_options.push_back(ss_params.str());
+
+      ss_params.str(string());
+      ss_params << " --- " << enumToString(_CB_ACCESS_FRT) << " - data is accessed "
+            "via the FreeRTOS events. This option is only available when the DC3 "
+            "is in " << enumToString(_CB_Application) << " mode.";
+      cmd_arg_options.push_back(ss_params.str());
+
+      ss_params.str(string());
+      ss_params << " --- " << enumToString(_CB_ACCESS_FRT) << " - data is accessed "
+            "via bare-metal, bypassing all event interfaces except for the delivery "
+            "to and from the active object that handles that particular HW "
+            "interface. This option should only be used for debugging.";
+      cmd_arg_options.push_back(ss_params.str());
+
+      ss_params.str(string());
+      ss_params << "* {data=\"0x00,0x05 0x34; 0xab 32 \"}";
+      cmd_arg_options.push_back(ss_params.str());
+
+      ss_params.str(string());
+      ss_params << "--- the optional data should be formatted as follows: ";
+      cmd_arg_options.push_back(ss_params.str());
+
+      ss_params.str(string());
+      ss_params << "~~~~ The array should be surrounded by '' or \"\".  [] can "
+            "also be used but spaces cannot be used as separators then.  \"\" and "
+            "'' are the safe options.";
+      cmd_arg_options.push_back(ss_params.str());
+
+      ss_params.str(string());
+      ss_params << "~~~~ Numbers can be separated by , ; . or spaces if surrounded by '' or \"\"";
+      cmd_arg_options.push_back(ss_params.str());
+
+      ss_params.str(string());
+      ss_params << "~~~~ Numbers can be specified to be hex (prepend 0x) or dec";
+      cmd_arg_options.push_back(ss_params.str());
+
+      prototype = appName + " [connection options] --" + parsed_cmd
+            + " [start=<0 - 128>] {bytes=<0-128>}";
+      ss_params.str(string());
+      ss_params << "[dev=<" << enumToString(_CB_EEPROM) << ">]";
+      prototype += ss_params.str();
+      prototype += " ";
+      ss_params.str(string());
+      ss_params << "{acc=<(" << enumToString(_CB_ACCESS_QPC) << ")"
+                << "|" << enumToString(_CB_ACCESS_FRT)
+                << "|" << enumToString(_CB_ACCESS_BARE) << ">}";
+      prototype += ss_params.str();
+      prototype += "{data=\"<0-0xFF>,<0-0xFF>,<0-0xFF>,<0-0xFF>, ... ,<0-0xFF>\"}";
+
+      example = appName + " -i 207.27.0.75 --" + parsed_cmd +
+            " start=0 bytes=4 " + "dev=";
+      example += enumToString(_CB_EEPROM);
+      example += " data=\"0x00,0x01,0x02,0x03\"";
+
    } else if( 0 == parsed_cmd.compare("ram_test") ) {       // ram_test cmd help
       description = parsed_cmd + " command sends a request to the DC3 to run "
             "a test on the external RAM. The RAM test checks the integrity of "
@@ -148,6 +348,25 @@ void HELP_printCmdSpecific(
    std::copy(description.begin(), description.end(),
          ff_ostream_iterator(ss, "", CHARS_PER_LINE));
    ss << endl << endl;
+
+   ss << "Command argument(s) and option(s): " << endl;
+   ss << "Arguments surrounded in: " << endl
+         << "[] are required" << endl
+         << "{} are optional" << endl;
+   ss << "Argument values surrounded in: " << endl
+         << "<> are allowed options" << endl
+         << "() are the default if none is selected" << endl
+         << "\"\" are string types that may contain spaces" << endl
+         << "Argument values separated by | indicate all the allowed options" << endl;
+
+   // iterate over the elements of the vector
+   for( vector<string>::iterator v_itr = cmd_arg_options.begin(); v_itr != cmd_arg_options.end(); ++v_itr ) {
+      std::copy((*v_itr).begin(), (*v_itr).end(),
+         ff_ostream_iterator(ss, "", CHARS_PER_LINE));
+         ss << endl;
+   }
+   ss << endl << endl;
+
    ss << "Command Prototype(s): " << endl;
    std::copy(prototype.begin(), prototype.end(),
          ff_ostream_iterator(ss, "", CHARS_PER_LINE));

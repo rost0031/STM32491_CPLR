@@ -181,7 +181,7 @@ template<typename T> struct allowedStrings
  */
 template<typename T> T ARG_getEnumFromAllowedStr(
       std::string& str,
-      std::map< T, std::vector<std::string>>& m_allowedStrings //enumRefHolder1<T> const& m_allowedStrings
+      std::map< T, std::vector<std::string>>& m_allowedStrings
 )
 {
    // iterate over the map elements

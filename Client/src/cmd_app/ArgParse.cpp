@@ -42,8 +42,8 @@ MODULE_NAME( MODULE_EXT );
  */
 template<> std::map<CBBootMode, std::vector<std::string>> allowedStrings<CBBootMode>::m_allowedStrings = {
       { _CB_NoBootMode   , {"None","invalid"} },
-      { _CB_Bootloader   , {"boot", "bootloader", "bootldr", "btldr" } },
-      { _CB_Application  , {"app", "application", "appl", "scips", "scipsiii", "scips3" } }
+      { _CB_Bootloader   , {"b", "bo", "bt", "boo", "boot", "bootloader", "bootldr", "btldr" } },
+      { _CB_Application  , {"a", "ap", "app", "appl", "application", "scips", "scipsiii", "scips3" } }
 };
 
 /**
@@ -51,17 +51,17 @@ template<> std::map<CBBootMode, std::vector<std::string>> allowedStrings<CBBootM
  */
 template<> std::map<CBMsgRoute, std::vector<std::string>> allowedStrings<CBMsgRoute>::m_allowedStrings = {
       { _CB_NoRoute   , {"None","no route"} },
-      { _CB_Serial   , {"serial", "ser"} },
-      { _CB_EthSys  , {"sys", "sys_eth", "system_eth", "system_ethernet", "eth_sys", "ethernet_system", "eth_system"} },
-      { _CB_EthLog  , {"log", "log_eth", "logging_eth", "logging_ethernet", "eth_log", "ethernet_logging", "eth_logging"} },
-      { _CB_EthCli  , {"cli", "cli_eth", "client_eth", "client_ethernet", "eth_cli", "ethernet_client", "eth_client"} }
+      { _CB_Serial   , {"se", "serial", "ser"} },
+      { _CB_EthSys  , {"sy", "sys", "sys_eth", "system_eth", "system_ethernet", "eth_sys", "ethernet_system", "eth_system"} },
+      { _CB_EthLog  , {"l","lo","log", "log_eth", "logging_eth", "logging_ethernet", "eth_log", "ethernet_logging", "eth_logging"} },
+      { _CB_EthCli  , {"c", "cl","cli", "cli_eth", "client_eth", "client_ethernet", "eth_cli", "ethernet_client", "eth_client"} }
 };
 
 /**
  * @brief All allowed strings for specifying CBI2CDevices enums
  */
 template<> std::map<CBI2CDevices, std::vector<std::string>> allowedStrings<CBI2CDevices>::m_allowedStrings = {
-      { _CB_EEPROM   , {"eeprom","eprom"} },
+      { _CB_EEPROM   , {"e","ee","eep","eeprom","eprom"} },
       { _CB_SNROM   , {"snrom", "sn", "ser_rom", "srom", "serial_rom", "serial_number_rom", } },
       { _CB_EUIROM  , {"euirom", "eui", "ui", "uie", "uierom", "eurom", "uirom", } },
 };
