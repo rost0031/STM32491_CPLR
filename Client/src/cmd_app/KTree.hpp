@@ -132,8 +132,13 @@
 typedef enum MenuActions {
    MENU_NO_ACTION = 0,
    MENU_RAM_TEST,
-   MENU_I2C_READ_TEST,
-   MENU_I2C_WRITE_TEST,
+   MENU_I2C_READ_TEST_DEF,
+   MENU_I2C_READ_TEST_CUS,
+   MENU_I2C_WRITE_TEST_DEF,
+   MENU_I2C_WRITE_TEST_CUS,
+   MENU_GET_MODE,
+   MENU_SET_APPL,
+   MENU_SET_BOOT,
 } MenuAction_t;
 
 /* Exported functions --------------------------------------------------------*/

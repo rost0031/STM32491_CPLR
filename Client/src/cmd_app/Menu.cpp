@@ -51,9 +51,18 @@ APIError_t MENU_run( ClientApi *client )
    root->addChild( "DBG", "Debug control" );
    root->addChild( "SYS", "System tests" );
 
+   root->findChild("SYS")->addChild( "MDE", "DC3 mode commands" );
+   root->findChild("SYS")->findChild("MDE")->addChild( "GET", "Get DC3 boot mode", MENU_GET_MODE );
+   root->findChild("SYS")->findChild("MDE")->addChild( "SEA", "Set DC3 boot mode to Application", MENU_SET_APPL );
+   root->findChild("SYS")->findChild("MDE")->addChild( "SEB", "Set DC3 boot mode to Bootloader", MENU_SET_BOOT );
+
    root->findChild("SYS")->addChild( "I2C", "I2C tests" );
-   root->findChild("SYS")->findChild("I2C")->addChild( "REE", "Read EEPROM on I2C", MENU_I2C_READ_TEST );
-   root->findChild("SYS")->findChild("I2C")->addChild( "WEE", "Write EEPROM on I2C", MENU_I2C_WRITE_TEST );
+   root->findChild("SYS")->findChild("I2C")->addChild( "REE", "Read EEPROM on I2C" );
+   root->findChild("SYS")->findChild("I2C")->findChild("REE")->addChild( "DEF", "Read EEPROM on I2C with default start and number of bytes", MENU_I2C_READ_TEST_DEF );
+   root->findChild("SYS")->findChild("I2C")->findChild("REE")->addChild( "CUS", "Read EEPROM on I2C with custom start and number of bytes", MENU_I2C_READ_TEST_CUS );
+   root->findChild("SYS")->findChild("I2C")->addChild( "WEE", "Write EEPROM on I2C" );
+   root->findChild("SYS")->findChild("I2C")->findChild("WEE")->addChild( "DEF", "Write EEPROM on I2C with default start and number of bytes", MENU_I2C_WRITE_TEST_DEF );
+   root->findChild("SYS")->findChild("I2C")->findChild("WEE")->addChild( "CUS", "Write EEPROM on I2C with custom start and number of bytes", MENU_I2C_WRITE_TEST_CUS );
 
    root->findChild("SYS")->addChild( "MEM", "Memory tests" );
    root->findChild("SYS")->findChild("MEM")->addChild("RAM", "Test RAM", MENU_RAM_TEST );
@@ -236,12 +245,22 @@ APIError_t MENU_parseAndExecAction(
 )
 {
    APIError_t status = API_ERR_NONE; // Keep track of API errors
-
+   CBErrorCode statusDC3 = ERR_NONE; // Keep track of DC3 errors
    stringstream ss;
 
    switch( menuAction ) {
       case MENU_RAM_TEST:
          status = CMD_runRamTest( client );
+         break;
+      case MENU_GET_MODE:
+         CBBootMode mode;
+         status = CMD_runGetMode( client, &statusDC3, &mode );
+         break;
+      case MENU_SET_APPL:
+         status = CMD_runSetMode( client, &statusDC3, _CB_Application );
+         break;
+      case MENU_SET_BOOT:
+         status = CMD_runSetMode( client, &statusDC3, _CB_Bootloader );
          break;
       case MENU_NO_ACTION:
          WRN_out << enumToString(menuAction) <<  " associated with this menu selection";
