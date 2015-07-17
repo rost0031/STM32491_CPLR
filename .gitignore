@@ -1,6 +1,6 @@
 # This file tells git what to ignore
-!Client/lib/win32/*.a
-!Client/lib/posix/*.a
+!Client/lib/win32/
+!Client/lib/posix/
 *.o
 *.d
 *.a
@@ -11,9 +11,9 @@
 *.lib
 *.map
 *.elf
-#*~
-#*.lst
-#*.swp
+*~
+*.lst
+*.swp
 dbg/
 rel/
 spy/
@@ -23,13 +23,13 @@ rel_posix/
 rel_win32/
 spy_posix/
 spy_win32/
-#Debug/
-#.svn/
-#*_gen.*
+Debug/
+.svn/
+*_gen.*
 ipAndMac.h
-#cscope.out
-#*.bak
-#env.mk
+cscope.out
+*.bak
+env.mk
 version.h
 #doc/
 .LWIPMgr
