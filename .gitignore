@@ -43,3 +43,4 @@ version.h
 .CommMgr
 .FlashMgr
 .SysMgr
+Common/sys/cb_api/gen_src/
