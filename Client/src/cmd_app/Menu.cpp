@@ -21,6 +21,7 @@
 #include "EnumMaps.hpp"
 #include "KTree.hpp"
 #include "Cmds.hpp"
+#include "ArgParse.hpp"
 
 /* Lib includes */
 
@@ -261,6 +262,69 @@ APIError_t MENU_parseAndExecAction(
          break;
       case MENU_SET_BOOT:
          status = CMD_runSetMode( client, &statusDC3, _CB_Bootloader );
+         break;
+      case MENU_I2C_READ_TEST_DEF: {; // local scope and ; for label fix
+         // Read 16 bytes from offset 0 from EEPROM using QPC events as the
+         // method of passing data back and forth.
+         int bytes = 16, start = 0;
+         size_t nMaxBufferSize = 20;
+
+         uint8_t *buffer = new uint8_t[nMaxBufferSize];
+         uint16_t bytesRead = 0;
+
+         CBI2CDevices dev = _CB_EEPROM;
+         CBAccessType acc = _CB_ACCESS_QPC;       // set to a default arg of QPC
+
+         status = CMD_runReadI2C( client, &statusDC3, &bytesRead, buffer,
+               nMaxBufferSize, bytes, start, dev, acc );
+
+         delete[] buffer;
+
+         break;
+      }
+      case MENU_I2C_READ_TEST_CUS:
+         break;
+      case MENU_I2C_WRITE_TEST_DEF: {;
+
+         int bytes = 16, start = 0;
+         CBI2CDevices dev = _CB_EEPROM;
+         CBAccessType acc = _CB_ACCESS_QPC;       // set to a default arg of QPC
+
+         // create a default array and fill it number of bytes user requested
+         size_t maxArraySize = 20;
+         uint8_t *data = new uint8_t[maxArraySize];
+
+         // form the default array of the length user wants but still have our
+         // code parse it instead of just making the data array directly.  This
+         // allows the same code path to be taken for both default and user
+         // arrays.
+         string defaultArrayStr = "[";
+         stringstream ss_tmp;
+         for (int i = 0; i < bytes; i++ ) {
+            ss_tmp << "0x" << hex << setfill('0') << setw(2) << unsigned(i);
+            if (i < (bytes - 1) ) {
+               ss_tmp << ",";     // append a comma unless it's the last element
+            }
+         }
+         defaultArrayStr.append(ss_tmp.str());
+         defaultArrayStr.append("]");
+
+         size_t dataLen = 0;
+         try {
+            ARG_parseHexStr( data, &dataLen, maxArraySize, defaultArrayStr );
+         } catch (exception &e) {
+            ERR_out << "Caught exception parsing data array: " << e.what();
+         }
+
+         bytes = dataLen; // update the bytes argument with how many were read
+
+         status = CMD_runWriteI2C( client, &statusDC3, data, bytes, start, dev, acc );
+
+         delete[] data;
+
+         break;
+      }
+      case MENU_I2C_WRITE_TEST_CUS:
          break;
       case MENU_NO_ACTION:
          WRN_out << enumToString(menuAction) <<  " associated with this menu selection";

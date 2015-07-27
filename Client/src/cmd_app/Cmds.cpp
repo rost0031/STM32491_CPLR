@@ -208,7 +208,7 @@ APIError_t CMD_runReadI2C(
             pBuffer, nMaxBufferSize, nBytesToRead, nStart, dev, acc) )) {
       ss << "Finished read_i2c cmd. Command ";
       if (ERR_NONE == *statusDC3) {
-         ss << "completed with no errors. Read " << *pBytesRead << " bytes: [ ";
+         ss << "completed with no errors. ***" << endl << "*** Read " << *pBytesRead << " bytes: [ ";
          for ( unsigned int i = 0; i < *pBytesRead; i++ ) {
             ss << "0x" << hex << setfill('0') << setw(2) << unsigned(pBuffer[i]) << " ";
          }
@@ -250,7 +250,7 @@ APIError_t CMD_runWriteI2C(
          nBytesToWrite, nStart, dev, acc ))) {
       ss << "Finished write_i2c cmd. Command ";
       if (ERR_NONE == *statusDC3) {
-         ss << "completed with no errors. Wrote " << nBytesToWrite << " bytes: [ ";
+         ss << "completed with no errors. ***" << endl << "*** Wrote " << nBytesToWrite << " bytes: [ ";
          for ( unsigned int i = 0; i < nBytesToWrite; i++ ) {
             ss << "0x" << hex << setfill('0') << setw(2) << unsigned(pBuffer[i]) << " ";
          }
