@@ -19,8 +19,8 @@
 #include <map>
 
 /* Api includes */
-#include "CBSharedDbgLevels.h"
-#include "CBCommApi.h"
+#include "DC3DbgLevels.h"
+#include "DC3CommApi.h"
 
 /* Lib includes */
 #include "ClientModules.h"
@@ -38,12 +38,12 @@
  * the coupler board. This performs a pretty-print of data going out in the Req
  * msg.
  *
- * @param [in] basicMsgStruct: CBBasicMsg struct of raw data contained in the
+ * @param [in] basicMsgStruct: DC3BasicMsg struct of raw data contained in the
  * Req msg.
  * @return: None.
  */
 void CLI_ReqCallback(
-      struct CBBasicMsg basicMsgStruct
+      struct DC3BasicMsg basicMsgStruct
 );
 
 /**
@@ -53,12 +53,12 @@ void CLI_ReqCallback(
  * from the coupler board. This performs a pretty-print of data going out in the
  * Ack msg.
  *
- * @param [in] basicMsgStruct: CBBasicMsg struct of raw data contained in the
+ * @param [in] basicMsgStruct: DC3BasicMsg struct of raw data contained in the
  * Ack msg.
  * @return: None.
  */
 void CLI_AckCallback(
-      struct CBBasicMsg basicMsgStruct
+      struct DC3BasicMsg basicMsgStruct
 );
 
 
@@ -68,20 +68,20 @@ void CLI_AckCallback(
  * This is a callback which should be instantiated to handle Done msgs coming
  * from the coupler board. This performs a pretty-print of data in the Done msg.
  *
- * @param [in] basicMsgStruct: CBBasicMsg struct of raw data contained in the Ack msg.
- * @param [in] payloadMsgUnion: CBPayloadMsgUnion_t uniont that contains the union
+ * @param [in] basicMsgStruct: DC3BasicMsg struct of raw data contained in the Ack msg.
+ * @param [in] payloadMsgUnion: DC3PayloadMsgUnion_t uniont that contains the union
  * of all possible payload msgs.
  *
  * @return: None.
  */
 void CLI_DoneCallback(
-      struct CBBasicMsg basicMsgStruct,
-      CBPayloadMsgUnion_t payloadMsgUnion
+      struct DC3BasicMsg basicMsgStruct,
+      DC3PayloadMsgUnion_t payloadMsgUnion
 );
 
 //void CLI_LogCallback(
 //      DBG_LEVEL_T logLevel,
-//      CBErrorCode err,
+//      DC3ErrorCode err,
 //      char *message
 //);
 

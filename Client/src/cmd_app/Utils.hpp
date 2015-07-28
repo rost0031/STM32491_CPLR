@@ -27,7 +27,7 @@
 #include "Logging.hpp"
 #include "Help.hpp"
 #include "EnumMaps.hpp"
-#include "CBCommApi.h"
+#include "DC3CommApi.h"
 
 /* Namespaces ----------------------------------------------------------------*/
 using namespace std;
@@ -113,15 +113,15 @@ bool UTIL_getArgValue(
 //   // Have to check types here.  It's ugly but it works.
 //   if ( typeid(value) == string ) {
 //      value = tmpValue;
-//   } else if ( typeid(value) == CBBootMode ) {
+//   } else if ( typeid(value) == DC3BootMode ) {
 //      if (0 == tmpValue.compare("Bootloader")) {
-//         value = _CB_Bootloader;
+//         value = _DC3_Bootloader;
 //      } else if (0 == tmpValue.compare("Application")) {
-//         value = _CB_Application;
+//         value = _DC3_Application;
 //      } else if (0 == tmpValue.compare("SysRomBoot")) {
-//         value = _CB_SysRomBoot;
+//         value = _DC3_SysRomBoot;
 //      }  else {
-//         value = _CB_MaxBootModes;
+//         value = _DC3_MaxBootModes;
 //      }
 //   }
 //

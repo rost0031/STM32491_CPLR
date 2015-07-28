@@ -52,6 +52,9 @@ APIError_t MENU_run( ClientApi *client )
    root->addChild( "DBG", "Debug control" );
    root->addChild( "SYS", "System tests" );
 
+   root->findChild("SYS")->addChild( "MEM", "Memory tests" );
+   root->findChild("SYS")->findChild("MEM")->addChild("RAM", "Test RAM", MENU_RAM_TEST );
+
    root->findChild("SYS")->addChild( "MDE", "DC3 mode commands" );
    root->findChild("SYS")->findChild("MDE")->addChild( "GET", "Get DC3 boot mode", MENU_GET_MODE );
    root->findChild("SYS")->findChild("MDE")->addChild( "SEA", "Set DC3 boot mode to Application", MENU_SET_APPL );
@@ -65,12 +68,10 @@ APIError_t MENU_run( ClientApi *client )
    root->findChild("SYS")->findChild("I2C")->findChild("WEE")->addChild( "DEF", "Write EEPROM on I2C with default start and number of bytes", MENU_I2C_WRITE_TEST_DEF );
    root->findChild("SYS")->findChild("I2C")->findChild("WEE")->addChild( "CUS", "Write EEPROM on I2C with custom start and number of bytes", MENU_I2C_WRITE_TEST_CUS );
 
-   root->findChild("SYS")->addChild( "MEM", "Memory tests" );
-   root->findChild("SYS")->findChild("MEM")->addChild("RAM", "Test RAM", MENU_RAM_TEST );
-   root->findChild("SYS")->findChild("MEM")->addChild("RAM1", "Test RAM again" );
-
-
-   MENU_finalize( root, 1 ); // Finalize the menu node numbers
+   // Finalize the menu node numbers.  This has to be called after all the items
+   // have been added to the menu.  This function numbers all the nodes to allow
+   // direct access to them without going through the entire menu tree.
+   MENU_finalize( root, 1 );
 
    root->printTree();
    MENU_printHelp();
@@ -246,7 +247,7 @@ APIError_t MENU_parseAndExecAction(
 )
 {
    APIError_t status = API_ERR_NONE; // Keep track of API errors
-   CBErrorCode statusDC3 = ERR_NONE; // Keep track of DC3 errors
+   DC3Error_t statusDC3 = ERR_NONE; // Keep track of DC3 errors
    stringstream ss;
 
    switch( menuAction ) {
@@ -254,14 +255,14 @@ APIError_t MENU_parseAndExecAction(
          status = CMD_runRamTest( client );
          break;
       case MENU_GET_MODE:
-         CBBootMode mode;
+         DC3BootMode mode;
          status = CMD_runGetMode( client, &statusDC3, &mode );
          break;
       case MENU_SET_APPL:
-         status = CMD_runSetMode( client, &statusDC3, _CB_Application );
+         status = CMD_runSetMode( client, &statusDC3, _DC3_Application );
          break;
       case MENU_SET_BOOT:
-         status = CMD_runSetMode( client, &statusDC3, _CB_Bootloader );
+         status = CMD_runSetMode( client, &statusDC3, _DC3_Bootloader );
          break;
       case MENU_I2C_READ_TEST_DEF:                 // intentionally fall through
       case MENU_I2C_WRITE_TEST_DEF: {;        // local scope and ; for label fix
@@ -270,8 +271,8 @@ APIError_t MENU_parseAndExecAction(
          int bytes = 16, start = 0;
          size_t nMaxBufferSize = 20;
 
-         CBI2CDevices dev = _CB_EEPROM;
-         CBAccessType acc = _CB_ACCESS_QPC;       // set to a default arg of QPC
+         DC3I2CDevices dev = _DC3_EEPROM;
+         DC3AccessType acc = _DC3_ACCESS_QPC;       // set to a default arg of QPC
 
          uint8_t *buffer = new uint8_t[nMaxBufferSize];
 
@@ -317,8 +318,8 @@ APIError_t MENU_parseAndExecAction(
          int bytes = 0, start = 0;
          size_t nMaxBufferSize = 0;
 
-         CBI2CDevices dev = _CB_EEPROM;
-         CBAccessType acc = _CB_ACCESS_QPC;       // set to a default arg of QPC
+         DC3I2CDevices dev = _DC3_EEPROM;
+         DC3AccessType acc = _DC3_ACCESS_QPC;       // set to a default arg of QPC
 
 
          // TODO: the current magic numbers should be looked up from a common
@@ -350,12 +351,10 @@ APIError_t MENU_parseAndExecAction(
             nMaxBufferSize = 1000;
             buffer = new uint8_t[nMaxBufferSize];
 
-//            DBG_out << "bytes: " << bytes << "start " << start;
             uint16_t bytesRead = 0;
             status = CMD_runReadI2C( client, &statusDC3, &bytesRead, buffer,
                   nMaxBufferSize, bytes, start, dev, acc );
 
-//            DBG_out << "bytesRead: " << bytesRead;
             delete[] buffer;
 
          } else {
@@ -380,8 +379,6 @@ APIError_t MENU_parseAndExecAction(
 
             delete[] buffer;         // Don't forget to delete buffer on success
          }
-
-
 
          break;
       }

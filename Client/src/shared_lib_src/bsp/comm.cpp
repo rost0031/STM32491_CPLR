@@ -34,8 +34,8 @@ APIError_t Comm::write_some( char* message, uint16_t len )
 {
    if ( this->m_pSer ) {
       /* Serial messages have to be base64 encoded */
-      char enDataBuf[CB_MAX_MSG_LEN];
-      int encDataLen = base64_encode( message, len, enDataBuf, CB_MAX_MSG_LEN );
+      char enDataBuf[DC3_MAX_MSG_LEN];
+      int encDataLen = base64_encode( message, len, enDataBuf, DC3_MAX_MSG_LEN );
 
       if(encDataLen < 1) {
          ERR_printf(this->m_pLog,"Encoding failed\n");

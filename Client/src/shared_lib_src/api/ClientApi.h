@@ -54,9 +54,9 @@ class CLIENT_DLL ClientApi {
 
 private:
    LogStub *m_pLog;         /**< Pointer to LogStub instance used for logging */
-   CB_ReqMsgHandler_t m_pReqHandlerCBFunction; /**< Callback for handling Req msgs */
-   CB_AckMsgHandler_t m_pAckHandlerCBFunction; /**< Callback for handling Ack msgs */
-   CB_DoneMsgHandler_t m_pDoneHandlerCBFunction; /**< Callback for handling Done msgs */
+   DC3_ReqMsgHandler_t m_pReqHandlerDC3Function; /**< Callback for handling Req msgs */
+   DC3_AckMsgHandler_t m_pAckHandlerDC3Function; /**< Callback for handling Ack msgs */
+   DC3_DoneMsgHandler_t m_pDoneHandlerDC3Function; /**< Callback for handling Done msgs */
 
    bool m_bReqLogEnable; /**< flag to enable/disable callback call for Req msgs */
    bool m_bAckLogEnable; /**< flag to enable/disable callback call for Ack msgs */
@@ -65,27 +65,27 @@ private:
 
    unsigned int m_msgId;   /* Msg ID incrementing counter for unique msg ids. */
    bool m_bRequestProg;     /* Flag to see if progress messages are requested */
-   CBMsgRoute m_msgRoute; /* This is set based on the connection used (UDP vs Serial) */
+   DC3MsgRoute m_msgRoute; /* This is set based on the connection used (UDP vs Serial) */
 
    boost::thread m_workerThread;          /**< Thread to start MainMgr and QF */
 
    /* All the different msg structures that exist */
-   struct CBBasicMsg          m_basicMsg;
-   struct CBStatusPayloadMsg  m_statusPayloadMsg;
-   struct CBVersionPayloadMsg m_versionPayloadMsg;
-   struct CBBootModePayloadMsg m_bootmodePayloadMsg;
-   struct CBFlashMetaPayloadMsg m_flashMetaPayloadMsg;
-   struct CBFlashDataPayloadMsg m_flashDataPayloadMsg;
-   struct CBI2CDataPayloadMsg m_i2cDataPayloadMsg;
+   struct DC3BasicMsg          m_basicMsg;
+   struct DC3StatusPayloadMsg  m_statusPayloadMsg;
+   struct DC3VersionPayloadMsg m_versionPayloadMsg;
+   struct DC3BootModePayloadMsg m_bootmodePayloadMsg;
+   struct DC3FlashMetaPayloadMsg m_flashMetaPayloadMsg;
+   struct DC3FlashDataPayloadMsg m_flashDataPayloadMsg;
+   struct DC3I2CDataPayloadMsg m_i2cDataPayloadMsg;
 
    uint8_t dataBuf[1000];
    int dataLen;
 
    /**
     * @brief   Polls for new events in the queue from MainMgr AO.
-    * @param [out] *basicMsg: CBBasicMsg pointer to the basic msg struct that
+    * @param [out] *basicMsg: DC3BasicMsg pointer to the basic msg struct that
     * will contain the data on output.
-    * @param [out] *payloadMsgUnion: CBPayloadMsgUnion_t pointer to the union
+    * @param [out] *payloadMsgUnion: DC3PayloadMsgUnion_t pointer to the union
     * of all the payload msgs that will contain the correct portion of itself
     * filled on output.  This union is indexed by the contents of the
     * basicMsg._msgPayload.
@@ -94,15 +94,15 @@ private:
     *    other error codes if failure.
     */
    APIError_t pollForResp(
-         CBBasicMsg *basicMsg,
-         CBPayloadMsgUnion_t *payloadMsgUnion
+         DC3BasicMsg *basicMsg,
+         DC3PayloadMsgUnion_t *payloadMsgUnion
    );
 
    /**
     * @brief   Blocks while waiting for new events in queue from MainMgr AO.
-    * @param [out] *basicMsg: CBBasicMsg pointer to the basic msg struct that
+    * @param [out] *basicMsg: DC3BasicMsg pointer to the basic msg struct that
     * will contain the data on output.
-    * @param [out] *payloadMsgUnion: CBPayloadMsgUnion_t pointer to the union
+    * @param [out] *payloadMsgUnion: DC3PayloadMsgUnion_t pointer to the union
     * of all the payload msgs that will contain the correct portion of itself
     * filled on output.  This union is indexed by the contents of the
     * basicMsg._msgPayload.
@@ -111,8 +111,8 @@ private:
     *    other error codes if failure.
     */
    APIError_t waitForResp(
-         CBBasicMsg *basicMsg,
-         CBPayloadMsgUnion_t *payloadMsgUnion,
+         DC3BasicMsg *basicMsg,
+         DC3PayloadMsgUnion_t *payloadMsgUnion,
          uint16_t timeoutSecs
    );
 
@@ -123,53 +123,53 @@ public:
     ***************************************************************************/
    /**
     * @brief   Blocking cmd to get the current boot mode of DC3.
-    * @param [out] *status: CBErrorCode pointer to the returned status of from
+    * @param [out] *status: DC3Error_t pointer to the returned status of from
     * the DC3 board.
     *    @arg  ERR_NONE: success.
     *    other error codes if failure.
     * @note: unless this variable is set to ERR_NONE at the completion, the
     * results of other returned data should not be trusted.
     *
-    * @param [out] *mode: CBBootMode pointer to the returned boot mode from the
+    * @param [out] *mode: DC3BootMode pointer to the returned boot mode from the
     * DC3 board.
-    *    @arg  _CB_Bootloader: the DC3 board is currently in bootloader mode.
-    *    @arg  _CB_Application: the DC3 board is currently in application mode.
+    *    @arg  _DC3_Bootloader: the DC3 board is currently in bootloader mode.
+    *    @arg  _DC3_Application: the DC3 board is currently in application mode.
     * @return: APIError_t status of the client executing the command.
     *    @arg  API_ERR_NONE: success
     *    other error codes if failure.
     */
-   APIError_t DC3_getMode( CBErrorCode *status, CBBootMode *mode );
+   APIError_t DC3_getMode( DC3Error_t *status, DC3BootMode *mode );
 
    /**
     * @brief   Blocking cmd to set the current boot mode of DC3.
-    * @param [out] *status: CBErrorCode pointer to the returned status of from
+    * @param [out] *status: DC3Error_t pointer to the returned status of from
     * the DC3 board.
     *    @arg  ERR_NONE: success.
     *    other error codes if failure.
     * @note: unless this variable is set to ERR_NONE at the completion, the
     * results of other returned data should not be trusted.
     *
-    * @param [in] mode: CBBootMode to the mode to set the DC3 board to.
-    *    @arg  _CB_Bootloader: the DC3 board is currently in bootloader mode.
-    *    @arg  _CB_Application: the DC3 board is currently in application mode.
+    * @param [in] mode: DC3BootMode to the mode to set the DC3 board to.
+    *    @arg  _DC3_Bootloader: the DC3 board is currently in bootloader mode.
+    *    @arg  _DC3_Application: the DC3 board is currently in application mode.
     * @return: APIError_t status of the client executing the command.
     *    @arg  API_ERR_NONE: success
     *    other error codes if failure.
     */
-   APIError_t DC3_setMode(CBErrorCode *status, CBBootMode mode);
+   APIError_t DC3_setMode(DC3Error_t *status, DC3BootMode mode);
 
    /**
     * @brief   Blocking cmd to get the current boot mode of DC3.
-    * @param [out] *status: CBErrorCode pointer to the returned status of from
+    * @param [out] *status: DC3Error_t pointer to the returned status of from
     * the DC3 board.
     *    @arg  ERR_NONE: success.
     *    other error codes if failure.
     * @note: unless this variable is set to ERR_NONE at the completion, the
     * results of other returned data should not be trusted.
     *
-    * @param [in] type: CBBootMode that specifies where the FW image will be
+    * @param [in] type: DC3BootMode that specifies where the FW image will be
     * flashed to
-    *    @arg  _CB_Application: flash the FW image to the application space.
+    *    @arg  _DC3_Application: flash the FW image to the application space.
     * @param [in] *filename: const char pointer to a path and file where the
     * FW image file can be found.
     *
@@ -179,14 +179,14 @@ public:
     *
     */
    APIError_t DC3_flashFW(
-         CBErrorCode *status,
-         CBBootMode type,
+         DC3Error_t *status,
+         DC3BootMode type,
          const char *filename
    );
 
    /**
     * @brief   Blocking cmd to read I2C device on the DC3.
-    * @param [out] *status: CBErrorCode pointer to the returned status of from
+    * @param [out] *status: DC3Error_t pointer to the returned status of from
     * the DC3 board.
     *    @arg  ERR_NONE: success.
     *    other error codes if failure.
@@ -197,15 +197,15 @@ public:
     * @param [in] bufferSize: size_t size of *pBuffer storage area.
     * @param [in] bytes: number of bytes to read
     * @param [in] start: where to start reading from
-    * @param [in] dev: CBI2CDevices type that specifies the I2C device to read
-    *    @arg _CB_EEPROM: read from the EEPROM on I2C bus 1.
-    *    @arg _CB_SNROM: read from the RO SerialNumber ROM on I2C bus 1.
-    *    @arg _CB_EUIROM: read from the RO Unique number ROM on I2C bus 1.
-    * @param [in] acc: CBAccessType type that specifies the access to use to get
+    * @param [in] dev: DC3I2CDevices type that specifies the I2C device to read
+    *    @arg _DC3_EEPROM: read from the EEPROM on I2C bus 1.
+    *    @arg _DC3_SNROM: read from the RO SerialNumber ROM on I2C bus 1.
+    *    @arg _DC3_EUIROM: read from the RO Unique number ROM on I2C bus 1.
+    * @param [in] acc: DC3AccessType type that specifies the access to use to get
     * at the I2C bus.
-    *    @arg _CB_ACCESS_BARE: bare metal access. Blocking and slow. For testing only.
-    *    @arg _CB_ACCESS_QPC: use event driven QPC access.
-    *    @arg _CB_ACCESS_FRT: use event driven FreeRTOS access.  Available in
+    *    @arg _DC3_ACCESS_BARE: bare metal access. Blocking and slow. For testing only.
+    *    @arg _DC3_ACCESS_QPC: use event driven QPC access.
+    *    @arg _DC3_ACCESS_FRT: use event driven FreeRTOS access.  Available in
     *    Application only.
     *
     * @return: APIError_t status of the client executing the command.
@@ -213,19 +213,19 @@ public:
     *    other error codes if failures.
     */
    APIError_t DC3_readI2C(
-         CBErrorCode *status,
+         DC3Error_t *status,
          uint16_t *pBytesRead,
          uint8_t *pBuffer,
          const int bufferSize,
          const int bytes,
          const int start,
-         const CBI2CDevices dev,
-         const CBAccessType acc
+         const DC3I2CDevices dev,
+         const DC3AccessType acc
    );
 
    /**
     * @brief   Blocking cmd to write I2C device on the DC3.
-    * @param [out] *status: CBErrorCode pointer to the returned status of from
+    * @param [out] *status: DC3Error_t pointer to the returned status of from
     * the DC3 board.
     *    @arg  ERR_NONE: success.
     *    other error codes if failure.
@@ -234,15 +234,15 @@ public:
     * @param [out] *pBuffer: pointer to buffer where data to write is stored.
     * @param [in] bytes: number of bytes to write
     * @param [in] start: where to start writing to (offset)
-    * @param [in] dev: CBI2CDevices type that specifies the I2C device to read
-    *    @arg _CB_EEPROM: read from the EEPROM on I2C bus 1.
-    *    @arg _CB_SNROM: read from the RO SerialNumber ROM on I2C bus 1.
-    *    @arg _CB_EUIROM: read from the RO Unique number ROM on I2C bus 1.
-    * @param [in] acc: CBAccessType type that specifies the access to use to get
+    * @param [in] dev: DC3I2CDevices type that specifies the I2C device to read
+    *    @arg _DC3_EEPROM: read from the EEPROM on I2C bus 1.
+    *    @arg _DC3_SNROM: read from the RO SerialNumber ROM on I2C bus 1.
+    *    @arg _DC3_EUIROM: read from the RO Unique number ROM on I2C bus 1.
+    * @param [in] acc: DC3AccessType type that specifies the access to use to get
     * at the I2C bus.
-    *    @arg _CB_ACCESS_BARE: bare metal access. Blocking and slow. For testing only.
-    *    @arg _CB_ACCESS_QPC: use event driven QPC access.
-    *    @arg _CB_ACCESS_FRT: use event driven FreeRTOS access.  Available in
+    *    @arg _DC3_ACCESS_BARE: bare metal access. Blocking and slow. For testing only.
+    *    @arg _DC3_ACCESS_QPC: use event driven QPC access.
+    *    @arg _DC3_ACCESS_FRT: use event driven FreeRTOS access.  Available in
     *    Application only.
     *
     * @return: APIError_t status of the client executing the command.
@@ -250,31 +250,31 @@ public:
     *    other error codes if failures.
     */
    APIError_t DC3_writeI2C(
-         CBErrorCode *status,
+         DC3Error_t *status,
          const uint8_t* const pBuffer,
          const int bytes,
          const int start,
-         const CBI2CDevices dev,
-         const CBAccessType acc
+         const DC3I2CDevices dev,
+         const DC3AccessType acc
    );
 
    /**
     * @brief   Blocking cmd to start a test of external RAM of DC3.
-    * @param [out] *status: CBErrorCode pointer to the returned status of from
+    * @param [out] *status: DC3Error_t pointer to the returned status of from
     * the DC3 board.
     *    @arg  ERR_NONE: success.
     *    other error codes if failure.
     * @note: unless this variable is set to ERR_NONE at the completion, the
     * results of other returned data should not be trusted.
     *
-    * @param [out] *test: CBRamTest_t pointer to the returned RAM test that
+    * @param [out] *test: DC3RamTest_t pointer to the returned RAM test that
     * failed on the DC3 board.
-    *    @arg _CB_RAM_TEST_NONE: no test failed.
-    *    @arg _CB_RAM_TEST_DATA_BUS: ram test failed in the data bus integrity
+    *    @arg _DC3_RAM_TEST_NONE: no test failed.
+    *    @arg _DC3_RAM_TEST_DATA_BUS: ram test failed in the data bus integrity
     *                                test
-    *    @arg _CB_RAM_TEST_ADDR_BUS: ram test failed in the addr bus integrity
+    *    @arg _DC3_RAM_TEST_ADDR_BUS: ram test failed in the addr bus integrity
     *                                test
-    *    @arg _CB_RAM_TEST_DEV_INT:  ram test failed in the device integrity
+    *    @arg _DC3_RAM_TEST_DEV_INT:  ram test failed in the device integrity
     *                                test
     * @param [out] *addr: address at which the ram address saw an error.
     * @return: APIError_t status of the client executing the command.
@@ -282,8 +282,8 @@ public:
     *    other error codes if failure.
     */
    APIError_t DC3_ramTest(
-         CBErrorCode *status,
-         CBRamTest_t* test,
+         DC3Error_t *status,
+         DC3RamTest_t* test,
          uint32_t* addr
    );
 
@@ -338,38 +338,38 @@ public:
    /**
     * This method sets a callback to handle Req msgs.
     *
-    * @param  [in]  pCallbackFunction: a CB_ReqLogHandler_t pointer to the
+    * @param  [in]  pCallbackFunction: a DC3_ReqLogHandler_t pointer to the
     * callback function that is implemented outside the library.
     *
     * @return APIError_t:
     *    @arg API_ERR_NONE: no errors were detected
     *    else some error code indicating what went wrong
     */
-   APIError_t setReqCallBack( CB_ReqMsgHandler_t pCallbackFunction );
+   APIError_t setReqCallBack( DC3_ReqMsgHandler_t pCallbackFunction );
 
    /**
     * This method sets a callback to handle Ack msgs.
     *
-    * @param  [in]  pCallbackFunction: a CB_AckLogHandler_t pointer to the
+    * @param  [in]  pCallbackFunction: a DC3_AckLogHandler_t pointer to the
     * callback function that is implemented outside the library.
     *
     * @return APIError_t:
     *    @arg API_ERR_NONE: no errors were detected
     *    else some error code indicating what went wrong
     */
-   APIError_t setAckCallBack( CB_AckMsgHandler_t pCallbackFunction );
+   APIError_t setAckCallBack( DC3_AckMsgHandler_t pCallbackFunction );
 
    /**
     * This method sets a callback to handle Done msgs.
     *
-    * @param  [in]  pCallbackFunction: a CB_DoneLogHandler_t pointer to the
+    * @param  [in]  pCallbackFunction: a DC3_DoneLogHandler_t pointer to the
     * callback function that is implemented outside the library.
     *
     * @return APIError_t:
     *    @arg API_ERR_NONE: no errors were detected
     *    else some error code indicating what went wrong
     */
-   APIError_t setDoneCallBack( CB_DoneMsgHandler_t pCallbackFunction );
+   APIError_t setDoneCallBack( DC3_DoneMsgHandler_t pCallbackFunction );
 
    /**
     * @brief   Enable all the callbacks (if set) for Req, Ack, Prog, and Done msgs.

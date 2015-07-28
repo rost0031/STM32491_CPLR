@@ -43,4 +43,4 @@ version.h
 .CommMgr
 .FlashMgr
 .SysMgr
-Common/sys/cb_api/gen_src/
+Common/sys/DC3_api/gen_src/

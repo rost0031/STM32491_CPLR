@@ -19,7 +19,7 @@
 #include "KTree.hpp"
 
 /* Lib includes */
-#include "CBSharedDbgLevels.h"
+#include "DC3DbgLevels.h"
 #include "ClientModules.h"
 
 /* Namespaces ----------------------------------------------------------------*/
@@ -79,103 +79,103 @@ template<> char const* enumStrings<DBG_LEVEL_T>::data[] =
    {"DBG", "LOG", "WRN", "ERR", "CON", "ISR"};
 
 /**
- * @brief String values for CBMsgName enums
+ * @brief String values for DC3MsgName enums
  * String values for consecutive enums can be placed into const char* arrays
  * and a template will autogenerate the necessary enumToString function based
  * on the existence of this ::data[] array.
  * */
-template<> char const* enumStrings<CBMsgName>::data[] =  {
-         "None",                          /**< _CBNoMsg */
-         "StatusPayload",                 /**< _CBStatusPayloadMsg */
-         "GetVersion",                    /**< _CBGetVersionMsg */
-         "VersionPayload",                /**< _CBVersionPayloadMsg */
-         "GetBootMode",                   /**< _CBGetBootModeMsg */
-         "SetBootMode",                   /**< _CBSetBootModeMsg */
-         "BootModePayload"                /**< _CBBootModePayloadMsg */
+template<> char const* enumStrings<DC3MsgName>::data[] =  {
+         "None",                          /**< _DC3NoMsg */
+         "StatusPayload",                 /**< _DC3StatusPayloadMsg */
+         "GetVersion",                    /**< _DC3GetVersionMsg */
+         "VersionPayload",                /**< _DC3VersionPayloadMsg */
+         "GetBootMode",                   /**< _DC3GetBootModeMsg */
+         "SetBootMode",                   /**< _DC3SetBootModeMsg */
+         "BootModePayload"                /**< _DC3BootModePayloadMsg */
 };
 
 /**
- * @brief String values for CBMsgType enums
+ * @brief String values for DC3MsgType enums
  * String values for consecutive enums can be placed into const char* arrays
  * and a template will autogenerate the necessary enumToString function based
  * on the existence of this ::data[] array.
  * */
-template<> char const* enumStrings<CBMsgType>::data[] =  {
-         "None",                          /**< _CB_NoMsgType */
-         "Req",                           /**< _CB_Req */
-         "Ack",                           /**< _CB_Ack */
-         "Prog",                          /**< _CB_Prog */
-         "Done",                          /**< _CB_Done */
-         "Invalid"                        /**< _CB_MaxMsgType */
+template<> char const* enumStrings<DC3MsgType>::data[] =  {
+         "None",                          /**< _DC3_NoMsgType */
+         "Req",                           /**< _DC3_Req */
+         "Ack",                           /**< _DC3_Ack */
+         "Prog",                          /**< _DC3_Prog */
+         "Done",                          /**< _DC3_Done */
+         "Invalid"                        /**< _DC3_MaxMsgType */
 };
 
 /**
- * @brief String values for CBMsgRoute enums
+ * @brief String values for DC3MsgRoute enums
  * String values for consecutive enums can be placed into const char* arrays
  * and a template will autogenerate the necessary enumToString function based
  * on the existence of this ::data[] array.
  * */
-template<> char const* enumStrings<CBMsgRoute>::data[] =  {
-         "None",                          /**< _CB_NoRoute */
-         "Serial",                        /**< _CB_Serial */
-         "TCPSys",                        /**< _CB_EthSys */
-         "TCPLog",                        /**< _CB_EthLog */
-         "UDPCli",                        /**< _CB_EthCli */
-         "Invalid"                        /**< _CB_MaxRoutes */
+template<> char const* enumStrings<DC3MsgRoute>::data[] =  {
+         "None",                          /**< _DC3_NoRoute */
+         "Serial",                        /**< _DC3_Serial */
+         "TCPSys",                        /**< _DC3_EthSys */
+         "TCPLog",                        /**< _DC3_EthLog */
+         "UDPCli",                        /**< _DC3_EthCli */
+         "Invalid"                        /**< _DC3_MaxRoutes */
 };
 
 /**
- * @brief String values for CBMsgRoute enums
+ * @brief String values for DC3MsgRoute enums
  * String values for consecutive enums can be placed into const char* arrays
  * and a template will autogenerate the necessary enumToString function based
  * on the existence of this ::data[] array.
  * */
-template<> char const* enumStrings<CBBootMode>::data[] =  {
-         "Invalid",                       /**< _CB_NoBootMode */
-         "SystemROM",                     /**< _CB_SysRomBoot */
-         "Bootloader",                    /**< _CB_Bootloader */
-         "Application",                   /**< _CB_Application */
-         "Invalid"                        /**< _CB_MaxBootModes */
+template<> char const* enumStrings<DC3BootMode>::data[] =  {
+         "Invalid",                       /**< _DC3_NoBootMode */
+         "SystemROM",                     /**< _DC3_SysRomBoot */
+         "Bootloader",                    /**< _DC3_Bootloader */
+         "Application",                   /**< _DC3_Application */
+         "Invalid"                        /**< _DC3_MaxBootModes */
 };
 
 /**
- * @brief String values for CBI2CDevices enums
+ * @brief String values for DC3I2CDevices enums
  * String values for consecutive enums can be placed into const char* arrays
  * and a template will autogenerate the necessary enumToString function based
  * on the existence of this ::data[] array.
  * */
-template<> char const* enumStrings<CBI2CDevices>::data[] =  {
-         "EEPROM",                /**< _CB_EEPROM */
-         "SNROM",                 /**< _CB_SNROM */
-         "EUIROM",                /**< _CB_EUIROM */
-         "Invalid device",        /**< _CB_MaxI2CDev */
+template<> char const* enumStrings<DC3I2CDevices>::data[] =  {
+         "EEPROM",                /**< _DC3_EEPROM */
+         "SNROM",                 /**< _DC3_SNROM */
+         "EUIROM",                /**< _DC3_EUIROM */
+         "Invalid device",        /**< _DC3_MaxI2CDev */
 };
 
 /**
- * @brief String values for CBI2CDevices enums
+ * @brief String values for DC3I2CDevices enums
  * String values for consecutive enums can be placed into const char* arrays
  * and a template will autogenerate the necessary enumToString function based
  * on the existence of this ::data[] array.
  * */
-template<> char const* enumStrings<CBAccessType>::data[] =  {
-         "Invalid",              /**< _CB_ACCESS_NONE */
-         "BARE",                 /**< _CB_ACCESS_BARE */
-         "QPC",                  /**< _CB_ACCESS_QPC */
-         "FRT",                  /**< _CB_ACCESS_FRT */
+template<> char const* enumStrings<DC3AccessType>::data[] =  {
+         "Invalid",              /**< _DC3_ACCESS_NONE */
+         "BARE",                 /**< _DC3_ACCESS_BARE */
+         "QPC",                  /**< _DC3_ACCESS_QPC */
+         "FRT",                  /**< _DC3_ACCESS_FRT */
 };
 
 /**
- * @brief String values for CBI2CDevices enums
+ * @brief String values for DC3I2CDevices enums
  * String values for consecutive enums can be placed into const char* arrays
  * and a template will autogenerate the necessary enumToString function based
  * on the existence of this ::data[] array.
  * */
-template<> char const* enumStrings<CBRamTest_t>::data[] =  {
-         "None",                 /**< _CB_RAM_TEST_NONE */
-         "DataBusTest",          /**< _CB_RAM_TEST_DATA_BUS */
-         "AddrBusTest",          /**< _CB_RAM_TEST_ADDR_BUS */
-         "DeviceTest",           /**< _CB_RAM_TEST_DEV_INT */
-         "InvalidTest",          /**< _CB_RAM_TEST_MAX */
+template<> char const* enumStrings<DC3RamTest_t>::data[] =  {
+         "None",                 /**< _DC3_RAM_TEST_NONE */
+         "DataBusTest",          /**< _DC3_RAM_TEST_DATA_BUS */
+         "AddrBusTest",          /**< _DC3_RAM_TEST_ADDR_BUS */
+         "DeviceTest",           /**< _DC3_RAM_TEST_DEV_INT */
+         "InvalidTest",          /**< _DC3_RAM_TEST_MAX */
 };
 
 /**

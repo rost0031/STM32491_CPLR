@@ -47,8 +47,8 @@ uint32_t  glbDbgConfig = 0;
 
 /******************************************************************************/
 LogStub::LogStub( void ) :
-   m_pLibLogHandlerCBFunction(NULL),
-   m_pDC3LogHandlerCBFunction(NULL)
+   m_pLibLogHandlerDC3Function(NULL),
+   m_pDC3LogHandlerDC3Function(NULL)
 {
 
 }
@@ -60,18 +60,18 @@ LogStub::~LogStub( void ) {}
 
 /******************************************************************************/
 APIError_t LogStub::setLibLogCallBack(
-      CB_LibLogHandler_t pCallbackFunction
+      DC3_LibLogHandler_t pCallbackFunction
 )
 {
    APIError_t err = API_ERR_NONE;
 
-   this->m_pLibLogHandlerCBFunction = pCallbackFunction;
+   this->m_pLibLogHandlerDC3Function = pCallbackFunction;
 
    /* This is a potentially dangerous call since the user could have passed in
     * garbage instead of a valid pointer */
    string tmp = "Testing Library Logging Callback passed in by user";
    try {
-      if ( NULL != this->m_pLibLogHandlerCBFunction ) {
+      if ( NULL != this->m_pLibLogHandlerDC3Function ) {
          LOG_printf(this, "Successfully set callback in LogStub");
       } else {
          err = API_ERR_INVALID_CALLBACK;
@@ -87,18 +87,18 @@ APIError_t LogStub::setLibLogCallBack(
 
 /******************************************************************************/
 APIError_t LogStub::setDC3LogCallBack(
-      CB_DC3LogHandler_t pCallbackFunction
+      DC3_DC3LogHandler_t pCallbackFunction
 )
 {
    APIError_t err = API_ERR_NONE;
 
-   this->m_pDC3LogHandlerCBFunction = pCallbackFunction;
+   this->m_pDC3LogHandlerDC3Function = pCallbackFunction;
 
    /* This is a potentially dangerous call since the user could have passed in
     * garbage instead of a valid pointer */
    string tmp = "Testing DC3 Logging Callback passed in by user";
    try {
-      if ( NULL != this->m_pDC3LogHandlerCBFunction ) {
+      if ( NULL != this->m_pDC3LogHandlerDC3Function ) {
          LOG_printf(this, "Successfully set callback in LogStub");
       } else {
          err = API_ERR_INVALID_CALLBACK;
@@ -148,7 +148,7 @@ void LogStub::log(
 )
 {
    char tmpBuffer[MAX_LOG_BUFFER_LEN];
-   if ( NULL != this->m_pLibLogHandlerCBFunction ) {
+   if ( NULL != this->m_pLibLogHandlerDC3Function ) {
 
       uint8_t tmpBufferIndex = 0;
 
@@ -166,7 +166,7 @@ void LogStub::log(
       va_end(args);
 
       /* 5. Call the callback that will pass the data to the caller of the library */
-      this->m_pLibLogHandlerCBFunction(
+      this->m_pLibLogHandlerDC3Function(
             dbgLvl,
             pFuncName,
             wLineNumber,
@@ -187,8 +187,8 @@ void LogStub::printDC3LogMsg(
       const char *msg
 )
 {
-   if (NULL != this->m_pDC3LogHandlerCBFunction) {
-      this->m_pDC3LogHandlerCBFunction( msg );
+   if (NULL != this->m_pDC3LogHandlerDC3Function) {
+      this->m_pDC3LogHandlerDC3Function( msg );
    }
 }
 /******** Copyright (C) 2015 Datacard. All rights reserved *****END OF FILE****/

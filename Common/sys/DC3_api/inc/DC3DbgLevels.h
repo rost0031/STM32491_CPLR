@@ -1,5 +1,5 @@
 /**
- * @file     CBSharedDbgLevels.h
+ * @file     DC3SharedDbgLevels.h
  *
  * Specifies the debug levels available to logging functions.  This is shared
  * between all FW and the client.
@@ -11,8 +11,8 @@
  */
 
 /* Define to prevent recursive inclusion -------------------------------------*/
-#ifndef CBSHAREDDBGLEVELS_H_
-#define CBSHAREDDBGLEVELS_H_
+#ifndef DC3SHAREDDBGLEVELS_H_
+#define DC3SHAREDDBGLEVELS_H_
 
 #ifdef __cplusplus
 extern "C" {
@@ -45,5 +45,5 @@ typedef enum DBG_LEVEL {
 }
 #endif
 
-#endif                                                /* CBSHAREDDBGLEVELS_H_ */
+#endif                                               /* DC3SHAREDDBGLEVELS_H_ */
 /******** Copyright (C) 2013 Datacard. All rights reserved *****END OF FILE****/

@@ -47,8 +47,8 @@ private:
    LogStub *m_pLog;         /**< Pointer to LogStub instance used for logging */
    boost::lockfree::queue<MsgData_t> *m_pQueue; /**< Pointer to the queue where
                                                      to put read data */
-   char read_msg_[CB_MAX_MSG_LEN];          /**< buffer to hold incoming msgs */
-   char write_msg_[CB_MAX_MSG_LEN];       /**< buffer to hold msgs being sent */
+   char read_msg_[DC3_MAX_MSG_LEN];          /**< buffer to hold incoming msgs */
+   char write_msg_[DC3_MAX_MSG_LEN];       /**< buffer to hold msgs being sent */
 
    uint8_t bReadNDFUSEBytes;    /**< This variable will hold how many bytes to
                                     read on the DFUSE serial bus because ST is

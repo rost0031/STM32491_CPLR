@@ -52,7 +52,7 @@
 #include <boost/thread/thread.hpp>
 
 /* Api includes */
-#include "CBSharedDbgLevels.h"
+#include "DC3DbgLevels.h"
 
 /* Lib includes */
 #include "LogStub.h"
@@ -246,14 +246,14 @@ typedef boost::log::sources::severity_logger_mt<DBG_LEVEL_T> logger_t;
 
 /**
  * @brief   Pretty prints the contents of a msg to a stream.
- * @param [in] *pBasicMsg: CBBasicMsg pointer to the struct.
- * @param [in] *pPayloadUnion: CBPayloadMsgUnion_t pointer to the union.
+ * @param [in] *pBasicMsg: DC3BasicMsg pointer to the struct.
+ * @param [in] *pPayloadUnion: DC3PayloadMsgUnion_t pointer to the union.
  * @param [in,out] ss&: stringstream ref where the data will be output.
  * @return: None.
  */
 void LOG_msgToStream(
-      struct CBBasicMsg *pBasicMsg,
-      CBPayloadMsgUnion_t *pPayloadUnion,
+      struct DC3BasicMsg *pBasicMsg,
+      DC3PayloadMsgUnion_t *pPayloadUnion,
       std::stringstream& ss
 );
 

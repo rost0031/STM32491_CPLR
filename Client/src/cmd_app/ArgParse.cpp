@@ -38,41 +38,41 @@ MODULE_NAME( MODULE_EXT );
 /* Private variables and Local objects ---------------------------------------*/
 
 /**
- * @brief All allowed strings for specifying CBBootMode enums
+ * @brief All allowed strings for specifying DC3BootMode enums
  */
-template<> std::map<CBBootMode, std::vector<std::string>> allowedStrings<CBBootMode>::m_allowedStrings = {
-      { _CB_NoBootMode   , {"None","invalid"} },
-      { _CB_Bootloader   , {"b", "bo", "bt", "boo", "boot", "bootloader", "bootldr", "btldr" } },
-      { _CB_Application  , {"a", "ap", "app", "appl", "application", "scips", "scipsiii", "scips3" } }
+template<> std::map<DC3BootMode, std::vector<std::string>> allowedStrings<DC3BootMode>::m_allowedStrings = {
+      { _DC3_NoBootMode   , {"None","invalid"} },
+      { _DC3_Bootloader   , {"b", "bo", "bt", "boo", "boot", "bootloader", "bootldr", "btldr" } },
+      { _DC3_Application  , {"a", "ap", "app", "appl", "application", "scips", "scipsiii", "scips3" } }
 };
 
 /**
- * @brief All allowed strings for specifying CBMsgRoute enums
+ * @brief All allowed strings for specifying DC3MsgRoute enums
  */
-template<> std::map<CBMsgRoute, std::vector<std::string>> allowedStrings<CBMsgRoute>::m_allowedStrings = {
-      { _CB_NoRoute   , {"None","no route"} },
-      { _CB_Serial   , {"se", "serial", "ser"} },
-      { _CB_EthSys  , {"sy", "sys", "sys_eth", "system_eth", "system_ethernet", "eth_sys", "ethernet_system", "eth_system"} },
-      { _CB_EthLog  , {"l","lo","log", "log_eth", "logging_eth", "logging_ethernet", "eth_log", "ethernet_logging", "eth_logging"} },
-      { _CB_EthCli  , {"c", "cl","cli", "cli_eth", "client_eth", "client_ethernet", "eth_cli", "ethernet_client", "eth_client"} }
+template<> std::map<DC3MsgRoute, std::vector<std::string>> allowedStrings<DC3MsgRoute>::m_allowedStrings = {
+      { _DC3_NoRoute   , {"None","no route"} },
+      { _DC3_Serial   , {"se", "serial", "ser"} },
+      { _DC3_EthSys  , {"sy", "sys", "sys_eth", "system_eth", "system_ethernet", "eth_sys", "ethernet_system", "eth_system"} },
+      { _DC3_EthLog  , {"l","lo","log", "log_eth", "logging_eth", "logging_ethernet", "eth_log", "ethernet_logging", "eth_logging"} },
+      { _DC3_EthCli  , {"c", "cl","cli", "cli_eth", "client_eth", "client_ethernet", "eth_cli", "ethernet_client", "eth_client"} }
 };
 
 /**
- * @brief All allowed strings for specifying CBI2CDevices enums
+ * @brief All allowed strings for specifying DC3I2CDevices enums
  */
-template<> std::map<CBI2CDevices, std::vector<std::string>> allowedStrings<CBI2CDevices>::m_allowedStrings = {
-      { _CB_EEPROM   , {"e","ee","eep","eeprom","eprom"} },
-      { _CB_SNROM   , {"snrom", "sn", "ser_rom", "srom", "serial_rom", "serial_number_rom", } },
-      { _CB_EUIROM  , {"euirom", "eui", "ui", "uie", "uierom", "eurom", "uirom", } },
+template<> std::map<DC3I2CDevices, std::vector<std::string>> allowedStrings<DC3I2CDevices>::m_allowedStrings = {
+      { _DC3_EEPROM   , {"e","ee","eep","eeprom","eprom"} },
+      { _DC3_SNROM   , {"snrom", "sn", "ser_rom", "srom", "serial_rom", "serial_number_rom", } },
+      { _DC3_EUIROM  , {"euirom", "eui", "ui", "uie", "uierom", "eurom", "uirom", } },
 };
 
 /**
- * @brief All allowed strings for specifying CBAccessType enums
+ * @brief All allowed strings for specifying DC3AccessType enums
  */
-template<> std::map<CBAccessType, std::vector<std::string>> allowedStrings<CBAccessType>::m_allowedStrings = {
-      { _CB_ACCESS_BARE, {"b", "bare","metal", "bare_metal", "baremetal"} },
-      { _CB_ACCESS_QPC , {"q", "qp", "qpc", } },
-      { _CB_ACCESS_FRT , {"f", "fr", "frt", "freertos", "frtos", "free"} },
+template<> std::map<DC3AccessType, std::vector<std::string>> allowedStrings<DC3AccessType>::m_allowedStrings = {
+      { _DC3_ACCESS_BARE, {"b", "bare","metal", "bare_metal", "baremetal"} },
+      { _DC3_ACCESS_QPC , {"q", "qp", "qpc", } },
+      { _DC3_ACCESS_FRT , {"f", "fr", "frt", "freertos", "frtos", "free"} },
 
 };
 

@@ -31,7 +31,7 @@ MODULE_NAME( MODULE_LOG );
 /* Private functions ---------------------------------------------------------*/
 /******************************************************************************/
 void CLI_ReqCallback(
-      struct CBBasicMsg basicMsgStruct
+      struct DC3BasicMsg basicMsgStruct
 )
 {
 //   DBG_out << "Sending Req msg:";
@@ -42,7 +42,7 @@ void CLI_ReqCallback(
 
 /******************************************************************************/
 void CLI_AckCallback(
-      struct CBBasicMsg basicMsgStruct
+      struct DC3BasicMsg basicMsgStruct
 )
 {
 //   DBG_out << "Received Ack msg with id: " << basicMsgStruct._msgID ;
@@ -53,8 +53,8 @@ void CLI_AckCallback(
 
 /******************************************************************************/
 void CLI_DoneCallback(
-      struct CBBasicMsg basicMsgStruct,
-      CBPayloadMsgUnion_t payloadMsgUnion
+      struct DC3BasicMsg basicMsgStruct,
+      DC3PayloadMsgUnion_t payloadMsgUnion
 )
 {
 //   DBG_out << "Received Done msg:";

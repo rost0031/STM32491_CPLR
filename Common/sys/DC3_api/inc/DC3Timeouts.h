@@ -1,5 +1,5 @@
 /**
- * @file 	CBTimeouts.h
+ * @file 	DC3Timeouts.h
  * @brief   Contains all the timeout values for the coupler board
  *
  * @date   	06/02/2014
@@ -12,8 +12,8 @@
  */
 
 /* Define to prevent recursive inclusion -------------------------------------*/
-#ifndef CBTIMEOUTS_H_
-#define CBTIMEOUTS_H_
+#ifndef DC3TIMEOUTS_H_
+#define DC3TIMEOUTS_H_
 
 /* Includes ------------------------------------------------------------------*/
 /* Exported defines ----------------------------------------------------------*/
@@ -141,5 +141,5 @@
  * end addtogroup groupApp
  */
 
-#endif                                                       /* CBTIMEOUTS_H_ */
+#endif                                                       /* DC3TIMEOUTS_H_ */
 /******** Copyright (C) 2014 Datacard. All rights reserved *****END OF FILE****/

@@ -52,10 +52,10 @@ void HELP_printCmdSpecific(
             "request and the current boot mode. The possible return for: "
             "status: 0x00000000 for success or other codes for failure.\n"
             "bootmode: \n";
-      ss_params << "[" << enumToString(_CB_NoBootMode) << "|"
-            << enumToString(_CB_SysRomBoot) << "|"
-            << enumToString(_CB_Bootloader) << "|"
-            << enumToString(_CB_Application) << "]";
+      ss_params << "[" << enumToString(_DC3_NoBootMode) << "|"
+            << enumToString(_DC3_SysRomBoot) << "|"
+            << enumToString(_DC3_Bootloader) << "|"
+            << enumToString(_DC3_Application) << "]";
       description += ss_params.str();
 
       cmd_arg_options.push_back(" * None");
@@ -71,8 +71,8 @@ void HELP_printCmdSpecific(
             "status: 0x00000000 for success or other codes for failure.\n";
 
       ss_params.str(string());
-      ss_params <<" * [mode=" << enumToString(_CB_Bootloader) << "|"
-                << enumToString(_CB_Application) << "]";
+      ss_params <<" * [mode=" << enumToString(_DC3_Bootloader) << "|"
+                << enumToString(_DC3_Application) << "]";
       cmd_arg_options.push_back(ss_params.str());
 
       cmd_arg_options.push_back(" --- Note that instead of typing out the entire "
@@ -82,13 +82,13 @@ void HELP_printCmdSpecific(
 
 
       prototype = appName + " [connection options] --" + parsed_cmd + "[mode=";
-      prototype += enumToString(_CB_Application);
+      prototype += enumToString(_DC3_Application);
       prototype += "|";
-      prototype += enumToString(_CB_Bootloader);
+      prototype += enumToString(_DC3_Bootloader);
       prototype += "]";
 
       example = appName + " -i 207.27.0.75 --" + parsed_cmd + " mode=";
-      example += enumToString(_CB_Application);
+      example += enumToString(_DC3_Application);
    } else if (  0 == parsed_cmd.compare("flash") ) {           // flash cmd help
       description = parsed_cmd + " command initiates a FW upgrade on the DC3 "
             "board. You have to specify the location of the FW upgrade *bin "
@@ -97,7 +97,7 @@ void HELP_printCmdSpecific(
             "The options for the FW image type are: ";
 
       ss_params.str(string());
-      ss_params << " * [type=" << enumToString(_CB_Application) << "]";
+      ss_params << " * [type=" << enumToString(_DC3_Application) << "]";
       cmd_arg_options.push_back(ss_params.str());
 
       cmd_arg_options.push_back(" --- Note that instead of typing out the entire word, you "
@@ -113,27 +113,27 @@ void HELP_printCmdSpecific(
 
       prototype = appName + " [connection options] --" + parsed_cmd
             + " [file=<relative path to *.bin file>] " + "[type=";
-      prototype += enumToString(_CB_Application);
+      prototype += enumToString(_DC3_Application);
       prototype += "|";
-      prototype += enumToString(_CB_Bootloader);
+      prototype += enumToString(_DC3_Bootloader);
       prototype += "]";
 
       example = appName + " -i 207.27.0.75 --" + parsed_cmd +
             " file=../../DC3Appl_v01.03_20150715142540.bin " + "type=";
-      example += enumToString(_CB_Application);
+      example += enumToString(_DC3_Application);
    } else if (  0 == parsed_cmd.compare("read_i2c") ) {     // read_i2c cmd help
       description = parsed_cmd + " command initiates an I2C device read. You "
             "have to specify the I2C device (dev=), number of bytes to read "
             "(bytes=), and an offset from the start of device memory (start=). ";
 
       ss_params.str(string());
-      ss_params << "* [dev=<" << enumToString(_CB_EEPROM)
-                << "|" << enumToString(_CB_SNROM)
-                << "|" << enumToString(_CB_EUIROM) << ">]";
+      ss_params << "* [dev=<" << enumToString(_DC3_EEPROM)
+                << "|" << enumToString(_DC3_SNROM)
+                << "|" << enumToString(_DC3_EUIROM) << ">]";
       cmd_arg_options.push_back(ss_params.str());
 
       ss_params.str(string());
-      ss_params << " --- " << enumToString(_CB_EEPROM) << " is a 256 byte R/W "
+      ss_params << " --- " << enumToString(_DC3_EEPROM) << " is a 256 byte R/W "
             "device that contains a database of various settings stored in a "
             "binary format. Some settings include an IP address last assigned "
             "to the DC3 and the version and build datetime of the Bootloader FW "
@@ -141,12 +141,12 @@ void HELP_printCmdSpecific(
       cmd_arg_options.push_back(ss_params.str());
 
       ss_params.str(string());
-      ss_params << " --- " << enumToString(_CB_SNROM) << " is a 16 byte RO "
+      ss_params << " --- " << enumToString(_DC3_SNROM) << " is a 16 byte RO "
             "device that contains a unique 64 bit serial number.";
       cmd_arg_options.push_back(ss_params.str());
 
       ss_params.str(string());
-      ss_params << " --- " << enumToString(_CB_EUIROM) << " is an 8 byte RO "
+      ss_params << " --- " << enumToString(_DC3_EUIROM) << " is an 8 byte RO "
             "device that contains a unique 48 bit number that is used as the MAC "
             "address for the DC3.";
       cmd_arg_options.push_back(ss_params.str());
@@ -157,15 +157,15 @@ void HELP_printCmdSpecific(
             "is specified. If 'data=' is not specified, 'bytes=' should be specified.");
 
       ss_params.str(string());
-      ss_params << " --- " << enumToString(_CB_EEPROM) << " max start is 255 (0xFF)";
+      ss_params << " --- " << enumToString(_DC3_EEPROM) << " max start is 255 (0xFF)";
       cmd_arg_options.push_back(ss_params.str());
 
       ss_params.str(string());
-      ss_params << " --- " << enumToString(_CB_SNROM) << " max start is 15 (0x0F)";
+      ss_params << " --- " << enumToString(_DC3_SNROM) << " max start is 15 (0x0F)";
       cmd_arg_options.push_back(ss_params.str());
 
       ss_params.str(string());
-      ss_params << " --- " << enumToString(_CB_EUIROM) << " max start is 7 (0x07)";
+      ss_params << " --- " << enumToString(_DC3_EUIROM) << " max start is 7 (0x07)";
       cmd_arg_options.push_back(ss_params.str());
 
       ss_params.str(string());
@@ -174,24 +174,24 @@ void HELP_printCmdSpecific(
       cmd_arg_options.push_back(ss_params.str());
 
       ss_params.str(string());
-      ss_params << "* {acc=<(" << enumToString(_CB_ACCESS_QPC) << ")"
-                << "|" << enumToString(_CB_ACCESS_FRT)
-                << "|" << enumToString(_CB_ACCESS_BARE) << ">}";
+      ss_params << "* {acc=<(" << enumToString(_DC3_ACCESS_QPC) << ")"
+                << "|" << enumToString(_DC3_ACCESS_FRT)
+                << "|" << enumToString(_DC3_ACCESS_BARE) << ">}";
       cmd_arg_options.push_back(ss_params.str());
 
       ss_params.str(string());
-      ss_params << " --- " << enumToString(_CB_ACCESS_QPC) << " - data is accessed "
+      ss_params << " --- " << enumToString(_DC3_ACCESS_QPC) << " - data is accessed "
             "via the QPC event driven framework.  This is the default option.";
       cmd_arg_options.push_back(ss_params.str());
 
       ss_params.str(string());
-      ss_params << " --- " << enumToString(_CB_ACCESS_FRT) << " - data is accessed "
+      ss_params << " --- " << enumToString(_DC3_ACCESS_FRT) << " - data is accessed "
             "via the FreeRTOS events. This option is only available when the DC3 "
-            "is in " << enumToString(_CB_Application) << " mode.";
+            "is in " << enumToString(_DC3_Application) << " mode.";
       cmd_arg_options.push_back(ss_params.str());
 
       ss_params.str(string());
-      ss_params << " --- " << enumToString(_CB_ACCESS_FRT) << " - data is accessed "
+      ss_params << " --- " << enumToString(_DC3_ACCESS_FRT) << " - data is accessed "
             "via bare-metal, bypassing all event interfaces except for the delivery "
             "to and from the active object that handles that particular HW "
             "interface. This option should only be used for debugging.";
@@ -201,20 +201,20 @@ void HELP_printCmdSpecific(
       prototype = appName + " [connection options] --" + parsed_cmd
             + " [start=<0 - 128>] {bytes=<0-128>}";
       ss_params.str(string());
-      ss_params << "[dev=<" << enumToString(_CB_EEPROM)
-                << "|" << enumToString(_CB_SNROM)
-                << "|" << enumToString(_CB_EUIROM) << ">]";
+      ss_params << "[dev=<" << enumToString(_DC3_EEPROM)
+                << "|" << enumToString(_DC3_SNROM)
+                << "|" << enumToString(_DC3_EUIROM) << ">]";
       prototype += ss_params.str();
       prototype += " ";
       ss_params.str(string());
-      ss_params << "{acc=<(" << enumToString(_CB_ACCESS_QPC) << ")"
-                << "|" << enumToString(_CB_ACCESS_FRT)
-                << "|" << enumToString(_CB_ACCESS_BARE) << ">}";
+      ss_params << "{acc=<(" << enumToString(_DC3_ACCESS_QPC) << ")"
+                << "|" << enumToString(_DC3_ACCESS_FRT)
+                << "|" << enumToString(_DC3_ACCESS_BARE) << ">}";
       prototype += ss_params.str();
 
       example = appName + " -i 207.27.0.75 --" + parsed_cmd +
             " start=0 bytes=20 " + "dev=";
-      example += enumToString(_CB_EEPROM);
+      example += enumToString(_DC3_EEPROM);
 
    } else if (  0 == parsed_cmd.compare("write_i2c") ) {   // write_i2c cmd help
 
@@ -226,11 +226,11 @@ void HELP_printCmdSpecific(
             "used.";
 
       ss_params.str(string());
-      ss_params << "* [dev=<" << enumToString(_CB_EEPROM)<< ">]";
+      ss_params << "* [dev=<" << enumToString(_DC3_EEPROM)<< ">]";
       cmd_arg_options.push_back(ss_params.str());
 
       ss_params.str(string());
-      ss_params << " --- " << enumToString(_CB_EEPROM) << " is a 256 byte R/W "
+      ss_params << " --- " << enumToString(_DC3_EEPROM) << " is a 256 byte R/W "
             "device that contains a database of various settings stored in a "
             "binary format. Some settings include an IP address last assigned "
             "to the DC3 and the version and build datetime of the Bootloader FW "
@@ -243,7 +243,7 @@ void HELP_printCmdSpecific(
             "is specified. If 'data=' is not specified, 'bytes=' should be specified.");
 
       ss_params.str(string());
-      ss_params << " --- " << enumToString(_CB_EEPROM) << " max start is 255 (0xFF)";
+      ss_params << " --- " << enumToString(_DC3_EEPROM) << " max start is 255 (0xFF)";
       cmd_arg_options.push_back(ss_params.str());
 
       ss_params.str(string());
@@ -252,24 +252,24 @@ void HELP_printCmdSpecific(
       cmd_arg_options.push_back(ss_params.str());
 
       ss_params.str(string());
-      ss_params << "* {acc=<(" << enumToString(_CB_ACCESS_QPC) << ")"
-                << "|" << enumToString(_CB_ACCESS_FRT)
-                << "|" << enumToString(_CB_ACCESS_BARE) << ">}";
+      ss_params << "* {acc=<(" << enumToString(_DC3_ACCESS_QPC) << ")"
+                << "|" << enumToString(_DC3_ACCESS_FRT)
+                << "|" << enumToString(_DC3_ACCESS_BARE) << ">}";
       cmd_arg_options.push_back(ss_params.str());
 
       ss_params.str(string());
-      ss_params << " --- " << enumToString(_CB_ACCESS_QPC) << " - data is accessed "
+      ss_params << " --- " << enumToString(_DC3_ACCESS_QPC) << " - data is accessed "
             "via the QPC event driven framework.  This is the default option.";
       cmd_arg_options.push_back(ss_params.str());
 
       ss_params.str(string());
-      ss_params << " --- " << enumToString(_CB_ACCESS_FRT) << " - data is accessed "
+      ss_params << " --- " << enumToString(_DC3_ACCESS_FRT) << " - data is accessed "
             "via the FreeRTOS events. This option is only available when the DC3 "
-            "is in " << enumToString(_CB_Application) << " mode.";
+            "is in " << enumToString(_DC3_Application) << " mode.";
       cmd_arg_options.push_back(ss_params.str());
 
       ss_params.str(string());
-      ss_params << " --- " << enumToString(_CB_ACCESS_FRT) << " - data is accessed "
+      ss_params << " --- " << enumToString(_DC3_ACCESS_FRT) << " - data is accessed "
             "via bare-metal, bypassing all event interfaces except for the delivery "
             "to and from the active object that handles that particular HW "
             "interface. This option should only be used for debugging.";
@@ -300,19 +300,19 @@ void HELP_printCmdSpecific(
       prototype = appName + " [connection options] --" + parsed_cmd
             + " [start=<0 - 128>] {bytes=<0-128>}";
       ss_params.str(string());
-      ss_params << "[dev=<" << enumToString(_CB_EEPROM) << ">]";
+      ss_params << "[dev=<" << enumToString(_DC3_EEPROM) << ">]";
       prototype += ss_params.str();
       prototype += " ";
       ss_params.str(string());
-      ss_params << "{acc=<(" << enumToString(_CB_ACCESS_QPC) << ")"
-                << "|" << enumToString(_CB_ACCESS_FRT)
-                << "|" << enumToString(_CB_ACCESS_BARE) << ">}";
+      ss_params << "{acc=<(" << enumToString(_DC3_ACCESS_QPC) << ")"
+                << "|" << enumToString(_DC3_ACCESS_FRT)
+                << "|" << enumToString(_DC3_ACCESS_BARE) << ">}";
       prototype += ss_params.str();
       prototype += "{data=\"<0-0xFF>,<0-0xFF>,<0-0xFF>,<0-0xFF>, ... ,<0-0xFF>\"}";
 
       example = appName + " -i 207.27.0.75 --" + parsed_cmd +
             " start=0 bytes=4 " + "dev=";
-      example += enumToString(_CB_EEPROM);
+      example += enumToString(_DC3_EEPROM);
       example += " data=\"0x00,0x01,0x02,0x03\"";
 
    } else if( 0 == parsed_cmd.compare("ram_test") ) {       // ram_test cmd help
@@ -327,9 +327,9 @@ void HELP_printCmdSpecific(
             "addr: 0x00000000 if no failures and hex value of the memory "
             "address the error occurred at. \n"
             "test: ";
-      ss_params << "[" << enumToString(_CB_RAM_TEST_DATA_BUS) << "|"
-            << enumToString(_CB_RAM_TEST_ADDR_BUS) << "|"
-            << enumToString(_CB_RAM_TEST_DEV_INT) << "]";
+      ss_params << "[" << enumToString(_DC3_RAM_TEST_DATA_BUS) << "|"
+            << enumToString(_DC3_RAM_TEST_ADDR_BUS) << "|"
+            << enumToString(_DC3_RAM_TEST_DEV_INT) << "]";
       description += ss_params.str();
       prototype = appName + " [connection options] --" + parsed_cmd;
       example = appName + " -i 207.27.0.75 --" + parsed_cmd;

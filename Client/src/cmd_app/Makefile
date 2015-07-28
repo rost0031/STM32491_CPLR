@@ -218,7 +218,7 @@ CPP_DEPS_EXT                = $(patsubst %.o, %.d, $(CPP_OBJS_EXT))
 # BUILD TARGETS
 #-----------------------------------------------------------------------------
 
-.PHONY: build_dll all clean clean_with_libs build_qpc build_cb_comm_api $(BIN_DIR)
+.PHONY: build_dll all clean clean_with_libs build_DC3_comm_api $(BIN_DIR)
 
 all:  $(TARGET_EXE)
 

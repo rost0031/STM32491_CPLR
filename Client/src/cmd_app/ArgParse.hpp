@@ -26,7 +26,7 @@
 #include "Logging.hpp"
 #include "Help.hpp"
 #include "EnumMaps.hpp"
-#include "CBCommApi.h"
+#include "DC3CommApi.h"
 #include "ClientApi.h"
 
 /* Namespaces ----------------------------------------------------------------*/

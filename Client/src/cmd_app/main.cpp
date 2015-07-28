@@ -1,6 +1,6 @@
 /**
  * @file    main.cpp
- * @brief   Main for Client for the coupler board (CB).
+ * @brief   Main for Client for the coupler board (DC3).
  *
  * @date    03/23/2015
  * @author  Harry Rostovtsev
@@ -37,7 +37,7 @@
 #include "ArgParse.hpp"
 
 /* Lib includes */
-#include "CBSharedDbgLevels.h"
+#include "DC3DbgLevels.h"
 #include "ClientModules.h"
 #include "LogStub.h"
 #include "ClientApi.h"
@@ -260,7 +260,7 @@ int main(int argc, char *argv[])
       }
 
       /**< Used for status of commands sent to the DC3 board */
-      CBErrorCode statusDC3;
+      DC3Error_t statusDC3;
 
       // Figure out which command is being specified.  If a command is found,
       // execute and exit.  If no command is found, start the menu thread and
@@ -274,7 +274,7 @@ int main(int argc, char *argv[])
          // Store status of DC3 cmd and bootmode even though we don't need it
          // since it's all parsed and handled in CMD_ functions to reduce clutter.
          statusDC3 = ERR_NONE;
-         CBBootMode mode = _CB_NoBootMode;
+         DC3BootMode mode = _DC3_NoBootMode;
 
          // No need to extract the value from the arg=value pair for this cmd.
 
@@ -291,7 +291,7 @@ int main(int argc, char *argv[])
          // Store status of DC3 cmd and bootmode even though we don't need it
          // since it's all parsed and handled in CMD_ functions to reduce clutter.
          statusDC3 = ERR_NONE;
-         CBBootMode mode = _CB_NoBootMode;
+         DC3BootMode mode = _DC3_NoBootMode;
 
          try {                      // Extract the value from the arg=value pair
             ARG_parseEnumStr( &mode, "mode", m_parsed_cmd, appName,
@@ -314,7 +314,7 @@ int main(int argc, char *argv[])
          // Store status of DC3 cmd and bootmode even though we don't need it
          // since it's all parsed and handled in CMD_ functions to reduce clutter.
          statusDC3 = ERR_NONE;
-         CBBootMode type = _CB_NoBootMode;
+         DC3BootMode type = _DC3_NoBootMode;
          string filename = "";
 
          try {                      // Extract the value from the arg=value pair
@@ -345,15 +345,15 @@ int main(int argc, char *argv[])
 
          // Extract the value from the arg=value pair
          int bytes = -1, start = -1;
-         CBI2CDevices dev = _CB_MaxI2CDev;
-         CBAccessType acc = _CB_ACCESS_QPC;       // set to a default arg of QPC
+         DC3I2CDevices dev = _DC3_MaxI2CDev;
+         DC3AccessType acc = _DC3_ACCESS_QPC;       // set to a default arg of QPC
          string value = "";
 
          try {                      // Extract the value from the arg=value pair
             ARG_parseEnumStr( &dev, "dev", m_parsed_cmd, appName,
                   m_vm[m_parsed_cmd].as<vector<string>>() );
             // This call passes in a default value for an optional argument
-            ARG_parseEnumStr( &acc, _CB_ACCESS_QPC, "acc", m_parsed_cmd,
+            ARG_parseEnumStr( &acc, _DC3_ACCESS_QPC, "acc", m_parsed_cmd,
                   appName, m_vm[m_parsed_cmd].as<vector<string>>() );
             ARG_parseNumStr( &start, "start", m_parsed_cmd, appName,
                   m_vm[m_parsed_cmd].as<vector<string>>() );
@@ -395,8 +395,8 @@ int main(int argc, char *argv[])
 
          // Extract the value from the arg=value pair
          int bytes = -1, start = -1;
-         CBI2CDevices dev = _CB_MaxI2CDev;
-         CBAccessType acc = _CB_ACCESS_QPC;       // set to a default arg of QPC
+         DC3I2CDevices dev = _DC3_MaxI2CDev;
+         DC3AccessType acc = _DC3_ACCESS_QPC;       // set to a default arg of QPC
 
          string value = "";
 
@@ -404,7 +404,7 @@ int main(int argc, char *argv[])
             ARG_parseEnumStr( &dev, "dev", m_parsed_cmd, appName,
                   m_vm[m_parsed_cmd].as<vector<string>>() );
             // This call passes in a default value for an optional argument
-            ARG_parseEnumStr( &acc, _CB_ACCESS_QPC, "acc", m_parsed_cmd,
+            ARG_parseEnumStr( &acc, _DC3_ACCESS_QPC, "acc", m_parsed_cmd,
                   appName, m_vm[m_parsed_cmd].as<vector<string>>() );
             // This call passes in a default value for an optional argument
             ARG_parseNumStr( &start, "0", "start", m_parsed_cmd, appName,

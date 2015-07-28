@@ -24,7 +24,7 @@
 
 /* This is necessary since C++ code is pulling in a library compiled as C */
 extern "C" {
-#include "CBCommApi.h"
+#include "DC3CommApi.h"
 }
 
 #include "ApiErrorCodes.h"

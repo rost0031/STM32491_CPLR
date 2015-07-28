@@ -26,7 +26,7 @@ TRACEON                 = $(TRACE:0=@)
 TRACE_FLAG              = $(TRACEON:1=)
 
 # Output file basename (should be the same as the library name)
-PROJECT_NAME            = libCBCommApi
+PROJECT_NAME            = libDC3CommApi
 
 # Set up variable for appending later
 DEFINES                 = 
@@ -196,7 +196,7 @@ endif
 #------------------------------------------------------------------------------
 #  Which proto files to use.
 #------------------------------------------------------------------------------
-PROTO_FILES     = CBMsgs.proto 
+PROTO_FILES     = DC3Msgs.proto 
 
 #------------------------------------------------------------------------------
 # Files
@@ -253,7 +253,7 @@ JAR_FILE        = $(PROTOBUF_DIR)/protoc-1.0M2.jar
 #  PYTHON SETUP
 #------------------------------------------------------------------------------
 PYTHON          = python
-PFLAGS          = -i $(GEN_SOURCES_DIR)/CBMsgs.c
+PFLAGS          = -i $(GEN_SOURCES_DIR)/DC3Msgs.c
 LIB_SPLITTER    = lib_splitter_shared/src/protobuf_lib_splitter.py
 
 #-------------------------------------------------------------------------------
@@ -280,12 +280,12 @@ endif
 #-------------------------------------------------------------------------------
 # Make Targets
 #-------------------------------------------------------------------------------
-all: $(BIN_DIR) $(BIN_DIR)/CBMsgs.o $(BIN_DIR)/protobuf_core.o $(LIBDIR)/$(LIB_NAME).a $(LIBDIR)/$(LIB_CORE).a
+all: $(BIN_DIR) $(BIN_DIR)/DC3Msgs.o $(BIN_DIR)/protobuf_core.o $(LIBDIR)/$(LIB_NAME).a $(LIBDIR)/$(LIB_CORE).a
 	@echo --- Creating library $(LIBDIR)/$(LIB_CORE).a
 	$(TRACE_FLAG)$(RANLIB) $(LIBDIR)/$(LIB_CORE).a
 	$(TRACE_FLAG)$(RANLIB) $(LIBDIR)/$(LIB_NAME).a
 
-$(GEN_SOURCES_DIR)/CBMsgs.c: $(PROTO_FILES_DIR)/CBMsgs.proto 
+$(GEN_SOURCES_DIR)/DC3Msgs.c: $(PROTO_FILES_DIR)/DC3Msgs.proto 
 	@echo --- Regenerating code from proto files
 	$(TRACE_FLAG)$(MKDIR) $(GEN_SOURCES_DIR)
 	$(TRACE_FLAG)$(JAVA) $(JFLAGS) $(JAR_FILE) $(JPROTO_FLAGS) -I=$(PROTO_FILES_DIR) $(PROTO_FILES)
@@ -300,7 +300,7 @@ $(LIBDIR)/$(LIB_CORE).a:  $(C_CORE_OBJS_EXT) $(LIBDIR)
 	@echo --- Compiling Core library $(<F)
 	$(TRACE_FLAG)$(AR) $(LIBFLAGS) $(LIBDIR)/$(LIB_CORE).a $(C_CORE_OBJS_EXT)
 	
-$(BIN_DIR)/CBMsgs.o : $(GEN_SOURCES_DIR)/CBMsgs.c 
+$(BIN_DIR)/DC3Msgs.o : $(GEN_SOURCES_DIR)/DC3Msgs.c 
 	@echo --- Compiling $(<F)
 	$(TRACE_FLAG)$(CC) $(CFLAGS) -c $< -o $@
 	

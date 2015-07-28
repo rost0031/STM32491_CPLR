@@ -62,7 +62,7 @@
 						</toolChain>
 					</folderInfo>
 					<sourceEntries>
-						<entry excluding="CliCommon/sys/qpc_5.3.1/examples|CliCommon/sys/qpc_5.3.1/ports/ucos2|CliCommon/sys/qpc_5.3.1/ports/lint|CliCommon/sys/qpc_5.3.1/ports/freertos|CliCommon/sys/qpc_5.3.1/ports/arm-cm|CliCommon/sys/qpc_5.3.1/ports/80x86|CliCommon/sys/qpc_5.3.1/doxygen|src/dll/MainMgr_gen.h|src/dll/MainMgr_gen.cpp" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
+						<entry excluding="CliCommon/sys/qpc_5.3.1/doxygen|CliCommon/sys/qpc_5.3.1/ports/80x86|CliCommon/sys/qpc_5.3.1/ports/lint|CliCommon/sys/qpc_5.3.1/examples|src/dll/MainMgr_gen.h|CliCommon/sys/qpc_5.3.1/ports/freertos|CliCommon/sys/qpc_5.3.1/ports/arm-cm|src/dll/MainMgr_gen.cpp|CliCommon/sys/qpc_5.3.1/ports/ucos2" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
 					</sourceEntries>
 				</configuration>
 			</storageModule>

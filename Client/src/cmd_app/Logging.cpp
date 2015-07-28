@@ -62,8 +62,8 @@ void LOG_setDbgLvl( DBG_LEVEL_T dbgLvl )
 
 /******************************************************************************/
 void LOG_msgToStream(
-      struct CBBasicMsg *pBasicMsg,
-      CBPayloadMsgUnion_t *pPayloadUnion,
+      struct DC3BasicMsg *pBasicMsg,
+      DC3PayloadMsgUnion_t *pPayloadUnion,
       std::stringstream& ss
 )
 {
@@ -86,17 +86,17 @@ void LOG_msgToStream(
          << "|" << setw(15)  << (pBasicMsg->_msgReqProg == 0 ? "No" : "Yes")
          << "|" << setw(10)  << enumToString(pBasicMsg->_msgRoute) << "|" << endl;
 
-   if (NULL != pPayloadUnion && _CBNoMsg != pBasicMsg->_msgPayload ) {
+   if (NULL != pPayloadUnion && _DC3NoMsg != pBasicMsg->_msgPayload ) {
       ss << setw(25) << setfill(' ') << "|" << endl;
       ss << setw(25) << setfill(' ') << "*" << "---> ";
       switch( pBasicMsg->_msgPayload ) {
-         case _CBStatusPayloadMsg:
+         case _DC3StatusPayloadMsg:
             ss << "ErrorCode: " << hex << "0x" << setw(8) << setfill('0')
             << pPayloadUnion->statusPayload._errorCode << dec << endl;
             break;
-         case _CBVersionPayloadMsg:
+         case _DC3VersionPayloadMsg:
             break;
-         case _CBBootModePayloadMsg:
+         case _DC3BootModePayloadMsg:
             ss << setw(15) << setfill(' ') << "ErrorCode: "
             << hex << "0x" << setw(8) << setfill('0')
             << pPayloadUnion->bootmodePayload._errorCode << dec << endl;
@@ -114,8 +114,8 @@ void LOG_msgToStream(
 
 /******************************************************************************/
 void LOG_payloadMsgToStream(
-      CBMsgName payloadMsgName,
-      CBPayloadMsgUnion_t *pPayloadUnion,
+      DC3MsgName payloadMsgName,
+      DC3PayloadMsgUnion_t *pPayloadUnion,
       std::stringstream& ss
 )
 {

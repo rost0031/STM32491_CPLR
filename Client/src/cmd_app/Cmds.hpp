@@ -21,7 +21,7 @@
 #include "Logging.hpp"
 #include "Help.hpp"
 #include "EnumMaps.hpp"
-#include "CBCommApi.h"
+#include "DC3CommApi.h"
 #include "ClientApi.h"
 
 /* Namespaces ----------------------------------------------------------------*/
@@ -46,18 +46,18 @@ APIError_t CMD_runRamTest(  ClientApi* client );
  *
  * @param [in] *client: ClientApi pointer to the API object to provide access to
  * the DC3
- * @param [out] *statusDC3: CBErrorCode status returned from DC3.
+ * @param [out] *statusDC3: DC3Error_t status returned from DC3.
  *    @arg  ERR_NONE: success.
  *    other error codes if failure.
- * @param [out] *mode: CBBootMode pointer where to store the retrieved mode
+ * @param [out] *mode: DC3BootMode pointer where to store the retrieved mode
  * @return  ApiError_t:
  *    @arg API_ERR_NONE: if no error occurred
  *    @arg API_ERR_XXXX: other error codes indicating the error that occurred.
  */
 APIError_t CMD_runGetMode(
       ClientApi* client,
-      CBErrorCode* statusDC3,
-      CBBootMode* mode
+      DC3Error_t* statusDC3,
+      DC3BootMode* mode
 );
 
 /**
@@ -65,19 +65,19 @@ APIError_t CMD_runGetMode(
  *
  * @param [in] *client: ClientApi pointer to the API object to provide access to
  * the DC3
- * @param [out] *statusDC3: CBErrorCode status returned from DC3.
+ * @param [out] *statusDC3: DC3Error_t status returned from DC3.
  *    @arg  ERR_NONE: success.
  *    other error codes if failure.
- * @param [in] mode: CBBootMode to set the DC3 mode to.
+ * @param [in] mode: DC3BootMode to set the DC3 mode to.
  * @return  ApiError_t:
  *    @arg API_ERR_NONE: if no error occurred
  *    @arg API_ERR_XXXX: other error codes indicating the error that occurred.
  */
 APIError_t CMD_runSetMode(
       ClientApi* client,
-      CBErrorCode*
+      DC3Error_t*
       statusDC3,
-      CBBootMode mode
+      DC3BootMode mode
 );
 
 /**
@@ -85,10 +85,10 @@ APIError_t CMD_runSetMode(
  *
  * @param [in] *client: ClientApi pointer to the API object to provide access to
  * the DC3
- * @param [out] *statusDC3: CBErrorCode status returned from DC3.
+ * @param [out] *statusDC3: DC3Error_t status returned from DC3.
  *    @arg  ERR_NONE: success.
  *    other error codes if failure.
- * @param [in] type: CBBootMode type of fw image
+ * @param [in] type: DC3BootMode type of fw image
  * @param [in] file: string that contains a verified path to the FW image file.
  * @return  ApiError_t:
  *    @arg API_ERR_NONE: if no error occurred
@@ -96,8 +96,8 @@ APIError_t CMD_runSetMode(
  */
 APIError_t CMD_runFlash(
       ClientApi* client,
-      CBErrorCode* statusDC3,
-      CBBootMode type,
+      DC3Error_t* statusDC3,
+      DC3BootMode type,
       const string& file
 );
 
@@ -106,7 +106,7 @@ APIError_t CMD_runFlash(
  *
  * @param [in] *client: ClientApi pointer to the API object to provide access
  * to the DC3
- * @param [out] *statusDC3: CBErrorCode status returned from DC3.
+ * @param [out] *statusDC3: DC3Error_t status returned from DC3.
  *    @arg  ERR_NONE: success.
  *    other error codes if failure.
  * @note: unless this variable is set to ERR_NONE at the completion, the
@@ -116,15 +116,15 @@ APIError_t CMD_runFlash(
  * @param [in] nMaxBufferSize: size_t size of *pBuffer storage area.
  * @param [in] nBytesToRead: number of bytes to read
  * @param [in] nStart: where to start reading from
- * @param [in] dev: CBI2CDevices type that specifies the I2C device to read
- *    @arg _CB_EEPROM: read from the EEPROM on I2C bus 1.
- *    @arg _CB_SNROM: read from the RO SerialNumber ROM on I2C bus 1.
- *    @arg _CB_EUIROM: read from the RO Unique number ROM on I2C bus 1.
- * @param [in] acc: CBAccessType type that specifies the access to use to get
+ * @param [in] dev: DC3I2CDevices type that specifies the I2C device to read
+ *    @arg _DC3_EEPROM: read from the EEPROM on I2C bus 1.
+ *    @arg _DC3_SNROM: read from the RO SerialNumber ROM on I2C bus 1.
+ *    @arg _DC3_EUIROM: read from the RO Unique number ROM on I2C bus 1.
+ * @param [in] acc: DC3AccessType type that specifies the access to use to get
  * at the I2C bus.
- *    @arg _CB_ACCESS_BARE: bare metal access. Blocking and slow. For testing only.
- *    @arg _CB_ACCESS_QPC: use event driven QPC access.
- *    @arg _CB_ACCESS_FRT: use event driven FreeRTOS access.  Available in
+ *    @arg _DC3_ACCESS_BARE: bare metal access. Blocking and slow. For testing only.
+ *    @arg _DC3_ACCESS_QPC: use event driven QPC access.
+ *    @arg _DC3_ACCESS_FRT: use event driven FreeRTOS access.  Available in
  *    Application only.
  *
  * @return: APIError_t status of the client executing the command.
@@ -133,14 +133,14 @@ APIError_t CMD_runFlash(
  */
 APIError_t CMD_runReadI2C(
       ClientApi* client,
-      CBErrorCode* statusDC3,
+      DC3Error_t* statusDC3,
       uint16_t* pBytesRead,
       uint8_t* pBuffer,
       const size_t nMaxBufferSize,
       const size_t nBytesToRead,
       const size_t nStart,
-      const CBI2CDevices dev,
-      const CBAccessType acc
+      const DC3I2CDevices dev,
+      const DC3AccessType acc
 );
 
 /**
@@ -148,7 +148,7 @@ APIError_t CMD_runReadI2C(
  *
  * @param [in] *client: ClientApi pointer to the API object to provide access
  * to the DC3
- * @param [out] *statusDC3: CBErrorCode status returned from DC3.
+ * @param [out] *statusDC3: DC3Error_t status returned from DC3.
  *    @arg  ERR_NONE: success.
  *    other error codes if failure.
  * @note: unless this variable is set to ERR_NONE at the completion, the
@@ -157,15 +157,15 @@ APIError_t CMD_runReadI2C(
  * @param [in] *pBuffer: pointer to data to write.
  * @param [in] nBytesToWrite: number of bytes to write
  * @param [in] nStart: where to start reading from
- * @param [in] dev: CBI2CDevices type that specifies the I2C device to read
- *    @arg _CB_EEPROM: read from the EEPROM on I2C bus 1.
- *    @arg _CB_SNROM: read from the RO SerialNumber ROM on I2C bus 1.
- *    @arg _CB_EUIROM: read from the RO Unique number ROM on I2C bus 1.
- * @param [in] acc: CBAccessType type that specifies the access to use to get
+ * @param [in] dev: DC3I2CDevices type that specifies the I2C device to read
+ *    @arg _DC3_EEPROM: read from the EEPROM on I2C bus 1.
+ *    @arg _DC3_SNROM: read from the RO SerialNumber ROM on I2C bus 1.
+ *    @arg _DC3_EUIROM: read from the RO Unique number ROM on I2C bus 1.
+ * @param [in] acc: DC3AccessType type that specifies the access to use to get
  * at the I2C bus.
- *    @arg _CB_ACCESS_BARE: bare metal access. Blocking and slow. For testing only.
- *    @arg _CB_ACCESS_QPC: use event driven QPC access.
- *    @arg _CB_ACCESS_FRT: use event driven FreeRTOS access.  Available in
+ *    @arg _DC3_ACCESS_BARE: bare metal access. Blocking and slow. For testing only.
+ *    @arg _DC3_ACCESS_QPC: use event driven QPC access.
+ *    @arg _DC3_ACCESS_FRT: use event driven FreeRTOS access.  Available in
  *    Application only.
  *
  * @return: APIError_t status of the client executing the command.
@@ -174,12 +174,12 @@ APIError_t CMD_runReadI2C(
  */
 APIError_t CMD_runWriteI2C(
       ClientApi* client,
-      CBErrorCode* statusDC3,
+      DC3Error_t* statusDC3,
       uint8_t* pBuffer,
       const size_t nBytesToWrite,
       const size_t nStart,
-      const CBI2CDevices dev,
-      const CBAccessType acc
+      const DC3I2CDevices dev,
+      const DC3AccessType acc
 );
 /* Exported classes ----------------------------------------------------------*/
 

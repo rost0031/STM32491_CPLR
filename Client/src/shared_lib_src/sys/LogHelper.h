@@ -17,7 +17,7 @@
 #define LOGHELPER_H_
 
 /* Includes ------------------------------------------------------------------*/
-#include "CBSharedDbgLevels.h"
+#include "DC3DbgLevels.h"
 #include "ClientModules.h"
 
 /* Exported defines ----------------------------------------------------------*/

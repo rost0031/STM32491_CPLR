@@ -36,8 +36,8 @@ void Udp::read_handler(
       /* Construct a new msg event indicating that a msg has been received */
       MsgData_t msg;
       memset(&msg, 0, sizeof(msg));
-      msg.src = _CB_EthCli;
-      msg.dst = _CB_EthCli;
+      msg.src = _DC3_EthCli;
+      msg.dst = _DC3_EthCli;
       msg.dataLen = bytes_transferred;
       memcpy( msg.dataBuf, read_msg_, msg.dataLen );
 
@@ -56,7 +56,7 @@ void Udp::read_handler(
 void Udp::read_some( void )
 {
    m_socket.async_receive_from(
-         boost::asio::buffer(read_msg_, CB_MAX_MSG_LEN),
+         boost::asio::buffer(read_msg_, DC3_MAX_MSG_LEN),
          m_loc_endpoint,
          boost::bind(
                &Udp::read_handler,

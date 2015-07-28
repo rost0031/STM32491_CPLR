@@ -97,11 +97,11 @@ BSP_DIR                     = $(SRC_DIR)/bsp
 SYS_DIR                     = $(SRC_DIR)/sys
 
 # Coupler Board API directory
-CB_API_DIR                  = $(COMMON_CLI_SYS_DIR)/cb_api
-CB_API_GEN_SRC_DIR          = $(CB_API_DIR)/gen_src
-CB_API_SRC_DIR              = $(CB_API_DIR)/src
-CB_API_INC_DIR              = $(CB_API_DIR)/inc
-CB_API_LIB_DIR              = $(CB_API_DIR)/$(TARGET)_lib
+DC3_API_DIR                  = $(COMMON_CLI_SYS_DIR)/DC3_api
+DC3_API_GEN_SRC_DIR          = $(DC3_API_DIR)/gen_src
+DC3_API_SRC_DIR              = $(DC3_API_DIR)/src
+DC3_API_INC_DIR              = $(DC3_API_DIR)/inc
+DC3_API_LIB_DIR              = $(DC3_API_DIR)/$(TARGET)_lib
 
 # Boost library
 BOOST_INC_DIR               = $(EXT_LIB_INC_DIR)
@@ -126,9 +126,9 @@ INCLUDES                    = -I$(SRC_DIR) \
                               -I$(BSP_DIR) \
                               -I$(SYS_DIR) \
                               \
-                              -I$(CB_API_SRC_DIR) \
-                              -I$(CB_API_INC_DIR) \
-                              -I$(CB_API_GEN_SRC_DIR) \
+                              -I$(DC3_API_SRC_DIR) \
+                              -I$(DC3_API_INC_DIR) \
+                              -I$(DC3_API_GEN_SRC_DIR) \
                               \
                               -I$(BASE64_DIR) \
                               \
@@ -199,8 +199,8 @@ endif
 CFLAGS                     += -shared
 CPPFLAGS                   += -shared
 
-API_STATIC_LIBS             = $(CB_API_LIB_DIR)/libCBCommApi_$(TARGET).a \
-                              $(CB_API_LIB_DIR)/libprotobuf_core_$(TARGET).a \
+API_STATIC_LIBS             = $(DC3_API_LIB_DIR)/libDC3CommApi_$(TARGET).a \
+                              $(DC3_API_LIB_DIR)/libprotobuf_core_$(TARGET).a \
                               $(BOOST_LIB_DIR)/libboost_thread$(BOOST_TH_LIBMOD)$(BOOSTLIBMOD).a \
                               $(BOOST_LIB_DIR)/libboost_system$(BOOSTLIBMOD).a
                               
@@ -247,7 +247,7 @@ CPP_DEPS_EXT                = $(patsubst %.o, %.d, $(CPP_OBJS_EXT))
 # BUILD TARGETS
 #-----------------------------------------------------------------------------
 
-.PHONY: build_libs build_dll all clean clean_with_libs build_qpc build_cb_comm_api $(BIN_DIR)
+.PHONY: build_libs build_dll all clean clean_with_libs build_DC3_comm_api $(BIN_DIR)
 
 all: build_dll
 
@@ -272,21 +272,20 @@ $(TARGET_DLL):  $(C_OBJS_EXT) $(CPP_OBJS_EXT)
 	@echo --- Copy libs/headers   ---
 	@echo ---------------------------
 	cp $(API_DIR)/*.h $(BIN_DIR)/.
-	cp $(COMMON_CLI_SYS_DIR)/*.h $(BIN_DIR)/.
-	cp $(CB_API_INC_DIR)/*.h $(BIN_DIR)/.
-	cp $(CB_API_GEN_SRC_DIR)/*.h $(BIN_DIR)
-	cp $(CB_API_SRC_DIR)/*.h $(BIN_DIR)
+	cp $(DC3_API_INC_DIR)/*.h $(BIN_DIR)/.
+	cp $(DC3_API_GEN_SRC_DIR)/*.h $(BIN_DIR)
+	cp $(DC3_API_SRC_DIR)/*.h $(BIN_DIR)
 
-build_libs: build_cb_api
+build_libs: build_DC3_api
 	@echo -----------------------------------
 	@echo --- Building libraries complete ---
 	@echo -----------------------------------
 
-build_cb_api:
+build_DC3_api:
 	@echo ------------------------------------
-	@echo --- Building CB Comm API library ---
+	@echo --- Building DC3 Comm API library ---
 	@echo ------------------------------------
-	$(TRACE_FLAG)cd $(CB_API_DIR); make TARGET=$(TARGET) CONF=$(CONF) TRACE=$(TRACE) all
+	$(TRACE_FLAG)cd $(DC3_API_DIR); make TARGET=$(TARGET) CONF=$(CONF) TRACE=$(TRACE) all
 	
 $(BIN_DIR)/%.d : %.c
 	$(CPP) -MM -MT $(@:.d=.o) $(CPPFLAGS) $< > $@
@@ -309,16 +308,16 @@ cleanall: clean_with_libs
 clean:
 	$(RM) $(BIN_DIR)
 	
-clean_with_libs: clean clean_cb_api_libs
+clean_with_libs: clean clean_DC3_api_libs
 	@echo -------------------------
 	@echo --- Cleaned all libs ----
 	@echo -------------------------
 
-clean_cb_api_libs:
+clean_DC3_api_libs:
 	@echo -------------------------------
-	@echo --- Cleaning CB API library ---
+	@echo --- Cleaning DC3 API library ---
 	@echo -------------------------------
-	$(TRACE_FLAG)cd $(CB_API_DIR); make TARGET=$(TARGET) TRACE=$(TRACE) cleanall
+	$(TRACE_FLAG)cd $(DC3_API_DIR); make TARGET=$(TARGET) TRACE=$(TRACE) cleanall
 
 show:
 	@echo CONF             = $(CONF)

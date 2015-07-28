@@ -108,7 +108,7 @@ BSP_DIR                     = $(SHARED_LIB_DIR)/bsp
 SYS_DIR                     = $(SHARED_LIB_DIR)/sys
 
 # Coupler Board API directory
-CB_API_DIR                  = $(COMMON_CLI_SYS_DIR)/cb_api
+CB_API_DIR                  = $(COMMON_CLI_SYS_DIR)/DC3_api
 CB_API_GEN_SRC_DIR          = $(CB_API_DIR)/gen_src
 CB_API_SRC_DIR              = $(CB_API_DIR)/src
 CB_API_INC_DIR              = $(CB_API_DIR)/inc
@@ -284,7 +284,7 @@ CPP_DEPS_EXT                = $(patsubst %.o, %.d, $(CPP_OBJS_EXT))
 # BUILD TARGETS
 #-----------------------------------------------------------------------------
 
-.PHONY: build_dll all clean clean_with_libs build_cb_comm_api $(BIN_DIR)
+.PHONY: build_dll all clean clean_with_libs build_DC3_comm_api $(BIN_DIR)
 
 all:  $(TARGET_EXE)
 
@@ -301,12 +301,12 @@ $(TARGET_EXE):  $(BIN_DIR) build_libs $(CPP_OBJS_EXT) $(C_OBJS_EXT)
 	$(LINK) -o $(TARGET_EXE) $(LIBS) $(C_OBJS_EXT) $(CPP_OBJS_EXT) $(LIB_LOCATIONS) $(STATIC_LIBS) 
 #	$(RM) $(BIN_DIR)/*.o
     
-build_libs: build_cb_api
+build_libs: build_DC3_api
 	@echo -----------------------------------
 	@echo --- Building libraries complete ---
 	@echo -----------------------------------
 
-build_cb_api:
+build_DC3_api:
 	@echo ------------------------------------
 	@echo --- Building DC3 Comm API lib    ---
 	@echo ------------------------------------

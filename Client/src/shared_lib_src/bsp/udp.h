@@ -43,8 +43,8 @@ private:
    LogStub *m_pLog;         /**< Pointer to LogStub instance used for logging */
    boost::lockfree::queue<MsgData_t> *m_pQueue; /**< Pointer to the queue where
                                                      to put read data */
-   char read_msg_[CB_MAX_MSG_LEN];          /**< buffer to hold incoming msgs */
-   char write_msg_[CB_MAX_MSG_LEN];       /**< buffer to hold msgs being sent */
+   char read_msg_[DC3_MAX_MSG_LEN];          /**< buffer to hold incoming msgs */
+   char write_msg_[DC3_MAX_MSG_LEN];       /**< buffer to hold msgs being sent */
 
    boost::asio::io_service m_io;/**< internal instance of boost's io_service  */
    boost::asio::ip::udp::socket m_socket;/**< internal instance of boost's socket pointer */

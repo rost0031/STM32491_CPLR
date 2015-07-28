@@ -17,7 +17,7 @@
 #define LOGSTUB_H_
 
 /* Includes ------------------------------------------------------------------*/
-#include "CBSharedDbgLevels.h"
+#include "DC3DbgLevels.h"
 #include "ClientModules.h"
 #include "ApiErrorCodes.h"
 #include "CallbackTypes.h"
@@ -63,8 +63,8 @@ extern "C" {
 class CLIENT_DLL LogStub {
 
 private:
-   CB_LibLogHandler_t m_pLibLogHandlerCBFunction;  /**< Callback for handling lib log msgs */
-   CB_DC3LogHandler_t m_pDC3LogHandlerCBFunction;  /**< Callback for handling DC3 log msgs */
+   DC3_LibLogHandler_t m_pLibLogHandlerDC3Function;  /**< Callback for handling lib log msgs */
+   DC3_DC3LogHandler_t m_pDC3LogHandlerDC3Function;  /**< Callback for handling DC3 log msgs */
 
 public:
 
@@ -87,26 +87,26 @@ public:
    /**
     * @brief   Set a callback to handle the internal logging from the client.
     *
-    * @param  [in]  pCallbackFunction: a CB_LibLogHandler_t pointer to the
+    * @param  [in]  pCallbackFunction: a DC3_LibLogHandler_t pointer to the
     * callback function that is implemented outside the library.
     *
     * @return APIError_t:
     *    @arg API_ERR_NONE: no errors were detected
     *    else some error code indicating what went wrong
     */
-   APIError_t setLibLogCallBack( CB_LibLogHandler_t pCallbackFunction );
+   APIError_t setLibLogCallBack( DC3_LibLogHandler_t pCallbackFunction );
 
    /**
     * @brief   Set a callback to handle the log msgs coming from DC3 board.
     *
-    * @param  [in]  pCallbackFunction: a CB_DC3LogHandler_t pointer to the
+    * @param  [in]  pCallbackFunction: a DC3_DC3LogHandler_t pointer to the
     * callback function that is implemented outside the library.
     *
     * @return APIError_t:
     *    @arg API_ERR_NONE: no errors were detected
     *    else some error code indicating what went wrong
     */
-   APIError_t setDC3LogCallBack( CB_DC3LogHandler_t pCallbackFunction );
+   APIError_t setDC3LogCallBack( DC3_DC3LogHandler_t pCallbackFunction );
 
    /**
     * @brief   Enable logging for a given module of the library.

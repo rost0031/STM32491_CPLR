@@ -40,9 +40,9 @@ MODULE_NAME( MODULE_EXT );
 APIError_t CMD_runRamTest( ClientApi* client )
 {
    APIError_t statusAPI = API_ERR_NONE;
-   CBErrorCode statusDC3 = ERR_NONE;
+   DC3Error_t statusDC3 = ERR_NONE;
 
-   CBRamTest_t test = _CB_RAM_TEST_NONE;  // Test which can fail
+   DC3RamTest_t test = _DC3_RAM_TEST_NONE;  // Test which can fail
    uint32_t addr = 0x00000000;            // Address at which a test can fail
 
    CON_print("*** Starting ram_test cmd to test of external RAM of DC3... ***");
@@ -74,8 +74,8 @@ APIError_t CMD_runRamTest( ClientApi* client )
 /******************************************************************************/
 APIError_t CMD_runGetMode(
       ClientApi* client,
-      CBErrorCode* statusDC3,
-      CBBootMode* mode
+      DC3Error_t* statusDC3,
+      DC3BootMode* mode
 )
 {
    APIError_t statusAPI = API_ERR_NONE;
@@ -110,8 +110,8 @@ APIError_t CMD_runGetMode(
 /******************************************************************************/
 APIError_t CMD_runSetMode(
       ClientApi* client,
-      CBErrorCode* statusDC3,
-      CBBootMode mode
+      DC3Error_t* statusDC3,
+      DC3BootMode mode
 )
 {
    APIError_t statusAPI = API_ERR_NONE;
@@ -145,16 +145,16 @@ APIError_t CMD_runSetMode(
 /******************************************************************************/
 APIError_t CMD_runFlash(
       ClientApi* client,
-      CBErrorCode* statusDC3,
-      CBBootMode type,
+      DC3Error_t* statusDC3,
+      DC3BootMode type,
       const string& file
 )
 {
    APIError_t statusAPI = API_ERR_NONE;
 
    // Only allow Application FW image for now.
-   if ( _CB_Application != type ) {
-      ERR_out << "Only " << enumToString(_CB_Application) << " FW images are currently supported.";
+   if ( _DC3_Application != type ) {
+      ERR_out << "Only " << enumToString(_DC3_Application) << " FW images are currently supported.";
       return( API_ERR_UNIMPLEMENTED );
    }
 
@@ -186,14 +186,14 @@ APIError_t CMD_runFlash(
 /******************************************************************************/
 APIError_t CMD_runReadI2C(
       ClientApi* client,
-      CBErrorCode* statusDC3,
+      DC3Error_t* statusDC3,
       uint16_t* pBytesRead,
       uint8_t* pBuffer,
       const size_t nMaxBufferSize,
       const size_t nBytesToRead,
       const size_t nStart,
-      const CBI2CDevices dev,
-      const CBAccessType acc
+      const DC3I2CDevices dev,
+      const DC3AccessType acc
 )
 {
    APIError_t statusAPI = API_ERR_NONE;
@@ -230,12 +230,12 @@ APIError_t CMD_runReadI2C(
 /******************************************************************************/
 APIError_t CMD_runWriteI2C(
       ClientApi* client,
-      CBErrorCode* statusDC3,
+      DC3Error_t* statusDC3,
       uint8_t* pBuffer,
       const size_t nBytesToWrite,
       const size_t nStart,
-      const CBI2CDevices dev,
-      const CBAccessType acc
+      const DC3I2CDevices dev,
+      const DC3AccessType acc
 )
 {
    APIError_t statusAPI = API_ERR_NONE;

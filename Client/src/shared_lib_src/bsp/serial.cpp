@@ -62,12 +62,12 @@ void Serial::read_handler(
              read_msg_,
              bytes_transferred,
              (char *)msg.dataBuf,
-             CB_MAX_MSG_LEN
+             DC3_MAX_MSG_LEN
        );
 
        /* Set the size and source */
-       msg.src = _CB_EthCli;
-       msg.dst = _CB_EthCli;
+       msg.src = _DC3_EthCli;
+       msg.dst = _DC3_EthCli;
 
        /* Put the data into the queue for ClientApi to read */
        if(!this->m_pQueue->push(msg)) {

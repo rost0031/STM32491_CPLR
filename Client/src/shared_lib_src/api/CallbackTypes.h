@@ -29,8 +29,8 @@ extern "C" {
 
 /* Includes ------------------------------------------------------------------*/
 /* Generated C headers should be included inside of extern C enclosure */
-#include "CBCommApi.h"
-#include "CBSharedDbgLevels.h"
+#include "DC3CommApi.h"
+#include "DC3DbgLevels.h"
 #include "ClientModules.h"
 #ifdef __cplusplus
 }
@@ -49,13 +49,13 @@ extern "C" {
  * logging outgoing Req msgs depending if the client is commandline, menu
  * driven, or a a gui.
  *
- * @param [in] basicMsg: CBBasicMsg struct of raw data contained in the Req msg.
+ * @param [in] basicMsg: DC3BasicMsg struct of raw data contained in the Req msg.
  * @param [in] basicMsgMap: std map that contains text values of the basicMsg
  * struct, ready to print
  * @return: None.
  */
-typedef void (*CB_ReqMsgHandler_t)(
-      struct CBBasicMsg basicMsgStruct
+typedef void (*DC3_ReqMsgHandler_t)(
+      struct DC3BasicMsg basicMsgStruct
 );
 
 /**
@@ -65,13 +65,13 @@ typedef void (*CB_ReqMsgHandler_t)(
  * handle Ack msgs coming from the coupler board. This allows different handling
  * depending if the client is commandline, menu driven, or a a gui.
  *
- * @param [in] basicMsg: CBBasicMsg struct of raw data contained in the Ack msg.
+ * @param [in] basicMsg: DC3BasicMsg struct of raw data contained in the Ack msg.
  * @param [in] basicMsgMap: std map that contains text values of the basicMsg
  * struct, ready to print
  * @return: None.
  */
-typedef void (*CB_AckMsgHandler_t)(
-      struct CBBasicMsg basicMsgStruct
+typedef void (*DC3_AckMsgHandler_t)(
+      struct DC3BasicMsg basicMsgStruct
 );
 
 /**
@@ -81,15 +81,15 @@ typedef void (*CB_AckMsgHandler_t)(
  * handle Done msgs coming from the coupler board. This allows different
  * handling depending if the client is commandline, menu driven, or a a gui.
  *
- * @param [in] basicMsgStruct: CBBasicMsg struct of raw data contained in the Ack msg.
- * @param [in] payloadMsgUnion: CBPayloadMsgUnion_t uniont that contains the union
+ * @param [in] basicMsgStruct: DC3BasicMsg struct of raw data contained in the Ack msg.
+ * @param [in] payloadMsgUnion: DC3PayloadMsgUnion_t uniont that contains the union
  * of all possible payload msgs.
  *
  * @return: None.
  */
-typedef void (*CB_DoneMsgHandler_t)(
-      struct CBBasicMsg basicMsgStruct,
-      CBPayloadMsgUnion_t payloadMsgUnion
+typedef void (*DC3_DoneMsgHandler_t)(
+      struct DC3BasicMsg basicMsgStruct,
+      DC3PayloadMsgUnion_t payloadMsgUnion
 );
 
 /**
@@ -102,7 +102,7 @@ typedef void (*CB_DoneMsgHandler_t)(
  *
  * @param *buffer: char pointer to buffer containing the message to be printed.
  */
-typedef void (*CB_DC3LogHandler_t)(
+typedef void (*DC3_DC3LogHandler_t)(
       const char *buffer
 );
 
@@ -132,7 +132,7 @@ typedef void (*CB_DC3LogHandler_t)(
  * @param [in] *fmt: char* fmt va args type argument.
  * @param [in]  ...: additional va args type arguments.
  */
-typedef void (*CB_LibLogHandler_t)(
+typedef void (*DC3_LibLogHandler_t)(
       DBG_LEVEL_T logLevel,
       const char *pFuncName,
       int wLineNumber,

@@ -58,13 +58,13 @@ boost::lockfree::queue<MsgData_t> queue(128);
 /* Private classes -----------------------------------------------------------*/
 
 /******************************************************************************/
-APIError_t ClientApi::DC3_getMode(CBErrorCode *status, CBBootMode *mode)
+APIError_t ClientApi::DC3_getMode(DC3Error_t *status, DC3BootMode *mode)
 {
    this->enableMsgCallbacks();
 
    /* These will be used for responses */
-   CBBasicMsg basicMsg;
-   CBPayloadMsgUnion_t payloadMsgUnion;
+   DC3BasicMsg basicMsg;
+   DC3PayloadMsgUnion_t payloadMsgUnion;
 
    /* Common settings for most messages */
    this->m_basicMsg._msgID       = this->m_msgId;
@@ -72,14 +72,14 @@ APIError_t ClientApi::DC3_getMode(CBErrorCode *status, CBBootMode *mode)
    this->m_basicMsg._msgRoute    = this->m_msgRoute;
 
    /* Settings specific to this message */
-   this->m_basicMsg._msgType     = _CB_Req;
-   this->m_basicMsg._msgName     = _CBGetBootModeMsg;
-   this->m_basicMsg._msgPayload  = _CBNoMsg;
+   this->m_basicMsg._msgType     = _DC3_Req;
+   this->m_basicMsg._msgName     = _DC3GetBootModeMsg;
+   this->m_basicMsg._msgPayload  = _DC3NoMsg;
 
-   size_t size = CB_MAX_MSG_LEN;
+   size_t size = DC3_MAX_MSG_LEN;
    uint8_t *buffer = new uint8_t[size];                    /* Allocate buffer */
    unsigned int bufferLen = 0;
-   bufferLen = CBBasicMsg_write_delimited_to(&m_basicMsg, buffer, 0);
+   bufferLen = DC3BasicMsg_write_delimited_to(&m_basicMsg, buffer, 0);
    l_pComm->write_some((char *)buffer, bufferLen);                /* Send Req */
 
    delete[] buffer;                                          /* Delete buffer */
@@ -126,7 +126,7 @@ APIError_t ClientApi::DC3_getMode(CBErrorCode *status, CBBootMode *mode)
             "Waiting for Done received client Error: 0x%08x", clientStatus);
       return clientStatus;
    } else {
-      *status = (CBErrorCode)payloadMsgUnion.bootmodePayload._errorCode;
+      *status = (DC3Error_t)payloadMsgUnion.bootmodePayload._errorCode;
       *mode = payloadMsgUnion.bootmodePayload._bootMode;
    }
 
@@ -134,13 +134,13 @@ APIError_t ClientApi::DC3_getMode(CBErrorCode *status, CBBootMode *mode)
 }
 
 /******************************************************************************/
-APIError_t ClientApi::DC3_setMode(CBErrorCode *status, CBBootMode mode)
+APIError_t ClientApi::DC3_setMode(DC3Error_t *status, DC3BootMode mode)
 {
    this->enableMsgCallbacks();
 
    /* These will be used for responses */
-   CBBasicMsg basicMsg;
-   CBPayloadMsgUnion_t payloadMsgUnion;
+   DC3BasicMsg basicMsg;
+   DC3PayloadMsgUnion_t payloadMsgUnion;
 
    /* Common settings for most messages */
    this->m_basicMsg._msgID       = this->m_msgId;
@@ -148,18 +148,18 @@ APIError_t ClientApi::DC3_setMode(CBErrorCode *status, CBBootMode mode)
    this->m_basicMsg._msgRoute    = this->m_msgRoute;
 
    /* Settings specific to this message */
-   this->m_basicMsg._msgType     = _CB_Req;
-   this->m_basicMsg._msgName     = _CBSetBootModeMsg;
-   this->m_basicMsg._msgPayload  = _CBBootModePayloadMsg;
+   this->m_basicMsg._msgType     = _DC3_Req;
+   this->m_basicMsg._msgName     = _DC3SetBootModeMsg;
+   this->m_basicMsg._msgPayload  = _DC3BootModePayloadMsg;
 
    this->m_bootmodePayloadMsg._bootMode = mode;
    this->m_bootmodePayloadMsg._errorCode = ERR_NONE; // This field is ignored in Req msgs.
 
-   size_t size = CB_MAX_MSG_LEN;
+   size_t size = DC3_MAX_MSG_LEN;
    uint8_t *buffer = new uint8_t[size];                    /* Allocate buffer */
    unsigned int bufferLen = 0;
-   bufferLen = CBBasicMsg_write_delimited_to(&m_basicMsg, buffer, 0);
-   bufferLen = CBBootModePayloadMsg_write_delimited_to(&m_bootmodePayloadMsg, buffer, bufferLen);
+   bufferLen = DC3BasicMsg_write_delimited_to(&m_basicMsg, buffer, 0);
+   bufferLen = DC3BootModePayloadMsg_write_delimited_to(&m_bootmodePayloadMsg, buffer, bufferLen);
    l_pComm->write_some((char *)buffer, bufferLen);                /* Send Req */
 
    delete[] buffer;                                          /* Delete buffer */
@@ -190,7 +190,7 @@ APIError_t ClientApi::DC3_setMode(CBErrorCode *status, CBBootMode mode)
             "Waiting for Done received client Error: 0x%08x", clientStatus);
       return clientStatus;
    } else {
-      *status = (CBErrorCode)payloadMsgUnion.statusPayload._errorCode;
+      *status = (DC3Error_t)payloadMsgUnion.statusPayload._errorCode;
    }
 
    return clientStatus;
@@ -198,8 +198,8 @@ APIError_t ClientApi::DC3_setMode(CBErrorCode *status, CBBootMode mode)
 
 /******************************************************************************/
 APIError_t ClientApi::DC3_flashFW(
-      CBErrorCode *status,
-      CBBootMode type,
+      DC3Error_t *status,
+      DC3BootMode type,
       const char* filename
 )
 {
@@ -207,17 +207,17 @@ APIError_t ClientApi::DC3_flashFW(
    to log all of them so just turn this off */
 
    /* These will be used for responses */
-   CBBasicMsg basicMsg;
-   CBPayloadMsgUnion_t payloadMsgUnion;
+   DC3BasicMsg basicMsg;
+   DC3PayloadMsgUnion_t payloadMsgUnion;
    APIError_t clientStatus = API_ERR_NONE;
 
 
    /* First, check if DC3 is in bootloader mode and if not, send a SetMode cmd
     * so that the user doesn't have to worry about doing it */
-   CBBootMode currentBootMode = _CB_NoBootMode;
+   DC3BootMode currentBootMode = _DC3_NoBootMode;
    int curRetry   = 0;
    int maxRetries = 3;
-   while ( currentBootMode != _CB_Bootloader && curRetry++ <= maxRetries ) {
+   while ( currentBootMode != _DC3_Bootloader && curRetry++ <= maxRetries ) {
       DBG_printf(m_pLog, "Sending %d out of %d max possible get_mode to see if DC3 is in Bootloader mode", curRetry, maxRetries);
       clientStatus = this->DC3_getMode(status, &currentBootMode);
       if ( clientStatus != API_ERR_NONE ) {
@@ -230,8 +230,8 @@ APIError_t ClientApi::DC3_flashFW(
       }
 
       /* If the DC3 is not in bootloader mode, reset it */
-      if ( currentBootMode != _CB_Bootloader ) {
-         clientStatus = this->DC3_setMode(status, _CB_Bootloader);
+      if ( currentBootMode != _DC3_Bootloader ) {
+         clientStatus = this->DC3_setMode(status, _DC3_Bootloader);
          if ( clientStatus != API_ERR_NONE ) {
             ERR_printf(m_pLog, "Unable to set DC3 to Bootloader mode. Client Error: 0x%08x", clientStatus);
             return clientStatus;
@@ -267,9 +267,9 @@ APIError_t ClientApi::DC3_flashFW(
    this->m_basicMsg._msgRoute    = this->m_msgRoute;
 
    /* Settings specific to this message */
-   this->m_basicMsg._msgType     = _CB_Req;
-   this->m_basicMsg._msgName     = _CBFlashMsg;
-   this->m_basicMsg._msgPayload  = _CBFlashMetaPayloadMsg;
+   this->m_basicMsg._msgType     = _DC3_Req;
+   this->m_basicMsg._msgName     = _DC3FlashMsg;
+   this->m_basicMsg._msgPayload  = _DC3FlashMetaPayloadMsg;
 
    /* Construct the flashMetaPayloadMsg that tells the bootloader about all
     * the data to expect. */
@@ -293,15 +293,15 @@ APIError_t ClientApi::DC3_flashFW(
 
    /* Buffer and counter to use for sending messages. We could allocated when
     * needed but it's a lot slower */
-   uint8_t buffer[CB_MAX_MSG_LEN];
+   uint8_t buffer[DC3_MAX_MSG_LEN];
    unsigned int bufferLen;
 
    /* 1. Send the Flashmsg wih FlashMetaPayloadMsg */
    memset(buffer, 0, sizeof(buffer));
    bufferLen = 0;
 
-   bufferLen = CBBasicMsg_write_delimited_to(&m_basicMsg, buffer, 0);
-   bufferLen = CBFlashMetaPayloadMsg_write_delimited_to(&m_flashMetaPayloadMsg, buffer, bufferLen);
+   bufferLen = DC3BasicMsg_write_delimited_to(&m_basicMsg, buffer, 0);
+   bufferLen = DC3FlashMetaPayloadMsg_write_delimited_to(&m_flashMetaPayloadMsg, buffer, bufferLen);
    l_pComm->write_some((char *)buffer, bufferLen);                /* Send Req */
 
    /* 2. Wait for Ack */
@@ -333,7 +333,7 @@ APIError_t ClientApi::DC3_flashFW(
             "Waiting for Done received client Error: 0x%08x", clientStatus);
       return clientStatus;
    } else {
-      *status = (CBErrorCode)payloadMsgUnion.statusPayload._errorCode;
+      *status = (DC3Error_t)payloadMsgUnion.statusPayload._errorCode;
       if ( ERR_NONE != *status ) {
          ERR_printf(m_pLog, "Status from DC3: 0x%08x", *status);
          return clientStatus;
@@ -352,9 +352,9 @@ APIError_t ClientApi::DC3_flashFW(
       this->m_basicMsg._msgID       = this->m_msgId;
       this->m_basicMsg._msgReqProg  = 0;
       this->m_basicMsg._msgRoute    = this->m_msgRoute;
-      this->m_basicMsg._msgType     = _CB_Req;
-      this->m_basicMsg._msgName     = _CBFlashMsg;
-      this->m_basicMsg._msgPayload  = _CBFlashDataPayloadMsg;
+      this->m_basicMsg._msgType     = _DC3_Req;
+      this->m_basicMsg._msgName     = _DC3FlashMsg;
+      this->m_basicMsg._msgPayload  = _DC3FlashDataPayloadMsg;
 
       uint32_t crc = 0;
       /* Set up the payload */
@@ -373,8 +373,8 @@ APIError_t ClientApi::DC3_flashFW(
       /* 5. Send the Flashmsg wih FlashDataPayloadMsg */
       memset(buffer, 0, sizeof(buffer));
       bufferLen = 0;
-      bufferLen = CBBasicMsg_write_delimited_to(&m_basicMsg, buffer, 0);
-      bufferLen = CBFlashDataPayloadMsg_write_delimited_to(&m_flashDataPayloadMsg, buffer, bufferLen);
+      bufferLen = DC3BasicMsg_write_delimited_to(&m_basicMsg, buffer, 0);
+      bufferLen = DC3FlashDataPayloadMsg_write_delimited_to(&m_flashDataPayloadMsg, buffer, bufferLen);
 //      DBG_printf(m_pLog, "BufferLen is %d", bufferLen);
       l_pComm->write_some((char *)buffer, bufferLen);             /* Send Req */
 
@@ -415,7 +415,7 @@ APIError_t ClientApi::DC3_flashFW(
       }
 
       /* Make sure the status of the done msg has no errors */
-      *status = (CBErrorCode)payloadMsgUnion.statusPayload._errorCode;
+      *status = (DC3Error_t)payloadMsgUnion.statusPayload._errorCode;
       if ( ERR_NONE != *status ) {
          ERR_printf(
                m_pLog,
@@ -451,21 +451,21 @@ APIError_t ClientApi::DC3_flashFW(
 
 /******************************************************************************/
 APIError_t ClientApi::DC3_readI2C(
-      CBErrorCode *status,
+      DC3Error_t *status,
       uint16_t *pBytesRead,
       uint8_t *pBuffer,
       const int bufferSize,
       const int bytes,
       const int start,
-      const CBI2CDevices dev,
-      const CBAccessType acc
+      const DC3I2CDevices dev,
+      const DC3AccessType acc
 )
 {
    this->enableMsgCallbacks();
 
    /* These will be used for responses */
-   CBBasicMsg basicMsg;
-   CBPayloadMsgUnion_t payloadMsgUnion;
+   DC3BasicMsg basicMsg;
+   DC3PayloadMsgUnion_t payloadMsgUnion;
 
    /* Common settings for most messages */
    this->m_basicMsg._msgID       = this->m_msgId;
@@ -473,9 +473,9 @@ APIError_t ClientApi::DC3_readI2C(
    this->m_basicMsg._msgRoute    = this->m_msgRoute;
 
    /* Settings specific to this message */
-   this->m_basicMsg._msgType     = _CB_Req;
-   this->m_basicMsg._msgName     = _CBI2CReadMsg;
-   this->m_basicMsg._msgPayload  = _CBI2CDataPayloadMsg;
+   this->m_basicMsg._msgType     = _DC3_Req;
+   this->m_basicMsg._msgName     = _DC3I2CReadMsg;
+   this->m_basicMsg._msgPayload  = _DC3I2CDataPayloadMsg;
 
    this->m_i2cDataPayloadMsg._accType = acc;
    this->m_i2cDataPayloadMsg._i2cDev = dev;
@@ -487,11 +487,11 @@ APIError_t ClientApi::DC3_readI2C(
    DBG_printf(m_pLog,
             "Sending I2CRead with dev %d", this->m_i2cDataPayloadMsg._i2cDev);
 
-   size_t size = CB_MAX_MSG_LEN;
+   size_t size = DC3_MAX_MSG_LEN;
    uint8_t *buffer = new uint8_t[size];                    /* Allocate buffer */
    unsigned int bufferLen = 0;
-   bufferLen = CBBasicMsg_write_delimited_to(&m_basicMsg, buffer, 0);
-   bufferLen = CBI2CDataPayloadMsg_write_delimited_to(&m_i2cDataPayloadMsg, buffer, bufferLen);
+   bufferLen = DC3BasicMsg_write_delimited_to(&m_basicMsg, buffer, 0);
+   bufferLen = DC3I2CDataPayloadMsg_write_delimited_to(&m_i2cDataPayloadMsg, buffer, bufferLen);
    l_pComm->write_some((char *)buffer, bufferLen);                /* Send Req */
 
    delete[] buffer;                                          /* Delete buffer */
@@ -522,7 +522,7 @@ APIError_t ClientApi::DC3_readI2C(
             "Waiting for Done received client Error: 0x%08x", clientStatus);
       return clientStatus;
    } else {
-      *status = (CBErrorCode)payloadMsgUnion.i2cDataPayload._errorCode;
+      *status = (DC3Error_t)payloadMsgUnion.i2cDataPayload._errorCode;
       if ( ERR_NONE == *status ) {
          if ( payloadMsgUnion.i2cDataPayload._dataBuf_len < bufferSize ) {
             DBG_printf(m_pLog,"Copying %d bytes", payloadMsgUnion.i2cDataPayload._dataBuf_len );
@@ -537,19 +537,19 @@ APIError_t ClientApi::DC3_readI2C(
 
 /******************************************************************************/
 APIError_t ClientApi::DC3_writeI2C(
-      CBErrorCode *status,
+      DC3Error_t *status,
       const uint8_t* const pBuffer,
       const int bytes,
       const int start,
-      const CBI2CDevices dev,
-      const CBAccessType acc
+      const DC3I2CDevices dev,
+      const DC3AccessType acc
 )
 {
    this->enableMsgCallbacks();
 
    /* These will be used for responses */
-   CBBasicMsg basicMsg;
-   CBPayloadMsgUnion_t payloadMsgUnion;
+   DC3BasicMsg basicMsg;
+   DC3PayloadMsgUnion_t payloadMsgUnion;
 
    /* Common settings for most messages */
    this->m_basicMsg._msgID       = this->m_msgId;
@@ -557,9 +557,9 @@ APIError_t ClientApi::DC3_writeI2C(
    this->m_basicMsg._msgRoute    = this->m_msgRoute;
 
    /* Settings specific to this message */
-   this->m_basicMsg._msgType     = _CB_Req;
-   this->m_basicMsg._msgName     = _CBI2CWriteMsg;
-   this->m_basicMsg._msgPayload  = _CBI2CDataPayloadMsg;
+   this->m_basicMsg._msgType     = _DC3_Req;
+   this->m_basicMsg._msgName     = _DC3I2CWriteMsg;
+   this->m_basicMsg._msgPayload  = _DC3I2CDataPayloadMsg;
 
    this->m_i2cDataPayloadMsg._accType = acc;
    this->m_i2cDataPayloadMsg._i2cDev = dev;
@@ -572,11 +572,11 @@ APIError_t ClientApi::DC3_writeI2C(
    DBG_printf(m_pLog,
             "Sending write_i2c with dev %d", this->m_i2cDataPayloadMsg._i2cDev);
 
-   size_t size = CB_MAX_MSG_LEN;
+   size_t size = DC3_MAX_MSG_LEN;
    uint8_t *buffer = new uint8_t[size];                    /* Allocate buffer */
    unsigned int bufferLen = 0;
-   bufferLen = CBBasicMsg_write_delimited_to(&m_basicMsg, buffer, 0);
-   bufferLen = CBI2CDataPayloadMsg_write_delimited_to(&m_i2cDataPayloadMsg, buffer, bufferLen);
+   bufferLen = DC3BasicMsg_write_delimited_to(&m_basicMsg, buffer, 0);
+   bufferLen = DC3I2CDataPayloadMsg_write_delimited_to(&m_i2cDataPayloadMsg, buffer, bufferLen);
    l_pComm->write_some((char *)buffer, bufferLen);                /* Send Req */
 
    delete[] buffer;                                          /* Delete buffer */
@@ -607,7 +607,7 @@ APIError_t ClientApi::DC3_writeI2C(
             "Waiting for Done received client Error: 0x%08x", clientStatus);
       return clientStatus;
    } else {
-      *status = (CBErrorCode)payloadMsgUnion.statusPayload._errorCode;
+      *status = (DC3Error_t)payloadMsgUnion.statusPayload._errorCode;
    }
 
    return clientStatus;
@@ -615,16 +615,16 @@ APIError_t ClientApi::DC3_writeI2C(
 
 /******************************************************************************/
 APIError_t ClientApi::DC3_ramTest(
-      CBErrorCode *status,
-      CBRamTest_t* test,
+      DC3Error_t *status,
+      DC3RamTest_t* test,
       uint32_t* addr
 )
 {
    this->enableMsgCallbacks();
 
    /* These will be used for responses */
-   CBBasicMsg basicMsg;
-   CBPayloadMsgUnion_t payloadMsgUnion;
+   DC3BasicMsg basicMsg;
+   DC3PayloadMsgUnion_t payloadMsgUnion;
 
    /* Common settings for most messages */
    this->m_basicMsg._msgID       = this->m_msgId;
@@ -632,14 +632,14 @@ APIError_t ClientApi::DC3_ramTest(
    this->m_basicMsg._msgRoute    = this->m_msgRoute;
 
    /* Settings specific to this message */
-   this->m_basicMsg._msgType     = _CB_Req;
-   this->m_basicMsg._msgName     = _CBRamTestMsg;
-   this->m_basicMsg._msgPayload  = _CBNoMsg;
+   this->m_basicMsg._msgType     = _DC3_Req;
+   this->m_basicMsg._msgName     = _DC3RamTestMsg;
+   this->m_basicMsg._msgPayload  = _DC3NoMsg;
 
-   size_t size = CB_MAX_MSG_LEN;
+   size_t size = DC3_MAX_MSG_LEN;
    uint8_t *buffer = new uint8_t[size];                    /* Allocate buffer */
    unsigned int bufferLen = 0;
-   bufferLen = CBBasicMsg_write_delimited_to(&m_basicMsg, buffer, 0);
+   bufferLen = DC3BasicMsg_write_delimited_to(&m_basicMsg, buffer, 0);
    l_pComm->write_some((char *)buffer, bufferLen);                /* Send Req */
 
    delete[] buffer;                                          /* Delete buffer */
@@ -670,7 +670,7 @@ APIError_t ClientApi::DC3_ramTest(
             "Waiting for Done received client Error: 0x%08x", clientStatus);
       return clientStatus;
    } else {
-      *status = (CBErrorCode)payloadMsgUnion.ramTestPayload._errorCode;
+      *status = (DC3Error_t)payloadMsgUnion.ramTestPayload._errorCode;
       if ( ERR_NONE != *status ) {
          *test = payloadMsgUnion.ramTestPayload._test;
          *addr = payloadMsgUnion.ramTestPayload._addr;
@@ -697,7 +697,7 @@ APIError_t ClientApi::setNewConnection(
       return( API_ERR_UDP_EXCEPTION_CAUGHT );
    }
 
-   m_msgRoute = _CB_EthCli;
+   m_msgRoute = _DC3_EthCli;
    return( API_ERR_NONE );
 }
 
@@ -719,14 +719,14 @@ APIError_t ClientApi::setNewConnection(
       return( API_ERR_SER_EXCEPTION_CAUGHT );
    }
 
-   m_msgRoute = _CB_Serial;
+   m_msgRoute = _DC3_Serial;
    return( API_ERR_NONE );
 }
 
 /******************************************************************************/
 bool ClientApi::isConnected( void )
 {
-   if (m_msgRoute != _CB_NoRoute ) {
+   if (m_msgRoute != _DC3_NoRoute ) {
       return true;
    }
 
@@ -742,8 +742,8 @@ void ClientApi::setLogging( LogStub *log )
 
 /******************************************************************************/
 APIError_t ClientApi::pollForResp(
-      CBBasicMsg *basicMsg,
-      CBPayloadMsgUnion_t *payloadMsgUnion
+      DC3BasicMsg *basicMsg,
+      DC3PayloadMsgUnion_t *payloadMsgUnion
 )
 {
 
@@ -758,7 +758,7 @@ APIError_t ClientApi::pollForResp(
    unsigned int offset = 0;
    memset(&msg, 0, sizeof(msg));
    if( queue.pop( msg ) ) {
-      offset = CBBasicMsg_read_delimited_from(
+      offset = DC3BasicMsg_read_delimited_from(
             msg.dataBuf,
             basicMsg,
             0
@@ -766,61 +766,61 @@ APIError_t ClientApi::pollForResp(
 
       /* If this is an Ack msg, don't bother checking for a payload.  There
        * shouldn't be one.*/
-      if ( _CB_Ack == basicMsg->_msgType ) {
+      if ( _DC3_Ack == basicMsg->_msgType ) {
          return API_ERR_NONE;
       }
 
       /* We should never get a request from DC3 */
-      if ( _CB_Req == basicMsg->_msgType ) {
+      if ( _DC3_Req == basicMsg->_msgType ) {
          return API_ERR_MSG_UNEXPECTED_REQ_RECEIVED;
       }
 
       /* Extract the payload (if exists) since this buffer is going away the moment we get
        * into a state.  We'll figure out later if it's valid, right before we send an Ack */
       switch( basicMsg->_msgPayload ) {
-         case _CBNoMsg:
+         case _DC3NoMsg:
             status = API_ERR_MSG_MISSING_EXPECTED_PAYLOAD;
             break;
-         case _CBStatusPayloadMsg:
+         case _DC3StatusPayloadMsg:
             //                  DBG_printf( m_pLog, "Status payload detected");
             status = API_ERR_NONE;
-            CBStatusPayloadMsg_read_delimited_from(
+            DC3StatusPayloadMsg_read_delimited_from(
                   (void*)msg.dataBuf,
                   &(payloadMsgUnion->statusPayload),
                   offset
             );
             break;
-         case _CBVersionPayloadMsg:
+         case _DC3VersionPayloadMsg:
             status = API_ERR_NONE;
             DBG_printf( m_pLog, "Version payload detected");
-            CBVersionPayloadMsg_read_delimited_from(
+            DC3VersionPayloadMsg_read_delimited_from(
                   (void*)msg.dataBuf,
                   &(payloadMsgUnion->versionPayload),
                   offset
             );
             break;
-         case _CBBootModePayloadMsg:
+         case _DC3BootModePayloadMsg:
             status = API_ERR_NONE;
             DBG_printf( m_pLog, "BootMode payload detected");
-            CBBootModePayloadMsg_read_delimited_from(
+            DC3BootModePayloadMsg_read_delimited_from(
                   (void*)msg.dataBuf,
                   &(payloadMsgUnion->bootmodePayload),
                   offset
             );
             break;
-         case _CBI2CDataPayloadMsg:
+         case _DC3I2CDataPayloadMsg:
             status = API_ERR_NONE;
             DBG_printf( m_pLog, "I2CData payload detected");
-            CBI2CDataPayloadMsg_read_delimited_from(
+            DC3I2CDataPayloadMsg_read_delimited_from(
                   (void*)msg.dataBuf,
                   &(payloadMsgUnion->i2cDataPayload),
                   offset
             );
             break;
-         case _CBRamTestPayloadMsg:
+         case _DC3RamTestPayloadMsg:
             status = API_ERR_NONE;
             DBG_printf( m_pLog, "RamTest payload detected");
-            CBRamTestPayloadMsg_read_delimited_from(
+            DC3RamTestPayloadMsg_read_delimited_from(
                   (void*)msg.dataBuf,
                   &(payloadMsgUnion->ramTestPayload),
                   offset
@@ -841,8 +841,8 @@ APIError_t ClientApi::pollForResp(
 
 /******************************************************************************/
 APIError_t ClientApi::waitForResp(
-      CBBasicMsg *basicMsg,
-      CBPayloadMsgUnion_t *payloadMsgUnion,
+      DC3BasicMsg *basicMsg,
+      DC3PayloadMsgUnion_t *payloadMsgUnion,
       uint16_t timeoutSecs
 )
 {
@@ -862,19 +862,19 @@ APIError_t ClientApi::waitForResp(
 
 /******************************************************************************/
 APIError_t ClientApi::setReqCallBack(
-      CB_ReqMsgHandler_t pCallbackFunction
+      DC3_ReqMsgHandler_t pCallbackFunction
 )
 {
    APIError_t err = API_ERR_NONE;
 
-   this->m_pReqHandlerCBFunction = pCallbackFunction;
+   this->m_pReqHandlerDC3Function = pCallbackFunction;
 
-   if ( NULL == this->m_pReqHandlerCBFunction ) {
+   if ( NULL == this->m_pReqHandlerDC3Function ) {
       err = API_ERR_INVALID_CALLBACK;
       ERR_printf(m_pLog, "Unable to set Req callback, err: 0x%08x",err);
    } else {
       DBG_printf(m_pLog, "Req callback set to addr: 0x%08x",
-            this->m_pReqHandlerCBFunction);
+            this->m_pReqHandlerDC3Function);
       m_bReqLogEnable = true;
    }
 
@@ -883,18 +883,18 @@ APIError_t ClientApi::setReqCallBack(
 
 /******************************************************************************/
 APIError_t ClientApi::setAckCallBack(
-      CB_AckMsgHandler_t pCallbackFunction
+      DC3_AckMsgHandler_t pCallbackFunction
 )
 {
    APIError_t err = API_ERR_NONE;
-   this->m_pAckHandlerCBFunction = pCallbackFunction;
+   this->m_pAckHandlerDC3Function = pCallbackFunction;
 
-   if ( NULL == this->m_pAckHandlerCBFunction ) {
+   if ( NULL == this->m_pAckHandlerDC3Function ) {
       err = API_ERR_INVALID_CALLBACK;
       ERR_printf(m_pLog, "Unable to set Ack callback, err: 0x%08x",err);
    } else {
       DBG_printf(m_pLog, "Ack callback set to addr: 0x%08x",
-            this->m_pAckHandlerCBFunction);
+            this->m_pAckHandlerDC3Function);
       m_bAckLogEnable= true;
    }
    return( err );
@@ -902,19 +902,19 @@ APIError_t ClientApi::setAckCallBack(
 
 /******************************************************************************/
 APIError_t ClientApi::setDoneCallBack(
-      CB_DoneMsgHandler_t pCallbackFunction
+      DC3_DoneMsgHandler_t pCallbackFunction
 )
 {
    APIError_t err = API_ERR_NONE;
 
-   this->m_pDoneHandlerCBFunction = pCallbackFunction;
+   this->m_pDoneHandlerDC3Function = pCallbackFunction;
 
-   if ( NULL == this->m_pDoneHandlerCBFunction ) {
+   if ( NULL == this->m_pDoneHandlerDC3Function ) {
       err = API_ERR_INVALID_CALLBACK;
       ERR_printf(m_pLog, "Unable to set Done callback, err: 0x%08x",err);
    } else {
       DBG_printf(m_pLog, "Done callback set to addr: 0x%08x",
-            this->m_pDoneHandlerCBFunction);
+            this->m_pDoneHandlerDC3Function);
       m_bDoneLogEnable = true;
    }
    return( err );
@@ -945,14 +945,14 @@ ClientApi::ClientApi(
       const char *pRemPort,
       const char *pLocPort
 ) :   m_pLog(NULL),
-      m_pReqHandlerCBFunction(NULL),
-      m_pAckHandlerCBFunction(NULL),
-      m_pDoneHandlerCBFunction(NULL),
+      m_pReqHandlerDC3Function(NULL),
+      m_pAckHandlerDC3Function(NULL),
+      m_pDoneHandlerDC3Function(NULL),
       m_bReqLogEnable(false),
       m_bAckLogEnable(false),
       m_bProgLogEnable(false),
       m_bDoneLogEnable(false),
-      m_msgId( 0 ), m_bRequestProg( false ), m_msgRoute( _CB_EthCli )
+      m_msgId( 0 ), m_bRequestProg( false ), m_msgRoute( _DC3_EthCli )
 {
    this->setLogging(log);
    this->setNewConnection(ipAddress, pRemPort, pLocPort);
@@ -966,14 +966,14 @@ ClientApi::ClientApi(
          int baud_rate,
          bool bDFUSEComm
 ) :   m_pLog(NULL),
-      m_pReqHandlerCBFunction(NULL),
-      m_pAckHandlerCBFunction(NULL),
-      m_pDoneHandlerCBFunction(NULL),
+      m_pReqHandlerDC3Function(NULL),
+      m_pAckHandlerDC3Function(NULL),
+      m_pDoneHandlerDC3Function(NULL),
       m_bReqLogEnable(false),
       m_bAckLogEnable(false),
       m_bProgLogEnable(false),
       m_bDoneLogEnable(false),
-      m_msgId( 0 ), m_bRequestProg( false ), m_msgRoute( _CB_Serial )
+      m_msgId( 0 ), m_bRequestProg( false ), m_msgRoute( _DC3_Serial )
 {
    this->setLogging(log);
    try {
@@ -988,14 +988,14 @@ ClientApi::ClientApi(
 /******************************************************************************/
 ClientApi::ClientApi( LogStub *log ) :
       m_pLog(NULL),
-      m_pReqHandlerCBFunction(NULL),
-      m_pAckHandlerCBFunction(NULL),
-      m_pDoneHandlerCBFunction(NULL),
+      m_pReqHandlerDC3Function(NULL),
+      m_pAckHandlerDC3Function(NULL),
+      m_pDoneHandlerDC3Function(NULL),
       m_bReqLogEnable(false),
       m_bAckLogEnable(false),
       m_bProgLogEnable(false),
       m_bDoneLogEnable(false),
-      m_msgId( 0 ), m_bRequestProg( false ), m_msgRoute( _CB_NoRoute )
+      m_msgId( 0 ), m_bRequestProg( false ), m_msgRoute( _DC3_NoRoute )
 {
 
    this->setLogging(log);                                      /* Set logging */
