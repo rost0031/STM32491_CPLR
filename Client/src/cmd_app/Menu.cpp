@@ -302,19 +302,89 @@ APIError_t MENU_parseAndExecAction(
                ERR_out << "Caught exception parsing data array: " << e.what();
             }
 
-            bytes = dataLen; // update the bytes argument with how many were read
+            bytes = dataLen;        // update the bytes with how many were read
 
-            status = CMD_runWriteI2C( client, &statusDC3, buffer, bytes, start, dev, acc );
+            status = CMD_runWriteI2C( client, &statusDC3, buffer,
+                  bytes, start, dev, acc );
          }
 
          delete[] buffer;
 
          break;
       }
-      case MENU_I2C_READ_TEST_CUS:
+      case MENU_I2C_READ_TEST_CUS:                 // intentionally fall through
+      case MENU_I2C_WRITE_TEST_CUS:{;         // local scope and ; for label fix
+         int bytes = 0, start = 0;
+         size_t nMaxBufferSize = 0;
+
+         CBI2CDevices dev = _CB_EEPROM;
+         CBAccessType acc = _CB_ACCESS_QPC;       // set to a default arg of QPC
+
+
+         // TODO: the current magic numbers should be looked up from a common
+         // header file eventually when we refactor the lib to include info
+         // about device sizes
+         if( !ARG_userInputNum( &start, 0, 255, "Offset to start access from...") ) {
+            stringstream ss;
+            ss << "*** Not performing operation '" << enumToString(menuAction)
+                  << "'. ***";
+            CON_print(ss.str());
+            break;
+         }
+
+         // Don't allocate array here since invalid inputs might cause it to not
+         // be used.
+         uint8_t *buffer;
+
+         if ( MENU_I2C_READ_TEST_CUS == menuAction ) {
+
+            // Don't allow to read more than there are in the device
+            if( !ARG_userInputNum( &bytes, 1, 256 - start, "How many bytes to access...") ) {
+               stringstream ss;
+               ss << "*** Not performing operation '" << enumToString(menuAction)
+                        << "'. ***";
+               CON_print(ss.str());
+               break;
+            }
+
+            nMaxBufferSize = 1000;
+            buffer = new uint8_t[nMaxBufferSize];
+
+//            DBG_out << "bytes: " << bytes << "start " << start;
+            uint16_t bytesRead = 0;
+            status = CMD_runReadI2C( client, &statusDC3, &bytesRead, buffer,
+                  nMaxBufferSize, bytes, start, dev, acc );
+
+//            DBG_out << "bytesRead: " << bytesRead;
+            delete[] buffer;
+
+         } else {
+
+            nMaxBufferSize = 1000;
+            buffer = new uint8_t[nMaxBufferSize];
+            size_t bytesInArray = 0;
+
+            if( !ARG_userInputArr( buffer, &bytesInArray, nMaxBufferSize, "Array of data to write..." ) ) {
+               stringstream ss;
+               ss << "*** Not performing operation '" << enumToString(menuAction)
+                        << "'. ***";
+               CON_print(ss.str());
+               delete[] buffer;        // Don't forget to delete buffer on error
+               break;
+            }
+
+            bytes = bytesInArray;
+
+            status = CMD_runWriteI2C( client, &statusDC3, buffer,
+                  bytes, start, dev, acc );
+
+            delete[] buffer;         // Don't forget to delete buffer on success
+         }
+
+
+
          break;
-      case MENU_I2C_WRITE_TEST_CUS:
-         break;
+      }
       case MENU_NO_ACTION:
          WRN_out << enumToString(menuAction) <<  " associated with this menu selection";
          break;
@@ -322,7 +392,6 @@ APIError_t MENU_parseAndExecAction(
          ERR_out << "Unknown action (" << menuAction << ")";
          break;
    }
-
 
    return status;
 }

@@ -157,6 +157,27 @@ void ARG_parseHexStr(
       const size_t nDataArrMaxSize,
       string& valueStr
 );
+
+/**
+ * @brief   A template function that interactively requests user input an array
+ * of numbers.
+ *
+ * @throw <std::exception> if user passes in invalid values or format
+ *
+ * @param [out] *pDataArr: uint8_t pointer to array where to store the output
+ * @param [out] *pDataArrLen: size_t pointer to how long the resulting array is.
+ * @param [in] nDataArrMaxSize: size_t of max storage in pDataArr.
+ * @param [in] msg: const string ref of the message to prompt the user with
+ *
+ * @return  None
+ */
+bool ARG_userInputArr(
+      uint8_t* pDataArr,
+      size_t* pDataArrLen,
+      const size_t nDataArrMaxSize,
+      const string& msg
+);
+
 /**
  * @brief   Storage for all the maps of vectors of allowed strings for enums.
  *
@@ -411,6 +432,59 @@ template<typename T> void ARG_parseNumStr(
       throw;
    }
 }
+
+/**
+ * @brief   A template function that interactively requests user input a number
+ *
+ * @throw <std::exception> if user passes in invalid value
+ *
+ * @param [out] *value: T pointer to where to output the parsed value.
+ * @param [in] min: T that specifies the minimum value allowed
+ * @param [in] max: T that specifies the maximum value allowed
+ * @param [in] msg: const string ref of the message to prompt the user with
+ *
+ * @return  None
+ */
+template<typename T> bool ARG_userInputNum(
+      T* value,
+      T min,
+      T max,
+      const string& msg
+)
+{
+   // Allows the generated template functions to use logging facilities
+   MODULE_NAME( MODULE_EXT );
+
+   stringstream ss;
+   ss << msg << endl; // print the explanation msg and ask for the actual value
+   ss << "Input a number between " << min << " and " << max << " or type 'cancel' to abort:";
+   CON_print( ss.str() );
+
+   string input;
+   cin >> input;                             // Read input from user as a string
+
+   if ( boost::iequals(input, "cancel") ) {
+      return false;
+   }
+
+   try {
+      ARG_parseNumber(value, input);
+   } catch ( exception &e ) {
+      WRN_out << "Caught exception trying to parse number.  Aborting...";
+      return false;
+   }
+
+   // Don't allow negatives in our numeric input
+   if ( *value < min || *value > max ) {
+      WRN_out << "Value " << *value << " must be no less than " << min
+            << " and no greater than " << max << ". Aborting...";
+      return false;
+   }
+
+   // If we got here, everything parsed ok.
+   return true;
+}
+
 /* Exported classes ----------------------------------------------------------*/
 
 

@@ -246,6 +246,39 @@ void ARG_parseHexStr(
    }
    *pDataArrLen = index;
 }
+
+/******************************************************************************/
+bool ARG_userInputArr(
+      uint8_t* pDataArr,
+      size_t* pDataArrLen,
+      const size_t nDataArrMaxSize,
+      const string& msg
+)
+{
+   stringstream ss;
+   ss << msg << endl; // print the explanation msg and ask for the actual value
+   ss << "Input a comma separated array of hex or decimal numbers. Prepend hex "
+         << endl << "numbers with '0x'. Type 'cancel' to abort:";
+   CON_print( ss.str() );
+
+   string input;
+   cin >> input;                             // Read input from user as a string
+
+   if ( boost::iequals(input, "cancel") ) {
+      return false;
+   }
+
+   try {
+      ARG_parseHexStr(pDataArr, pDataArrLen, nDataArrMaxSize, input);
+   } catch ( exception &e ) {
+      WRN_out << "Caught exception trying to parse array.  Aborting...";
+      return false;
+   }
+
+   // If we got here, everything parsed ok.
+   return true;
+}
+
 /* Private class prototypes --------------------------------------------------*/
 /* Private classes -----------------------------------------------------------*/
 

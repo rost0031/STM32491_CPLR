@@ -185,10 +185,15 @@ template<> char const* enumStrings<CBRamTest_t>::data[] =  {
  * on the existence of this ::data[] array.
  * */
 template<> char const* enumStrings<MenuAction_t>::data[] =  {
-         "No menu action",         /**< MENU_NO_ACTION */
-         "Menu Ram Test",          /**< MENU_RAM_TEST */
-         "Menu I2C Read Test",     /**< MENU_I2C_READ_TEST */
-         "Menu I2C Write Test",    /**< MENU_I2C_WRITE_TEST */
+         "No menu action",                         /**< MENU_NO_ACTION */
+         "Menu Ram Test",                          /**< MENU_RAM_TEST */
+         "Menu I2C Read Test (default params)",    /**< MENU_I2C_READ_TEST_DEF */
+         "Menu I2C Read Test (custom params)",     /**< MENU_I2C_READ_TEST_CUS */
+         "Menu I2C Write Test (default params)",   /**< MENU_I2C_WRITE_TEST_DEF */
+         "Menu I2C Write Test (custom params)",    /**< MENU_I2C_WRITE_TEST_CUS */
+         "Menu Get DC3 mode",                      /**< MENU_GET_MODE */
+         "Menu Set DC3 mode to Application/SCIPS", /**< MENU_SET_APPL */
+         "Menu Set DC3 mode to Bootloader",        /**< MENU_SET_BOOT */
 };
 
 /* Private function prototypes -----------------------------------------------*/
