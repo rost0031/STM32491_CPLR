@@ -65,7 +65,7 @@ private:
 
    unsigned int m_msgId;   /* Msg ID incrementing counter for unique msg ids. */
    bool m_bRequestProg;     /* Flag to see if progress messages are requested */
-   DC3MsgRoute m_msgRoute; /* This is set based on the connection used (UDP vs Serial) */
+   DC3MsgRoute_t m_msgRoute; /* This is set based on the connection used (UDP vs Serial) */
 
    boost::thread m_workerThread;          /**< Thread to start MainMgr and QF */
 
@@ -130,7 +130,7 @@ public:
     * @note: unless this variable is set to ERR_NONE at the completion, the
     * results of other returned data should not be trusted.
     *
-    * @param [out] *mode: DC3BootMode pointer to the returned boot mode from the
+    * @param [out] *mode: DC3BootMode_t pointer to the returned boot mode from the
     * DC3 board.
     *    @arg  _DC3_Bootloader: the DC3 board is currently in bootloader mode.
     *    @arg  _DC3_Application: the DC3 board is currently in application mode.
@@ -138,7 +138,7 @@ public:
     *    @arg  API_ERR_NONE: success
     *    other error codes if failure.
     */
-   APIError_t DC3_getMode( DC3Error_t *status, DC3BootMode *mode );
+   APIError_t DC3_getMode( DC3Error_t *status, DC3BootMode_t *mode );
 
    /**
     * @brief   Blocking cmd to set the current boot mode of DC3.
@@ -149,14 +149,14 @@ public:
     * @note: unless this variable is set to ERR_NONE at the completion, the
     * results of other returned data should not be trusted.
     *
-    * @param [in] mode: DC3BootMode to the mode to set the DC3 board to.
+    * @param [in] mode: DC3BootMode_t to the mode to set the DC3 board to.
     *    @arg  _DC3_Bootloader: the DC3 board is currently in bootloader mode.
     *    @arg  _DC3_Application: the DC3 board is currently in application mode.
     * @return: APIError_t status of the client executing the command.
     *    @arg  API_ERR_NONE: success
     *    other error codes if failure.
     */
-   APIError_t DC3_setMode(DC3Error_t *status, DC3BootMode mode);
+   APIError_t DC3_setMode(DC3Error_t *status, DC3BootMode_t mode);
 
    /**
     * @brief   Blocking cmd to get the current boot mode of DC3.
@@ -167,7 +167,7 @@ public:
     * @note: unless this variable is set to ERR_NONE at the completion, the
     * results of other returned data should not be trusted.
     *
-    * @param [in] type: DC3BootMode that specifies where the FW image will be
+    * @param [in] type: DC3BootMode_t that specifies where the FW image will be
     * flashed to
     *    @arg  _DC3_Application: flash the FW image to the application space.
     * @param [in] *filename: const char pointer to a path and file where the
@@ -180,7 +180,7 @@ public:
     */
    APIError_t DC3_flashFW(
          DC3Error_t *status,
-         DC3BootMode type,
+         DC3BootMode_t type,
          const char *filename
    );
 
@@ -197,11 +197,11 @@ public:
     * @param [in] bufferSize: size_t size of *pBuffer storage area.
     * @param [in] bytes: number of bytes to read
     * @param [in] start: where to start reading from
-    * @param [in] dev: DC3I2CDevices type that specifies the I2C device to read
+    * @param [in] dev: DC3I2CDevice_t type that specifies the I2C device to read
     *    @arg _DC3_EEPROM: read from the EEPROM on I2C bus 1.
     *    @arg _DC3_SNROM: read from the RO SerialNumber ROM on I2C bus 1.
     *    @arg _DC3_EUIROM: read from the RO Unique number ROM on I2C bus 1.
-    * @param [in] acc: DC3AccessType type that specifies the access to use to get
+    * @param [in] acc: DC3AccessType_t  type that specifies the access to use to get
     * at the I2C bus.
     *    @arg _DC3_ACCESS_BARE: bare metal access. Blocking and slow. For testing only.
     *    @arg _DC3_ACCESS_QPC: use event driven QPC access.
@@ -219,8 +219,8 @@ public:
          const int bufferSize,
          const int bytes,
          const int start,
-         const DC3I2CDevices dev,
-         const DC3AccessType acc
+         const DC3I2CDevice_t dev,
+         const DC3AccessType_t  acc
    );
 
    /**
@@ -234,11 +234,11 @@ public:
     * @param [out] *pBuffer: pointer to buffer where data to write is stored.
     * @param [in] bytes: number of bytes to write
     * @param [in] start: where to start writing to (offset)
-    * @param [in] dev: DC3I2CDevices type that specifies the I2C device to read
+    * @param [in] dev: DC3I2CDevice_t type that specifies the I2C device to read
     *    @arg _DC3_EEPROM: read from the EEPROM on I2C bus 1.
     *    @arg _DC3_SNROM: read from the RO SerialNumber ROM on I2C bus 1.
     *    @arg _DC3_EUIROM: read from the RO Unique number ROM on I2C bus 1.
-    * @param [in] acc: DC3AccessType type that specifies the access to use to get
+    * @param [in] acc: DC3AccessType_t  type that specifies the access to use to get
     * at the I2C bus.
     *    @arg _DC3_ACCESS_BARE: bare metal access. Blocking and slow. For testing only.
     *    @arg _DC3_ACCESS_QPC: use event driven QPC access.
@@ -254,8 +254,8 @@ public:
          const uint8_t* const pBuffer,
          const int bytes,
          const int start,
-         const DC3I2CDevices dev,
-         const DC3AccessType acc
+         const DC3I2CDevice_t dev,
+         const DC3AccessType_t  acc
    );
 
    /**

@@ -49,7 +49,7 @@ APIError_t CMD_runRamTest(  ClientApi* client );
  * @param [out] *statusDC3: DC3Error_t status returned from DC3.
  *    @arg  ERR_NONE: success.
  *    other error codes if failure.
- * @param [out] *mode: DC3BootMode pointer where to store the retrieved mode
+ * @param [out] *mode: DC3BootMode_t pointer where to store the retrieved mode
  * @return  ApiError_t:
  *    @arg API_ERR_NONE: if no error occurred
  *    @arg API_ERR_XXXX: other error codes indicating the error that occurred.
@@ -57,7 +57,7 @@ APIError_t CMD_runRamTest(  ClientApi* client );
 APIError_t CMD_runGetMode(
       ClientApi* client,
       DC3Error_t* statusDC3,
-      DC3BootMode* mode
+      DC3BootMode_t* mode
 );
 
 /**
@@ -68,7 +68,7 @@ APIError_t CMD_runGetMode(
  * @param [out] *statusDC3: DC3Error_t status returned from DC3.
  *    @arg  ERR_NONE: success.
  *    other error codes if failure.
- * @param [in] mode: DC3BootMode to set the DC3 mode to.
+ * @param [in] mode: DC3BootMode_t to set the DC3 mode to.
  * @return  ApiError_t:
  *    @arg API_ERR_NONE: if no error occurred
  *    @arg API_ERR_XXXX: other error codes indicating the error that occurred.
@@ -77,7 +77,7 @@ APIError_t CMD_runSetMode(
       ClientApi* client,
       DC3Error_t*
       statusDC3,
-      DC3BootMode mode
+      DC3BootMode_t mode
 );
 
 /**
@@ -88,7 +88,7 @@ APIError_t CMD_runSetMode(
  * @param [out] *statusDC3: DC3Error_t status returned from DC3.
  *    @arg  ERR_NONE: success.
  *    other error codes if failure.
- * @param [in] type: DC3BootMode type of fw image
+ * @param [in] type: DC3BootMode_t type of fw image
  * @param [in] file: string that contains a verified path to the FW image file.
  * @return  ApiError_t:
  *    @arg API_ERR_NONE: if no error occurred
@@ -97,7 +97,7 @@ APIError_t CMD_runSetMode(
 APIError_t CMD_runFlash(
       ClientApi* client,
       DC3Error_t* statusDC3,
-      DC3BootMode type,
+      DC3BootMode_t type,
       const string& file
 );
 
@@ -116,11 +116,11 @@ APIError_t CMD_runFlash(
  * @param [in] nMaxBufferSize: size_t size of *pBuffer storage area.
  * @param [in] nBytesToRead: number of bytes to read
  * @param [in] nStart: where to start reading from
- * @param [in] dev: DC3I2CDevices type that specifies the I2C device to read
+ * @param [in] dev: DC3I2CDevice_t type that specifies the I2C device to read
  *    @arg _DC3_EEPROM: read from the EEPROM on I2C bus 1.
  *    @arg _DC3_SNROM: read from the RO SerialNumber ROM on I2C bus 1.
  *    @arg _DC3_EUIROM: read from the RO Unique number ROM on I2C bus 1.
- * @param [in] acc: DC3AccessType type that specifies the access to use to get
+ * @param [in] acc: DC3AccessType_t  type that specifies the access to use to get
  * at the I2C bus.
  *    @arg _DC3_ACCESS_BARE: bare metal access. Blocking and slow. For testing only.
  *    @arg _DC3_ACCESS_QPC: use event driven QPC access.
@@ -139,8 +139,8 @@ APIError_t CMD_runReadI2C(
       const size_t nMaxBufferSize,
       const size_t nBytesToRead,
       const size_t nStart,
-      const DC3I2CDevices dev,
-      const DC3AccessType acc
+      const DC3I2CDevice_t dev,
+      const DC3AccessType_t  acc
 );
 
 /**
@@ -157,11 +157,11 @@ APIError_t CMD_runReadI2C(
  * @param [in] *pBuffer: pointer to data to write.
  * @param [in] nBytesToWrite: number of bytes to write
  * @param [in] nStart: where to start reading from
- * @param [in] dev: DC3I2CDevices type that specifies the I2C device to read
+ * @param [in] dev: DC3I2CDevice_t type that specifies the I2C device to read
  *    @arg _DC3_EEPROM: read from the EEPROM on I2C bus 1.
  *    @arg _DC3_SNROM: read from the RO SerialNumber ROM on I2C bus 1.
  *    @arg _DC3_EUIROM: read from the RO Unique number ROM on I2C bus 1.
- * @param [in] acc: DC3AccessType type that specifies the access to use to get
+ * @param [in] acc: DC3AccessType_t  type that specifies the access to use to get
  * at the I2C bus.
  *    @arg _DC3_ACCESS_BARE: bare metal access. Blocking and slow. For testing only.
  *    @arg _DC3_ACCESS_QPC: use event driven QPC access.
@@ -178,8 +178,8 @@ APIError_t CMD_runWriteI2C(
       uint8_t* pBuffer,
       const size_t nBytesToWrite,
       const size_t nStart,
-      const DC3I2CDevices dev,
-      const DC3AccessType acc
+      const DC3I2CDevice_t dev,
+      const DC3AccessType_t  acc
 );
 /* Exported classes ----------------------------------------------------------*/
 

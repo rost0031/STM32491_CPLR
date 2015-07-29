@@ -216,7 +216,7 @@ const DC3Error_t FLASH_getSectorsToErase(
       uint32_t *sectorArrayLoc,
       uint8_t *nSectors,
       const uint8_t sectorArraySize,
-      const DC3BootMode flashImageLoc,
+      const DC3BootMode_t flashImageLoc,
       const uint32_t flashImageSize
 )
 {

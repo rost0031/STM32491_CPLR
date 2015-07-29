@@ -114,7 +114,7 @@ void LOG_msgToStream(
 
 /******************************************************************************/
 void LOG_payloadMsgToStream(
-      DC3MsgName payloadMsgName,
+      DC3MsgName_t payloadMsgName,
       DC3PayloadMsgUnion_t *pPayloadUnion,
       std::stringstream& ss
 )

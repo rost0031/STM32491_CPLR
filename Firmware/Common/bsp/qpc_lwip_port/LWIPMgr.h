@@ -75,7 +75,7 @@ typedef struct {
     QEvt super;
 
     /**< Where the msg came from so it can be routed back to the sender. */
-    DC3MsgRoute msg_src;
+    DC3MsgRoute_t msg_src;
 
     /**< Length of the msg buffer. */
     uint16_t msg_len;

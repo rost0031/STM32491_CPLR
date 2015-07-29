@@ -57,7 +57,7 @@
  * @note 4: don't manually set dst variable.  Instead, it should be set by the
  * requester of the menu (serial port or ethernet port).
  *
- * @param [in] dst: DC3MsgRoute var that determines where the output will go
+ * @param [in] dst: DC3MsgRoute_t var that determines where the output will go
  *    @arg _DC3_Serial: output to serial port.
  *    @arg _DC3_EthSys: output to the ethernet system port.
  *    @arg _DC3_EthLog: output to the ethernet logging port.
@@ -72,7 +72,7 @@
  * @return None
  */
 void MENU_printf(
-      volatile DC3MsgRoute dst,
+      volatile DC3MsgRoute_t dst,
       char *fmt,
       ...
 );
@@ -127,14 +127,14 @@ void MENU_printf(
  *   Enabled in all builds. Just the "User message here" will be printed.  This
  *   is meant to output serial menu items.
  *
- * @param [in] src: DC3MsgRoute var specifying the source of the data.
+ * @param [in] src: DC3MsgRoute_t var specifying the source of the data.
  *    @arg _DC3_NoRoute: no source needed
  *    @arg _DC3_Serial: data is from serial port.
  *    @arg _DC3_EthSys: data is from the ethernet system port.
  *    @arg _DC3_EthLog: data is from the ethernet logging port.
  *    @arg _DC3_EthCli: data is from the ethernet client port.
  *
- * @param [in] dst: DC3MsgRoute var specifying the destination of the data.
+ * @param [in] dst: DC3MsgRoute_t var specifying the destination of the data.
  *    @arg _DC3_NoRoute: no source needed
  *    @arg _DC3_Serial: data is to serial port.
  *    @arg _DC3_EthSys: data is to the ethernet system port.
@@ -155,8 +155,8 @@ void MENU_printf(
  */
 void CON_output(
       DC3DbgLevel_t dbgLvl,
-      volatile DC3MsgRoute src,
-      volatile DC3MsgRoute dst,
+      volatile DC3MsgRoute_t src,
+      volatile DC3MsgRoute_t dst,
       const char *pFuncName,
       uint16_t wLineNumber,
       char *fmt,

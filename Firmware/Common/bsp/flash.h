@@ -96,7 +96,7 @@
  * found.
  * @param [in] sectorArraySize: const uint8_t size of sectorArrayLoc buffer.
  * This is for sanity checking.
- * @param [in] flashImageLoc: const DC3BootMode that specifies which flash area
+ * @param [in] flashImageLoc: const DC3BootMode_t that specifies which flash area
  * to find sectors to erase for.
  * @param [in] flashImageSize: const uint32_t that specifies the size of the FW
  * image.
@@ -108,7 +108,7 @@ const DC3Error_t FLASH_getSectorsToErase(
       uint32_t *sectorArrayLoc,
       uint8_t *nSectors,
       const uint8_t sectorArraySize,
-      const DC3BootMode flashImageLoc,
+      const DC3BootMode_t flashImageLoc,
       const uint32_t flashImageSize
 );
 

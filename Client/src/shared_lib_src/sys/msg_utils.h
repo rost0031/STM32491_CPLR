@@ -24,8 +24,8 @@
  */
 typedef struct MsgEvtTag {
 /* protected: */
-    DC3MsgRoute src;                                   /**< Source of the data */
-    DC3MsgRoute dst;                              /**< Destination of the data */
+    DC3MsgRoute_t src;                                   /**< Source of the data */
+    DC3MsgRoute_t dst;                              /**< Destination of the data */
     uint16_t   dataLen;                    /**< Length of the data in dataBuf */
     uint8_t    dataBuf[DC3_MAX_MSG_LEN];       /**< Buffer that holds the data */
 } MsgData_t;

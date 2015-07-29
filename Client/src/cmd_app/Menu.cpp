@@ -255,7 +255,7 @@ APIError_t MENU_parseAndExecAction(
          status = CMD_runRamTest( client );
          break;
       case MENU_GET_MODE:
-         DC3BootMode mode;
+         DC3BootMode_t mode;
          status = CMD_runGetMode( client, &statusDC3, &mode );
          break;
       case MENU_SET_APPL:
@@ -271,8 +271,8 @@ APIError_t MENU_parseAndExecAction(
          int bytes = 16, start = 0;
          size_t nMaxBufferSize = 20;
 
-         DC3I2CDevices dev = _DC3_EEPROM;
-         DC3AccessType acc = _DC3_ACCESS_QPC;       // set to a default arg of QPC
+         DC3I2CDevice_t dev = _DC3_EEPROM;
+         DC3AccessType_t acc = _DC3_ACCESS_QPC;   // set to a default arg of QPC
 
          uint8_t *buffer = new uint8_t[nMaxBufferSize];
 
@@ -318,8 +318,8 @@ APIError_t MENU_parseAndExecAction(
          int bytes = 0, start = 0;
          size_t nMaxBufferSize = 0;
 
-         DC3I2CDevices dev = _DC3_EEPROM;
-         DC3AccessType acc = _DC3_ACCESS_QPC;       // set to a default arg of QPC
+         DC3I2CDevice_t dev = _DC3_EEPROM;
+         DC3AccessType_t acc = _DC3_ACCESS_QPC;   // set to a default arg of QPC
 
 
          // TODO: the current magic numbers should be looked up from a common

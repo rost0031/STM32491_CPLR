@@ -78,7 +78,7 @@ typedef struct {
     uint32_t imageSize;
 
     /**< FW image type */
-    DC3BootMode imageType;
+    DC3BootMode_t imageType;
 
     /**< FW image major version number */
     uint8_t imageMaj;

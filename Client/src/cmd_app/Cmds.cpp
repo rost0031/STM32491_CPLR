@@ -75,7 +75,7 @@ APIError_t CMD_runRamTest( ClientApi* client )
 APIError_t CMD_runGetMode(
       ClientApi* client,
       DC3Error_t* statusDC3,
-      DC3BootMode* mode
+      DC3BootMode_t* mode
 )
 {
    APIError_t statusAPI = API_ERR_NONE;
@@ -111,7 +111,7 @@ APIError_t CMD_runGetMode(
 APIError_t CMD_runSetMode(
       ClientApi* client,
       DC3Error_t* statusDC3,
-      DC3BootMode mode
+      DC3BootMode_t mode
 )
 {
    APIError_t statusAPI = API_ERR_NONE;
@@ -146,7 +146,7 @@ APIError_t CMD_runSetMode(
 APIError_t CMD_runFlash(
       ClientApi* client,
       DC3Error_t* statusDC3,
-      DC3BootMode type,
+      DC3BootMode_t type,
       const string& file
 )
 {
@@ -192,8 +192,8 @@ APIError_t CMD_runReadI2C(
       const size_t nMaxBufferSize,
       const size_t nBytesToRead,
       const size_t nStart,
-      const DC3I2CDevices dev,
-      const DC3AccessType acc
+      const DC3I2CDevice_t dev,
+      const DC3AccessType_t  acc
 )
 {
    APIError_t statusAPI = API_ERR_NONE;
@@ -234,8 +234,8 @@ APIError_t CMD_runWriteI2C(
       uint8_t* pBuffer,
       const size_t nBytesToWrite,
       const size_t nStart,
-      const DC3I2CDevices dev,
-      const DC3AccessType acc
+      const DC3I2CDevice_t dev,
+      const DC3AccessType_t  acc
 )
 {
    APIError_t statusAPI = API_ERR_NONE;

@@ -58,7 +58,7 @@ boost::lockfree::queue<MsgData_t> queue(128);
 /* Private classes -----------------------------------------------------------*/
 
 /******************************************************************************/
-APIError_t ClientApi::DC3_getMode(DC3Error_t *status, DC3BootMode *mode)
+APIError_t ClientApi::DC3_getMode(DC3Error_t *status, DC3BootMode_t *mode)
 {
    this->enableMsgCallbacks();
 
@@ -134,7 +134,7 @@ APIError_t ClientApi::DC3_getMode(DC3Error_t *status, DC3BootMode *mode)
 }
 
 /******************************************************************************/
-APIError_t ClientApi::DC3_setMode(DC3Error_t *status, DC3BootMode mode)
+APIError_t ClientApi::DC3_setMode(DC3Error_t *status, DC3BootMode_t mode)
 {
    this->enableMsgCallbacks();
 
@@ -199,7 +199,7 @@ APIError_t ClientApi::DC3_setMode(DC3Error_t *status, DC3BootMode mode)
 /******************************************************************************/
 APIError_t ClientApi::DC3_flashFW(
       DC3Error_t *status,
-      DC3BootMode type,
+      DC3BootMode_t type,
       const char* filename
 )
 {
@@ -214,7 +214,7 @@ APIError_t ClientApi::DC3_flashFW(
 
    /* First, check if DC3 is in bootloader mode and if not, send a SetMode cmd
     * so that the user doesn't have to worry about doing it */
-   DC3BootMode currentBootMode = _DC3_NoBootMode;
+   DC3BootMode_t currentBootMode = _DC3_NoBootMode;
    int curRetry   = 0;
    int maxRetries = 3;
    while ( currentBootMode != _DC3_Bootloader && curRetry++ <= maxRetries ) {
@@ -457,8 +457,8 @@ APIError_t ClientApi::DC3_readI2C(
       const int bufferSize,
       const int bytes,
       const int start,
-      const DC3I2CDevices dev,
-      const DC3AccessType acc
+      const DC3I2CDevice_t dev,
+      const DC3AccessType_t  acc
 )
 {
    this->enableMsgCallbacks();
@@ -541,8 +541,8 @@ APIError_t ClientApi::DC3_writeI2C(
       const uint8_t* const pBuffer,
       const int bytes,
       const int start,
-      const DC3I2CDevices dev,
-      const DC3AccessType acc
+      const DC3I2CDevice_t dev,
+      const DC3AccessType_t  acc
 )
 {
    this->enableMsgCallbacks();

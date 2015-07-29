@@ -274,7 +274,7 @@ int main(int argc, char *argv[])
          // Store status of DC3 cmd and bootmode even though we don't need it
          // since it's all parsed and handled in CMD_ functions to reduce clutter.
          statusDC3 = ERR_NONE;
-         DC3BootMode mode = _DC3_NoBootMode;
+         DC3BootMode_t mode = _DC3_NoBootMode;
 
          // No need to extract the value from the arg=value pair for this cmd.
 
@@ -291,7 +291,7 @@ int main(int argc, char *argv[])
          // Store status of DC3 cmd and bootmode even though we don't need it
          // since it's all parsed and handled in CMD_ functions to reduce clutter.
          statusDC3 = ERR_NONE;
-         DC3BootMode mode = _DC3_NoBootMode;
+         DC3BootMode_t mode = _DC3_NoBootMode;
 
          try {                      // Extract the value from the arg=value pair
             ARG_parseEnumStr( &mode, "mode", m_parsed_cmd, appName,
@@ -314,7 +314,7 @@ int main(int argc, char *argv[])
          // Store status of DC3 cmd and bootmode even though we don't need it
          // since it's all parsed and handled in CMD_ functions to reduce clutter.
          statusDC3 = ERR_NONE;
-         DC3BootMode type = _DC3_NoBootMode;
+         DC3BootMode_t type = _DC3_NoBootMode;
          string filename = "";
 
          try {                      // Extract the value from the arg=value pair
@@ -345,8 +345,8 @@ int main(int argc, char *argv[])
 
          // Extract the value from the arg=value pair
          int bytes = -1, start = -1;
-         DC3I2CDevices dev = _DC3_MaxI2CDev;
-         DC3AccessType acc = _DC3_ACCESS_QPC;       // set to a default arg of QPC
+         DC3I2CDevice_t dev = _DC3_MaxI2CDev;
+         DC3AccessType_t  acc = _DC3_ACCESS_QPC;       // set to a default arg of QPC
          string value = "";
 
          try {                      // Extract the value from the arg=value pair
@@ -395,8 +395,8 @@ int main(int argc, char *argv[])
 
          // Extract the value from the arg=value pair
          int bytes = -1, start = -1;
-         DC3I2CDevices dev = _DC3_MaxI2CDev;
-         DC3AccessType acc = _DC3_ACCESS_QPC;       // set to a default arg of QPC
+         DC3I2CDevice_t dev = _DC3_MaxI2CDev;
+         DC3AccessType_t  acc = _DC3_ACCESS_QPC;       // set to a default arg of QPC
 
          string value = "";
 

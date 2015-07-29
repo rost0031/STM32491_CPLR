@@ -57,7 +57,7 @@ typedef struct {
     QActive super;
 
     /**< Keeps track of where the message came from */
-    DC3MsgRoute msgRoute;
+    DC3MsgRoute_t msgRoute;
 
     /**< Keep track of whether Prog responses were requested by the sender of the msg */
     bool reqProg;

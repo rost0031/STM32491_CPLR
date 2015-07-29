@@ -76,7 +76,7 @@ typedef struct {
     uint16_t basicMsgOffset;
 
     /**< Keeps track of where the message came from */
-    DC3MsgRoute msgRoute;
+    DC3MsgRoute_t msgRoute;
 
     /**< Keep track of the ID of the msg */
     uint32_t msgId;
@@ -86,12 +86,12 @@ typedef struct {
 
     /**< Keep track of the CLI_RECEIVED_SIG event source in order to send it back the
      * same comm channel */
-    DC3MsgRoute cliEvtSrc;
+    DC3MsgRoute_t cliEvtSrc;
 
     /**< Keep track of the CLI_RECEIVED_SIG event destination.
      * TODO: This isn't currently used but hold on to it just in case. Figure out if
      * this is even needed.*/
-    DC3MsgRoute cliEvtDst;
+    DC3MsgRoute_t cliEvtDst;
 
     /**< Keep track of errors that may occur in the AO */
     DC3Error_t errorCode;
@@ -100,7 +100,7 @@ typedef struct {
      * necessary because basicMsg struct gets modified to send an Ack and this variable
      * will be used to extract the rest of the payload from the data buffer where it's
      * still being stored. */
-    DC3MsgName msgPayloadName;
+    DC3MsgName_t msgPayloadName;
 
     /**< Union of all the possible payload msgs.  This gets populated by the recieved msg
      * processing and later reused to send Prog and Done msgs. */
@@ -260,6 +260,9 @@ static QState CommMgr_initial(CommMgr * const me, QEvt const * const e) {
     QS_FUN_DICTIONARY(&CommMgr_Active);
 
     QActive_subscribe((QActive *)me, SER_RECEIVED_SIG);
+    QActive_subscribe((QActive *)me, CLI_RECEIVED_SIG);
+
+
     return Q_TRAN(&CommMgr_Idle);
 }
 

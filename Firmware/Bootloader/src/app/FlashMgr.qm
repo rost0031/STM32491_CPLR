@@ -28,7 +28,7 @@
    <attribute name="imageSize" type="uint32_t" visibility="0x01" properties="0x00">
     <documentation>/**&lt; FW image size */</documentation>
    </attribute>
-   <attribute name="imageType" type="DC3BootMode" visibility="0x01" properties="0x00">
+   <attribute name="imageType" type="DC3BootMode_t" visibility="0x01" properties="0x00">
     <documentation>/**&lt; FW image type */</documentation>
    </attribute>
    <attribute name="imageMaj" type="uint8_t" visibility="0x01" properties="0x00">
@@ -74,7 +74,7 @@
    <documentation>/**
  * \brief FlashMgr &quot;class&quot;
  */</documentation>
-   <attribute name="msgRoute" type="DC3MsgRoute" visibility="0x01" properties="0x00">
+   <attribute name="msgRoute" type="DC3MsgRoute_t" visibility="0x01" properties="0x00">
     <documentation>/**&lt; Keeps track of where the message came from */</documentation>
    </attribute>
    <attribute name="reqProg" type="bool" visibility="0x01" properties="0x00">

@@ -40,7 +40,7 @@ MODULE_NAME( MODULE_EXT );
 /**
  * @brief All allowed strings for specifying DC3BootMode enums
  */
-template<> std::map<DC3BootMode, std::vector<std::string>> allowedStrings<DC3BootMode>::m_allowedStrings = {
+template<> std::map<DC3BootMode_t, std::vector<std::string>> allowedStrings<DC3BootMode_t>::m_allowedStrings = {
       { _DC3_NoBootMode   , {"None","invalid"} },
       { _DC3_Bootloader   , {"b", "bo", "bt", "boo", "boot", "bootloader", "bootldr", "btldr" } },
       { _DC3_Application  , {"a", "ap", "app", "appl", "application", "scips", "scipsiii", "scips3" } }
@@ -49,7 +49,7 @@ template<> std::map<DC3BootMode, std::vector<std::string>> allowedStrings<DC3Boo
 /**
  * @brief All allowed strings for specifying DC3MsgRoute enums
  */
-template<> std::map<DC3MsgRoute, std::vector<std::string>> allowedStrings<DC3MsgRoute>::m_allowedStrings = {
+template<> std::map<DC3MsgRoute_t, std::vector<std::string>> allowedStrings<DC3MsgRoute_t>::m_allowedStrings = {
       { _DC3_NoRoute   , {"None","no route"} },
       { _DC3_Serial   , {"se", "serial", "ser"} },
       { _DC3_EthSys  , {"sy", "sys", "sys_eth", "system_eth", "system_ethernet", "eth_sys", "ethernet_system", "eth_system"} },
@@ -60,7 +60,7 @@ template<> std::map<DC3MsgRoute, std::vector<std::string>> allowedStrings<DC3Msg
 /**
  * @brief All allowed strings for specifying DC3I2CDevices enums
  */
-template<> std::map<DC3I2CDevices, std::vector<std::string>> allowedStrings<DC3I2CDevices>::m_allowedStrings = {
+template<> std::map<DC3I2CDevice_t, std::vector<std::string>> allowedStrings<DC3I2CDevice_t>::m_allowedStrings = {
       { _DC3_EEPROM   , {"e","ee","eep","eeprom","eprom"} },
       { _DC3_SNROM   , {"snrom", "sn", "ser_rom", "srom", "serial_rom", "serial_number_rom", } },
       { _DC3_EUIROM  , {"euirom", "eui", "ui", "uie", "uierom", "eurom", "uirom", } },
@@ -69,7 +69,7 @@ template<> std::map<DC3I2CDevices, std::vector<std::string>> allowedStrings<DC3I
 /**
  * @brief All allowed strings for specifying DC3AccessType enums
  */
-template<> std::map<DC3AccessType, std::vector<std::string>> allowedStrings<DC3AccessType>::m_allowedStrings = {
+template<> std::map<DC3AccessType_t, std::vector<std::string>> allowedStrings<DC3AccessType_t>::m_allowedStrings = {
       { _DC3_ACCESS_BARE, {"b", "bare","metal", "bare_metal", "baremetal"} },
       { _DC3_ACCESS_QPC , {"q", "qp", "qpc", } },
       { _DC3_ACCESS_FRT , {"f", "fr", "frt", "freertos", "frtos", "free"} },

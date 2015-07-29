@@ -40,11 +40,11 @@
 // 
 // Required Fields - all the common fields which always have to be sent:
 // 
-// msgName -  DC3MsgName type that uniquely identifies the message.  This should
+// msgName -  DC3MsgName_t type that uniquely identifies the message.  This should
 //            not be a payload message.
 // msgID   -  Some number that allows the sender to specify how it will find
 //            the responses to this request msg.
-// msgType -  DC3MsgType that if the DC3DescMsg is in front of a:
+// msgType -  DC3MsgType_t that if the DC3DescMsg is in front of a:
 //   A. DC3_Req - Request message - used to request data or actions from the 
 //                 DC3 API.
 //   B. DC3_Ack - Acknowledgement message - used by the DC3 API to let the 
@@ -52,7 +52,7 @@
 //   C. DC3_Prog- Specifies whether the message is a Progress message.
 //   D. DC3_Done- Specifies whether the message is a Done message.
 //
-// msgPayload - DC3MsgName type that specifies what payload message is appended
+// msgPayload - DC3MsgName_t type that specifies what payload message is appended
 //            to the back of this message.  This allows you to send any payload
 //            that is needed for this action or data request.  For example, if 
 //            requesting a CommTest, you can specify a payload that will be sent
@@ -60,7 +60,7 @@
 //            you so you can verify its integrity.  In some cases, such as simple
 //            Req msgs and DC3_Ack msgs, this field can be set to DC3NoMsg to avoid
 //            sending along any unnecessary extra data.  In general, this field 
-//            can be any of the DC3MsgName.  In most cases, it will be _DC3NoMsg, 
+//            can be any of the DC3MsgName_t.  In most cases, it will be _DC3NoMsg, 
 //            which means there's no payload and consequently, no extra data is 
 //            being sent or if the msgType is DC3_Done, there's no error to report.
 //            Some more complicated messages will use custom payload msgs which 
@@ -103,14 +103,14 @@
 //          < msgName = DC3ResetDC3ChipMsg            
 //          < msgID   = [uint]                          
 //          < msgType = DC3_Req
-//          < msgRoute = [DC3MsgRoute]  
+//          < msgRoute = [DC3MsgRoute_t]  
 //          < msgProgReq = [0|1]                        
 //          < msgPayload = DC3NoMsg
 // *Rec*  [[********DC3BasicMsg************]\n]<<<<<<<<<<<<<<<<<<<<<<<<<<*Send*
 //          < msgName = DC3ResetDC3ChipMsg
 //          < msgID   = [uint]              
 //          < msgType = DC3_Ack
-//          < msgRoute = [DC3MsgRoute]  
+//          < msgRoute = [DC3MsgRoute_t]  
 //          < msgProgReq = [0|1]                        
 //          < msgPayload = DC3NoMsg
 //
@@ -119,7 +119,7 @@
 //          < msgName = DC3ResetDC3ChipMsg     < errorCode = error or status
 //          < msgID   = [uint]                      
 //          < msgType = DC3_Done
-//          < msgRoute = [DC3MsgRoute]  
+//          < msgRoute = [DC3MsgRoute_t]  
 //          < msgProgReq = [0|1]               
 //          < msgPayload = DC3StatusPayloadMsg
 //
@@ -130,7 +130,7 @@
 //          < msgName = DC3ResetDC3ChipMsg     < errorCode = error or status
 //          < msgID   = [uint]              
 //          < msgType = DC3_Done
-//          < msgRoute = [DC3MsgRoute]  
+//          < msgRoute = [DC3MsgRoute_t]  
 //          < msgProgReq = [0|1]                        
 //          < msgPayload = DC3StatusPayloadMsg
 //
@@ -153,21 +153,21 @@
 //          < msgName = DC3CmdLLCommTestMsg  < payload = 0xA5A5A5A5          
 //          < msgID   = [uint]              < errorCode = error or status     
 //          < msgType = DC3_Req                   
-//          < msgRoute = [DC3MsgRoute]  
+//          < msgRoute = [DC3MsgRoute_t]  
 //          < msgProgReq = [0|1]
 //          < msgPayload = DC3CommTestPayloadMsg
 // *Rec*  [[DC3BasicMsg]\n]<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<*Send*
 //          < msgName = DC3CmdLLCommTestMsg
 //          < msgID   = [uint]              
 //          < msgType = DC3_Ack
-//          < msgRoute = [DC3MsgRoute]  
+//          < msgRoute = [DC3MsgRoute_t]  
 //          < msgProgReq = [0|1]                        
 //          < msgPayload = DC3NoMsg
 // *Rec*  [[**********DC3BasicMsg************][**DC3PayloadMsg*****]\n]<<<*Send*
 //          < msgName = DC3CmdLLCommTestMsg     < payload = 0xA5A5A5A5        
 //          < msgID   = [uint]                 < errorCode = error or status
 //          < msgType = DC3_Done                 
-//          < msgRoute = [DC3MsgRoute]  
+//          < msgRoute = [DC3MsgRoute_t]  
 //          < msgProgReq = [0|1]
 //          < msgPayload = DC3CommTestPayloadMsg
 //
@@ -189,71 +189,71 @@
 // same msg type (DC3BasicMsg) but the DC3PayloadMsgs should be defined to 
 // enumerate their custom fields.
 // 
-enum DC3MsgName 
+enum DC3MsgName_t 
 {
-    DC3NoMsg              = 0; // Used to indicate the end of a message sequence.
-                              // Usually used in the DC3Payload field of a 
-                              // DC3BasicMsg
+    DC3NoMsg              = 0; // Used to indicate the end of a message 
+                               // sequence. Usually used in the DC3Payload field 
+                               // of a DC3BasicMsg
                               
     DC3StatusPayloadMsg   = 1; // DC3PayloadMsg - Used to report a status/error 
-                              // by simple messages that don't normally have 
-                              // their own payload msg associated with them. 
-                              // This is useful for requests that require no 
-                              // data other than status to be reported back.
+                               // by simple messages that don't normally have 
+                               // their own payload msg associated with them. 
+                               // This is useful for requests that require no 
+                               // data other than status to be reported back.
     
     DC3GetVersionMsg      = 2; // DC3BasicMsg   - Used to get versions and build
-                              // dates from the DC3 board and return 
-                              // DC3VersionPayloadMsg.
+                               // dates from the DC3 board and return 
+                               // DC3VersionPayloadMsg.
                               
     DC3VersionPayloadMsg  = 3; // DC3PayloadMsg - Used to send back versions and 
-                              // build dates from the DC3 board.
+                               // build dates from the DC3 board.
                               
-    DC3GetBootModeMsg     = 4; // DC3BasicMsg   - Used to find which boot mode the
-                              // DC3 board in.  Note, system Rom mode will not 
-                              // respond to this (or any msgs other than DFU) 
-                              // msg.
+    DC3GetBootModeMsg     = 4; // DC3BasicMsg   - Used to find which boot mode 
+                               // the DC3 board in.  Note, system Rom mode will  
+                               // not respond to this (or any msgs other than  
+                               // DFU) msg.
                               
     DC3SetBootModeMsg     = 5; // DC3BasicMsg   - Used to tell the DC3 board to 
-                              // boot to: 
-                              // Bootloader  - Used to flash new Application FW.
-                              // Application - Main run mode 
-                              // System ROM mode - used to flash Bootloader (not
-                              //               currently implemented).
+                               // boot to: 
+                               // Bootloader  - Used to flash new Application FW
+                               // Application - Main run mode 
+                               // System ROM mode - used to flash Bootloader 
+                               //               (not currently implemented).
                               
     DC3BootModePayloadMsg = 6; // DC3PayloadMsg - Used to send the current 
-                              // BootMode information with GetBootMode and 
-                              // SetBootMode msgs.
+                               // BootMode information with GetBootMode and 
+                               // SetBootMode msgs.
                               
     DC3FlashMsg           = 7; // DC3BasicMsg - Used to send and flash the FW
     
 	DC3FlashMetaPayloadMsg = 8;// DC3PayloadMsg - Used to as a payload with 
-	                          // DC3FlashMsg basic msg to send FW image type, 
-	                          // size, and CRC of the FW image that will follow.
-	                          // Also used to send back status of each packet 
-	                          // to verify
+	                           // DC3FlashMsg basic msg to send FW image type, 
+	                           // size, and CRC of the FW image that will 
+	                           // follow. Also used to send back status of each 
+	                           // packet to verify integrity.
 	                           
     DC3FlashDataPayloadMsg = 9;// DC3PayloadMsg - Used as a data payload by 
-                              // DC3FlashMsg basic msg. Used to send FW image and
-                              // associated meta-data (fw packet number and CRC 
-                              // of data included)
+                               // DC3FlashMsg basic msg. Used to send FW image 
+                               // and associated meta-data (fw packet number and
+                               // CRC of data included)
                               
     DC3I2CReadMsg        = 10; // DC3BasicMsg  - Used to send an I2C read cmd.
-                              // Requires a DC3I2CDataPayloadMsg to fully 
-                              // specify what to read
+                               // Requires a DC3I2CDataPayloadMsg to fully 
+                               // specify what to read
     
     DC3I2CWriteMsg       = 11; // DC3BasicMsg  - Used to send an I2C write cmd.
-                              // Requires a DC3I2CDataPayloadMsg to fully 
-                              // specify what to write
+                               // Requires a DC3I2CDataPayloadMsg to fully 
+                               // specify what to write
     
     DC3I2CDataPayloadMsg = 12; // DC3PayloadMsg - Used as a data payload by 
-                              // DC3I2CReadMsg and DC3I2CWriteMsg to specify what
-                              // to read and write, as well as send data and
-                              // status back.
+                               // DC3I2CReadMsg and DC3I2CWriteMsg to specify 
+                               // what to read and write, as well as send data 
+                               // and status back.
     
     DC3RamTestMsg        = 13; // DC3BasicMsg  - Used to send an RAM test cmd.
     
     DC3RamTestPayloadMsg = 14; // DC3PayloadMsg - Used as a data payload by 
-                              // DC3RamTestMsg to send status and errors back.                  
+                               // DC3RamTestMsg to send status and errors back.                  
                               
                                                                                       
 }
@@ -261,20 +261,20 @@ enum DC3MsgName
 //------------------------------------------------------------------------------
 // This enum defines all the different response types that can identify a msg
 // type.
-enum DC3MsgType 
+enum DC3MsgType_t 
 {
     DC3_NoMsgType   = 0; // For error checking. This shouldn't be used by users.
     DC3_Req         = 1; // This is to mark the field when used in a Request 
-                        // message.
+                         // message.
     DC3_Ack         = 2; // This is to mark the field when used in a Acknowledge
-                        // message.
+                         // message.
     DC3_Prog        = 3; // This is used to mark a response message as "Progress"
-                        // message. It can be used to send back status updates 
-                        // for long commands to prevent timeouts or as a very 
-                        // simplistic logging.
+                         // message. It can be used to send back status updates 
+                         // for long commands to prevent timeouts or as a very 
+                         // simplistic logging.
     DC3_Done        = 4; // This marks the message as a "Done" message which 
-                        // signifies that the action that was requested has been
-                        // completed and all work related to it is done.
+                         // signifies that the action that was requested has been
+                         // completed and all work related to it is done.
     DC3_MaxMsgType  = 5; // For error checking. This shouldn't be used by users.
 }
 
@@ -283,26 +283,27 @@ enum DC3MsgType
 // is to enable the responses to go back to the proper port. It is expected that
 // the sender of the message will set the source if a reply is expected.
 //
-enum DC3MsgRoute 
+enum DC3MsgRoute_t
 {
 	DC3_NoRoute     = 0; // For error checking. This shouldn't be used by users.
-    DC3_Serial      = 1; // The message is source/destination is the serial debug
-                        // port
-    DC3_EthSys      = 2; // The message is source/destination is a client that is 
-                        // communicating the host device to which the DC3 board 
-                        // via the ethernet sys port (currently 1500).  This 
-                        // really shouldn't be used since it's reserved for 
-                        // communicating with the controller. The only reason 
-                        // this exists is if at some time in the future, the 
-                        // controller decides to use this port.
-    DC3_EthLog      = 3; // The message is source/destination is a client that is 
-                        // communicating the host device to which the DC3 board 
-                        // via the ethernet log port (currently 1501).
+    DC3_Serial      = 1; // The message is source/destination is the serial 
+                         // debug port
+    DC3_EthSys      = 2; // The message is source/destination is a client that 
+                         // is communicating the host device to which the DC3 
+                         // board via the ethernet sys port (currently 1500). 
+                         // This really shouldn't be used since it's reserved 
+                         // for communicating with the controller. The only 
+                         // reason this exists is if at some time in the future, 
+                         // the controller decides to use this port.
+    DC3_EthLog      = 3; // The message is source/destination is a client that  
+                         // is communicating the host device to which the DC3 
+                         // board via the ethernet log port (currently 1501).
 
-    DC3_EthCli      = 4; // The message is source/destination is a client that is
-                        // communicating the host device to which the DC3 board 
-                        // via the ethernet cli port (currently 1502). This is 
-                        // the preferred port for the client to connect to.
+    DC3_EthCli      = 4; // The message is source/destination is a client that 
+                         // is communicating the host device to which the DC3 
+                         // board  via the ethernet cli port (currently 1502). 
+                         // This is the preferred port for the client to connect 
+                         // to.
     DC3_MaxRoutes   = 5; // For error checking. This shouldn't be used by users.
 }
 
@@ -312,18 +313,18 @@ enum DC3MsgRoute
 // using the DFU protocol, which is the system boot mode provided by ST Micro.
 // The Flash mode is used for regular operation and the system boots from Flash
 // 
-enum DC3BootMode
+enum DC3BootMode_t
 {
-    DC3_NoBootMode   = 0; // For error checking. This shouldn't be used by users.
-    DC3_SysRomBoot   = 1; // STM32 System ROM boot mode which allows DFU commands
-                         // to be used to program the bootloader.  This is 
-                         // currently not implemented. 
+    DC3_NoBootMode   = 0; // For error checking. This shouldn't be used.
+    DC3_SysRomBoot   = 1; // STM32 System ROM boot mode which allows DFU 
+                          // commands to be used to program the bootloader. This 
+                          // is currently not implemented. 
     DC3_Bootloader   = 2; // Firmware update operation mode.  This tells the DC3 
-                         // board to boot into the Bootloader Mode. 
+                          // board to boot into the Bootloader Mode. 
     DC3_Application  = 3; // Main Application mode.  This tells the DC3 board to 
-                         // boot into its primary mode of operation: 
-                         // Application Boot mode. 
-    DC3_MaxBootModes = 4; // For error checking. This shouldn't be used by users.
+                          // boot into its primary mode of operation: 
+                          // Application/SCIPSIII mode. 
+    DC3_MaxBootModes = 4; // For error checking. This shouldn't be used.
 }
 
 //------------------------------------------------------------------------------
@@ -334,18 +335,18 @@ enum DC3BootMode
 // Msg Desc - This is the Basic message that must be used to send all the common 
 //            request/ack/progress/done portions of messages.   
 // Standard Field Description:
-// msgName -  DC3MsgName that uniquely identifies the message.
+// msgName -  DC3MsgName_t that uniquely identifies the message.
 // msgID   -  Some number that allows the sender to specify how it will find
 //            the responses to this request msg.
 //
-// msgType - DC3MsgType that if the DC3DescMsg is in front of a:
+// msgType - DC3MsgType_t that if the DC3DescMsg is in front of a:
 //   A. DC3_Req - Request message - used to request data or actions from the DC3 API.
 //   B. DC3_Ack - Acknowledgement message - used by the DC3 API to let the sender 
 //                 know that the Req message was successfully received.
 //   C. DC3_Prog- Specifies whether the message is a Progress message.
 //   D. DC3_Done- Specifies whether the message is a Done message.
 //
-// msgRoute - See DC3MsgRoute enum for a full description.  This allows msg 
+// msgRoute - See DC3MsgRoute_t enum for a full description.  This allows msg 
 //            forwarding on the host device.
 //   A. DC3_HostDevice  - The message is source/destination is the directly 
 //            attached host device.
@@ -359,7 +360,7 @@ enum DC3BootMode
 //   0 - Don't send progress msgs
 //   1 - Send progress msgs
 //      
-// msgPayload - DC3MsgName type that specifies what payload message is appended
+// msgPayload - DC3MsgName_t type that specifies what payload message is appended
 //            to the back of this message.  This allows you to send any payload
 //            that is needed for this action or data request.  For example, if 
 //            requesting a CommTest, you can specify a payload that will be sent
@@ -367,7 +368,7 @@ enum DC3BootMode
 //            you so you can verify its integrity.  In some cases, such as simple
 //            Req msgs and Ack msgs, this field can be set to DC3NoMsg to avoid
 //            sending along any unnecessary extra data.  In general, this field 
-//            can be any of the DC3MsgName.  In most cases, it will be empty, 
+//            can be any of the DC3MsgName_t.  In most cases, it will be empty, 
 //            which means there's no payload and consequently, no extra data is 
 //            being sent or if the msgType is DC3_Done, there's no error to report.
 //            Some more complicated messages will use custom payload msgs which 
@@ -376,12 +377,12 @@ enum DC3BootMode
 //
 message DC3BasicMsg 
 {
-    required DC3MsgName  msgName       = 1;
-    required DC3MsgType  msgType       = 2;
-    required DC3MsgRoute msgRoute      = 3;
-    required uint32     msgID         = 4;
-    required uint32     msgReqProg    = 5;
-    required DC3MsgName  msgPayload    = 6;
+    required DC3MsgName_t  msgName       = 1;
+    required DC3MsgType_t  msgType       = 2;
+    required DC3MsgRoute_t msgRoute      = 3;
+    required uint32        msgID         = 4;
+    required uint32        msgReqProg    = 5;
+    required DC3MsgName_t  msgPayload    = 6;
 }
 // END DC3BasicMsg
 //------------------------------------------------------------------------------
@@ -422,22 +423,22 @@ message DC3StatusPayloadMsg
 //          < msgID   = [uint32]                         
 //          < msgType = DC3_Req                
 //          < msgProgReq = [0|1]
-//          < msgRoute = [DC3MsgRoute]                                                   
+//          < msgRoute = [DC3MsgRoute_t]                                                   
 //          < msgPayload = DC3NoMsg
 // *Rec*  [[DC3BasicMsg]\n]<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<*Send*
 //          < msgName = DC3GetVersionMsg
 //          < msgID   = [uint32]             
 //          < msgType = DC3_Ack    
 //          < msgProgReq = [0|1]
-//          < msgRoute = [DC3MsgRoute]                    
+//          < msgRoute = [DC3MsgRoute_t]                    
 //          < msgPayload = DC3NoMsg
 // *Rec*  [[**************DC3BasicMsg*********][**DC3PayloadMsg**]\n]<<<*Send*
-//          < msgName = DC3GetVersionMsg          < errorCode = error or status  
-//          < msgID   = [uint32]                 < fwVersionString = string of data with FW version
-//          < msgType = DC3_Done                  < fwDateString = string of data with FW date
-//          < msgProgReq = [0|1]                 < fwVersionString_len = Number of characters in FW version string.
-//          < msgRoute = [DC3MsgRoute]            < fwDateString_len = Number of characters in FW date string.
-//          < msgPayload = DC3VersionPayloadMsg   < dbVersion = version of the settings database
+//          < msgName = DC3GetVersionMsg        < errorCode = error or status  
+//          < msgID   = [uint32]                < fwVersionString = string of data with FW version
+//          < msgType = DC3_Done                < fwDateString = string of data with FW date
+//          < msgProgReq = [0|1]                < fwVersionString_len = Number of characters in FW version string.
+//          < msgRoute = [DC3MsgRoute_t]        < fwDateString_len = Number of characters in FW date string.
+//          < msgPayload = DC3VersionPayloadMsg < dbVersion = version of the settings database
 // END DC3GetVersionMsg
 //------------------------------------------------------------------------------
 
@@ -477,21 +478,21 @@ message DC3VersionPayloadMsg
 //          < msgID   = [uint32]                         
 //          < msgType = DC3_Req        
 //          < msgProgReq = [0|1]
-//          < msgRoute = [DC3MsgRoute]               
+//          < msgRoute = [DC3MsgRoute_t]               
 //          < msgPayload = DC3NoMsg
 // *Rec*  [[**************DC3BasicMsg***********]\n]<<<<<<<<<<<<<<<<<<<<<<<*Send*
 //          < msgName = DC3GetBootModeMsg
 //          < msgID   = [uint32]                   
 //          < msgType = DC3_Ack      
 //          < msgProgReq = [0|1]
-//          < msgRoute = [DC3MsgRoute]                  
+//          < msgRoute = [DC3MsgRoute_t]                  
 //          < msgPayload = DC3NoMsg
 // *Rec*  [[************DC3BasicMsg**********][**DC3PayloadMsg**]\n]<<<<<<<<*Send*
 //          < msgName = DC3GetBootModeMsg      < errorCode = DC3_ERR_CODE  
-//          < msgID   = [uint32]              < bootmode = [DC3_SysRomBoot|DC3_Bootloader|DC3_Application]         
+//          < msgID   = [uint32]               < bootmode = [DC3_SysRomBoot|DC3_Bootloader|DC3_Application]         
 //          < msgType = DC3_Done                  
 //          < msgProgReq = [0|1]
-//          < msgRoute = [DC3MsgRoute]
+//          < msgRoute = [DC3MsgRoute_t]
 //          < msgPayload = DC3BootModePayloadMsg   
 // END DC3GetBootModeMsg
 //------------------------------------------------------------------------------
@@ -509,25 +510,25 @@ message DC3VersionPayloadMsg
 // Client                                                             DC3 Board
 //   |                                                                      |
 // *Send*  [[************DC3BasicMsg**********][**DC3PayloadMsg**]\n]>>>>>>>>*Rec*
-//          < msgName = DC3SetBootModeMsg         < errorCode = N/A  
+//          < msgName = DC3SetBootModeMsg        < errorCode = N/A  
 //          < msgID   = [uint32]                 < bootmode = [DC3_SysRomBoot|DC3_Bootloader|DC3_Application]       
 //          < msgType = DC3_Req                  
 //          < msgProgReq = [0|1]
-//          < msgRoute = [DC3MsgRoute]
+//          < msgRoute = [DC3MsgRoute_t]
 //          < msgPayload = DC3BootModePayloadMsg
 // *Rec*  [[**************DC3BasicMsg***********]\n]<<<<<<<<<<<<<<<<<<<<<<<*Send*
 //          < msgName = DC3SetBootModeMsg
 //          < msgID   = [uint32]                   
 //          < msgType = DC3_Ack                        
 //          < msgProgReq = [0|1]
-//          < msgRoute = [DC3MsgRoute]
+//          < msgRoute = [DC3MsgRoute_t]
 //          < msgPayload = DC3NoMsg
 // *Rec*  [[************DC3BasicMsg**********][**DC3PayloadMsg**]\n]<<<<<<<<*Send*
-//          < msgName = DC3SetBootModeMsg       < errorCode = DC3_ERR_CODE  
+//          < msgName = DC3SetBootModeMsg      < errorCode = DC3_ERR_CODE  
 //          < msgID   = [uint32]               < bootmode = [DC3_SysRomBoot|DC3_Bootloader|DC3_Application]  
 //          < msgType = DC3_Done                  
 //          < msgProgReq = [0|1]
-//          < msgRoute = [DC3MsgRoute]
+//          < msgRoute = [DC3MsgRoute_t]
 //          < msgPayload = DC3BootModePayloadMsg
 // END DC3SetBootModeMsg
 //------------------------------------------------------------------------------
@@ -542,13 +543,13 @@ message DC3VersionPayloadMsg
 // Non-standard Field Description: (see below)
 message DC3BootModePayloadMsg 
 {
-	required uint32     errorCode = 1; // a uint32 number that specifies the
-	                                   // error encountered, if any.
-    required DC3BootMode bootMode  = 2; // DC3BootMode enum that specifies the 
-                                       // boot mode being requested.
-                                       // Can be one of the following: 
-                    // DC3_SysRomBoot  - STM32 system ROM bootmode (not currently 
-                    //                  implemented)
+	required uint32     errorCode   = 1; // a uint32 number that specifies the
+	                                     // error encountered, if any.
+    required DC3BootMode_t bootMode = 2; // enum that specifies the 
+                                         // boot mode being requested.
+                                         // Can be one of the following: 
+                    // DC3_SysRomBoot  - STM32 system ROM bootmode (not 
+                    //                   currently implemented)
                     // DC3_Bootloader  - bootloader mode
                     // DC3_Application - application mode
                     // The system boot mode will not respond to messages so the 
@@ -570,50 +571,50 @@ message DC3BootModePayloadMsg
 // Client                                                             DC3 Board
 //   |                                                                      |
 // *Send*  [[************DC3BasicMsg**********][**DC3PayloadMsg**]\n]>>>>>>>>*Rec*
-//          < msgName = DC3FlashMsg                < imageCrc 
+//          < msgName = DC3FlashMsg               < imageCrc 
 //          < msgID   = n (some uint)             < imageSize
-//          < msgType = DC3_Req                    < imageType
+//          < msgType = DC3_Req                   < imageType
 //          < msgProgReq = [0|1]                  < imageMajor            
-//          < msgRoute = [DC3MsgRoute]             < imageMinor
-//          < msgPayload = DC3FlashMetaPayloadMsg  < imageDatetime
+//          < msgRoute = [DC3MsgRoute_t]          < imageMinor
+//          < msgPayload = DC3FlashMetaPayloadMsg < imageDatetime
 //                                                < imageNumPackets
 // *Rec*  [[**************DC3BasicMsg***********]\n]<<<<<<<<<<<<<<<<<<<<<<<*Send*
 //          < msgName = DC3FlashMsg
 //          < msgID   = [uint32]                   
 //          < msgType = DC3_Ack                        
 //          < msgProgReq = [0|1]
-//          < msgRoute = [DC3MsgRoute]
+//          < msgRoute = [DC3MsgRoute_t]
 //          < msgPayload = DC3NoMsg
 // *Rec*  [[************DC3BasicMsg**********][**DC3PayloadMsg**]\n]<<<<<<<<*Send*
 //          < msgName = DC3FlashMsg             < errorCode = DC3_ERR_CODE  
 //          < msgID   = [uint32]                
 //          < msgType = DC3_Done                
 //          < msgProgReq = [0|1]
-//          < msgRoute = [DC3MsgRoute]
+//          < msgRoute = [DC3MsgRoute_t]
 //          < msgPayload = DC3StatusPayloadMsg
 //
 // 2. Send the data packets that will be flashed (loop until out of data)
 //
 // *Send*  [[************DC3BasicMsg**********][**DC3PayloadMsg**]\n]>>>>>>>>*Rec*
-//          < msgName = DC3FlashMsg                < dataCrc 
+//          < msgName = DC3FlashMsg               < dataCrc 
 //          < msgID   = n + 1                     < dataBuf_len
-//          < msgType = DC3_Req                    < dataBuf
+//          < msgType = DC3_Req                   < dataBuf
 //          < msgProgReq = [0|1]                  < seqCurr ( n through n + x ) 
-//          < msgRoute = [DC3MsgRoute]             
+//          < msgRoute = [DC3MsgRoute_t]             
 //          < msgPayload = DC3FlashDataPayloadMsg
 // *Rec*  [[**************DC3BasicMsg***********]\n]<<<<<<<<<<<<<<<<<<<<<<<*Send*
 //          < msgName = DC3FlashMsg
 //          < msgID   = [uint32]                   
 //          < msgType = DC3_Ack                        
 //          < msgProgReq = [0|1]
-//          < msgRoute = [DC3MsgRoute]
+//          < msgRoute = [DC3MsgRoute_t]
 //          < msgPayload = DC3NoMsg
 // *Rec*  [[************DC3BasicMsg**********][**DC3PayloadMsg**]\n]<<<<<<<<*Send*
-//          < msgName = DC3FlashMsg             < errorCode = DC3_ERR_CODE  
+//          < msgName = DC3FlashMsg              < errorCode = DC3_ERR_CODE  
 //          < msgID   = [uint32]                
 //          < msgType = DC3_Done                
 //          < msgProgReq = [0|1]
-//          < msgRoute = [DC3MsgRoute]
+//          < msgRoute = [DC3MsgRoute_t]
 //          < msgPayload = DC3StatusPayloadMsg
 // 
 // 3.  Repeat until all the data packets have been sent.  If at any point there's
@@ -625,25 +626,25 @@ message DC3BootModePayloadMsg
 //     DC3FlashMetaPayloadMsg as a payload in the final Done response.)
 //
 // *Send*  [[************DC3BasicMsg**********][**DC3PayloadMsg**]\n]>>>>>>>>*Rec*
-//          < msgName = DC3FlashMsg                < dataCrc 
+//          < msgName = DC3FlashMsg               < dataCrc 
 //          < msgID   = n + 1                     < dataBuf_len
-//          < msgType = DC3_Req                    < dataBuf
+//          < msgType = DC3_Req                   < dataBuf
 //          < msgProgReq = [0|1]                  < seqCurr ( n + x ) 
-//          < msgRoute = [DC3MsgRoute]             < seqTotal ( n + x )
+//          < msgRoute = [DC3MsgRoute_t]          < seqTotal ( n + x )
 //          < msgPayload = DC3FlashDataPayloadMsg
 // *Rec*  [[**************DC3BasicMsg***********]\n]<<<<<<<<<<<<<<<<<<<<<<<*Send*
 //          < msgName = DC3FlashMsg
 //          < msgID   = [uint32]                   
 //          < msgType = DC3_Ack                        
 //          < msgProgReq = [0|1]  
-//          < msgRoute = [DC3MsgRoute]
+//          < msgRoute = [DC3MsgRoute_t]
 //          < msgPayload = DC3NoMsg
 // *Rec*  [[************DC3BasicMsg**********][**DC3PayloadMsg**]\n]<<<<<<<<*Send*
 //          < msgName = DC3FlashMsg                < errorCode 
 //          < msgID   = n (some uint)             
 //          < msgType = DC3_Done                   
 //          < msgProgReq = [0|1]                              
-//          < msgRoute = [DC3MsgRoute]             
+//          < msgRoute = [DC3MsgRoute_t]             
 //          < msgPayload = DC3StatusPayloadMsg  
 //                                             
 // END DC3FlashMsg
@@ -658,24 +659,24 @@ message DC3BootModePayloadMsg
 // Non-standard Field Description: (see below)
 message DC3FlashMetaPayloadMsg 
 {
-    required uint32 errorCode     = 1; // Status of cmd.  Only used if being 
-                                       // sent back as a payload to a Done or 
-                                       // Prog msg.  Not used for Req. 
-    required uint32 imageCrc      = 2; // CRC of the entire FW image. 
-    required uint32 imageSize     = 3; // size of the coming FW image (in bytes)
-    required DC3BootMode imageType = 4; // DC3BootMode enum that specifies the 
-                                       // type this FW image. Can be one of the
-                                       // following: 
-                                       //  -- DC3_Bootloader  - bootloader mode 
-                                       //  -- DC3_Application - application mode
-                                       // The system boot mode will not respond
-                                       // to messages so the above are the only 
-                                       // possible values.
-    required uint32 imageMaj      = 5; // Major version
-    required uint32 imageMin      = 6; // Minor version
-    required string imageDatetime = 7; // Build date and time string
-    required uint32 imageNumPackets = 8; // Number of FW image data packets to 
-                                       // expect.
+    required uint32 errorCode        = 1; // Status of cmd.  Only used if being 
+                                          // sent back as a payload to a Done or 
+                                          // Prog msg.  Not used for Req. 
+    required uint32 imageCrc         = 2; // CRC of the entire FW image. 
+    required uint32 imageSize        = 3; // size of the coming FW image (in bytes)
+    required DC3BootMode_t imageType = 4; // enum that specifies the 
+                                          // type this FW image. Can be one of the
+                                          // following: 
+                                          //  -- DC3_Bootloader  - bootloader mode 
+                                          //  -- DC3_Application - application mode
+                                          // The system boot mode will not respond
+                                          // to messages so the above are the only 
+                                          // possible values.
+    required uint32 imageMaj         = 5; // Major version
+    required uint32 imageMin         = 6; // Minor version
+    required string imageDatetime    = 7; // Build date and time string
+    required uint32 imageNumPackets  = 8; // Number of FW image data packets to 
+                                          // expect.
  
 }
 // END DC3FlashMetaPayloadMsg.
@@ -712,28 +713,28 @@ message DC3FlashDataPayloadMsg
 // Client                                                               DC3 Board
 //   |                                                                      |
 // *Send* [[**************DC3BasicMsg********][**DC3PayloadMsg**]\n]]>>*Receive*
-//          < msgName = DC3I2CReadMsg              < i2cDev = I2C device
-//          < msgID   = [uint32]                  < start        
-//          < msgType = DC3_Req                    < nBytes
-//          < msgProgReq = [0|1]                  < accessType
-//          < msgRoute = [DC3MsgRoute]             < dataBuf_len = Not used  
-//          < msgPayload = DC3I2CDataPayloadMsg    < dataBuf = Not used
-//                                                < errorCode = Not used       
+//          < msgName = DC3I2CReadMsg           < i2cDev = [DC3I2CDevice_t]
+//          < msgID   = [uint32]                < start = [0 < N < maxSize]        
+//          < msgType = DC3_Req                 < nBytes = [1 < N < maxSize-start]
+//          < msgProgReq = [0|1]                < accessType = [DC3AccessType_t]
+//          < msgRoute = [DC3MsgRoute_t]        < dataBuf_len = Not used  
+//          < msgPayload = DC3I2CDataPayloadMsg < dataBuf = Not used
+//                                              < errorCode = Not used       
 // *Rec*  [[**************DC3BasicMsg***********]\n]<<<<<<<<<<<<<<<<<<<<<<<*Send*
 //          < msgName = DC3I2CReadMsg
 //          < msgID   = [uint32]                   
 //          < msgType = DC3_Ack      
 //          < msgProgReq = [0|1]
-//          < msgRoute = [DC3MsgRoute]                  
+//          < msgRoute = [DC3MsgRoute_t]                  
 //          < msgPayload = DC3NoMsg
 // *Rec*  [[************DC3BasicMsg**********][**DC3PayloadMsg**]\n]<<<<<<<<*Send*
-//          < msgName = DC3I2CReadMsg           < i2cDev = I2C device
-//          < msgID   = [uint32]               < start        
-//          < msgType = DC3_Done                < nBytes
-//          < msgProgReq = [0|1]               < accessType
-//          < msgRoute = [DC3MsgRoute]          < dataBuf_len
-//          < msgPayload = DC3I2CDataPayloadMsg < dataBuf
-//                                             < errorCode   = DC3_ERR_CODE  
+//          < msgName = DC3I2CReadMsg           < i2cDev = [DC3I2CDevice_t]
+//          < msgID   = [uint32]                < start = [0 < N < maxSize]     
+//          < msgType = DC3_Done                < nBytes = [1 < N < maxSize-start]
+//          < msgProgReq = [0|1]                < accessType = [DC3AccessType_t]
+//          < msgRoute = [DC3MsgRoute_t]        < dataBuf_len = len(dataBuf)
+//          < msgPayload = DC3I2CDataPayloadMsg < dataBuf = [bytes of data]
+//                                              < errorCode   = DC3_ERR_CODE  
 // END DC3I2CReadMsg
 //------------------------------------------------------------------------------
 
@@ -750,35 +751,35 @@ message DC3FlashDataPayloadMsg
 // Client                                                               DC3 Board
 //   |                                                                      |
 // *Send* [[**************DC3BasicMsg********][**DC3PayloadMsg**]\n]]>>*Receive*
-//          < msgName = DC3I2CWriteMsg             < i2cDev = I2C device
-//          < msgID   = [uint32]                  < start        
-//          < msgType = DC3_Req                    < nBytes
-//          < msgProgReq = [0|1]                  < accessType
-//          < msgRoute = [DC3MsgRoute]             < dataBuf_len  
-//          < msgPayload = DC3I2CDataPayloadMsg    < dataBuf
-//                                                < errorCode = Not used       
+//          < msgName = DC3I2CWriteMsg          < i2cDev = [DC3I2CDevice_t]
+//          < msgID   = [uint32]                < start = [0 < N < maxSize]     
+//          < msgType = DC3_Req                 < nBytes = [1 < N < maxSize-start]
+//          < msgProgReq = [0|1]                < accessType = [DC3AccessType_t]
+//          < msgRoute = [DC3MsgRoute_t]        < dataBuf_len = len(dataBuf)
+//          < msgPayload = DC3I2CDataPayloadMsg < dataBuf = [bytes of data]
+//                                              < errorCode = Not used       
 // *Rec*  [[**************DC3BasicMsg***********]\n]<<<<<<<<<<<<<<<<<<<<<<<*Send*
 //          < msgName = DC3I2CWriteMsg
 //          < msgID   = [uint32]                   
 //          < msgType = DC3_Ack      
 //          < msgProgReq = [0|1]
-//          < msgRoute = [DC3MsgRoute]                  
+//          < msgRoute = [DC3MsgRoute_t]                  
 //          < msgPayload = DC3NoMsg
 // *Rec*  [[************DC3BasicMsg**********][**DC3PayloadMsg**]\n]<<<<<<<<*Send*
-//          < msgName = DC3I2CWriteMsg          < i2cDev = I2C device
-//          < msgID   = [uint32]               < start        
-//          < msgType = DC3_Done                < nBytes
-//          < msgProgReq = [0|1]               < accessType
-//          < msgRoute = [DC3MsgRoute]          < dataBuf_len = not used
+//          < msgName = DC3I2CWriteMsg          < i2cDev = [DC3I2CDevice_t]
+//          < msgID   = [uint32]                < start = [0 < N < maxSize]          
+//          < msgType = DC3_Done                < nBytes = [1 < N < maxSize-start]
+//          < msgProgReq = [0|1]                < accessType = [DC3AccessType_t]
+//          < msgRoute = [DC3MsgRoute_t]        < dataBuf_len = not used
 //          < msgPayload = DC3I2CDataPayloadMsg < dataBuf = not used
-//                                             < errorCode   = DC3_ERR_CODE  
+//                                              < errorCode   = DC3_ERR_CODE  
 // END DC3I2CWriteMsg
 //------------------------------------------------------------------------------
 
 
 //------------------------------------------------------------------------------
 // This enum defines all the different I2C devices that exist on the board 
-enum DC3I2CDevices
+enum DC3I2CDevice_t
 {
     DC3_EEPROM      = 0; // R/W EEPROM on I2C bus 1 
     DC3_SNROM       = 1; // RO EEPROM on I2C bus 1 that contains a serial number.
@@ -788,19 +789,19 @@ enum DC3I2CDevices
 
 //------------------------------------------------------------------------------
 // This enum defines all the different I2C devices that exist on the board 
-enum DC3AccessType
+enum DC3AccessType_t
 {
     DC3_ACCESS_NONE = 0; // No access type.  Used as a default value 
     DC3_ACCESS_BARE = 1; // Blocking access where no RTOS services are running. 
-                        // All returns are done via passed in buffer.  Very slow
-                        // and blocking. 
+                         // All returns are done via passed in buffer.  Very slow
+                         // and blocking. 
     DC3_ACCESS_QPC  = 2; // Non-blocking access performed from QPC Active Objects.
-                        // All returns are done via events that requesting AO 
-                        // should know how to handle
+                         // All returns are done via events that requesting AO 
+                         // should know how to handle
     DC3_ACCESS_FRT  = 3; // Non-blocking access performed from a FreeRTOS thread.
-                        // All returns are done via a QEQueue that the 
-                        // requesting thread should wait on. Note, this is only
-                        // available in Application boot mode.
+                         // All returns are done via a QEQueue that the 
+                         // requesting thread should wait on. Note, this is only
+                         // available in Application boot mode.
 }
 
 //------------------------------------------------------------------------------
@@ -814,14 +815,14 @@ enum DC3AccessType
 // Non-standard Field Description: (see below)
 message DC3I2CDataPayloadMsg 
 {
-	required DC3I2CDevices i2cDev  = 1; // Specifies which I2C device to access
-    required uint32       start   = 2; // offset from which to read dev from
-    required uint32       nBytes  = 3; // number of bytes to read/write
-    required DC3AccessType accType = 4; // how to access the I2C device.
-    required uint32     errorCode = 5; // DC3ErrorCode that specifies status
+	required DC3I2CDevice_t  i2cDev  = 1; // Specifies which I2C device to access
+    required uint32          start   = 2; // offset from which to read dev from
+    required uint32          nBytes  = 3; // number of bytes to read/write
+    required DC3AccessType_t accType = 4; // how to access the I2C device.
+    required uint32        errorCode = 5; // DC3ErrorCode that specifies status
                                        // of the requested operation.  Not used
                                        // when sent along with a DC3_Req
-    required bytes        dataBuf = 6; // buffer with data                                       
+    required bytes           dataBuf = 6; // buffer with data                                       
 }
 // END DC3I2CDataPayloadMsg.
 //------------------------------------------------------------------------------
@@ -833,11 +834,11 @@ enum DC3RamTest_t
 {
     DC3_RAM_TEST_NONE      = 0; // No test.  Used for error checking 
     DC3_RAM_TEST_DATA_BUS  = 1; // Ram test that tests the integrity of the RAM 
-                               // data bus.  
+                                // data bus.  
     DC3_RAM_TEST_ADDR_BUS  = 2; // Ram test that tests the integrity of the RAM 
-                               // address bus.
+                                // address bus.
     DC3_RAM_TEST_DEV_INT   = 3; // Ram test that tests the integrity of the RAM 
-                               // device itself.
+                                // device itself.
     DC3_RAM_TEST_MAX       = 4; // Max number of tests.  Used for error checking.                               
 }
 
@@ -857,30 +858,30 @@ enum DC3RamTest_t
 //          < msgID   = [uint32]                          
 //          < msgType = DC3_Req                    
 //          < msgProgReq = [0|1]                  
-//          < msgRoute = [DC3MsgRoute]               
+//          < msgRoute = [DC3MsgRoute_t]               
 //          < msgPayload = DC3NoMsg           
 // *Rec*  [[**************DC3BasicMsg***********]\n]<<<<<<<<<<<<<<<<<<<<<<<*Send*
 //          < msgName = DC3RamTestMsg
 //          < msgID   = [uint32]                   
 //          < msgType = DC3_Ack      
 //          < msgProgReq = [0|1]
-//          < msgRoute = [DC3MsgRoute]                  
+//          < msgRoute = [DC3MsgRoute_t]                  
 //          < msgPayload = DC3NoMsg
 // ... Start of optional Progress msgs ...
 // *Rec*  [[************DC3BasicMsg**********][**DC3PayloadMsg**]\n]<<<<<<<<*Send*
-//          < msgName = DC3RamTestMsg           < errorCode = DC3_ERR_CODE  
+//          < msgName = DC3RamTestMsg          < errorCode = DC3_ERR_CODE  
 //          < msgID   = [uint32]               < addr = (addr where error was found)        
-//          < msgType = DC3_Prog                < test = (which test is in progress)
+//          < msgType = DC3_Prog               < test = (DC3RamTest_t is in progress)
 //          < msgProgReq = [0|1]               
-//          < msgRoute = [DC3MsgRoute]          
+//          < msgRoute = [DC3MsgRoute_t]          
 //          < msgPayload = DC3RamTestPayloadMsg
 // ... End of optional progress msgs ...
 // *Rec*  [[************DC3BasicMsg**********][**DC3PayloadMsg**]\n]<<<<<<<<*Send*
 //          < msgName = DC3RamTestMsg           < errorCode = DC3_ERR_CODE  
-//          < msgID   = [uint32]               < addr = (addr where error was found if any)        
-//          < msgType = DC3_Done                < test = (which test failed or last finished)
+//          < msgID   = [uint32]                < addr = (addr where error was found if any)        
+//          < msgType = DC3_Done                < test = (DC3RamTest_t test failed or last finished)
 //          < msgProgReq = [0|1]               
-//          < msgRoute = [DC3MsgRoute]          
+//          < msgRoute = [DC3MsgRoute_t]          
 //          < msgPayload = DC3RamTestPayloadMsg 
 //                                               
 // END DC3RamTestMsg
@@ -898,7 +899,7 @@ message DC3RamTestPayloadMsg
 {
 	required uint32     errorCode = 1; // DC3ErrorCode that specifies status
                                        // of the requested operation.
-    required DC3RamTest_t  test    = 2; // Test that failed (if any)
+    required DC3RamTest_t  test   = 2; // Test that failed (if any)
     required uint32       addr    = 3; // Addr at which the test failed (if any)                                       
 }
 // END DC3RamTestPayloadMsg.

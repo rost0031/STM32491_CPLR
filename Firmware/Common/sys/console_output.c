@@ -36,7 +36,7 @@ DBG_DEFINE_THIS_MODULE( DBG_MODL_SERIAL ); /* For debug system to ID this module
 
 /******************************************************************************/
 void MENU_printf(
-      volatile DC3MsgRoute dst,
+      volatile DC3MsgRoute_t dst,
       char *fmt,
       ...
 )
@@ -72,8 +72,8 @@ void MENU_printf(
 /******************************************************************************/
 void CON_output(
       DC3DbgLevel_t dbgLvl,
-      volatile DC3MsgRoute src,
-      volatile DC3MsgRoute dst,
+      volatile DC3MsgRoute_t src,
+      volatile DC3MsgRoute_t dst,
       const char *pFuncName,
       uint16_t wLineNumber,
       char *fmt,

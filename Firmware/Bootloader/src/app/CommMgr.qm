@@ -4,24 +4,7 @@
  * CommStackMgr Active Object which.  This AO handles all communications work.
  */</documentation>
  <framework name="qpc"/>
- <package name="Events" stereotype="0x01">
-  <class name="MsgEvt" superclass="qpc::QEvt">
-   <documentation>/**
- * \struct Event struct type for getting data from Eth driver to LWIPMgr.
- * MsgEvt types will use CommStackSignals for signal names.  These events are
- * responsible for getting data from Eth/Serial to CommStackMgr.
- */</documentation>
-   <attribute name="msg_src" type="MsgSrc" visibility="0x01" properties="0x00">
-    <documentation>/**&lt; Where the msg came from so it can be routed back to the sender. */</documentation>
-   </attribute>
-   <attribute name="msg_len" type="uint16_t" visibility="0x01" properties="0x00">
-    <documentation>/**&lt; Length of the msg buffer. */</documentation>
-   </attribute>
-   <attribute name="msg[MAX_MSG_LEN]" type="char" visibility="0x01" properties="0x00">
-    <documentation>/**&lt; Buffer that holds the data of the msg. */</documentation>
-   </attribute>
-  </class>
- </package>
+ <package name="Events" stereotype="0x01"/>
  <package name="AOs" stereotype="0x02">
   <class name="CommMgr" superclass="qpc::QActive">
    <documentation>/**
@@ -39,7 +22,7 @@
  * additional payload msgs after the BasicMsg in the buffer and this variable allows
  * the next deserialization step to know where to find them */</documentation>
    </attribute>
-   <attribute name="msgRoute" type="DC3MsgRoute" visibility="0x01" properties="0x00">
+   <attribute name="msgRoute" type="DC3MsgRoute_t" visibility="0x01" properties="0x00">
     <documentation>/**&lt; Keeps track of where the message came from */</documentation>
    </attribute>
    <attribute name="msgId" type="uint32_t" visibility="0x01" properties="0x00">
@@ -48,11 +31,11 @@
    <attribute name="msgReqProg" type="bool" visibility="0x01" properties="0x00">
     <documentation>/**&lt; Keep track of whether Prog responses were requested by the sender of the msg */</documentation>
    </attribute>
-   <attribute name="cliEvtSrc" type="DC3MsgRoute" visibility="0x01" properties="0x00">
+   <attribute name="cliEvtSrc" type="DC3MsgRoute_t" visibility="0x01" properties="0x00">
     <documentation>/**&lt; Keep track of the CLI_RECEIVED_SIG event source in order to send it back the
  * same comm channel */</documentation>
    </attribute>
-   <attribute name="cliEvtDst" type="DC3MsgRoute" visibility="0x01" properties="0x00">
+   <attribute name="cliEvtDst" type="DC3MsgRoute_t" visibility="0x01" properties="0x00">
     <documentation>/**&lt; Keep track of the CLI_RECEIVED_SIG event destination.
  * TODO: This isn't currently used but hold on to it just in case. Figure out if
  * this is even needed.*/</documentation>
@@ -60,7 +43,7 @@
    <attribute name="errorCode" type="DC3Error_t" visibility="0x01" properties="0x00">
     <documentation>/**&lt; Keep track of errors that may occur in the AO */</documentation>
    </attribute>
-   <attribute name="msgPayloadName" type="DC3MsgName" visibility="0x01" properties="0x00">
+   <attribute name="msgPayloadName" type="DC3MsgName_t" visibility="0x01" properties="0x00">
     <documentation>/**&lt; Keep track of what the payload msg is supposed to be upon reception.  This is
  * necessary because basicMsg struct gets modified to send an Ack and this variable
  * will be used to extract the rest of the payload from the data buffer where it's 

@@ -84,7 +84,7 @@ template<> char const* enumStrings<DC3DbgLevel_t>::data[] =
  * and a template will autogenerate the necessary enumToString function based
  * on the existence of this ::data[] array.
  * */
-template<> char const* enumStrings<DC3MsgName>::data[] =  {
+template<> char const* enumStrings<DC3MsgName_t>::data[] =  {
          "None",                          /**< _DC3NoMsg */
          "StatusPayload",                 /**< _DC3StatusPayloadMsg */
          "GetVersion",                    /**< _DC3GetVersionMsg */
@@ -100,7 +100,7 @@ template<> char const* enumStrings<DC3MsgName>::data[] =  {
  * and a template will autogenerate the necessary enumToString function based
  * on the existence of this ::data[] array.
  * */
-template<> char const* enumStrings<DC3MsgType>::data[] =  {
+template<> char const* enumStrings<DC3MsgType_t>::data[] =  {
          "None",                          /**< _DC3_NoMsgType */
          "Req",                           /**< _DC3_Req */
          "Ack",                           /**< _DC3_Ack */
@@ -115,7 +115,7 @@ template<> char const* enumStrings<DC3MsgType>::data[] =  {
  * and a template will autogenerate the necessary enumToString function based
  * on the existence of this ::data[] array.
  * */
-template<> char const* enumStrings<DC3MsgRoute>::data[] =  {
+template<> char const* enumStrings<DC3MsgRoute_t>::data[] =  {
          "None",                          /**< _DC3_NoRoute */
          "Serial",                        /**< _DC3_Serial */
          "TCPSys",                        /**< _DC3_EthSys */
@@ -130,7 +130,7 @@ template<> char const* enumStrings<DC3MsgRoute>::data[] =  {
  * and a template will autogenerate the necessary enumToString function based
  * on the existence of this ::data[] array.
  * */
-template<> char const* enumStrings<DC3BootMode>::data[] =  {
+template<> char const* enumStrings<DC3BootMode_t>::data[] =  {
          "Invalid",                       /**< _DC3_NoBootMode */
          "SystemROM",                     /**< _DC3_SysRomBoot */
          "Bootloader",                    /**< _DC3_Bootloader */
@@ -144,7 +144,7 @@ template<> char const* enumStrings<DC3BootMode>::data[] =  {
  * and a template will autogenerate the necessary enumToString function based
  * on the existence of this ::data[] array.
  * */
-template<> char const* enumStrings<DC3I2CDevices>::data[] =  {
+template<> char const* enumStrings<DC3I2CDevice_t>::data[] =  {
          "EEPROM",                /**< _DC3_EEPROM */
          "SNROM",                 /**< _DC3_SNROM */
          "EUIROM",                /**< _DC3_EUIROM */
@@ -157,7 +157,7 @@ template<> char const* enumStrings<DC3I2CDevices>::data[] =  {
  * and a template will autogenerate the necessary enumToString function based
  * on the existence of this ::data[] array.
  * */
-template<> char const* enumStrings<DC3AccessType>::data[] =  {
+template<> char const* enumStrings<DC3AccessType_t>::data[] =  {
          "Invalid",              /**< _DC3_ACCESS_NONE */
          "BARE",                 /**< _DC3_ACCESS_BARE */
          "QPC",                  /**< _DC3_ACCESS_QPC */
