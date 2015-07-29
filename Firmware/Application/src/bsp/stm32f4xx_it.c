@@ -25,7 +25,7 @@
 #include "project_includes.h"        /* application events and active objects */
 #include "qp_port.h"                                        /* for QP support */
 #include "Shared.h"                                   /*  Common Declarations */
-#include "CBSignals.h"                            /*  For signal declarations */
+#include "DC3Signals.h"                            /*  For signal declarations */
 #include "SerialMgr.h"                                 /* for SerialMgr types */
 #include "time.h"                          /* for processor date/time support */
 #include "i2c.h"                                /* For I2C callback functions */

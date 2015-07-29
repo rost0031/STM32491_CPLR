@@ -447,7 +447,7 @@ void SDRAM_TestDestructive( void )
 
    uint32_t tmpIndex = 0;
    uint32_t uwOffset = 0x250F;
-   CBErrorCode status = ERR_NONE;
+   DC3Error_t status = ERR_NONE;
 
    /* 1. Fill the buffer to write */
    DBG_printf("Filling buffer...\n");

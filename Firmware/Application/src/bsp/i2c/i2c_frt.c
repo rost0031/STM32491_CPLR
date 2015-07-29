@@ -34,7 +34,7 @@ DBG_DEFINE_THIS_MODULE( DBG_MODL_I2C_DEV ); /* For debug system to ID this modul
 /* Private functions ---------------------------------------------------------*/
 
 /******************************************************************************/
-const CBErrorCode I2C_readDevMemFRT(
+const DC3Error_t I2C_readDevMemFRT(
       const I2C_Dev_t iDev,
       const uint16_t offset,
       uint8_t* const pBuffer,
@@ -43,7 +43,7 @@ const CBErrorCode I2C_readDevMemFRT(
       const uint16_t nBytesToRead
 )
 {
-   CBErrorCode status = ERR_NONE; /* Keep track of the errors that may occur.
+   DC3Error_t status = ERR_NONE; /* Keep track of the errors that may occur.
                                      This gets returned at the end of the
                                      function */
    /* Check buffer sizes */
@@ -115,7 +115,7 @@ I2C_readDevMemFRT_ERR_HANDLER:    /* Handle any error that may have occurred. */
 }
 
 /******************************************************************************/
-const CBErrorCode I2C_writeDevMemFRT(
+const DC3Error_t I2C_writeDevMemFRT(
       const I2C_Dev_t iDev,
       const uint16_t offset,
       const uint8_t* const pBuffer,
@@ -124,7 +124,7 @@ const CBErrorCode I2C_writeDevMemFRT(
       const uint16_t nBytesToWrite
 )
 {
-   CBErrorCode status = ERR_NONE; /* Keep track of the errors that may occur.
+   DC3Error_t status = ERR_NONE; /* Keep track of the errors that may occur.
                                      This gets returned at the end of the
                                      function */
    /* Check buffer sizes */

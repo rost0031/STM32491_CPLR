@@ -24,7 +24,7 @@ extern "C" {
 /* Includes ------------------------------------------------------------------*/
 #include "stm32f4xx.h"                                 /* For STM32F4 support */
 #include "bsp.h"
-#include "CBErrors.h"
+#include "DC3Errors.h"
 
 /* Exported defines ----------------------------------------------------------*/
 /* Exported types ------------------------------------------------------------*/
@@ -79,34 +79,34 @@ void NOR_ReadID( NOR_IDTypeDef* pNOR_ID );
  * @brief  Performs a block erase operation giving its address.
  *         This function returns the NOR memory status after block erase.
  * @param  [in] uwBlockAddress: Address of the block to erase.
- * @return CBErrorCode: The returned value can be:
+ * @return DC3ErrorCode: The returned value can be:
  *   @arg  ERR_NONE
  *   @arg  ERR_NOR_ERROR
  *   @arg  ERR_NOR_TIMEOUT.
  */
-CBErrorCode NOR_EraseBlock( uint32_t uwBlockAddress );
+DC3Error_t NOR_EraseBlock( uint32_t uwBlockAddress );
 
 /**
  * @brief  Erases the entire chip.
  * @param  None
- * @retval CBErrorCode: The returned value can be:
+ * @retval DC3Error_t: The returned value can be:
  *   @arg  ERR_NONE
  *   @arg  ERR_NOR_ERROR
  *   @arg  ERR_NOR_TIMEOUT
  */
-CBErrorCode NOR_EraseChip( void );
+DC3Error_t NOR_EraseChip( void );
 
 /**
  * @brief  Writes a half-word to the NOR memory.
  *         This function returns the NOR memory status after writing half word.
  * @param  [in] uwWriteAddress: uint32_t NOR memory internal address to write to.
  *         [in] uhData: uint16_t word of data to write.
- * @retval CBErrorCode: The returned value can be:
+ * @retval DC3Error_t: The returned value can be:
  *   @arg  ERR_NONE
  *   @arg  ERR_NOR_ERROR
  *   @arg  ERR_NOR_TIMEOUT
  */
-CBErrorCode NOR_WriteHalfWord( uint32_t uwWriteAddress, uint16_t uhData );
+DC3Error_t NOR_WriteHalfWord( uint32_t uwWriteAddress, uint16_t uhData );
 
 /**
  * @brief  Writes a buffer to the NOR memory.
@@ -115,13 +115,13 @@ CBErrorCode NOR_WriteHalfWord( uint32_t uwWriteAddress, uint16_t uhData );
  * @param  [in] *pBuffer: uint16_t pointer to buffer.
  *         [in] uwWriteAddress: uint32_t NOR memory internal address to write to.
  *         [in] uwBufferSize: uint32_t number of Half words to write.
- * @retval CBErrorCode: The returned value can be:
+ * @retval DC3Error_t: The returned value can be:
  *   @arg  ERR_NONE
  *   @arg  ERR_NOR_ERROR
  *   @arg  ERR_NOR_TIMEOUT
  *   @arg  ERR_NOR_BUSY
  */
-CBErrorCode NOR_WriteBuffer(
+DC3Error_t NOR_WriteBuffer(
       uint16_t* pBuffer,
       uint32_t uwWriteAddress,
       uint32_t uwBufferSize
@@ -167,13 +167,13 @@ void NOR_Reset( void );
 /**
  * @brief  Returns the NOR operation status.
  * @param  [in] Timeout: uint32_t NOR programming Timeout
- * @retval CBErrorCode: The returned value can be:
+ * @retval DC3Error_t: The returned value can be:
  *   @arg  ERR_NONE
  *   @arg  ERR_NOR_ERROR
  *   @arg  ERR_NOR_TIMEOUT
  *   @arg  ERR_NOR_BUSY
  */
-CBErrorCode NOR_GetStatus( uint32_t Timeout );
+DC3Error_t NOR_GetStatus( uint32_t Timeout );
 
 /**
  * @brief  Runs a destructive test of the the NOR flash memory.

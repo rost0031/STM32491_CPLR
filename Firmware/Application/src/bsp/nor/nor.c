@@ -259,7 +259,7 @@ void NOR_ReadID( NOR_IDTypeDef* pNOR_ID )
 }
 
 /******************************************************************************/
-CBErrorCode NOR_EraseBlock(uint32_t uwBlockAddress)
+DC3Error_t NOR_EraseBlock(uint32_t uwBlockAddress)
 {
    NOR_WRITE( ADDR_SHIFT( 0x0555), 0x00AA );
    NOR_WRITE( ADDR_SHIFT( 0x02AA), 0x0055 );
@@ -272,7 +272,7 @@ CBErrorCode NOR_EraseBlock(uint32_t uwBlockAddress)
 }
 
 /******************************************************************************/
-CBErrorCode NOR_EraseChip(void)
+DC3Error_t NOR_EraseChip(void)
 {
    NOR_WRITE( ADDR_SHIFT( 0x0555 ), 0x00AA );
    NOR_WRITE( ADDR_SHIFT( 0x02AA ), 0x0055 );
@@ -285,7 +285,7 @@ CBErrorCode NOR_EraseChip(void)
 }
 
 /******************************************************************************/
-CBErrorCode NOR_WriteHalfWord( uint32_t uwWriteAddress, uint16_t uhData )
+DC3Error_t NOR_WriteHalfWord( uint32_t uwWriteAddress, uint16_t uhData )
 {
    NOR_WRITE( ADDR_SHIFT( 0x0555 ), 0x00AA );
    NOR_WRITE( ADDR_SHIFT( 0x02AA ), 0x0055 );
@@ -296,13 +296,13 @@ CBErrorCode NOR_WriteHalfWord( uint32_t uwWriteAddress, uint16_t uhData )
 }
 
 /******************************************************************************/
-CBErrorCode NOR_WriteBuffer(
+DC3Error_t NOR_WriteBuffer(
       uint16_t* pBuffer,
       uint32_t uwWriteAddress,
       uint32_t uwBufferSize
 )
 {
-   CBErrorCode status = ERR_NOR_BUSY;
+   DC3Error_t status = ERR_NOR_BUSY;
 
    do {
       /* Transfer data to the memory */
@@ -364,10 +364,10 @@ void NOR_Reset( void )
 }
 
 /******************************************************************************/
-CBErrorCode NOR_GetStatus( uint32_t Timeout )
+DC3Error_t NOR_GetStatus( uint32_t Timeout )
 {
    uint16_t val1 = 0, val2 = 0;
-   CBErrorCode status = ERR_NOR_BUSY;
+   DC3Error_t status = ERR_NOR_BUSY;
    uint32_t timeout = Timeout;
 
    /* Poll on NOR memory Ready/Busy signal ------------------------------------*/
@@ -429,7 +429,7 @@ void NOR_TestDestructive( void )
 
    uint16_t tmpIndex = 0;
    uint16_t uwOffset = 0x2A50;
-   CBErrorCode status = ERR_NONE;
+   DC3Error_t status = ERR_NONE;
 
    /* 1. Fill the buffer to write */
    DBG_printf("Filling buffer...\n");
@@ -479,7 +479,7 @@ void NOR_SDRAMTestInteraction( void )
 
    uint16_t tmpIndex = 0;
    uint16_t uwOffset = 0x3CA5;
-   CBErrorCode status = ERR_NONE;
+   DC3Error_t status = ERR_NONE;
 
    /* 1. Fill the buffer to write */
    DBG_printf("Filling buffer...\n");

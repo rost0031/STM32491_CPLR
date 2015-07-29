@@ -23,7 +23,7 @@ extern "C" {
 /* Includes ------------------------------------------------------------------*/
 #include "stm32f4xx.h"                                 /* For STM32F4 support */
 #include "bsp.h"
-#include "CBErrors.h"
+#include "DC3Errors.h"
 
 /* Exported defines ----------------------------------------------------------*/
 /* Exported types ------------------------------------------------------------*/

@@ -43,7 +43,7 @@ void CPLR_Task( void* pvParameters )
                        processing this (main) one, a different local pointer
                        should be used and garbage collected after. */
 
-   CBErrorCode status = ERR_NONE; /* Keep track of failures of various func
+   DC3Error_t status = ERR_NONE; /* Keep track of failures of various func
                                      calls and commands.  If this is ever set
                                      to something other than ERR_NONE, it will
                                      be printed out at the end of the for loop*/

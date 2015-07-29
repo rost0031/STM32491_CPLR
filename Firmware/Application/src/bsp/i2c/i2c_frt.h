@@ -55,10 +55,10 @@ extern "C" {
  * @param [out] *pBytesRead: number of bytes read as returned from the
  *             I2CxDevMgr AO that performs the actual read operation.
  * @param [in] bytesToRead: uint8_t variable specifying how many bytes to read
- * @return CBErrorCode: status of the read operation
+ * @return DC3Error_t: status of the read operation
  *    @arg ERR_NONE: if no errors occurred
  */
-const CBErrorCode I2C_readDevMemFRT(
+const DC3Error_t I2C_readDevMemFRT(
       const I2C_Dev_t iDev,
       const uint16_t offset,
       uint8_t* const pBuffer,
@@ -88,10 +88,10 @@ const CBErrorCode I2C_readDevMemFRT(
  * @param [out] *pBytesWrite: number of bytes written as returned from the
  *             I2CxDevMgr AO that performs the actual write operation.
  * @param [in] bytesToWrite: uint8_t variable specifying how many bytes to write
- * @return CBErrorCode: status of the write operation
+ * @return DC3Error_t: status of the write operation
  *    @arg ERR_NONE: if no errors occurred
  */
-const CBErrorCode I2C_writeDevMemFRT(
+const DC3Error_t I2C_writeDevMemFRT(
       const I2C_Dev_t iDev,
       const uint16_t offset,
       const uint8_t* const pBuffer,
