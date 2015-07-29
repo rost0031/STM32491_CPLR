@@ -38,7 +38,7 @@
 /* Includes ------------------------------------------------------------------*/
 #include "Shared.h"
 #include "i2c_defs.h"                                /* for I2C functionality */
-#include "CBCommApi.h"
+#include "DC3CommApi.h"
 
 /* Exported defines ----------------------------------------------------------*/
 #define MAX_DB_ELEM_SIZE   64               /**< Max size of an element in DB */
@@ -104,11 +104,11 @@ typedef struct {
    uint8_t ipAddr[4];  /**< 4 values of the 111.222.333.444 ip address in hex */
    uint8_t bootMajVer; /**< Major version byte of the bootloader FW image */
    uint8_t bootMinVer; /**< Major version byte of the bootloader FW image */
-   uint8_t bootBuildDT[CB_DATETIME_LEN]; /**< Build datetime of the bootloader
+   uint8_t bootBuildDT[DC3_DATETIME_LEN]; /**< Build datetime of the bootloader
                                               FW image */
    uint8_t fpgaMajVer; /**< Major version byte of the FPGA FW image */
    uint8_t fpgaMinVer; /**< Major version byte of the FPGA FW image */
-   uint8_t fpgaBuildDT[CB_DATETIME_LEN]; /**< Build datetime of the FPGA FW
+   uint8_t fpgaBuildDT[DC3_DATETIME_LEN]; /**< Build datetime of the FPGA FW
                                               image */
 } SettingsDB_t;
 
@@ -140,11 +140,11 @@ const char* const DB_elemToStr( const DB_Elem_t elem );
  *                            RTOS is running.
  *    @arg ACCESS_QPC:        non-blocking, event based access.
  *    @arg ACCESS_FREERTOS:   non-blocking, but waits on queue to know the status.
- * @return CBErrorCode: status of the read operation
+ * @return DC3Error_t: status of the read operation
  *    @arg ERR_NONE: if no errors occurred
  *    other errors if found.
  */
-const CBErrorCode DB_isValid( const AccessType_t accessType );
+const DC3Error_t DB_isValid( const AccessType_t accessType );
 
 /**
  * @brief   Initialize the settings DB in EEPROM to a stored default.
@@ -158,11 +158,11 @@ const CBErrorCode DB_isValid( const AccessType_t accessType );
  *                            RTOS is running.
  *    @arg ACCESS_QPC:        non-blocking, event based access.
  *    @arg ACCESS_FREERTOS:   non-blocking, but waits on queue to know the status.
- * @return CBErrorCode: status of the read operation
+ * @return DC3Error_t: status of the read operation
  *    @arg ERR_NONE: if no errors occurred
  *    other errors if found.
  */
-const CBErrorCode DB_initToDefault( const AccessType_t accessType  );
+const DC3Error_t DB_initToDefault( const AccessType_t accessType  );
 
 /**
  * @brief   Get an element from the settings DB.
@@ -185,11 +185,11 @@ const CBErrorCode DB_initToDefault( const AccessType_t accessType  );
  *                            RTOS is running.
  *    @arg ACCESS_QPC:        non-blocking, event based access.
  *    @arg ACCESS_FREERTOS:   non-blocking, but waits on queue to know the status.
- * @return CBErrorCode: status of the read operation
+ * @return DC3Error_t: status of the read operation
  *    @arg ERR_NONE: if no errors occurred
  *    other errors if found.
  */
-const CBErrorCode DB_getElemBLK(
+const DC3Error_t DB_getElemBLK(
       const DB_Elem_t elem,
       uint8_t* pBuffer,
       const size_t bufSize,
@@ -218,11 +218,11 @@ const CBErrorCode DB_getElemBLK(
  *                            RTOS is running.
  *    @arg ACCESS_QPC:        non-blocking, event based access.
  *    @arg ACCESS_FREERTOS:   non-blocking, but waits on queue to know the status.
- * @return CBErrorCode: status of the read operation
+ * @return DC3Error_t: status of the read operation
  *    @arg ERR_NONE: if no errors occurred
  *    other errors if found.
  */
-const CBErrorCode DB_setElemBLK(
+const DC3Error_t DB_setElemBLK(
       const DB_Elem_t elem,
       const uint8_t* const pBuffer,
       const size_t bufSize,
@@ -290,11 +290,11 @@ const I2C_Dev_t DB_getI2CDev( const DB_ElemLoc_t loc );
  *                         retrieved element.
  * @param  [out] resultLen: uint16_t pointer to the length of data stored in the
  *                         buffer on return.
- * @return CBErrorCode: status of the read operation
+ * @return DC3Error_t: status of the read operation
  *    @arg ERR_NONE: if no errors occurred
  *    other errors if found.
  */
-const CBErrorCode DB_readEEPROM(
+const DC3Error_t DB_readEEPROM(
       const DB_Elem_t elem,
       const uint8_t bufferSize,
       uint8_t* const buffer,

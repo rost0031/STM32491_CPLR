@@ -18,9 +18,9 @@
 /* Includes ------------------------------------------------------------------*/
 #include "sys_shared.h"
 #include "qp_port.h"                                        /* for QP support */
-#include "CBErrors.h"                               /* for system error codes */
-#include "CBSignals.h"                                  /* for system signals */
-#include "CBCommApi.h"                                  /* for CB API support */
+#include "DC3Errors.h"                              /* for system error codes */
+#include "DC3Signals.h"                                 /* for system signals */
+#include "DC3CommApi.h"                                /* for DC3 API support */
 
 /* Exported defines ----------------------------------------------------------*/
 /* Exported macros -----------------------------------------------------------*/

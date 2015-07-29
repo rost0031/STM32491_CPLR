@@ -74,7 +74,7 @@ typedef struct {
     uint16_t devAddr;
 
     /**< Result error code from the completed request.  ERR_NONE if OK. */
-    CBErrorCode errorCode;
+    DC3Error_t errorCode;
 } I2CBusDataEvt;
 
 /**
@@ -89,7 +89,7 @@ typedef struct {
     I2C_Bus_t i2cBus;
 
     /**< Result error code from the completed request.  ERR_NONE if OK. */
-    CBErrorCode errorCode;
+    DC3Error_t errorCode;
 } I2CStatusEvt;
 
 /**

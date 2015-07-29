@@ -46,7 +46,7 @@
    <attribute name="dataLen" type="uint8_t" visibility="0x01" properties="0x00">
     <documentation>/**&lt; Length of data in dataBuf */</documentation>
    </attribute>
-   <attribute name="status" type="CBErrorCode" visibility="0x01" properties="0x00">
+   <attribute name="status" type="DC3Error_t" visibility="0x01" properties="0x00">
     <documentation>/**&lt; Status of the operation */</documentation>
    </attribute>
   </class>
@@ -57,7 +57,7 @@
    <attribute name="dbElem" type="DB_Elem_t" visibility="0x01" properties="0x00">
     <documentation>/**&lt; DB element */</documentation>
    </attribute>
-   <attribute name="status" type="CBErrorCode" visibility="0x01" properties="0x00">
+   <attribute name="status" type="DC3Error_t" visibility="0x01" properties="0x00">
     <documentation>/**&lt; Status of the operation */</documentation>
    </attribute>
   </class>
@@ -67,7 +67,7 @@
    <documentation>/**
  * \brief SysMgr &quot;class&quot;
  */</documentation>
-   <attribute name="errorCode" type="CBErrorCode" visibility="0x01" properties="0x00">
+   <attribute name="errorCode" type="DC3Error_t" visibility="0x01" properties="0x00">
     <documentation>/**&lt; Keep track of errors that may occur in the AO */</documentation>
    </attribute>
    <attribute name="deferredEvtQueue" type="QEQueue" visibility="0x01" properties="0x00">
@@ -580,9 +580,6 @@ if( !DB_isArraysMatch(
 END_ERROR_CHECK:</action>
          <choice target="../../../8">
           <guard brief="NoError?">ERR_NONE == me-&gt;errorCode</guard>
-          <action>
-
-</action>
           <choice_glyph conn="43,44,4,0,4">
            <action box="-7,1,7,2"/>
           </choice_glyph>
@@ -1266,8 +1263,8 @@ $define(AOs::SysMgr)
 
 /* Includes ------------------------------------------------------------------*/
 #include &quot;qp_port.h&quot;                                        /* for QP support */
-#include &quot;CBCommApi.h&quot;               /* For API for communicating with client */
-#include &quot;CBSignals.h&quot;              /* For QP signals available to the system */
+#include &quot;DC3CommApi.h&quot;              /* For API for communicating with client */
+#include &quot;DC3Signals.h&quot;             /* For QP signals available to the system */
 #include &quot;db.h&quot;                                    /* For DB access and types */
 
 /* Exported defines ----------------------------------------------------------*/

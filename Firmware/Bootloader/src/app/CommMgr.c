@@ -69,11 +69,11 @@ typedef struct {
     QActive super;
 
     /**< Local buffer to store incoming msgs */
-    uint8_t* dataBuf[CB_MAX_MSG_LEN];
+    uint8_t* dataBuf[DC3_MAX_MSG_LEN];
 
-    /**< Common struct for CBBasicMsg.  This can be re-used in most cases since once the
+    /**< Common struct for DC3BasicMsg.  This can be re-used in most cases since once the
      * request has been unwrapped, all the data from that struct has been stored locally */
-    struct CBBasicMsg basicMsg;
+    struct DC3BasicMsg basicMsg;
 
     /**< Keeps track of how far into the dataBuf basicMsg was.  Sometimes, there are
      * additional payload msgs after the BasicMsg in the buffer and this variable allows
@@ -81,7 +81,7 @@ typedef struct {
     uint16_t basicMsgOffset;
 
     /**< Keeps track of where the message came from */
-    CBMsgRoute msgRoute;
+    DC3MsgRoute msgRoute;
 
     /**< Keep track of the ID of the msg */
     uint32_t msgId;
@@ -91,25 +91,25 @@ typedef struct {
 
     /**< Keep track of the CLI_RECEIVED_SIG event source in order to send it back the
      * same comm channel */
-    CBMsgRoute cliEvtSrc;
+    DC3MsgRoute cliEvtSrc;
 
     /**< Keep track of the CLI_RECEIVED_SIG event destination.
      * TODO: This isn't currently used but hold on to it just in case. Figure out if
      * this is even needed.*/
-    CBMsgRoute cliEvtDst;
+    DC3MsgRoute cliEvtDst;
 
     /**< Keep track of errors that may occur in the AO */
-    CBErrorCode errorCode;
+    DC3Error_t errorCode;
 
     /**< Keep track of what the payload msg is supposed to be upon reception.  This is
      * necessary because basicMsg struct gets modified to send an Ack and this variable
      * will be used to extract the rest of the payload from the data buffer where it's
      * still being stored. */
-    CBMsgName msgPayloadName;
+    DC3MsgName msgPayloadName;
 
     /**< Union of all the possible payload msgs.  This gets populated by the recieved msg
      * processing and later reused to send Prog and Done msgs. */
-    CBPayloadMsgUnion_t payloadMsgUnion;
+    DC3PayloadMsgUnion_t payloadMsgUnion;
 
     /**< Timer for timing out the Busy state of CommMgr Ao. */
     QTimeEvt commMgrTimerEvt;
@@ -228,19 +228,19 @@ void CommMgr_ctor(void) {
  * This function acts as a simple wrapper around serial and UDP ethernet send data
  * functions to allow easy posting of events to send out data over those interfaces.
  * @param [in] *evt: LrgDataEvt pointer to event to send.
- * @return: CBErrorCode indicating status of operation.
+ * @return: DC3Error_t indicating status of operation.
  */
 /*${AOs::Comm_sendToClien~} ................................................*/
-CBErrorCode Comm_sendToClient(LrgDataEvt* evt) {
-    CBErrorCode status = ERR_NONE;
-    if ( _CB_Serial == evt->dst ) {
-        uint8_t encDataBuf[CB_MAX_MSG_LEN];
+DC3Error_t Comm_sendToClient(LrgDataEvt* evt) {
+    DC3Error_t status = ERR_NONE;
+    if ( _DC3_Serial == evt->dst ) {
+        uint8_t encDataBuf[DC3_MAX_MSG_LEN];
         memset(encDataBuf, 0, sizeof(encDataBuf));
         uint16_t encDataLen = base64_encode(
               (char *)(evt->dataBuf),
               evt->dataLen,
               (char *)encDataBuf,
-              CB_MAX_MSG_LEN
+              DC3_MAX_MSG_LEN
         );
 
         if(encDataLen < 1) {
@@ -258,8 +258,8 @@ CBErrorCode Comm_sendToClient(LrgDataEvt* evt) {
          * it regardless of whether we*/
         evt->dataLen = encDataLen;
         MEMCPY( evt->dataBuf, encDataBuf, evt->dataLen);
-        evt->dst = _CB_Serial;
-        evt->src = _CB_Serial;
+        evt->dst = _DC3_Serial;
+        evt->src = _DC3_Serial;
 
         /* Directly post to the LWIPMgr AO. */
         QACTIVE_POST( AO_SerialMgr, (QEvt *)(evt), 0 );
@@ -380,10 +380,10 @@ static QState CommMgr_Idle(CommMgr * const me, QEvt const * const e) {
              * feedback should have already happened. */
             me->errorCode       = ERR_NONE;
             me->msgId           = 0;
-            me->cliEvtSrc       = _CB_NoRoute;
-            me->cliEvtDst       = _CB_NoRoute;
-            me->msgRoute        = _CB_NoRoute;
-            me->msgPayloadName  = _CBNoMsg;
+            me->cliEvtSrc       = _DC3_NoRoute;
+            me->cliEvtDst       = _DC3_NoRoute;
+            me->msgRoute        = _DC3_NoRoute;
+            me->msgPayloadName  = _DC3NoMsg;
             me->msgReqProg      = false;
 
             memset(&me->basicMsg, 0, sizeof(me->basicMsg));
@@ -399,7 +399,7 @@ static QState CommMgr_Idle(CommMgr * const me, QEvt const * const e) {
                 (char *)((LrgDataEvt const *) e)->dataBuf,
                 ((LrgDataEvt const *) e)->dataLen,
                 (char *)cliEvt->dataBuf,
-                CB_MAX_MSG_LEN
+                DC3_MAX_MSG_LEN
             );
 
             cliEvt->src = ((LrgDataEvt const *) e)->src;
@@ -417,7 +417,7 @@ static QState CommMgr_Idle(CommMgr * const me, QEvt const * const e) {
         case CLI_RECEIVED_SIG: {
             /* Extract the basicMsg first */
             memset(&(me->basicMsg), 0, sizeof(me->basicMsg));
-            me->basicMsgOffset = CBBasicMsg_read_delimited_from(
+            me->basicMsgOffset = DC3BasicMsg_read_delimited_from(
                 (void*)((LrgDataEvt const *) e)->dataBuf,
                 &(me->basicMsg),
                 0
@@ -438,39 +438,39 @@ static QState CommMgr_Idle(CommMgr * const me, QEvt const * const e) {
             /* Extract the payload (if exists) since this buffer is going away the moment we get
              * into a state.  We'll figure out later if it's valid, right before we send an Ack */
             switch( me->msgPayloadName ) {
-                case _CBNoMsg:
+                case _DC3NoMsg:
                     DBG_printf("No payload detected\n");
                     break;
-                case _CBStatusPayloadMsg:
+                case _DC3StatusPayloadMsg:
                     WRN_printf("Status payload detected, this is probably an error\n");
                     break;
-                case _CBVersionPayloadMsg:
+                case _DC3VersionPayloadMsg:
                     WRN_printf("Version payload detected, this is probably an error\n");
                     break;
-                case _CBBootModePayloadMsg:
+                case _DC3BootModePayloadMsg:
                     DBG_printf("BootMode payload detected\n");
-                    CBBootModePayloadMsg_read_delimited_from(
+                    DC3BootModePayloadMsg_read_delimited_from(
                         ((LrgDataEvt *) e)->dataBuf,
                         &(me->payloadMsgUnion.bootmodePayload),
                         me->basicMsgOffset
                     );
                     break;
-                case _CBFlashMetaPayloadMsg:
-                    CBFlashMetaPayloadMsg_read_delimited_from(
+                case _DC3FlashMetaPayloadMsg:
+                    DC3FlashMetaPayloadMsg_read_delimited_from(
                         ((LrgDataEvt *) e)->dataBuf,
                         &(me->payloadMsgUnion.flashMetaPayload),
                         me->basicMsgOffset
                     );
                     break;
-                case _CBFlashDataPayloadMsg:
-                    CBFlashDataPayloadMsg_read_delimited_from(
+                case _DC3FlashDataPayloadMsg:
+                    DC3FlashDataPayloadMsg_read_delimited_from(
                         ((LrgDataEvt *) e)->dataBuf,
                         &(me->payloadMsgUnion.flashDataPayload),
                         me->basicMsgOffset
                     );
                     break;
-                case _CBI2CDataPayloadMsg:
-                    CBI2CDataPayloadMsg_read_delimited_from(
+                case _DC3I2CDataPayloadMsg:
+                    DC3I2CDataPayloadMsg_read_delimited_from(
                         ((LrgDataEvt *) e)->dataBuf,
                         &(me->payloadMsgUnion.i2cDataPayload),
                         me->basicMsgOffset
@@ -520,8 +520,8 @@ static QState CommMgr_Busy(CommMgr * const me, QEvt const * const e) {
 
             /* Compose and send Ack response.  We can re-use the current structure since only
              * one non-essential field changes. */
-            me->basicMsg._msgType    = _CB_Ack;
-            me->basicMsg._msgPayload = _CBNoMsg; // This was saved earlier
+            me->basicMsg._msgType    = _DC3_Ack;
+            me->basicMsg._msgPayload = _DC3NoMsg; // This was saved earlier
             /* The rest of the fields are the same */
 
             /* Serialize the msg into a buffer of a fresh event. This event will be passed to
@@ -531,7 +531,7 @@ static QState CommMgr_Busy(CommMgr * const me, QEvt const * const e) {
              * to where it originally came from. */
             evt->dst = me->cliEvtSrc;
             evt->src = me->cliEvtDst;
-            evt->dataLen = CBBasicMsg_write_delimited_to(&(me->basicMsg), evt->dataBuf, 0);
+            evt->dataLen = DC3BasicMsg_write_delimited_to(&(me->basicMsg), evt->dataBuf, 0);
             me->errorCode = Comm_sendToClient( evt );
             if ( ERR_NONE != me->errorCode ) {
                 WRN_printf("Possible error sending Ack, attempting to continue. Error: 0x%08x\n", me->errorCode);
@@ -544,7 +544,7 @@ static QState CommMgr_Busy(CommMgr * const me, QEvt const * const e) {
             QTimeEvt_disarm(&me->commMgrTimerEvt);                 /* Disarm timer on exit */
 
             /* Set the fields of the msg common for all Done msgs regardless of status or msg */
-            me->basicMsg._msgType    = _CB_Done;
+            me->basicMsg._msgType    = _DC3_Done;
             me->basicMsg._msgRoute   = me->msgRoute;
             me->basicMsg._msgID      = me->msgId;
             me->basicMsg._msgReqProg = (unsigned long)me->msgReqProg;
@@ -552,71 +552,71 @@ static QState CommMgr_Busy(CommMgr * const me, QEvt const * const e) {
             /* The command specific fields should have already been set up by their respective
              * exit transitions */
             LrgDataEvt *evt = Q_NEW(LrgDataEvt, CLI_SEND_DATA_SIG);
-            evt->dataLen = CBBasicMsg_write_delimited_to(&me->basicMsg, evt->dataBuf, 0);
+            evt->dataLen = DC3BasicMsg_write_delimited_to(&me->basicMsg, evt->dataBuf, 0);
             /* The src and dst are swapped on purpose since we have to tell the message to go
              * to where it originally came from. */
             evt->dst = me->cliEvtSrc;
             evt->src = me->cliEvtDst;
-            evt->dataLen = CBBasicMsg_write_delimited_to(&(me->basicMsg), evt->dataBuf, 0);
+            evt->dataLen = DC3BasicMsg_write_delimited_to(&(me->basicMsg), evt->dataBuf, 0);
 
             /* Append payload msg if needed */
             switch( me->msgPayloadName ) {
-                case _CBStatusPayloadMsg:
-                    evt->dataLen = CBStatusPayloadMsg_write_delimited_to(
+                case _DC3StatusPayloadMsg:
+                    evt->dataLen = DC3StatusPayloadMsg_write_delimited_to(
                         (void*)&(me->payloadMsgUnion.statusPayload),
                         evt->dataBuf,
                         evt->dataLen
                     );
                     break;
-                case _CBVersionPayloadMsg:
+                case _DC3VersionPayloadMsg:
                     DBG_printf("Sending version payload\n");
-                    evt->dataLen = CBVersionPayloadMsg_write_delimited_to(
+                    evt->dataLen = DC3VersionPayloadMsg_write_delimited_to(
                         (void*)&(me->payloadMsgUnion.versionPayload),
                         evt->dataBuf,
                         evt->dataLen
                     );
                     break;
-                case _CBBootModePayloadMsg:
+                case _DC3BootModePayloadMsg:
                     DBG_printf("Sending bootMode payload\n");
-                    evt->dataLen = CBBootModePayloadMsg_write_delimited_to(
+                    evt->dataLen = DC3BootModePayloadMsg_write_delimited_to(
                         (void*)&(me->payloadMsgUnion.bootmodePayload),
                         evt->dataBuf,
                         evt->dataLen
                     );
                     break;
-                case _CBFlashMetaPayloadMsg:
+                case _DC3FlashMetaPayloadMsg:
                     DBG_printf("Sending FlashMeta payload\n");
-                    evt->dataLen = CBFlashMetaPayloadMsg_write_delimited_to(
+                    evt->dataLen = DC3FlashMetaPayloadMsg_write_delimited_to(
                         (void*)&(me->payloadMsgUnion.flashMetaPayload),
                         evt->dataBuf,
                         evt->dataLen
                     );
                     break;
-                case _CBFlashDataPayloadMsg:
+                case _DC3FlashDataPayloadMsg:
                     DBG_printf("Sending FlashData payload\n");
-                    evt->dataLen = CBFlashDataPayloadMsg_write_delimited_to(
+                    evt->dataLen = DC3FlashDataPayloadMsg_write_delimited_to(
                         (void*)&(me->payloadMsgUnion.flashDataPayload),
                         evt->dataBuf,
                         evt->dataLen
                     );
                     break;
-                case _CBI2CDataPayloadMsg:
+                case _DC3I2CDataPayloadMsg:
                     DBG_printf("Sending I2CData payload\n");
-                    evt->dataLen = CBI2CDataPayloadMsg_write_delimited_to(
+                    evt->dataLen = DC3I2CDataPayloadMsg_write_delimited_to(
                         (void*)&(me->payloadMsgUnion.i2cDataPayload),
                         evt->dataBuf,
                         evt->dataLen
                     );
                     break;
-                case _CBRamTestPayloadMsg:
+                case _DC3RamTestPayloadMsg:
                     DBG_printf("Sending RamTest payload\n");
-                    evt->dataLen = CBRamTestPayloadMsg_write_delimited_to(
+                    evt->dataLen = DC3RamTestPayloadMsg_write_delimited_to(
                         (void*)&(me->payloadMsgUnion.ramTestPayload),
                         evt->dataBuf,
                         evt->dataLen
                     );
                     break;
-                case _CBNoMsg:
+                case _DC3NoMsg:
                     WRN_printf("Not sending payload as part of Done msg.\n");
                     break;
                 default:
@@ -706,7 +706,7 @@ static QState CommMgr_WaitForRespFromFlashMgr(CommMgr * const me, QEvt const * c
              * state to send the msg.  Here, we only set up fields that are specific to this
              * response. We can also destructively change the payload name since we are sending
              * a response right after this. */
-            me->msgPayloadName = _CBFlashMetaPayloadMsg;
+            me->msgPayloadName = _DC3FlashMetaPayloadMsg;
             me->basicMsg._msgPayload = me->msgPayloadName;
 
             /* Set up the payload msg here */
@@ -719,7 +719,7 @@ static QState CommMgr_WaitForRespFromFlashMgr(CommMgr * const me, QEvt const * c
             MEMCPY(
                 me->payloadMsgUnion.flashMetaPayload._imageDatetime,
                 ((FWMetaEvt const *)e)->imageDatetime,
-                CB_DATETIME_LEN
+                DC3_DATETIME_LEN
             );
 
             DBG_printf("Setting flash meta payload with error code: %d\n", me->payloadMsgUnion.flashMetaPayload._errorCode);
@@ -791,35 +791,35 @@ static QState CommMgr_ValidateMsg(CommMgr * const me, QEvt const * const e) {
         /* ${AOs::CommMgr::SM::Active::Busy::ValidateMsg::MSG_PROCESS} */
         case MSG_PROCESS_SIG: {
             /* ${AOs::CommMgr::SM::Active::Busy::ValidateMsg::MSG_PROCESS::[GetBootMode?]} */
-            if (_CBGetBootModeMsg == me->basicMsg._msgName) {
+            if (_DC3GetBootModeMsg == me->basicMsg._msgName) {
                 me->errorCode = ERR_NONE;
 
-                DBG_printf("_CBGetBootModeMsg decoded, attempting to decode payload (if exists)\n");
+                DBG_printf("_DC3GetBootModeMsg decoded, attempting to decode payload (if exists)\n");
 
                 /* Compose Done response.  We can re-use the current structure and it will be used by
                  * the exit action of the parent state to send the msg.  Here, we only set up fields
                  * that are specific to this response. We can also destructively change the payload
                  * name since we are sending a response right after this. */
-                me->msgPayloadName = _CBBootModePayloadMsg;
+                me->msgPayloadName = _DC3BootModePayloadMsg;
 
                 /* Don't change the basicMsg name since it should be the same in all cases. */
                 me->basicMsg._msgPayload = me->msgPayloadName;
                 me->payloadMsgUnion.bootmodePayload._errorCode = me->errorCode;
-                me->payloadMsgUnion.bootmodePayload._bootMode  = _CB_Bootloader; // This is the bootloader
+                me->payloadMsgUnion.bootmodePayload._bootMode  = _DC3_Bootloader; // This is the bootloader
                 DBG_printf("Setting bootMode payload with bootmode: %d\n", me->payloadMsgUnion.bootmodePayload._bootMode);
                 status_ = Q_TRAN(&CommMgr_Idle);
             }
             /* ${AOs::CommMgr::SM::Active::Busy::ValidateMsg::MSG_PROCESS::[SetBootMode?]} */
-            else if (_CBSetBootModeMsg == me->basicMsg._msgName) {
-                DBG_printf("_CBSetBootModeMsg decoded, attempting to decode payload (if exists)\n");
+            else if (_DC3SetBootModeMsg == me->basicMsg._msgName) {
+                DBG_printf("_DC3SetBootModeMsg decoded, attempting to decode payload (if exists)\n");
 
                 /* ${AOs::CommMgr::SM::Active::Busy::ValidateMsg::MSG_PROCESS::[SetBootMode?]::[ValidPayload?]} */
-                if (_CBBootModePayloadMsg == me->msgPayloadName) {
+                if (_DC3BootModePayloadMsg == me->msgPayloadName) {
                     /* Has to be set after checking for a valid payload */
-                    me->msgPayloadName = _CBStatusPayloadMsg;
+                    me->msgPayloadName = _DC3StatusPayloadMsg;
                     me->basicMsg._msgPayload = me->msgPayloadName;
                     /* ${AOs::CommMgr::SM::Active::Busy::ValidateMsg::MSG_PROCESS::[SetBootMode?]::[ValidPayload?]::[Application?]} */
-                    if (_CB_Application == me->payloadMsgUnion.bootmodePayload._bootMode) {
+                    if (_DC3_Application == me->payloadMsgUnion.bootmodePayload._bootMode) {
                         /* Read the application CRC */
                         uint32_t storedCRC = FLASH_readApplCRC();
                         DBG_printf("Stored CRC: 0x%08x\n", storedCRC);
@@ -872,7 +872,7 @@ static QState CommMgr_ValidateMsg(CommMgr * const me, QEvt const * const e) {
                         }
                     }
                     /* ${AOs::CommMgr::SM::Active::Busy::ValidateMsg::MSG_PROCESS::[SetBootMode?]::[ValidPayload?]::[Bootloader?]} */
-                    else if (_CB_Bootloader == me->payloadMsgUnion.bootmodePayload._bootMode) {
+                    else if (_DC3_Bootloader == me->payloadMsgUnion.bootmodePayload._bootMode) {
                         me->errorCode = ERR_NONE;
                         DBG_printf("Already in bootloader mode\n");
                         status_ = Q_TRAN(&CommMgr_Idle);
@@ -889,24 +889,24 @@ static QState CommMgr_ValidateMsg(CommMgr * const me, QEvt const * const e) {
                 /* ${AOs::CommMgr::SM::Active::Busy::ValidateMsg::MSG_PROCESS::[SetBootMode?]::[else]} */
                 else {
                     /* Has to be set after checking for a valid payload */
-                    me->msgPayloadName = _CBStatusPayloadMsg;
+                    me->msgPayloadName = _DC3StatusPayloadMsg;
                     me->basicMsg._msgPayload = me->msgPayloadName;
 
                     me->errorCode = ERR_MSG_UNEXPECTED_PAYLOAD;
                     ERR_printf(
                         "Invalid payload for SetBootMode.  Expected BootmodePayload (%d), got (%d). Error: 0x%08x\n",
-                        _CBBootModePayloadMsg, me->msgPayloadName, me->errorCode
+                        _DC3BootModePayloadMsg, me->msgPayloadName, me->errorCode
                     );
 
                     status_ = Q_TRAN(&CommMgr_Idle);
                 }
             }
             /* ${AOs::CommMgr::SM::Active::Busy::ValidateMsg::MSG_PROCESS::[Flash?]} */
-            else if (_CBFlashMsg == me->basicMsg._msgName) {
+            else if (_DC3FlashMsg == me->basicMsg._msgName) {
                 me->errorCode = ERR_NONE;
 
                 /* ${AOs::CommMgr::SM::Active::Busy::ValidateMsg::MSG_PROCESS::[Flash?]::[FlashMetaPayloa~} */
-                if (_CBFlashMetaPayloadMsg == me->msgPayloadName) {
+                if (_DC3FlashMetaPayloadMsg == me->msgPayloadName) {
                     /* The flash meta payload is the start of the FW update.  The meta payload contains
                      * all the information about the coming fw data.  We need to store this so it can be
                      * used to keep track of the FW flash process. */
@@ -932,14 +932,14 @@ static QState CommMgr_ValidateMsg(CommMgr * const me, QEvt const * const e) {
                      * the exit action of the parent state to send the msg.  Here, we only set up fields
                      * that are specific to this response. We can also destructively change the payload
                      * name since we are sending a response right after this. */
-                    me->msgPayloadName = _CBStatusPayloadMsg;
+                    me->msgPayloadName = _DC3StatusPayloadMsg;
 
                     /* Don't change the basicMsg name since it should be the same in all cases. */
                     me->basicMsg._msgPayload = me->msgPayloadName;
                     status_ = Q_TRAN(&CommMgr_WaitForRespFromFlashMgr);
                 }
                 /* ${AOs::CommMgr::SM::Active::Busy::ValidateMsg::MSG_PROCESS::[Flash?]::[FlashDataPayloa~} */
-                else if (_CBFlashDataPayloadMsg == me->msgPayloadName) {
+                else if (_DC3FlashDataPayloadMsg == me->msgPayloadName) {
                     /* The flash data payload is used to transfer the FW data packets to FlashMgr AO. */
 
                     /* 1. Create a FWMetaEvt and send it along to FlashMgr AO to prep the flash */
@@ -958,7 +958,7 @@ static QState CommMgr_ValidateMsg(CommMgr * const me, QEvt const * const e) {
                      * the exit action of the parent state to send the msg.  Here, we only set up fields
                      * that are specific to this response. We can also destructively change the payload
                      * name since we are sending a response right after this. */
-                    me->msgPayloadName = _CBStatusPayloadMsg;
+                    me->msgPayloadName = _DC3StatusPayloadMsg;
 
                     /* Don't change the basicMsg name since it should be the same in all cases. */
                     me->basicMsg._msgPayload = me->msgPayloadName;
@@ -973,11 +973,11 @@ static QState CommMgr_ValidateMsg(CommMgr * const me, QEvt const * const e) {
                 }
             }
             /* ${AOs::CommMgr::SM::Active::Busy::ValidateMsg::MSG_PROCESS::[I2CRead?]} */
-            else if (_CBI2CReadMsg == me->basicMsg._msgName) {
+            else if (_DC3I2CReadMsg == me->basicMsg._msgName) {
                 /* ${AOs::CommMgr::SM::Active::Busy::ValidateMsg::MSG_PROCESS::[I2CRead?]::[ValidPayload?]} */
-                if (_CBI2CDataPayloadMsg == me->msgPayloadName) {
+                if (_DC3I2CDataPayloadMsg == me->msgPayloadName) {
                     /* Has to be set after checking for a valid payload */
-                    me->msgPayloadName = _CBI2CDataPayloadMsg;
+                    me->msgPayloadName = _DC3I2CDataPayloadMsg;
                     me->basicMsg._msgPayload = me->msgPayloadName;
 
                     /* Create the event and directly post it to the right AO. */
@@ -998,11 +998,11 @@ static QState CommMgr_ValidateMsg(CommMgr * const me, QEvt const * const e) {
                 }
             }
             /* ${AOs::CommMgr::SM::Active::Busy::ValidateMsg::MSG_PROCESS::[I2CWrite?]} */
-            else if (_CBI2CWriteMsg == me->basicMsg._msgName) {
+            else if (_DC3I2CWriteMsg == me->basicMsg._msgName) {
                 /* ${AOs::CommMgr::SM::Active::Busy::ValidateMsg::MSG_PROCESS::[I2CWrite?]::[ValidPayload?]} */
-                if (_CBI2CDataPayloadMsg == me->msgPayloadName) {
+                if (_DC3I2CDataPayloadMsg == me->msgPayloadName) {
                     /* Has to be set after checking for a valid payload */
-                    me->msgPayloadName = _CBStatusPayloadMsg;
+                    me->msgPayloadName = _DC3StatusPayloadMsg;
                     me->basicMsg._msgPayload = me->msgPayloadName;
 
                     /* Create the event and directly post it to the right AO. */
@@ -1024,7 +1024,7 @@ static QState CommMgr_ValidateMsg(CommMgr * const me, QEvt const * const e) {
                 /* ${AOs::CommMgr::SM::Active::Busy::ValidateMsg::MSG_PROCESS::[I2CWrite?]::[else]} */
                 else {
                     /* Has to be set after checking for a valid payload */
-                    me->msgPayloadName = _CBStatusPayloadMsg;
+                    me->msgPayloadName = _DC3StatusPayloadMsg;
                     me->basicMsg._msgPayload = me->msgPayloadName;
 
                     me->errorCode = ERR_MSG_UNEXPECTED_PAYLOAD;
@@ -1034,16 +1034,16 @@ static QState CommMgr_ValidateMsg(CommMgr * const me, QEvt const * const e) {
                 }
             }
             /* ${AOs::CommMgr::SM::Active::Busy::ValidateMsg::MSG_PROCESS::[RamTest?]} */
-            else if (_CBRamTestMsg == me->basicMsg._msgName) {
+            else if (_DC3RamTestMsg == me->basicMsg._msgName) {
                 me->errorCode = ERR_NONE;
 
-                DBG_printf("_CBRamTestMsg decoded, not expecting any payload\n");
+                DBG_printf("_DC3RamTestMsg decoded, not expecting any payload\n");
 
                 /* Compose Done response.  We can re-use the current structure and it will be used by
                  * the exit action of the parent state to send the msg.  Here, we only set up fields
                  * that are specific to this response. We can also destructively change the payload
                  * name since we are sending a response right after this. */
-                me->msgPayloadName = _CBRamTestPayloadMsg;
+                me->msgPayloadName = _DC3RamTestPayloadMsg;
 
                 /* Don't change the basicMsg name since it should be the same in all cases. */
                 me->basicMsg._msgPayload = me->msgPayloadName;
@@ -1065,7 +1065,7 @@ static QState CommMgr_ValidateMsg(CommMgr * const me, QEvt const * const e) {
                  * the exit action of the parent state to send the msg.  Here, we only set up fields
                  * that are specific to this response. We can also destructively change the payload
                  * name since we are sending a response right after this. */
-                me->msgPayloadName = _CBStatusPayloadMsg;
+                me->msgPayloadName = _DC3StatusPayloadMsg;
 
                 /* Don't change the basicMsg name since we don't actually know what it is but add a
                  * status payload msg to let the user know the error. */

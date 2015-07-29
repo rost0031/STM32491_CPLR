@@ -49,7 +49,7 @@
    <attribute name="dataBuf[MAX_I2C_READ_LEN]" type="uint8_t" visibility="0x01" properties="0x00">
     <documentation>/**&lt; Buffer that holds the data. */</documentation>
    </attribute>
-   <attribute name="status" type="CBErrorCode" visibility="0x01" properties="0x00">
+   <attribute name="status" type="DC3Error_t" visibility="0x01" properties="0x00">
     <documentation>/**&lt; Status of the operation */</documentation>
    </attribute>
    <attribute name="i2cDev" type="I2C_Dev_t" visibility="0x01" properties="0x00">
@@ -63,7 +63,7 @@
    <attribute name="bytes" type="uint16_t" visibility="0x01" properties="0x00">
     <documentation>/**&lt; Specify how many bytes to read */</documentation>
    </attribute>
-   <attribute name="status" type="CBErrorCode" visibility="0x01" properties="0x00">
+   <attribute name="status" type="DC3Error_t" visibility="0x01" properties="0x00">
     <documentation>/**&lt; Status of the operation */</documentation>
    </attribute>
    <attribute name="i2cDev" type="I2C_Dev_t" visibility="0x01" properties="0x00">
@@ -118,7 +118,7 @@
     <documentation>/**&lt; Keep track of the last memory location accessed.  This is for R/W operations
  * that don't fit into a single bus request */</documentation>
    </attribute>
-   <attribute name="errorCode" type="CBErrorCode" visibility="0x01" properties="0x00">
+   <attribute name="errorCode" type="DC3Error_t" visibility="0x01" properties="0x00">
     <documentation>/**&lt; Keep track of last error that occurs. */</documentation>
    </attribute>
    <attribute name="i2cDevOp" type="I2C_Operation_t" visibility="0x01" properties="0x00">
@@ -615,7 +615,7 @@ me-&gt;i2cReadDoneEvt-&gt;i2cDev = me-&gt;iDev;
 /* Use the event buffer to convert buffer and print it before using it to send the
  * response */
 uint16_t tmpLen = 0;
-CBErrorCode err = CON_hexToStr(
+DC3Error_t err = CON_hexToStr(
     ((I2CBusDataEvt const *)e)-&gt;dataBuf, // data to convert
     ((I2CBusDataEvt const *)e)-&gt;dataLen, // length of data to convert
     (char *)me-&gt;i2cReadDoneEvt-&gt;dataBuf, // where to write output
@@ -1052,7 +1052,7 @@ me-&gt;i2cDevOp   = I2C_OP_MEM_WRITE;
 /* If we are to print out the data we, need to do it before we copy it to the local
  * buffer or we'll end up losing it. */
 uint16_t tmpLen = 0;
-CBErrorCode err = CON_hexToStr(
+DC3Error_t err = CON_hexToStr(
     ((I2CWriteReqEvt const *)e)-&gt;dataBuf,// data to convert
     me-&gt;bytesTotal,                      // length of data to convert
     (char *)me-&gt;dataBuf,                 // where to write output

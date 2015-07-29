@@ -113,7 +113,7 @@ typedef struct {
     uint8_t dataBuf[MAX_I2C_READ_LEN];
 
     /**< Status of the operation */
-    CBErrorCode status;
+    DC3Error_t status;
 
     /**< Which I2C device was accessed */
     I2C_Dev_t i2cDev;
@@ -131,7 +131,7 @@ typedef struct {
     uint16_t bytes;
 
     /**< Status of the operation */
-    CBErrorCode status;
+    DC3Error_t status;
 
     /**< Which I2C device was accessed */
     I2C_Dev_t i2cDev;

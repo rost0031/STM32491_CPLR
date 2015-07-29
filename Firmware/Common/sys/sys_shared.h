@@ -50,8 +50,8 @@
      _a < _b ? _a : _b; })
 
 
-#ifndef CB_UNUSED_ARG
-#define CB_UNUSED_ARG(x) (void)x
+#ifndef DC3_UNUSED_ARG
+#define DC3_UNUSED_ARG(x) (void)x
 #endif
 /* Exported types ------------------------------------------------------------*/
 /* Exported constants --------------------------------------------------------*/

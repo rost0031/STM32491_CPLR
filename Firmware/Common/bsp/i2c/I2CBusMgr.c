@@ -87,7 +87,7 @@ typedef struct {
     QTimeEvt i2cBusSettleTimerEvt;
 
     /**< Keep track of last error that occurs. */
-    CBErrorCode errorCode;
+    DC3Error_t errorCode;
 
     /**< QPC timer Used to timeout individual I2C bus accesses. */
     QTimeEvt i2cOpTimerEvt;

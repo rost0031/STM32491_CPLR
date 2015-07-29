@@ -13,7 +13,7 @@
    <attribute name="dataLen" type="uint16_t" visibility="0x01" properties="0x00">
     <documentation>/**&lt; Length of data buffer */</documentation>
    </attribute>
-   <attribute name="dataBuf[CB_MAX_MSG_LEN]" type="uint8_t" visibility="0x01" properties="0x00">
+   <attribute name="dataBuf[DC3_MAX_MSG_LEN]" type="uint8_t" visibility="0x01" properties="0x00">
     <documentation>/**&lt; Data buffer */</documentation>
    </attribute>
    <attribute name="seqCurr" type="uint16_t" visibility="0x01" properties="0x00">
@@ -28,7 +28,7 @@
    <attribute name="imageSize" type="uint32_t" visibility="0x01" properties="0x00">
     <documentation>/**&lt; FW image size */</documentation>
    </attribute>
-   <attribute name="imageType" type="CBBootMode" visibility="0x01" properties="0x00">
+   <attribute name="imageType" type="DC3BootMode" visibility="0x01" properties="0x00">
     <documentation>/**&lt; FW image type */</documentation>
    </attribute>
    <attribute name="imageMaj" type="uint8_t" visibility="0x01" properties="0x00">
@@ -37,13 +37,13 @@
    <attribute name="imageMin" type="uint8_t" visibility="0x01" properties="0x00">
     <documentation>/**&lt; FW image minor version number */</documentation>
    </attribute>
-   <attribute name="imageDatetime[CB_DATETIME_LEN]" type="uint8_t" visibility="0x01" properties="0x00">
+   <attribute name="imageDatetime[DC3_DATETIME_LEN]" type="uint8_t" visibility="0x01" properties="0x00">
     <documentation>/**&lt; FW image datetime */</documentation>
    </attribute>
    <attribute name="imageDatetimeLen" type="uint8_t" visibility="0x01" properties="0x00">
     <documentation>/**&lt; FW image datetime length */</documentation>
    </attribute>
-   <attribute name="errorCode" type="CBErrorCode" visibility="0x01" properties="0x00">
+   <attribute name="errorCode" type="DC3Error_t" visibility="0x01" properties="0x00">
     <documentation>/**&lt; Status of the FW flash completion.  Only used when sending back from FlashMgr */</documentation>
    </attribute>
    <attribute name="imageNumPackets" type="uint16_t" visibility="0x01" properties="0x00">
@@ -52,16 +52,16 @@
   </class>
   <class name="FlashStatusEvt" superclass="qpc::QEvt">
    <documentation>/**&lt; Event type that transports metadata about the FW upgrade */</documentation>
-   <attribute name="errorCode" type="CBErrorCode" visibility="0x01" properties="0x00">
+   <attribute name="errorCode" type="DC3Error_t" visibility="0x01" properties="0x00">
     <documentation>/**&lt; Status of the FlashMgr operation completion. */</documentation>
    </attribute>
   </class>
   <class name="RamStatusEvt" superclass="qpc::QEvt">
    <documentation>/**&lt; Event type that transports data about the RAM test */</documentation>
-   <attribute name="errorCode" type="CBErrorCode" visibility="0x01" properties="0x00">
+   <attribute name="errorCode" type="DC3Error_t" visibility="0x01" properties="0x00">
     <documentation>/**&lt; Status of the RAM operation. */</documentation>
    </attribute>
-   <attribute name="test" type="CBRamTest_t" visibility="0x01" properties="0x00">
+   <attribute name="test" type="DC3RamTest_t" visibility="0x01" properties="0x00">
     <documentation>/**&lt; Which test is running if no error or failed if error. */</documentation>
    </attribute>
    <attribute name="addr" type="uint32_t" visibility="0x01" properties="0x00">
@@ -74,17 +74,17 @@
    <documentation>/**
  * \brief FlashMgr &quot;class&quot;
  */</documentation>
-   <attribute name="msgRoute" type="CBMsgRoute" visibility="0x01" properties="0x00">
+   <attribute name="msgRoute" type="DC3MsgRoute" visibility="0x01" properties="0x00">
     <documentation>/**&lt; Keeps track of where the message came from */</documentation>
    </attribute>
    <attribute name="reqProg" type="bool" visibility="0x01" properties="0x00">
     <documentation>/**&lt; Keep track of whether Prog responses were requested by the sender of the msg */</documentation>
    </attribute>
-   <attribute name="errorCode" type="CBErrorCode" visibility="0x01" properties="0x00">
+   <attribute name="errorCode" type="DC3Error_t" visibility="0x01" properties="0x00">
     <documentation>/**&lt; Keep track of errors that may occur in the AO */</documentation>
    </attribute>
-   <attribute name="fwFlashMetadata" type="struct CBFlashMetaPayloadMsg" visibility="0x01" properties="0x00">
-    <documentation>/**&lt; Common struct for CBBasicMsg.  This can be re-used in most cases since once the
+   <attribute name="fwFlashMetadata" type="struct DC3FlashMetaPayloadMsg" visibility="0x01" properties="0x00">
+    <documentation>/**&lt; Common struct for DC3BasicMsg.  This can be re-used in most cases since once the
  * request has been unwrapped, all the data from that struct has been stored locally */</documentation>
    </attribute>
    <attribute name="fwPacketExp" type="uint16_t" visibility="0x01" properties="0x00">
@@ -123,7 +123,7 @@
    <attribute name="ramTimerEvt" type="QTimeEvt" visibility="0x01" properties="0x00">
     <documentation>/**&lt; Used for timing out the Ram test in case it gets stuck for some reason. */</documentation>
    </attribute>
-   <attribute name="currRamTest" type="CBRamTest_t" visibility="0x01" properties="0x00">
+   <attribute name="currRamTest" type="DC3RamTest_t" visibility="0x01" properties="0x00">
     <documentation>/**&lt; Which test is running. */</documentation>
    </attribute>
    <attribute name="currRamAddr" type="__IO uint32_t" visibility="0x01" properties="0x00">
@@ -200,11 +200,11 @@ QTimeEvt_disarm(&amp;me-&gt;ramTimerEvt);</entry>
       <entry>/* Clear out all the variables on entry to Idle state.  By this point, any error
  * feedback should have already happened. */
 me-&gt;errorCode       = ERR_NONE;
-me-&gt;msgRoute        = _CB_NoRoute;
+me-&gt;msgRoute        = _DC3_NoRoute;
 me-&gt;reqProg         = false;
 
 memset(&amp;me-&gt;fwFlashMetadata, 0, sizeof(me-&gt;fwFlashMetadata));
-me-&gt;currRamTest = _CB_RAM_TEST_NONE;
+me-&gt;currRamTest = _DC3_RAM_TEST_NONE;
 me-&gt;currRamAddr = 0;</entry>
       <tran trig="FLASH_OP_START" target="../../1/2">
        <action>DBG_printf(&quot;FLASH_OP_START\n&quot;);
@@ -329,7 +329,7 @@ me-&gt;errorCode = FLASH_getSectorsToErase(
 );
 
 /* Set the start address which will get used later when the fw packets start coming in*/
-if (me-&gt;fwFlashMetadata._imageType == _CB_Application ) {
+if (me-&gt;fwFlashMetadata._imageType == _DC3_Application ) {
     me-&gt;flashAddrCurr = FLASH_APPL_START_ADDR;
     me-&gt;fwPacketExp   = me-&gt;fwFlashMetadata._imageNumPackets;
     DBG_printf(&quot;Expecting %d FW data packets\n&quot;, me-&gt;fwPacketExp);
@@ -569,7 +569,7 @@ QTimeEvt_rearm(                         /* Re-arm timer on entry */
 );
 
 uint16_t bytesWritten = 0;
-CBErrorCode err = FLASH_writeBuffer(
+DC3Error_t err = FLASH_writeBuffer(
       me-&gt;flashAddrCurr,
       me-&gt;fwDataToFlash,
       me-&gt;fwDataToFlashLen,
@@ -778,7 +778,7 @@ QACTIVE_POST(AO_CommMgr, (QEvt *)(evt), AO_FlashMgr);</exit>
  * @return status: QState type that specifies where the state
  * machine is going next.
  */</documentation>
-       <entry>me-&gt;currRamTest = _CB_RAM_TEST_ADDR_BUS;
+       <entry>me-&gt;currRamTest = _DC3_RAM_TEST_ADDR_BUS;
 me-&gt;currRamAddr = 0;
 me-&gt;errorCode = ERR_SDRAM_ADDR_BUS_TEST_TIMEOUT;
 
@@ -822,7 +822,7 @@ ERR_printf(
  * @return status: QState type that specifies where the state
  * machine is going next.
  */</documentation>
-       <entry>me-&gt;currRamTest = _CB_RAM_TEST_DEV_INT;
+       <entry>me-&gt;currRamTest = _DC3_RAM_TEST_DEV_INT;
 me-&gt;currRamAddr = 0;
 me-&gt;errorCode = ERR_SDRAM_DEVICE_INTEGRITY_TEST_TIMEOUT;
 
@@ -867,7 +867,7 @@ ERR_printf(
  * @return status: QState type that specifies where the state
  * machine is going next.
  */</documentation>
-       <entry>me-&gt;currRamTest = _CB_RAM_TEST_DATA_BUS;
+       <entry>me-&gt;currRamTest = _DC3_RAM_TEST_DATA_BUS;
 me-&gt;currRamAddr = 0;
 me-&gt;errorCode = ERR_SDRAM_DATA_BUS_TEST_TIMEOUT;
 
@@ -875,7 +875,7 @@ QEvt *evt = Q_NEW(QEvt, RAM_OP_START_SIG);
 QACTIVE_POST(AO_FlashMgr, (QEvt *)(evt), AO_FlashMgr);
 </entry>
        <tran trig="RAM_OP_START">
-        <action>me-&gt;currRamTest = _CB_RAM_TEST_DATA_BUS;
+        <action>me-&gt;currRamTest = _DC3_RAM_TEST_DATA_BUS;
 me-&gt;currRamAddr = SDRAM_testDataBus( 0 );</action>
         <choice target="../../../1">
          <guard>else</guard>
@@ -1016,8 +1016,8 @@ $define(AOs::FlashMgr)
 
 /* Includes ------------------------------------------------------------------*/
 #include &quot;qp_port.h&quot;                                        /* for QP support */
-#include &quot;CBCommApi.h&quot;               /* For API for communicating with client */
-#include &quot;CBSignals.h&quot;              /* For QP signals available to the system */
+#include &quot;DC3CommApi.h&quot;              /* For API for communicating with client */
+#include &quot;DC3Signals.h&quot;             /* For QP signals available to the system */
 
 /* Exported defines ----------------------------------------------------------*/
 /* Exported macros -----------------------------------------------------------*/

@@ -18,7 +18,7 @@
 #include "Shared.h"
 #include "project_includes.h"
 //#include "flash_info.h"
-#include "CBCommApi.h"
+#include "DC3CommApi.h"
 
 /* Exported defines ----------------------------------------------------------*/
 /* These defines specify where the various flash regions start and end on the
@@ -41,7 +41,7 @@
 #define FLASH_APPL_MIN_VER_LEN            1
 
 #define FLASH_APPL_BUILD_DATETIME_ADDR    ((uint32_t)0x081FFFEC)
-#define FLASH_APPL_BUILD_DATETIME_LEN     CB_DATETIME_LEN
+#define FLASH_APPL_BUILD_DATETIME_LEN     DC3_DATETIME_LEN
 
 #define FLASH_APPL_SIZE_ADDR              ((uint32_t)0x081FFFE0)
 #define FLASH_APPL_SIZE_LEN               4
@@ -96,19 +96,19 @@
  * found.
  * @param [in] sectorArraySize: const uint8_t size of sectorArrayLoc buffer.
  * This is for sanity checking.
- * @param [in] flashImageLoc: const CBBootMode that specifies which flash area
+ * @param [in] flashImageLoc: const DC3BootMode that specifies which flash area
  * to find sectors to erase for.
  * @param [in] flashImageSize: const uint32_t that specifies the size of the FW
  * image.
- * @return  CBErrorCode status:
+ * @return  DC3Error_t status:
  *    @arg  ERR_NONE: success
  *    @arg  other error codes if error occurred
  */
-const CBErrorCode FLASH_getSectorsToErase(
+const DC3Error_t FLASH_getSectorsToErase(
       uint32_t *sectorArrayLoc,
       uint8_t *nSectors,
       const uint8_t sectorArraySize,
-      const CBBootMode flashImageLoc,
+      const DC3BootMode flashImageLoc,
       const uint32_t flashImageSize
 );
 
@@ -116,22 +116,22 @@ const CBErrorCode FLASH_getSectorsToErase(
  * @brief   Erase flash section reserved for the specified FW image.
  * @param [in] sectorAddr: const uint32_t sector base address that specifies
  * which sector to erase.
- * @return	CBErrorCode status:
+ * @return	DC3Error_t status:
  *    @arg  ERR_NONE: success
  * 	@arg  other error codes if error occurred
  */
-const CBErrorCode FLASH_eraseSector( const uint32_t sectorAddr );
+const DC3Error_t FLASH_eraseSector( const uint32_t sectorAddr );
 
 /**
  * @brief   Validate FW image metadata.
- * @param [in] *fwMetadata: const const struct CBFlashMetaPayloadMsg const pointer
+ * @param [in] *fwMetadata: const const struct DC3FlashMetaPayloadMsg const pointer
  * to the fw image metadata.
- * @return  CBErrorCode status:
+ * @return  DC3Error_t status:
  *    @arg  ERR_NONE: success
  *    @arg  other error codes if error occurred
  */
-const CBErrorCode FLASH_validateMetadata(
-      const struct CBFlashMetaPayloadMsg const *fwMetadata
+const DC3Error_t FLASH_validateMetadata(
+      const struct DC3FlashMetaPayloadMsg const *fwMetadata
 );
 
 /**
@@ -143,11 +143,11 @@ const CBErrorCode FLASH_validateMetadata(
  * written to flash.
  * @param [out] *bytesWritten: uint16_t pointer to how many bytes were actually
  * written.
- * @return  CBErrorCode status:
+ * @return  DC3Error_t status:
  *    @arg  ERR_NONE: success
  *    @arg  other error codes if error occurred
  */
-const CBErrorCode FLASH_writeBuffer(
+const DC3Error_t FLASH_writeBuffer(
       const uint32_t startAddr,
       const uint8_t *buffer,
       const uint16_t size,
@@ -165,11 +165,11 @@ const uint32_t FLASH_readApplCRC( void );
 /**
  * @brief   Write the application CRC to the very end of the Application flash.
  * @param	crc: uint32_t crc that is to be written
- * @return  CBErrorCode status:
+ * @return  DC3Error_t status:
  *    @arg  ERR_NONE: success
  *    @arg  other error codes if error occurred
  */
-const CBErrorCode FLASH_writeApplCRC( const uint32_t crc );
+const DC3Error_t FLASH_writeApplCRC( const uint32_t crc );
 
 /**
  * @brief   Read the size stored at the very end of the Application flash.
@@ -181,11 +181,11 @@ const uint32_t FLASH_readApplSize( void );
 /**
  * @brief   Write the application size to the very end of the Application flash.
  * @param [in] size: const uint32_t size that is to be written
- * @return  CBErrorCode status:
+ * @return  DC3Error_t status:
  *    @arg  ERR_NONE: success
  *    @arg  other error codes if error occurred
  */
-const CBErrorCode FLASH_writeApplSize( const uint32_t size );
+const DC3Error_t FLASH_writeApplSize( const uint32_t size );
 
 /**
  * @brief   Read the major version stored at the very end of the Application flash.
@@ -198,11 +198,11 @@ const uint8_t FLASH_readApplMajVer( void );
  * @brief   Write the application major version to the very end of the
  * Application flash.
  * @param [in] maj: const uint8_t major version that is to be written
- * @return  CBErrorCode status:
+ * @return  DC3Error_t status:
  *    @arg  ERR_NONE: success
  *    @arg  other error codes if error occurred
  */
-const CBErrorCode FLASH_writeApplMajVer( const uint8_t maj );
+const DC3Error_t FLASH_writeApplMajVer( const uint8_t maj );
 
 /**
  * @brief   Read the minor version stored at the very end of the Application flash.
@@ -215,11 +215,11 @@ const uint8_t FLASH_readApplMinVer( void );
  * @brief   Write the application minor version to the very end of the
  * Application flash.
  * @param [in] maj: const uint8_t minor version that is to be written
- * @return  CBErrorCode status:
+ * @return  DC3Error_t status:
  *    @arg  ERR_NONE: success
  *    @arg  other error codes if error occurred
  */
-const CBErrorCode FLASH_writeApplMinVer( const uint8_t maj );
+const DC3Error_t FLASH_writeApplMinVer( const uint8_t maj );
 
 /**
  * @brief   Read the build datetime stored at the very end of the Application flash.
@@ -228,11 +228,11 @@ const CBErrorCode FLASH_writeApplMinVer( const uint8_t maj );
  * @param [in] bufferSize: const uint8_t size of the buffer.
  *    @note: This buffer should be at minimum 14 (FLASH_APPL_BUILD_DATETIME_LEN)
  *    bytes.
- * @return  CBErrorCode status:
+ * @return  DC3Error_t status:
  *    @arg  ERR_NONE: success
  *    @arg  other error codes if error occurred
  */
-const CBErrorCode FLASH_readApplBuildDatetime(
+const DC3Error_t FLASH_readApplBuildDatetime(
       uint8_t *buffer,
       const uint8_t bufferSize
 );
@@ -244,11 +244,11 @@ const CBErrorCode FLASH_readApplBuildDatetime(
  * @param [in] bufferSize: const uint8_t size of the buffer.
  *    @note: This buffer should be at minimum 14 (FLASH_APPL_BUILD_DATETIME_LEN)
  *    bytes.
- * @return  CBErrorCode status:
+ * @return  DC3Error_t status:
  *    @arg  ERR_NONE: success
  *    @arg  other error codes if error occurred
  */
-const CBErrorCode FLASH_writeApplBuildDatetime(
+const DC3Error_t FLASH_writeApplBuildDatetime(
       const uint8_t *buffer,
       const uint8_t bufferSize
 );

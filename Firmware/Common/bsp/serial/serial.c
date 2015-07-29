@@ -24,7 +24,7 @@
 #include "base64_wrapper.h"
 #include <stdio.h>
 #include "qp_port.h"                                        /* for QP support */
-#include "CBSignals.h"
+#include "DC3Signals.h"
 #include "bsp.h"
 #include "SerialMgr.h"
 
@@ -50,8 +50,8 @@ DBG_DEFINE_THIS_MODULE( DBG_MODL_SERIAL ); /* For debug system to ID this module
 /**
  * @brief Buffers for Serial interfaces
  */
-static char          Uart1TxBuffer[CB_MAX_MSG_LEN];
-static char          Uart1RxBuffer[CB_MAX_MSG_LEN];
+static char          Uart1TxBuffer[DC3_MAX_MSG_LEN];
+static char          Uart1RxBuffer[DC3_MAX_MSG_LEN];
 /**
  * @brief An internal array of structures that holds almost all the settings for
  * the all serial ports used in the system.
@@ -200,7 +200,7 @@ void Serial_DMAConfig(
       uint16_t wBufferLen
 )
 {
-   assert(wBufferLen <= CB_MAX_MSG_LEN);
+   assert(wBufferLen <= DC3_MAX_MSG_LEN);
 
    /* Enable the DMA clock */
    RCC_AHB1PeriphClockCmd( a_UARTDMASettings[serial_port].dma_clk, ENABLE );
@@ -253,19 +253,19 @@ void Serial_DMAStartXfer(
 }
 
 /******************************************************************************/
-CBErrorCode Serial_sendBase64Enc(
+DC3Error_t Serial_sendBase64Enc(
       const uint8_t *dataBuf,
       const uint16_t dataLen,
       const SerialPort_T serPort,
       const DevAccess_t devAcc
 )
 {
-   uint8_t encDataBuf[CB_MAX_MSG_LEN];
+   uint8_t encDataBuf[DC3_MAX_MSG_LEN];
    uint16_t encDataLen = base64_encode(
          (char *)dataBuf,
          dataLen,
          (char *)encDataBuf,
-         CB_MAX_MSG_LEN
+         DC3_MAX_MSG_LEN
    );
 
    if(encDataLen < 1) {
@@ -278,14 +278,14 @@ CBErrorCode Serial_sendBase64Enc(
 }
 
 /******************************************************************************/
-CBErrorCode Serial_sendRaw(
+DC3Error_t Serial_sendRaw(
       const uint8_t const *dataBuf,
       const uint16_t dataLen,
       const SerialPort_T serPort,
       const DevAccess_t devAcc
 )
 {
-   if ( dataLen >= CB_MAX_MSG_LEN ) {                     /* Check the length */
+   if ( dataLen >= DC3_MAX_MSG_LEN ) {                     /* Check the length */
       return ERR_SERIAL_MSG_TOO_LONG;
    }
 
@@ -301,8 +301,8 @@ CBErrorCode Serial_sendRaw(
       /* 2. Fill the msg payload with the message */
       MEMCPY(evt->dataBuf, dataBuf, dataLen);
       evt->dataLen = dataLen;
-      evt->dst = _CB_NoRoute;
-      evt->src = _CB_Serial;                    /* Serial only sent from here */
+      evt->dst = _DC3_NoRoute;
+      evt->src = _DC3_Serial;                    /* Serial only sent from here */
 
       /* 3. Directly post to the LWIPMgr AO. */
       QACTIVE_POST(
@@ -377,7 +377,7 @@ inline void Serial_UART1Callback(void)
                a_UARTSettings[SERIAL_UART1].indexRX
          );
          menuEvt->bufferLen = a_UARTSettings[SERIAL_UART1].indexRX;
-         menuEvt->msgSrc = _CB_Serial;
+         menuEvt->msgSrc = _DC3_Serial;
 
          /* 3. Publish the newly created event to current AO */
          QF_PUBLISH( (QEvent *)menuEvt, AO_SerialMgr );
@@ -393,8 +393,8 @@ inline void Serial_UART1Callback(void)
                a_UARTSettings[SERIAL_UART1].indexRX
          );
          msgEvt->dataLen = a_UARTSettings[SERIAL_UART1].indexRX;
-         msgEvt->src = _CB_Serial;
-         msgEvt->dst = _CB_Serial;
+         msgEvt->src = _DC3_Serial;
+         msgEvt->dst = _DC3_Serial;
 
          /* 3.Publish the newly created event */
          QF_PUBLISH((QEvent *)msgEvt, AO_SerialMgr);
@@ -404,10 +404,10 @@ inline void Serial_UART1Callback(void)
          /* If a linefeed is received, toss it out. */
          data = 0;
       } else {
-         if ( a_UARTSettings[SERIAL_UART1].indexRX >= CB_MAX_MSG_LEN ) {
+         if ( a_UARTSettings[SERIAL_UART1].indexRX >= DC3_MAX_MSG_LEN ) {
             WRN_printf(
                   "Attempting to RX a serial msg over %d bytes which will overrun the buffer. Ignoring\n",
-                  CB_MAX_MSG_LEN
+                  DC3_MAX_MSG_LEN
             );
             a_UARTSettings[SERIAL_UART1].indexRX = 0;       /* Reset the RX buffer */
          } else {

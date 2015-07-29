@@ -97,9 +97,9 @@ const char* const DB_elemToStr( const DB_Elem_t elem )
 }
 
 /******************************************************************************/
-const CBErrorCode DB_isValid( const AccessType_t accessType )
+const DC3Error_t DB_isValid( const AccessType_t accessType )
 {
-   CBErrorCode status = ERR_NONE;            /* keep track of success/failure */
+   DC3Error_t status = ERR_NONE;            /* keep track of success/failure */
 
    uint32_t db_magicWord = 0;
    status = DB_getElemBLK(
@@ -155,9 +155,9 @@ DB_isValid_ERR_HANDLE:            /* Handle any error that may have occurred. */
 }
 
 /******************************************************************************/
-const CBErrorCode DB_initToDefault( const AccessType_t accessType )
+const DC3Error_t DB_initToDefault( const AccessType_t accessType )
 {
-   CBErrorCode status = ERR_NONE;            /* keep track of success/failure */
+   DC3Error_t status = ERR_NONE;            /* keep track of success/failure */
 
    switch( accessType ) {
       case ACCESS_BARE_METAL:
@@ -221,14 +221,14 @@ DB_initToDefault_ERR_HANDLE:      /* Handle any error that may have occurred. */
 }
 
 /******************************************************************************/
-const CBErrorCode DB_getElemBLK(
+const DC3Error_t DB_getElemBLK(
       const DB_Elem_t elem,
       uint8_t* pBuffer,
       const size_t bufSize,
       const AccessType_t accessType
 )
 {
-   CBErrorCode status = ERR_NONE;            /* keep track of success/failure */
+   DC3Error_t status = ERR_NONE;            /* keep track of success/failure */
 
    /* 1. Sanity checks of buffer sizes and memory allocations. */
    if ( bufSize < settingsDB[elem].size ) {
@@ -294,14 +294,14 @@ DB_getElemBLK_ERR_HANDLE:         /* Handle any error that may have occurred. */
 }
 
 /******************************************************************************/
-const CBErrorCode DB_setElemBLK(
+const DC3Error_t DB_setElemBLK(
       const DB_Elem_t elem,
       const uint8_t* const pBuffer,
       const size_t bufSize,
       const AccessType_t accessType
 )
 {
-   CBErrorCode status = ERR_NONE; /* keep track of success/failure of operations. */
+   DC3Error_t status = ERR_NONE; /* keep track of success/failure of operations. */
 
    /* 1. Sanity checks of buffer sizes and memory allocations. */
    if ( bufSize > settingsDB[elem].size ) {
@@ -381,7 +381,7 @@ const I2C_Dev_t DB_getI2CDev( const DB_ElemLoc_t loc )
 }
 
 /******************************************************************************/
-const CBErrorCode DB_readEEPROM(
+const DC3Error_t DB_readEEPROM(
       const DB_Elem_t elem,
       const uint8_t bufferSize,
       uint8_t* const buffer,
@@ -392,7 +392,7 @@ const CBErrorCode DB_readEEPROM(
       return( ERR_MEM_NULL_VALUE );
    }
 
-   CBErrorCode status = ERR_NONE;
+   DC3Error_t status = ERR_NONE;
 
    switch( elem ) {
       case DB_APPL_MAJ:
@@ -406,7 +406,7 @@ const CBErrorCode DB_readEEPROM(
       case DB_APPL_BUILD_DATETIME:
          status = FLASH_readApplBuildDatetime( buffer, bufferSize );
          if ( ERR_NONE == status ) {
-            *resultLen = CB_DATETIME_LEN;
+            *resultLen = DC3_DATETIME_LEN;
          } else {
             *resultLen = 0;
          }

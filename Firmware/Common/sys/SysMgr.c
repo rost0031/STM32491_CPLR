@@ -64,7 +64,7 @@ typedef struct {
     QActive super;
 
     /**< Keep track of errors that may occur in the AO */
-    CBErrorCode errorCode;
+    DC3Error_t errorCode;
 
     /**< Native QF queue for deferred request events. */
     QEQueue deferredEvtQueue;
@@ -879,9 +879,6 @@ static QState SysMgr_DBMagicWordCheck(SysMgr * const me, QEvt const * const e) {
             END_ERROR_CHECK:
             /* ${AOs::SysMgr::SM::Active::Busy::AccessingDB::DBMagicWordCheck::I2C1_DEV_READ_DO~::[NoError?]} */
             if (ERR_NONE == me->errorCode) {
-
-
-
                 status_ = Q_TRAN(&SysMgr_DBVersionCheck);
             }
             /* ${AOs::SysMgr::SM::Active::Busy::AccessingDB::DBMagicWordCheck::I2C1_DEV_READ_DO~::[else]} */

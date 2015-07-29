@@ -102,27 +102,27 @@ typedef struct {
     /**< LWIP native TCP timer.  Only exists if LWIP_TCP is defined. */
     #if LWIP_TCP
     uint32_t  tcp_tmr;
-    #endif;
+    #endif
 
     /**< LWIP native ARP timer.  Only exists if LWIP_ARP is defined. */
     #if LWIP_ARP
     uint32_t  arp_tmr;
-    #endif;
+    #endif
 
     /**< LWIP native DHCP fine timer.  Only exists if LWIP_DHCP is defined. */
     #if LWIP_DHCP
     uint32_t  dhcp_fine_tmr;
-    #endif;
+    #endif
 
     /**< LWIP native DHCP coarse timer.  Only exists if LWIP_DHCP is defined. */
     #if LWIP_DHCP
     uint32_t  dhcp_coarse_tmr;
-    #endif;
+    #endif
 
     /**< LWIP native AUTOIP coarse timer.  Only exists if LWIP_AUTOIP is defined. */
     #if LWIP_AUTOIP
     uint32_t  auto_ip_tmr;
-    #endif;
+    #endif
 
     /**< Pointer to LWIP tcp pcb struct used to keep track of TCP connection to the
          system for commands and replies. */
@@ -1097,7 +1097,7 @@ static err_t LWIP_tcpRecv(
                   p->payload,
                   ethEvt->msg_len
             );
-            ethEvt->msg_src = _CB_EthSys;
+            ethEvt->msg_src = _DC3_EthSys;
 
             /* Post directly to the "raw" queue for FreeRTOS task to read */
             QEQueue_postFIFO(&CPLR_evtQueue, (QEvt *)ethEvt);
@@ -1143,7 +1143,7 @@ static err_t LWIP_tcpRecv(
                       p->payload,
                       ethEvt->msg_len
                 );
-                ethEvt->msg_src = _CB_EthSys;
+                ethEvt->msg_src = _DC3_EthSys;
 
                 /* Post directly to the "raw" queue for FreeRTOS task to read */
                 QEQueue_postFIFO(&CPLR_evtQueue, (QEvt *)ethEvt);
@@ -1389,7 +1389,7 @@ static void LWIP_tcpError(void * arg, err_t err) {
 }
 
 /* Ethernet UDP message sender .................................................*/
-CBErrorCode ETH_SendUdp(
+DC3Error_t ETH_SendUdp(
       const uint8_t* const dataBuf,
       const uint16_t const dataLen
 )
@@ -1400,8 +1400,8 @@ CBErrorCode ETH_SendUdp(
    /* 2. Fill the msg payload with the message */
    MEMCPY(ethEvt->dataBuf, dataBuf, dataLen);
    ethEvt->dataLen = dataLen;
-   ethEvt->dst = _CB_NoRoute;
-   ethEvt->src = _CB_EthCli;                  /* UDP only sent from this port */
+   ethEvt->dst = _DC3_NoRoute;
+   ethEvt->src = _DC3_EthCli;                  /* UDP only sent from this port */
 
    /* 3. Directly post to the LWIPMgr AO. */
    QACTIVE_POST(
@@ -1427,8 +1427,8 @@ static void udp_rx_handler(
     /* 2. Fill the msg payload and get the msg source and length */
     MEMCPY(msgEvt->dataBuf, p->payload, p->len);
     msgEvt->dataLen = p->len;
-    msgEvt->src = _CB_EthCli;
-    msgEvt->dst = _CB_EthCli;
+    msgEvt->src = _DC3_EthCli;
+    msgEvt->dst = _DC3_EthCli;
 
 //    DBG_printf("Received %d bytes (%s) on UDP\n", msgEvt->dataLen, msgEvt->dataBuf);
 

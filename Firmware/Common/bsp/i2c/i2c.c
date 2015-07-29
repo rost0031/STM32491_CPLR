@@ -142,9 +142,9 @@ I2C_BusSettings_t s_I2C_Bus[MAX_I2C_BUS] =
  *    @arg 1: a 1 byte address.
  *    @arg 2: a 2 byte address.
  *    No other sizes will be handled.
- * @return error: CBErrorCode that occurred during the I2C bus calls.
+ * @return error: DC3Error_t that occurred during the I2C bus calls.
  */
-static CBErrorCode I2C_setupMemRW(
+static DC3Error_t I2C_setupMemRW(
       I2C_Bus_t iBus,
       uint8_t i2cDevAddr,
       uint16_t i2cMemAddr,
@@ -173,10 +173,10 @@ static CBErrorCode I2C_setupMemRW(
  * the target memory device since most memory devices will loop around to the
  * front of the page if you go over the page boundary.
  *
- * @return CBErrorCode: status of the read operation
+ * @return DC3Error_t: status of the read operation
  *    @arg ERR_NONE: if no errors occurred
  */
-static CBErrorCode I2C_writePageBLK(
+static DC3Error_t I2C_writePageBLK(
       const I2C_Bus_t iBus,
       const uint8_t i2cDevAddr,
       const uint16_t i2cMemAddr,
@@ -190,12 +190,12 @@ static CBErrorCode I2C_writePageBLK(
  * functions.
  * @param [in] iBus: I2C_Bus_t type specifying the I2C bus where the error occurred.
  *    @arg I2CBus1
- * @param [in] error: CBErrorCode type specifying the error that occurred.
- * @return error: CBErrorCode that occurred to cause this callback to be called.
+ * @param [in] error: DC3Error_t type specifying the error that occurred.
+ * @return error: DC3Error_t that occurred to cause this callback to be called.
  */
-static CBErrorCode I2C_TIMEOUT_UserCallbackRaw(
+static DC3Error_t I2C_TIMEOUT_UserCallbackRaw(
       I2C_Bus_t iBus,
-      CBErrorCode error,
+      DC3Error_t error,
       const char *func,
       int line
 );
@@ -531,7 +531,7 @@ char* I2C_busToStr( I2C_Bus_t iBus )
 /******************************************************************************/
 
 /******************************************************************************/
-CBErrorCode I2C_readBufferBLK(
+DC3Error_t I2C_readBufferBLK(
       const I2C_Bus_t iBus,
       const uint8_t i2cDevAddr,
       const uint16_t i2cMemAddr,
@@ -541,7 +541,7 @@ CBErrorCode I2C_readBufferBLK(
 )
 {
    /* Call the common setup for reads and writes for memory devices on I2C */
-   CBErrorCode status = I2C_setupMemRW(
+   DC3Error_t status = I2C_setupMemRW(
          iBus,
          i2cDevAddr,
          i2cMemAddr,
@@ -623,7 +623,7 @@ CBErrorCode I2C_readBufferBLK(
 }
 
 /******************************************************************************/
-CBErrorCode I2C_writeBufferBLK(
+DC3Error_t I2C_writeBufferBLK(
       const I2C_Bus_t iBus,
       const uint8_t i2cDevAddr,
       const uint16_t i2cMemAddr,
@@ -637,7 +637,7 @@ CBErrorCode I2C_writeBufferBLK(
    uint8_t writeSizeFirstPage = 0;
    uint8_t writeSizeLastPage = 0;
    uint8_t writeTotalPages = 0;
-   CBErrorCode status = I2C_calcPageWriteSizes(
+   DC3Error_t status = I2C_calcPageWriteSizes(
          &writeSizeFirstPage,
          &writeSizeLastPage,
          &writeTotalPages,
@@ -692,7 +692,7 @@ CBErrorCode I2C_writeBufferBLK(
 }
 
 /******************************************************************************/
-static CBErrorCode I2C_writePageBLK(
+static DC3Error_t I2C_writePageBLK(
       const I2C_Bus_t iBus,
       const uint8_t i2cDevAddr,
       const uint16_t i2cMemAddr,
@@ -702,7 +702,7 @@ static CBErrorCode I2C_writePageBLK(
 )
 {
    /* Call the common setup for reads and writes for memory devices on I2C */
-   CBErrorCode status = I2C_setupMemRW(
+   DC3Error_t status = I2C_setupMemRW(
          iBus,
          i2cDevAddr,
          i2cMemAddr,
@@ -754,14 +754,14 @@ static CBErrorCode I2C_writePageBLK(
 }
 
 /******************************************************************************/
-static CBErrorCode I2C_setupMemRW(
+static DC3Error_t I2C_setupMemRW(
       I2C_Bus_t iBus,
       uint8_t i2cDevAddr,
       uint16_t i2cMemAddr,
       uint8_t i2cMemAddrSize
 )
 {
-   CBErrorCode status;
+   DC3Error_t status;
 
    /*!< While the bus is busy */
    uint32_t nI2CBusTimeout = I2C_LONG_TIMEOUT;
@@ -951,9 +951,9 @@ inline void I2C1_ErrorEventCallback( void )
 }
 
 /******************************************************************************/
-static CBErrorCode I2C_TIMEOUT_UserCallbackRaw(
+static DC3Error_t I2C_TIMEOUT_UserCallbackRaw(
       I2C_Bus_t iBus,
-      CBErrorCode error,
+      DC3Error_t error,
       const char *func,
       int line
 )

@@ -18,8 +18,8 @@
 /* Includes ------------------------------------------------------------------*/
 #include "dbg_cntrl.h"
 #include "qp_port.h"                                        /* for QP support */
-#include "CBSignals.h"
-#include "CBErrors.h"
+#include "DC3Signals.h"
+#include "DC3Errors.h"
 #include "Shared.h"                                   /*  Common Declarations */
 #include "time.h"
 #include "SerialMgr.h"

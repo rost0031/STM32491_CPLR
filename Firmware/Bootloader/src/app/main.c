@@ -125,7 +125,7 @@ int main(void)
 //
 //
 //    log_slow_printf("Checking settings DB validity...\n");
-//    CBErrorCode status = DB_isValid( ACCESS_BARE_METAL );
+//    DC3Error_t status = DB_isValid( ACCESS_BARE_METAL );
 //    if ( ERR_NONE != status ) {
 //       wrn_slow_printf("Settings DB validity check returned: 0x%08x\n", status);
 //       wrn_slow_printf("Attempting to write default DB to EEPROM...\n");

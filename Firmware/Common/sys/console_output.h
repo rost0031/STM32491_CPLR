@@ -57,11 +57,11 @@
  * @note 4: don't manually set dst variable.  Instead, it should be set by the
  * requester of the menu (serial port or ethernet port).
  *
- * @param [in] dst: CBMsgRoute var that determines where the output will go
- *    @arg _CB_Serial: output to serial port.
- *    @arg _CB_EthSys: output to the ethernet system port.
- *    @arg _CB_EthLog: output to the ethernet logging port.
- *    @arg _CB_EthCli: output to the ethernet client port.
+ * @param [in] dst: DC3MsgRoute var that determines where the output will go
+ *    @arg _DC3_Serial: output to serial port.
+ *    @arg _DC3_EthSys: output to the ethernet system port.
+ *    @arg _DC3_EthLog: output to the ethernet logging port.
+ *    @arg _DC3_EthCli: output to the ethernet client port.
  *
  * @param [in] *fmt: const char pointer to the data to be printed using the
  * va_args type argument list.
@@ -72,7 +72,7 @@
  * @return None
  */
 void MENU_printf(
-      volatile CBMsgRoute dst,
+      volatile DC3MsgRoute dst,
       char *fmt,
       ...
 );
@@ -127,19 +127,19 @@ void MENU_printf(
  *   Enabled in all builds. Just the "User message here" will be printed.  This
  *   is meant to output serial menu items.
  *
- * @param [in] src: CBMsgRoute var specifying the source of the data.
- *    @arg _CB_NoRoute: no source needed
- *    @arg _CB_Serial: data is from serial port.
- *    @arg _CB_EthSys: data is from the ethernet system port.
- *    @arg _CB_EthLog: data is from the ethernet logging port.
- *    @arg _CB_EthCli: data is from the ethernet client port.
+ * @param [in] src: DC3MsgRoute var specifying the source of the data.
+ *    @arg _DC3_NoRoute: no source needed
+ *    @arg _DC3_Serial: data is from serial port.
+ *    @arg _DC3_EthSys: data is from the ethernet system port.
+ *    @arg _DC3_EthLog: data is from the ethernet logging port.
+ *    @arg _DC3_EthCli: data is from the ethernet client port.
  *
- * @param [in] dst: CBMsgRoute var specifying the destination of the data.
- *    @arg _CB_NoRoute: no source needed
- *    @arg _CB_Serial: data is to serial port.
- *    @arg _CB_EthSys: data is to the ethernet system port.
- *    @arg _CB_EthLog: data is to the ethernet logging port.
- *    @arg _CB_EthCli: data is to the ethernet client port.
+ * @param [in] dst: DC3MsgRoute var specifying the destination of the data.
+ *    @arg _DC3_NoRoute: no source needed
+ *    @arg _DC3_Serial: data is to serial port.
+ *    @arg _DC3_EthSys: data is to the ethernet system port.
+ *    @arg _DC3_EthLog: data is to the ethernet logging port.
+ *    @arg _DC3_EthCli: data is to the ethernet client port.
  *
  * @param [in] pFuncName: const char* pointer to the function name where the
  * macro was called from.
@@ -155,8 +155,8 @@ void MENU_printf(
  */
 void CON_output(
       DBG_LEVEL_T dbgLvl,
-      volatile CBMsgRoute src,
-      volatile CBMsgRoute dst,
+      volatile DC3MsgRoute src,
+      volatile DC3MsgRoute dst,
       const char *pFuncName,
       uint16_t wLineNumber,
       char *fmt,
@@ -238,9 +238,9 @@ void CON_slow_output(
  * @param [in] sep: char that will be used to separate all the printed hex numbers.
  * @param [in] bPrintX: bool that specifies whether to print 0x in front of each
  * hex number.
- * @return CBErrorCode: ERR_NONE if OK.
+ * @return DC3Error_t: ERR_NONE if OK.
  */
-CBErrorCode CON_hexToStr(
+DC3Error_t CON_hexToStr(
       const uint8_t* hexData,
       uint16_t hexDataLen,
       char* strDataBuffer,

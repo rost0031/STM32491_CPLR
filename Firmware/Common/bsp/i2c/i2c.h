@@ -41,7 +41,7 @@ extern "C" {
  * This wrapper grabs the function name and line where the callback was called
  * from an passes it to the callback.
  * @param [in] bus: I2C_Bus_t type that specifies what i2c bus the error occurred on.
- * @param [in] error: CBErrorCode that specifies the error that occurred.
+ * @param [in] error: DC3Error_t that specifies the error that occurred.
  * @return None
  */
 #define I2C_TIMEOUT_UserCallback( bus, error ) \
@@ -185,10 +185,10 @@ char* I2C_busToStr( I2C_Bus_t iBus );
  * @param [in|out] *pBuffer: uint8_t pointer to buffer where to store read data.
  * @param [in] bytesToRead : uint8_t variable specifying how many bytes to read.
  *
- * @return CBErrorCode: status of the read operation
+ * @return DC3Error_t: status of the read operation
  *    @arg ERR_NONE: if no errors occurred
  */
-CBErrorCode I2C_readBufferBLK(
+DC3Error_t I2C_readBufferBLK(
       const I2C_Bus_t iBus,
       const uint8_t i2cDevAddr,
       const uint16_t i2cMemAddr,
@@ -220,10 +220,10 @@ CBErrorCode I2C_readBufferBLK(
  * @param [in] bytesToWrite: uint8_t variable specifying how many bytes to write
  * @param [in] pageSize: uint16_t size of a single page in the device being
  * written.
- * @return CBErrorCode: status of the write operation
+ * @return DC3Error_t: status of the write operation
  *    @arg ERR_NONE: if no errors occurred
  */
-CBErrorCode I2C_writeBufferBLK( /* TODO: does this belong in i2c_dev? */
+DC3Error_t I2C_writeBufferBLK( /* TODO: does this belong in i2c_dev? */
       const I2C_Bus_t iBus,
       const uint8_t i2cDevAddr,
       const uint16_t i2cMemAddr,

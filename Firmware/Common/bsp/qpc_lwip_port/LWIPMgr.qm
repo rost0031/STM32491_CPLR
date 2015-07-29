@@ -9,13 +9,13 @@
    <documentation>/**
  * \struct Event struct type for getting data from Eth driver to LWIPMgr.
  */</documentation>
-   <attribute name="msg_src" type="CBMsgRoute" visibility="0x01" properties="0x00">
+   <attribute name="msg_src" type="DC3MsgRoute" visibility="0x01" properties="0x00">
     <documentation>/**&lt; Where the msg came from so it can be routed back to the sender. */</documentation>
    </attribute>
    <attribute name="msg_len" type="uint16_t" visibility="0x01" properties="0x00">
     <documentation>/**&lt; Length of the msg buffer. */</documentation>
    </attribute>
-   <attribute name="msg[CB_MAX_MSG_LEN]" type="char" visibility="0x01" properties="0x00">
+   <attribute name="msg[DC3_MAX_MSG_LEN]" type="char" visibility="0x01" properties="0x00">
     <documentation>/**&lt; Buffer that holds the data of the msg. */</documentation>
    </attribute>
   </class>
@@ -910,7 +910,7 @@ if (p == NULL) {
               p-&gt;payload,
               ethEvt-&gt;msg_len
         );
-        ethEvt-&gt;msg_src = _CB_EthSys;
+        ethEvt-&gt;msg_src = _DC3_EthSys;
 
         /* Post directly to the &quot;raw&quot; queue for FreeRTOS task to read */
         QEQueue_postFIFO(&amp;CPLR_evtQueue, (QEvt *)ethEvt);
@@ -956,7 +956,7 @@ if (p == NULL) {
                   p-&gt;payload,
                   ethEvt-&gt;msg_len
             );
-            ethEvt-&gt;msg_src = _CB_EthSys;
+            ethEvt-&gt;msg_src = _DC3_EthSys;
 
             /* Post directly to the &quot;raw&quot; queue for FreeRTOS task to read */
             QEQueue_postFIFO(&amp;CPLR_evtQueue, (QEvt *)ethEvt);
@@ -1207,7 +1207,7 @@ $define(AOs::LWIP_tcpClose)
 $define(AOs::LWIP_tcpError)
 
 /* Ethernet UDP message sender .................................................*/
-CBErrorCode ETH_SendUdp(
+DC3Error_t ETH_SendUdp(
       const uint8_t* const dataBuf,
       const uint16_t const dataLen
 )
@@ -1218,8 +1218,8 @@ CBErrorCode ETH_SendUdp(
    /* 2. Fill the msg payload with the message */
    MEMCPY(ethEvt-&gt;dataBuf, dataBuf, dataLen);
    ethEvt-&gt;dataLen = dataLen;
-   ethEvt-&gt;dst = _CB_NoRoute;
-   ethEvt-&gt;src = _CB_EthCli;                  /* UDP only sent from this port */
+   ethEvt-&gt;dst = _DC3_NoRoute;
+   ethEvt-&gt;src = _DC3_EthCli;                  /* UDP only sent from this port */
 
    /* 3. Directly post to the LWIPMgr AO. */
    QACTIVE_POST(
@@ -1245,8 +1245,8 @@ static void udp_rx_handler(
     /* 2. Fill the msg payload and get the msg source and length */
     MEMCPY(msgEvt-&gt;dataBuf, p-&gt;payload, p-&gt;len);
     msgEvt-&gt;dataLen = p-&gt;len;
-    msgEvt-&gt;src = _CB_EthCli;
-    msgEvt-&gt;dst = _CB_EthCli;
+    msgEvt-&gt;src = _DC3_EthCli;
+    msgEvt-&gt;dst = _DC3_EthCli;
 
 //    DBG_printf(&quot;Received %d bytes (%s) on UDP\n&quot;, msgEvt-&gt;dataLen, msgEvt-&gt;dataBuf);
 
@@ -1339,9 +1339,9 @@ $declare(AOs::AO_LWIPMgr)
  * @param [in] *dataBuf: const uint8_t pointer to the buffer of data to send.
  * @param [in]  dataLen: length of data to send.
  *
- * @return CBErrorCode: status of send
+ * @return DC3Error_t: status of send
  */
-CBErrorCode ETH_SendUdp(
+DC3Error_t ETH_SendUdp(
       const uint8_t* const dataBuf,
       const uint16_t const dataLen
 );

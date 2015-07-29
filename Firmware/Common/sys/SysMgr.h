@@ -39,8 +39,8 @@
 
 /* Includes ------------------------------------------------------------------*/
 #include "qp_port.h"                                        /* for QP support */
-#include "CBCommApi.h"               /* For API for communicating with client */
-#include "CBSignals.h"              /* For QP signals available to the system */
+#include "DC3CommApi.h"              /* For API for communicating with client */
+#include "DC3Signals.h"             /* For QP signals available to the system */
 #include "db.h"                                    /* For DB access and types */
 
 /* Exported defines ----------------------------------------------------------*/
@@ -101,7 +101,7 @@ typedef struct {
     uint8_t dataLen;
 
     /**< Status of the operation */
-    CBErrorCode status;
+    DC3Error_t status;
 } DBReadDoneEvt;
 
 /**
@@ -116,7 +116,7 @@ typedef struct {
     DB_Elem_t dbElem;
 
     /**< Status of the operation */
-    CBErrorCode status;
+    DC3Error_t status;
 } DBWriteDoneEvt;
 
 

@@ -39,8 +39,8 @@
 
 /* Includes ------------------------------------------------------------------*/
 #include "qp_port.h"                                        /* for QP support */
-#include "CBCommApi.h"               /* For API for communicating with client */
-#include "CBSignals.h"              /* For QP signals available to the system */
+#include "DC3CommApi.h"              /* For API for communicating with client */
+#include "DC3Signals.h"             /* For QP signals available to the system */
 
 /* Exported defines ----------------------------------------------------------*/
 /* Exported macros -----------------------------------------------------------*/
@@ -59,7 +59,7 @@ typedef struct {
     uint16_t dataLen;
 
     /**< Data buffer */
-    uint8_t dataBuf[CB_MAX_MSG_LEN];
+    uint8_t dataBuf[DC3_MAX_MSG_LEN];
 
     /**< FW data packet sequence number */
     uint16_t seqCurr;
@@ -78,7 +78,7 @@ typedef struct {
     uint32_t imageSize;
 
     /**< FW image type */
-    CBBootMode imageType;
+    DC3BootMode imageType;
 
     /**< FW image major version number */
     uint8_t imageMaj;
@@ -87,13 +87,13 @@ typedef struct {
     uint8_t imageMin;
 
     /**< FW image datetime */
-    uint8_t imageDatetime[CB_DATETIME_LEN];
+    uint8_t imageDatetime[DC3_DATETIME_LEN];
 
     /**< FW image datetime length */
     uint8_t imageDatetimeLen;
 
     /**< Status of the FW flash completion.  Only used when sending back from FlashMgr */
-    CBErrorCode errorCode;
+    DC3Error_t errorCode;
 
     /**< Total number of FW data packets expected */
     uint16_t imageNumPackets;
@@ -106,7 +106,7 @@ typedef struct {
     QEvt super;
 
     /**< Status of the FlashMgr operation completion. */
-    CBErrorCode errorCode;
+    DC3Error_t errorCode;
 } FlashStatusEvt;
 
 /**< Event type that transports data about the RAM test */
@@ -116,10 +116,10 @@ typedef struct {
     QEvt super;
 
     /**< Status of the RAM operation. */
-    CBErrorCode errorCode;
+    DC3Error_t errorCode;
 
     /**< Which test is running if no error or failed if error. */
-    CBRamTest_t test;
+    DC3RamTest_t test;
 
     /**< Address where the test is running if no error or failed at if error. */
     uint32_t addr;

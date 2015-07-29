@@ -75,13 +75,13 @@ typedef struct {
     QEvt super;
 
     /**< Where the msg came from so it can be routed back to the sender. */
-    CBMsgRoute msg_src;
+    DC3MsgRoute msg_src;
 
     /**< Length of the msg buffer. */
     uint16_t msg_len;
 
     /**< Buffer that holds the data of the msg. */
-    char msg[CB_MAX_MSG_LEN];
+    char msg[DC3_MAX_MSG_LEN];
 } EthEvt;
 
 
@@ -112,9 +112,9 @@ extern QActive * const AO_LWIPMgr;
  * @param [in] *dataBuf: const uint8_t pointer to the buffer of data to send.
  * @param [in]  dataLen: length of data to send.
  *
- * @return CBErrorCode: status of send
+ * @return DC3Error_t: status of send
  */
-CBErrorCode ETH_SendUdp(
+DC3Error_t ETH_SendUdp(
       const uint8_t* const dataBuf,
       const uint16_t const dataLen
 );

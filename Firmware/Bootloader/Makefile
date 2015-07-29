@@ -187,11 +187,11 @@ BSP_DIR_FOR_LWIP        = ../../bsp/runtime
 LWIP_SRC_DIR            = ../../../Bootloader/src
 
 # Coupler Board API directory
-CB_API_DIR                  = $(COMMON_CLI_SYS_DIR)/cb_api
-CB_API_GEN_SRC_DIR          = $(CB_API_DIR)/gen_src
-CB_API_SRC_DIR              = $(CB_API_DIR)/src
-CB_API_INC_DIR              = $(CB_API_DIR)/inc
-CB_API_LIB_DIR              = $(CB_API_DIR)/arm_lib
+DC3_API_DIR                  = $(COMMON_CLI_SYS_DIR)/DC3_api
+DC3_API_GEN_SRC_DIR          = $(DC3_API_DIR)/gen_src
+DC3_API_SRC_DIR              = $(DC3_API_DIR)/src
+DC3_API_INC_DIR              = $(DC3_API_DIR)/inc
+DC3_API_LIB_DIR              = $(DC3_API_DIR)/arm_lib
 
 #-------------------------------------------------------------------------------
 # Source virtual directories - this is where make will look for all files that
@@ -255,9 +255,9 @@ INCLUDES                = -I$(SRC_DIR) \
                           \
                           -I$(COMMON_FW_SYS_DIR) \
                           \
-                          -I$(CB_API_SRC_DIR) \
-                          -I$(CB_API_INC_DIR) \
-                          -I$(CB_API_GEN_SRC_DIR)
+                          -I$(DC3_API_SRC_DIR) \
+                          -I$(DC3_API_INC_DIR) \
+                          -I$(DC3_API_GEN_SRC_DIR)
                           
 #-----------------------------------------------------------------------------
 # defines
@@ -372,8 +372,8 @@ LDFLAGS  				:= -T$(LDSCRIPT)
 #
 
 # Common options for all configurations. 
-LIBS    	= -lqp_$(ARM_CORE)_cs -llwip_$(ARM_CORE)_cs -lCBCommApi_arm -lprotobuf_core_arm
-LIB_PATHS   = -L$(QP_PORT_DIR)/$(BIN_DIR) -L$(LWIP_DIR)/$(BIN_DIR) -L$(CB_API_LIB_DIR)
+LIBS    	= -lqp_$(ARM_CORE)_cs -llwip_$(ARM_CORE)_cs -lDC3CommApi_arm -lprotobuf_core_arm
+LIB_PATHS   = -L$(QP_PORT_DIR)/$(BIN_DIR) -L$(LWIP_DIR)/$(BIN_DIR) -L$(DC3_API_LIB_DIR)
 
 # Specific options depending on the build configuration
 ifeq (rel, $(CONF))       # Release configuration ............................
@@ -506,7 +506,7 @@ $(TARGET_ELF) : $(ASM_OBJS_EXT) $(C_OBJS_EXT) $(CPP_OBJS_EXT)
 	$(TRACE_FLAG)$(LINK) -T$(LD_SCRIPT) $(LINKFLAGS) $(LIB_PATHS) -o $@ $^ $(LIBS)
 	$(SIZE) $(TARGET_ELF)
 	
-build_libs: build_qpc build_lwip build_cb_api
+build_libs: build_qpc build_lwip build_DC3_api
 	@echo -----------------------------------
 	@echo --- Building libraries complete ---
 	@echo -----------------------------------
@@ -517,12 +517,12 @@ build_qpc:
 	@echo ------------------------------------------------
 	$(TRACE_FLAG)cd $(QP_PORT_DIR); make TRACE=$(TRACE) MCU=$(MCU) CONF=$(BIN_DIR)
 
-build_cb_api:
+build_DC3_api:
 	@echo ------------------------------------------------
-	@echo --- Building CB API library in $(CB_API_DIR) ---
+	@echo --- Building DC3 API library in $(DC3_API_DIR) ---
 	@echo ------------------------------------------------
-	cd $(CB_API_DIR); make TARGET=arm  MCU=$(MCU) TRACE=$(TRACE) clean
-	$(TRACE_FLAG)cd $(CB_API_DIR); make TARGET=arm  MCU=$(MCU) TRACE=$(TRACE) all
+	cd $(DC3_API_DIR); make TARGET=arm  MCU=$(MCU) TRACE=$(TRACE) clean
+	$(TRACE_FLAG)cd $(DC3_API_DIR); make TARGET=arm  MCU=$(MCU) TRACE=$(TRACE) all
 
 build_lwip:
 	@echo ------------------------------------------------

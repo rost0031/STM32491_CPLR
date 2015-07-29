@@ -57,17 +57,17 @@ typedef struct {
     QActive super;
 
     /**< Keeps track of where the message came from */
-    CBMsgRoute msgRoute;
+    DC3MsgRoute msgRoute;
 
     /**< Keep track of whether Prog responses were requested by the sender of the msg */
     bool reqProg;
 
     /**< Keep track of errors that may occur in the AO */
-    CBErrorCode errorCode;
+    DC3Error_t errorCode;
 
-    /**< Common struct for CBBasicMsg.  This can be re-used in most cases since once the
+    /**< Common struct for DC3BasicMsg.  This can be re-used in most cases since once the
      * request has been unwrapped, all the data from that struct has been stored locally */
-    struct CBFlashMetaPayloadMsg fwFlashMetadata;
+    struct DC3FlashMetaPayloadMsg fwFlashMetadata;
 
     /**< How many total FW data packets to expect */
     uint16_t fwPacketExp;
@@ -106,7 +106,7 @@ typedef struct {
     QTimeEvt ramTimerEvt;
 
     /**< Which test is running. */
-    CBRamTest_t currRamTest;
+    DC3RamTest_t currRamTest;
 
     /**< Address where the test is running if no error or failed at if error. */
     __IO uint32_t currRamAddr;
@@ -372,11 +372,11 @@ static QState FlashMgr_Idle(FlashMgr * const me, QEvt const * const e) {
             /* Clear out all the variables on entry to Idle state.  By this point, any error
              * feedback should have already happened. */
             me->errorCode       = ERR_NONE;
-            me->msgRoute        = _CB_NoRoute;
+            me->msgRoute        = _DC3_NoRoute;
             me->reqProg         = false;
 
             memset(&me->fwFlashMetadata, 0, sizeof(me->fwFlashMetadata));
-            me->currRamTest = _CB_RAM_TEST_NONE;
+            me->currRamTest = _DC3_RAM_TEST_NONE;
             me->currRamAddr = 0;
             status_ = Q_HANDLED();
             break;
@@ -538,7 +538,7 @@ static QState FlashMgr_PrepFlash(FlashMgr * const me, QEvt const * const e) {
                 );
 
                 /* Set the start address which will get used later when the fw packets start coming in*/
-                if (me->fwFlashMetadata._imageType == _CB_Application ) {
+                if (me->fwFlashMetadata._imageType == _DC3_Application ) {
                     me->flashAddrCurr = FLASH_APPL_START_ADDR;
                     me->fwPacketExp   = me->fwFlashMetadata._imageNumPackets;
                     DBG_printf("Expecting %d FW data packets\n", me->fwPacketExp);
@@ -783,7 +783,7 @@ static QState FlashMgr_WritingFlash(FlashMgr * const me, QEvt const * const e) {
             );
 
             uint16_t bytesWritten = 0;
-            CBErrorCode err = FLASH_writeBuffer(
+            DC3Error_t err = FLASH_writeBuffer(
                   me->flashAddrCurr,
                   me->fwDataToFlash,
                   me->fwDataToFlashLen,
@@ -980,7 +980,7 @@ static QState FlashMgr_AddrBusTest(FlashMgr * const me, QEvt const * const e) {
     switch (e->sig) {
         /* ${AOs::FlashMgr::SM::Active::BusyRam::AddrBusTest} */
         case Q_ENTRY_SIG: {
-            me->currRamTest = _CB_RAM_TEST_ADDR_BUS;
+            me->currRamTest = _DC3_RAM_TEST_ADDR_BUS;
             me->currRamAddr = 0;
             me->errorCode = ERR_SDRAM_ADDR_BUS_TEST_TIMEOUT;
 
@@ -1031,7 +1031,7 @@ static QState FlashMgr_DeviceTest(FlashMgr * const me, QEvt const * const e) {
     switch (e->sig) {
         /* ${AOs::FlashMgr::SM::Active::BusyRam::DeviceTest} */
         case Q_ENTRY_SIG: {
-            me->currRamTest = _CB_RAM_TEST_DEV_INT;
+            me->currRamTest = _DC3_RAM_TEST_DEV_INT;
             me->currRamAddr = 0;
             me->errorCode = ERR_SDRAM_DEVICE_INTEGRITY_TEST_TIMEOUT;
 
@@ -1083,7 +1083,7 @@ static QState FlashMgr_DataBusTest(FlashMgr * const me, QEvt const * const e) {
     switch (e->sig) {
         /* ${AOs::FlashMgr::SM::Active::BusyRam::DataBusTest} */
         case Q_ENTRY_SIG: {
-            me->currRamTest = _CB_RAM_TEST_DATA_BUS;
+            me->currRamTest = _DC3_RAM_TEST_DATA_BUS;
             me->currRamAddr = 0;
             me->errorCode = ERR_SDRAM_DATA_BUS_TEST_TIMEOUT;
 
@@ -1095,7 +1095,7 @@ static QState FlashMgr_DataBusTest(FlashMgr * const me, QEvt const * const e) {
         }
         /* ${AOs::FlashMgr::SM::Active::BusyRam::DataBusTest::RAM_OP_START} */
         case RAM_OP_START_SIG: {
-            me->currRamTest = _CB_RAM_TEST_DATA_BUS;
+            me->currRamTest = _DC3_RAM_TEST_DATA_BUS;
             me->currRamAddr = SDRAM_testDataBus( 0 );
             /* ${AOs::FlashMgr::SM::Active::BusyRam::DataBusTest::RAM_OP_START::[Error?]} */
             if (0 != me->currRamAddr) {

@@ -191,7 +191,7 @@ const char* const I2C_opToStr( const I2C_Operation_t iOp )
 }
 
 /******************************************************************************/
-const CBErrorCode I2C_calcPageWriteSizes(
+const DC3Error_t I2C_calcPageWriteSizes(
       uint8_t* const writeSizeFirstPage,
       uint8_t* const writeSizeLastPage,
       uint8_t* const writeTotalPages,
@@ -228,7 +228,7 @@ const CBErrorCode I2C_calcPageWriteSizes(
 }
 
 /******************************************************************************/
-const CBErrorCode I2C_readDevMemEVT(
+const DC3Error_t I2C_readDevMemEVT(
       const I2C_Dev_t iDev,
       const uint16_t offset,
       const uint16_t bytesToRead,
@@ -236,7 +236,7 @@ const CBErrorCode I2C_readDevMemEVT(
       const QActive* const callingAO
 )
 {
-   CBErrorCode status = ERR_NONE; /* Keep track of the errors that may occur.
+   DC3Error_t status = ERR_NONE; /* Keep track of the errors that may occur.
                                      This gets returned at the end of the
                                      function */
    QSignal sig = 0;               /* Signal which will be used in the event to
@@ -292,7 +292,7 @@ I2C_readDevMemEVT_ERR_HANDLER:    /* Handle any error that may have occurred. */
 }
 
 /******************************************************************************/
-const CBErrorCode I2C_writeDevMemEVT(
+const DC3Error_t I2C_writeDevMemEVT(
       const I2C_Dev_t iDev,
       const uint16_t offset,
       const uint16_t bytesToWrite,
@@ -301,7 +301,7 @@ const CBErrorCode I2C_writeDevMemEVT(
       const uint8_t* const pBuffer
 )
 {
-   CBErrorCode status = ERR_NONE; /* Keep track of the errors that may occur.
+   DC3Error_t status = ERR_NONE; /* Keep track of the errors that may occur.
                                      This gets returned at the end of the
                                      function */
    QSignal sig = 0;               /* Signal which will be used in the event to
@@ -371,7 +371,7 @@ I2C_writeDevMemEVT_ERR_HANDLER:   /* Handle any error that may have occurred. */
 /******************************************************************************/
 
 /******************************************************************************/
-const CBErrorCode I2C_readDevMemBLK(
+const DC3Error_t I2C_readDevMemBLK(
       const I2C_Dev_t iDev,
       const uint16_t offset,
       const uint16_t bytesToRead,
@@ -380,7 +380,7 @@ const CBErrorCode I2C_readDevMemBLK(
       const uint8_t  bufSize
 )
 {
-   CBErrorCode status = ERR_NONE; /* Keep track of the errors that may occur.
+   DC3Error_t status = ERR_NONE; /* Keep track of the errors that may occur.
                                      This gets returned at the end of the
                                      function */
 
@@ -432,7 +432,7 @@ I2C_readDevMemBLK_ERR_HANDLER:    /* Handle any error that may have occurred. */
 }
 
 /******************************************************************************/
-const CBErrorCode I2C_writeDevMemBLK(
+const DC3Error_t I2C_writeDevMemBLK(
       const I2C_Dev_t iDev,
       const uint16_t offset,
       const uint16_t bytesToWrite,
@@ -441,7 +441,7 @@ const CBErrorCode I2C_writeDevMemBLK(
       const uint8_t  bufSize
 )
 {
-   CBErrorCode status = ERR_NONE; /* Keep track of the errors that may occur.
+   DC3Error_t status = ERR_NONE; /* Keep track of the errors that may occur.
                                      This gets returned at the end of the
                                      function */
 

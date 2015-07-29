@@ -223,10 +223,10 @@ const char* const I2C_opToStr( const I2C_Operation_t iOp );
  * @param [in] bytesToWrite: uint8_t variable specifying how many bytes to write
  * @param [in] pageSize: uint16_t specifying the size of the page of the target
  * device.
- * @return CBErrorCode: status of the write operation
+ * @return DC3Error_t: status of the write operation
  *    @arg ERR_NONE: if no errors occurred
  */
-const CBErrorCode I2C_calcPageWriteSizes(
+const DC3Error_t I2C_calcPageWriteSizes(
       uint8_t* const writeSizeFirstPage,
       uint8_t* const writeSizeLastPage,
       uint8_t* const writeTotalPages,
@@ -255,10 +255,10 @@ const CBErrorCode I2C_calcPageWriteSizes(
  *    @arg ACCESS_FREERTOS:   non-blocking, but waits on queue to know the status.
  * @param [in] *callingAO: QActive pointer to the AO that called this function.
  *                         If called by a FreeRTOS thread, this should be NULL.
- * @return CBErrorCode: status of the read operation
+ * @return DC3Error_t: status of the read operation
  *    @arg ERR_NONE: if no errors occurred
  */
-const CBErrorCode I2C_readDevMemEVT(
+const DC3Error_t I2C_readDevMemEVT(
       const I2C_Dev_t iDev,
       const uint16_t offset,
       const uint16_t bytesToRead,
@@ -286,10 +286,10 @@ const CBErrorCode I2C_readDevMemEVT(
  * @param [in] *callingAO: QActive pointer to the AO that called this function.
  *                         If called by a FreeRTOS thread, this should be NULL.
  * @param [in] *pBuffer: uint8_t pointer to the buffer to store read data.
- * @return CBErrorCode: status of the read operation
+ * @return DC3Error_t: status of the read operation
  *    @arg ERR_NONE: if no errors occurred
  */
-const CBErrorCode I2C_writeDevMemEVT(
+const DC3Error_t I2C_writeDevMemEVT(
       const I2C_Dev_t iDev,
       const uint16_t offset,
       const uint16_t bytesToWrite,
@@ -326,10 +326,10 @@ const CBErrorCode I2C_writeDevMemEVT(
  *    @arg ACCESS_FREERTOS:   non-blocking, but waits on queue to know the status.
  * @param [out] *pBuffer: uint8_t pointer to the buffer to store read data.
  * @param [in] bufSize: uint8_t maximum size of storage pointed to by *pBuffer
- * @return CBErrorCode: status of the read operation
+ * @return DC3Error_t: status of the read operation
  *    @arg ERR_NONE: if no errors occurred
  */
-const CBErrorCode I2C_readDevMemBLK(
+const DC3Error_t I2C_readDevMemBLK(
       const I2C_Dev_t iDev,
       const uint16_t offset,
       const uint16_t bytesToRead,
@@ -361,10 +361,10 @@ const CBErrorCode I2C_readDevMemBLK(
  *    @arg ACCESS_FREERTOS:   non-blocking, but waits on queue to know the status.
  * @param [out] *pBuffer: uint8_t pointer to the buffer to write.
  * @param [in] bufSize: uint8_t maximum size of storage pointed to by *pBuffer
- * @return CBErrorCode: status of the read operation
+ * @return DC3Error_t: status of the read operation
  *    @arg ERR_NONE: if no errors occurred
  */
-const CBErrorCode I2C_writeDevMemBLK(
+const DC3Error_t I2C_writeDevMemBLK(
       const I2C_Dev_t iDev,
       const uint16_t offset,
       const uint16_t bytesToWrite,

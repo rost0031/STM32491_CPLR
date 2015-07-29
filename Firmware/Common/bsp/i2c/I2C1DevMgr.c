@@ -112,7 +112,7 @@ typedef struct {
     uint16_t addrCurr;
 
     /**< Keep track of last error that occurs. */
-    CBErrorCode errorCode;
+    DC3Error_t errorCode;
 
     /**< Keep track of whether a read, write or other was requested */
     I2C_Operation_t i2cDevOp;
@@ -908,7 +908,7 @@ static QState I2C1DevMgr_ReadMem(I2C1DevMgr * const me, QEvt const * const e) {
                 /* Use the event buffer to convert buffer and print it before using it to send the
                  * response */
                 uint16_t tmpLen = 0;
-                CBErrorCode err = CON_hexToStr(
+                DC3Error_t err = CON_hexToStr(
                     ((I2CBusDataEvt const *)e)->dataBuf, // data to convert
                     ((I2CBusDataEvt const *)e)->dataLen, // length of data to convert
                     (char *)me->i2cReadDoneEvt->dataBuf, // where to write output
@@ -1392,7 +1392,7 @@ static QState I2C1DevMgr_Idle(I2C1DevMgr * const me, QEvt const * const e) {
             /* If we are to print out the data we, need to do it before we copy it to the local
              * buffer or we'll end up losing it. */
             uint16_t tmpLen = 0;
-            CBErrorCode err = CON_hexToStr(
+            DC3Error_t err = CON_hexToStr(
                 ((I2CWriteReqEvt const *)e)->dataBuf,// data to convert
                 me->bytesTotal,                      // length of data to convert
                 (char *)me->dataBuf,                 // where to write output

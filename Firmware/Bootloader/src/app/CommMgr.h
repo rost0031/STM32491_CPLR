@@ -40,8 +40,8 @@
 
 /* Includes ------------------------------------------------------------------*/
 #include "qp_port.h"                                        /* for QP support */
-#include "CBCommApi.h"               /* For API for communicating with client */
-#include "CBSignals.h"              /* For QP signals available to the system */
+#include "DC3CommApi.h"              /* For API for communicating with client */
+#include "DC3Signals.h"             /* For QP signals available to the system */
 
 /* Exported defines ----------------------------------------------------------*/
 /* Exported macros -----------------------------------------------------------*/
@@ -66,10 +66,10 @@ void CommMgr_ctor(void);
  * This function acts as a simple wrapper around serial and UDP ethernet send data
  * functions to allow easy posting of events to send out data over those interfaces.
  * @param [in] *evt: LrgDataEvt pointer to event to send.
- * @return: CBErrorCode indicating status of operation.
+ * @return: DC3Error_t indicating status of operation.
  */
 /*${AOs::Comm_sendToClien~} ................................................*/
-CBErrorCode Comm_sendToClient(LrgDataEvt* evt);
+DC3Error_t Comm_sendToClient(LrgDataEvt* evt);
 
 
 /**< "opaque" pointer to the Active Object */

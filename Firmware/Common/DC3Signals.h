@@ -1,5 +1,5 @@
 /**
- * @file 	CBSignals.h
+ * @file 	DC3Signals.h
  * @brief   Contains all the signals used by the state machines
  *
  * @date   	06/03/2014
@@ -12,12 +12,12 @@
  */
 
 /* Define to prevent recursive inclusion -------------------------------------*/
-#ifndef CBSIGNALS_H_
-#define CBSIGNALS_H_
+#ifndef DC3SIGNALS_H_
+#define DC3SIGNALS_H_
 
 /* Includes ------------------------------------------------------------------*/
 #include "qep_port.h"
-#include "CBCommApi.h"
+#include "DC3CommApi.h"
 /* Exported defines ----------------------------------------------------------*/
 /* Exported macros -----------------------------------------------------------*/
 /* Exported types ------------------------------------------------------------*/
@@ -28,10 +28,10 @@
 typedef struct LrgDataEvtTag {
 /* protected: */
     QEvt       super;
-    CBMsgRoute src;                                   /**< Source of the data */
-    CBMsgRoute dst;                              /**< Destination of the data */
+    DC3MsgRoute src;                                   /**< Source of the data */
+    DC3MsgRoute dst;                              /**< Destination of the data */
     uint16_t   dataLen;                    /**< Length of the data in dataBuf */
-    uint8_t    dataBuf[CB_MAX_MSG_LEN];       /**< Buffer that holds the data */
+    uint8_t    dataBuf[DC3_MAX_MSG_LEN];       /**< Buffer that holds the data */
 } LrgDataEvt;
 
 /**
@@ -204,5 +204,5 @@ enum FinalSignal {
  * end addtogroup groupApp
  */
 
-#endif                                                        /* CBSIGNALS_H_ */
+#endif                                                       /* DC3SIGNALS_H_ */
 /******** Copyright (C) 2014 Datacard. All rights reserved *****END OF FILE****/

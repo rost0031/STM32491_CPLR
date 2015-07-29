@@ -16,8 +16,8 @@
 /* Includes ------------------------------------------------------------------*/
 #include "console_output.h"
 #include "qp_port.h"                                        /* for QP support */
-#include "CBSignals.h"
-#include "CBErrors.h"
+#include "DC3Signals.h"
+#include "DC3Errors.h"
 #include "Shared.h"                                   /*  Common Declarations */
 #include "time.h"
 #include "SerialMgr.h"
@@ -36,7 +36,7 @@ DBG_DEFINE_THIS_MODULE( DBG_MODL_SERIAL ); /* For debug system to ID this module
 
 /******************************************************************************/
 void MENU_printf(
-      volatile CBMsgRoute dst,
+      volatile DC3MsgRoute dst,
       char *fmt,
       ...
 )
@@ -54,7 +54,7 @@ void MENU_printf(
    /* 3. Print the actual user supplied data to the buffer and set the length */
    lrgDataEvt->dataLen += vsnprintf(
          (char *)&lrgDataEvt->dataBuf[lrgDataEvt->dataLen],
-         CB_MAX_MSG_LEN - lrgDataEvt->dataLen, // Account for the part of the buffer that was already written.
+         DC3_MAX_MSG_LEN - lrgDataEvt->dataLen, // Account for the part of the buffer that was already written.
          fmt,
          args
    );
@@ -62,7 +62,7 @@ void MENU_printf(
 
    /* 4. Directly post the event to the appropriate AO based on it's intended
     * destination.  */
-   if ( _CB_Serial == dst ) {
+   if ( _DC3_Serial == dst ) {
       QACTIVE_POST(AO_SerialMgr, (QEvt *)lrgDataEvt, AO_DbgMgr); // directly post the event to the correct AO
    } else {
       QACTIVE_POST(AO_LWIPMgr, (QEvt *)lrgDataEvt, AO_DbgMgr); // directly post the event to the correct AO
@@ -72,8 +72,8 @@ void MENU_printf(
 /******************************************************************************/
 void CON_output(
       DBG_LEVEL_T dbgLvl,
-      volatile CBMsgRoute src,
-      volatile CBMsgRoute dst,
+      volatile DC3MsgRoute src,
+      volatile DC3MsgRoute dst,
       const char *pFuncName,
       uint16_t wLineNumber,
       char *fmt,
@@ -98,7 +98,7 @@ void CON_output(
       case DBG:
          lrgDataEvt->dataLen += snprintf(
                (char *)&lrgDataEvt->dataBuf[lrgDataEvt->dataLen],
-               CB_MAX_MSG_LEN,
+               DC3_MAX_MSG_LEN,
                "DBG-%02d:%02d:%02d:%03d-%s():%d:",
                time.hour_min_sec.RTC_Hours,
                time.hour_min_sec.RTC_Minutes,
@@ -111,7 +111,7 @@ void CON_output(
       case LOG:
          lrgDataEvt->dataLen += snprintf(
                (char *)&lrgDataEvt->dataBuf[lrgDataEvt->dataLen],
-               CB_MAX_MSG_LEN,
+               DC3_MAX_MSG_LEN,
                "LOG-%02d:%02d:%02d:%03d-%s():%d:",
                time.hour_min_sec.RTC_Hours,
                time.hour_min_sec.RTC_Minutes,
@@ -124,7 +124,7 @@ void CON_output(
       case WRN:
          lrgDataEvt->dataLen += snprintf(
                (char *)&lrgDataEvt->dataBuf[lrgDataEvt->dataLen],
-               CB_MAX_MSG_LEN,
+               DC3_MAX_MSG_LEN,
                "WRN-%02d:%02d:%02d:%03d-%s():%d:",
                time.hour_min_sec.RTC_Hours,
                time.hour_min_sec.RTC_Minutes,
@@ -137,7 +137,7 @@ void CON_output(
       case ERR:
          lrgDataEvt->dataLen += snprintf(
                (char *)&lrgDataEvt->dataBuf[lrgDataEvt->dataLen],
-               CB_MAX_MSG_LEN,
+               DC3_MAX_MSG_LEN,
                "ERR-%02d:%02d:%02d:%03d-%s():%d:",
                time.hour_min_sec.RTC_Hours,
                time.hour_min_sec.RTC_Minutes,
@@ -159,7 +159,7 @@ void CON_output(
    /* 5. Print the actual user supplied data to the buffer and set the length */
    lrgDataEvt->dataLen += vsnprintf(
          (char *)&lrgDataEvt->dataBuf[lrgDataEvt->dataLen],
-         CB_MAX_MSG_LEN - lrgDataEvt->dataLen, // Account for the part of the buffer that was already written.
+         DC3_MAX_MSG_LEN - lrgDataEvt->dataLen, // Account for the part of the buffer that was already written.
          fmt,
          args
    );
@@ -183,7 +183,7 @@ void CON_slow_output(
    time_T time = TIME_getTime();
 
    /* Temporary local buffer and index to compose the msg */
-   char tmpBuffer[CB_MAX_MSG_LEN];
+   char tmpBuffer[DC3_MAX_MSG_LEN];
    uint8_t tmpBufferIndex = 0;
 
    /* 2. Based on the debug level specified by the calling macro, decide what to
@@ -192,7 +192,7 @@ void CON_slow_output(
       case DBG:
          tmpBufferIndex += snprintf(
                tmpBuffer,
-               CB_MAX_MSG_LEN,
+               DC3_MAX_MSG_LEN,
                "DBG-SLOW!-%02d:%02d:%02d:%03d-%s():%d:",
                time.hour_min_sec.RTC_Hours,
                time.hour_min_sec.RTC_Minutes,
@@ -205,7 +205,7 @@ void CON_slow_output(
       case LOG:
          tmpBufferIndex += snprintf(
                tmpBuffer,
-               CB_MAX_MSG_LEN,
+               DC3_MAX_MSG_LEN,
                "LOG-SLOW!-%02d:%02d:%02d:%03d-%s():%d:",
                time.hour_min_sec.RTC_Hours,
                time.hour_min_sec.RTC_Minutes,
@@ -218,7 +218,7 @@ void CON_slow_output(
       case WRN:
          tmpBufferIndex += snprintf(
                tmpBuffer,
-               CB_MAX_MSG_LEN,
+               DC3_MAX_MSG_LEN,
                "WRN-SLOW!-%02d:%02d:%02d:%03d-%s():%d:",
                time.hour_min_sec.RTC_Hours,
                time.hour_min_sec.RTC_Minutes,
@@ -231,7 +231,7 @@ void CON_slow_output(
       case ERR:
          tmpBufferIndex += snprintf(
                tmpBuffer,
-               CB_MAX_MSG_LEN,
+               DC3_MAX_MSG_LEN,
                "ERR-SLOW!-%02d:%02d:%02d:%03d-%s():%d:",
                time.hour_min_sec.RTC_Hours,
                time.hour_min_sec.RTC_Minutes,
@@ -244,7 +244,7 @@ void CON_slow_output(
       case ISR:
          tmpBufferIndex += snprintf(
                tmpBuffer,
-               CB_MAX_MSG_LEN,
+               DC3_MAX_MSG_LEN,
                "D-ISR!-%02d:%02d:%02d:%03d-:%d:",
                time.hour_min_sec.RTC_Hours,
                time.hour_min_sec.RTC_Minutes,
@@ -265,7 +265,7 @@ void CON_slow_output(
 
    tmpBufferIndex += vsnprintf(
          &tmpBuffer[tmpBufferIndex],
-         CB_MAX_MSG_LEN - tmpBufferIndex, // Account for the part of the buffer that was already written.
+         DC3_MAX_MSG_LEN - tmpBufferIndex, // Account for the part of the buffer that was already written.
          fmt,
          args
    );
@@ -276,7 +276,7 @@ void CON_slow_output(
 }
 
 /******************************************************************************/
-CBErrorCode CON_hexToStr(
+DC3Error_t CON_hexToStr(
       const uint8_t* hexData,
       uint16_t hexDataLen,
       char* strDataBuffer,
@@ -287,7 +287,7 @@ CBErrorCode CON_hexToStr(
       const bool bPrintX
 )
 {
-   CBErrorCode status = ERR_NONE;
+   DC3Error_t status = ERR_NONE;
 
    if ( NULL == hexData ) {
       ERR_printf("Passed in a NULL buffer\n");

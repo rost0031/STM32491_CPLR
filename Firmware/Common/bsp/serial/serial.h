@@ -18,7 +18,7 @@
 /* Includes ------------------------------------------------------------------*/
 #include "stm32f4xx.h"
 #include "bsp_defs.h"
-#include "CBErrors.h"
+#include "DC3Errors.h"
 /* Exported defines ----------------------------------------------------------*/
 /* Exported macros -----------------------------------------------------------*/
 /* Exported types ------------------------------------------------------------*/
@@ -148,13 +148,13 @@ void Serial_DMAStartXfer(
  * @param [in]  devAcc: DevAccess_t var that specifies how to access the device:
  *    @arg DEV_ACC_BLK: blocking one byte at a time access.
  *    @arg DEV_ACC_DMA: non-blocking DMA access.
- * @retval  CBErrorCode: error code from error.h
+ * @retval  DC3Error_t: error code from error.h
  *    @arg  ERR_NONE:   No errors
  *    @arg  ERR_SERIAL_HW_TIMEOUT:     Serial hardware stopped responding
  *    @arg  ERR_SERIAL_MSG_TOO_LONG:   Message being sent is longer than MAX_MSG_LEN
  *    @arg  ERR_SERIAL_MSG_BASE64_ENC_FAILED: Failed to base64 encode the message, likely due to length
  */
-CBErrorCode Serial_sendBase64Enc(
+DC3Error_t Serial_sendBase64Enc(
       const uint8_t *dataBuf,
       const uint16_t dataLen,
       const SerialPort_T serPort,
@@ -174,12 +174,12 @@ CBErrorCode Serial_sendBase64Enc(
  *    @arg DEV_ACC_DMA: non-blocking DMA access.
  * @param [in] *dataBuf: pointer to the buffer with data to send
  * @param [in]  dataLen: length of the data to send
- * @retval  CBErrorCode: error code from error.h
+ * @retval  DC3Error_t: error code from error.h
  *    @arg  ERR_NONE:   No errors
  *    @arg  ERR_SERIAL_HW_TIMEOUT:     Serial hardware stopped responding
  *    @arg  ERR_SERIAL_MSG_TOO_LONG:   Message being sent is longer than MAX_MSG_LEN
  */
-CBErrorCode Serial_sendRaw(
+DC3Error_t Serial_sendRaw(
       const uint8_t const *dataBuf,
       const uint16_t dataLen,
       const SerialPort_T serPort,
