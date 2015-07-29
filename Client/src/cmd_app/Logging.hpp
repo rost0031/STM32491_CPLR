@@ -146,7 +146,7 @@
  * @note: Do not use "\n" or "<<endl" at the end of the buffer since the boost
  * logger automatically appends it (with no way to turn it off, it seems).
  *
- * @param [in] dbgLvl: DBG_LEVEL_T that specifies the level of logging
+ * @param [in] dbgLvl: DC3DbgLevel_t that specifies the level of logging
  *    @arg DBG: debug messages
  *    @arg LOG: log messages
  *    @arg WRN: warning messages
@@ -239,7 +239,7 @@
 /**
  * @brief   Logger type that defines a thread-safe severity logger.
  */
-typedef boost::log::sources::severity_logger_mt<DBG_LEVEL_T> logger_t;
+typedef boost::log::sources::severity_logger_mt<DC3DbgLevel_t> logger_t;
 
 /* Exported variables --------------------------------------------------------*/
 /* Exported functions --------------------------------------------------------*/
@@ -261,10 +261,10 @@ void LOG_msgToStream(
  * @brief   Set universal logging level
  * This function can be used to change the logging level on the fly after the
  * logging has been set up.
- * @param [in] dbgLvl: DBG_LEVEL_T log level to set
+ * @param [in] dbgLvl: DC3DbgLevel_t log level to set
  * @return: None.
  */
-void LOG_setDbgLvl( DBG_LEVEL_T dbgLvl );
+void LOG_setDbgLvl( DC3DbgLevel_t dbgLvl );
 
 /**
  * @brief   A boost macro that instantiates a thread safe global logger

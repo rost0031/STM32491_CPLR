@@ -114,7 +114,7 @@ typedef void (*DC3_DC3LogHandler_t)(
  * different handling depending if the client is commandline, menu driven, or a
  * a gui.
  *
- * @param [in] dbgLevel: DBG_LEVEL_T that specifies the log priority of the msg
+ * @param [in] dbgLevel: DC3DbgLevel_t that specifies the log priority of the msg
  *    @arg DBG: Lowest level of debugging.  Everything printed.
  *    @arg LOG: Basic logging.
  *    @arg WRN: Warnings.  Non-critical errors that may have occurred that allow
@@ -133,7 +133,7 @@ typedef void (*DC3_DC3LogHandler_t)(
  * @param [in]  ...: additional va args type arguments.
  */
 typedef void (*DC3_LibLogHandler_t)(
-      DBG_LEVEL_T logLevel,
+      DC3DbgLevel_t logLevel,
       const char *pFuncName,
       int wLineNumber,
       ModuleSrc_t moduleSrc,

@@ -65,7 +65,7 @@ void CLI_DoneCallback(
 
 /******************************************************************************/
 void CLI_LibLogCallback(
-      DBG_LEVEL_T dbgLvl,
+      DC3DbgLevel_t dbgLvl,
       const char *pFuncName,
       int wLineNumber,
       ModuleSrc_t moduleSrc,
@@ -107,7 +107,7 @@ void CLI_DC3LogCallback(
    size_t pos = 0;
 
    /* Get the debug level of the message */
-   DBG_LEVEL_T dbgLvl = CON;
+   DC3DbgLevel_t dbgLvl = CON;
    string dbgLvlStr = "";
    string delim = "-";
    if ( (pos = message.find( delim )) != string::npos) {

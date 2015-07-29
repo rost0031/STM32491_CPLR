@@ -43,6 +43,7 @@
 #include "project_includes.h"           /* Includes common to entire project. */
 #include "bsp.h"          /* For seconds to bsp tick conversion (SEC_TO_TICK) */
 #include "I2C1DevMgr.h"
+#include "stm32f4xx_dma.h"                           /* For DMA functionality */
 
 /* Compile-time called macros ------------------------------------------------*/
 Q_DEFINE_THIS_FILE                  /* For QSPY to know the name of this file */

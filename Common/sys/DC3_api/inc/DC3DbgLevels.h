@@ -1,8 +1,7 @@
 /**
- * @file     DC3SharedDbgLevels.h
+ * @file     DC3DbgLevels.h
  *
- * Specifies the debug levels available to logging functions.  This is shared
- * between all FW and the client.
+ * Specifies the debug levels available to logging functions on the DC3.
  *
  * @date       03/24/2015
  * @author     Harry Rostovtsev
@@ -11,8 +10,8 @@
  */
 
 /* Define to prevent recursive inclusion -------------------------------------*/
-#ifndef DC3SHAREDDBGLEVELS_H_
-#define DC3SHAREDDBGLEVELS_H_
+#ifndef DC3DBGLEVELS_H_
+#define DC3DBGLEVELS_H_
 
 #ifdef __cplusplus
 extern "C" {
@@ -35,7 +34,7 @@ typedef enum DBG_LEVEL {
                  DBG_LEVEL will be checked to issue a MENU signal instead of a
                  LOG signal */
    ISR,     /**< Use this with isr_debug_slow_printf to get smaller printout */
-} DBG_LEVEL_T;
+} DC3DbgLevel_t;
 
 /* Exported constants --------------------------------------------------------*/
 /* Exported functions --------------------------------------------------------*/
@@ -45,5 +44,5 @@ typedef enum DBG_LEVEL {
 }
 #endif
 
-#endif                                               /* DC3SHAREDDBGLEVELS_H_ */
+#endif                                                     /* DC3DBGLEVELS_H_ */
 /******** Copyright (C) 2013 Datacard. All rights reserved *****END OF FILE****/

@@ -79,14 +79,9 @@ void CLI_DoneCallback(
       DC3PayloadMsgUnion_t payloadMsgUnion
 );
 
-//void CLI_LogCallback(
-//      DBG_LEVEL_T logLevel,
-//      DC3ErrorCode err,
-//      char *message
-//);
 
 void CLI_LibLogCallback(
-      DBG_LEVEL_T dbgLvl,
+      DC3DbgLevel_t dbgLvl,
       const char *pFuncName,
       int wLineNumber,
       ModuleSrc_t moduleSrc,

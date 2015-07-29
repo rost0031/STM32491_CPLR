@@ -37,7 +37,7 @@ using namespace boost::log;
 
 /* Compile-time called macros ------------------------------------------------*/
 MODULE_NAME( MODULE_EXT )
-BOOST_LOG_ATTRIBUTE_KEYWORD(severity, "Severity", DBG_LEVEL_T)
+BOOST_LOG_ATTRIBUTE_KEYWORD(severity, "Severity", DC3DbgLevel_t)
 BOOST_LOG_ATTRIBUTE_KEYWORD(counter, "LineCounter", int)
 BOOST_LOG_ATTRIBUTE_KEYWORD(timestamp, "Timestamp", boost::posix_time::ptime)
 BOOST_LOG_ATTRIBUTE_KEYWORD(log_stream, "LogStream", std::string)
@@ -55,7 +55,7 @@ struct severity_tag;
 /* Private functions ---------------------------------------------------------*/
 
 /******************************************************************************/
-void LOG_setDbgLvl( DBG_LEVEL_T dbgLvl )
+void LOG_setDbgLvl( DC3DbgLevel_t dbgLvl )
 {
    boost::log::core::get()->set_filter( severity >= dbgLvl );
 }
@@ -130,7 +130,7 @@ void LOG_payloadMsgToStream(
 /**<! The formatting logic for the severity level */
 template< typename CharT, typename TraitsT >
 inline std::basic_ostream< CharT, TraitsT >& operator<< (
-    std::basic_ostream< CharT, TraitsT >& strm, DBG_LEVEL_T lvl)
+    std::basic_ostream< CharT, TraitsT >& strm, DC3DbgLevel_t lvl)
 {
     static const char* const str[] =
     {
@@ -175,7 +175,7 @@ BOOST_LOG_GLOBAL_LOGGER_INIT(my_logger, logger_t)
    boost::log::add_common_attributes();
    formatter format = expressions::stream
          << expressions::format_date_time< boost::posix_time::ptime >("TimeStamp", "%Y-%m-%d %H:%M:%S.%f") << " - "
-         << expressions::attr<DBG_LEVEL_T, severity_tag>("Severity")  << ": "
+         << expressions::attr<DC3DbgLevel_t, severity_tag>("Severity")  << ": "
          << expressions::smessage;
    sink->set_formatter(format);
    sink->flush();

@@ -1,5 +1,5 @@
 /**
- * @file     DC3SharedDBElements.h
+ * @file     DC3DBElements.h
  *
  * Specifies the all the elements the settings DB can handle.
  *
@@ -10,8 +10,8 @@
  */
 
 /* Define to prevent recursive inclusion -------------------------------------*/
-#ifndef DC3SHAREDDBELEMENTS_H_
-#define DC3SHAREDDBELEMENTS_H_
+#ifndef DC3DBELEMENTS_H_
+#define DC3DBELEMENTS_H_
 
 #ifdef __cplusplus
 extern "C" {
@@ -59,5 +59,5 @@ typedef enum DB_Elements {
 }
 #endif
 
-#endif                                              /* DC3SHAREDDBELEMENTS_H_ */
+#endif                                                    /* DC3DBELEMENTS_H_ */
 /******** Copyright (C) 2013 Datacard. All rights reserved *****END OF FILE****/

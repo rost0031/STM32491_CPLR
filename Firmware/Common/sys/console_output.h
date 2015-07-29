@@ -114,7 +114,7 @@ void MENU_printf(
  * SerDataEvt and sends the data to be output to serial via DMA.  This prevents
  * slow downs due to regular printf() to serial.
  *
- * @param  [in] dbgLvl: a DBG_LEVEL_T variable that specifies the logging
+ * @param  [in] dbgLvl: a DC3DbgLevel_t variable that specifies the logging
  * level to use.
  *   @arg DBG: Lowest level of debugging.  Everything above this level is
  *   printed.  Disabled in Release builds.  Prints "DBG" in place of "DBG_LEVEL".
@@ -154,7 +154,7 @@ void MENU_printf(
  * @return None
  */
 void CON_output(
-      DBG_LEVEL_T dbgLvl,
+      DC3DbgLevel_t dbgLvl,
       volatile DC3MsgRoute src,
       volatile DC3MsgRoute dst,
       const char *pFuncName,
@@ -188,7 +188,7 @@ void CON_output(
  * called by the slow macros which have to be called in the initializations
  * before the QPC RTOS is running and should not be used after.
  *
- * @param  [in] dbgLvl: a DBG_LEVEL_T variable that specifies the logging
+ * @param  [in] dbgLvl: a DC3DbgLevel_t variable that specifies the logging
  * level to use.
  *   @arg DBG: Lowest level of debugging.  Everything above this level is
  *   printed.  Disabled in Release builds.
@@ -211,7 +211,7 @@ void CON_output(
  * @return None
  */
 void CON_slow_output(
-      DBG_LEVEL_T dbgLvl,
+      DC3DbgLevel_t dbgLvl,
       const char *pFuncName,
       uint16_t wLineNumber,
       char *fmt,

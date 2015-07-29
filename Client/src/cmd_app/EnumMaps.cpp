@@ -70,12 +70,12 @@ std::map<ModuleSrc_t, std::string> m_ModuleSrc = boost::assign::map_list_of
       ; //End of m_ModuleSrc map
 
 /**
- * @brief String values for DBG_LEVEL_T enums
+ * @brief String values for DC3DbgLevel_t enums
  * String values for consecutive enums can be placed into const char* arrays
  * and a template will autogenerate the necessary enumToString function based
  * on the existence of this ::data[] array.
  * */
-template<> char const* enumStrings<DBG_LEVEL_T>::data[] =
+template<> char const* enumStrings<DC3DbgLevel_t>::data[] =
    {"DBG", "LOG", "WRN", "ERR", "CON", "ISR"};
 
 /**

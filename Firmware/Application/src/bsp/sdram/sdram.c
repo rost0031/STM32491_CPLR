@@ -19,6 +19,8 @@
 #include "project_includes.h"
 #include "Shared.h"
 #include "stm32f4xx_fmc.h"                         /* For STM32F4 FMC support */
+#include "stm32f4xx_rcc.h"                         /* For STM32F4 RCC support */
+#include "stm32f4xx_gpio.h"                       /* For STM32F4 GPIO support */
 
 /* Compile-time called macros ------------------------------------------------*/
 Q_DEFINE_THIS_FILE                  /* For QSPY to know the name of this file */

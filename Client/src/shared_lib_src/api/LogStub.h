@@ -154,7 +154,7 @@ public:
     * be used just like printf() in C in addition to providing the log level,
     * __func__, and __LINE__ macros as inputs.
     *
-    * @param [in] dbgLvl: DBG_LEVEL_T that specifies the level of logging
+    * @param [in] dbgLvl: DC3DbgLevel_t that specifies the level of logging
     *    @arg DBG: debug messages
     *    @arg LOG: log messages
     *    @arg WRN: warning messages
@@ -185,7 +185,7 @@ public:
     * @return  None.
     */
    void log(
-         DBG_LEVEL_T dbgLvl,
+         DC3DbgLevel_t dbgLvl,
          const char *pFuncName,
          int wLineNumber,
          ModuleSrc_t moduleSrc,

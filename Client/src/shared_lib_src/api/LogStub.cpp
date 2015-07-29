@@ -138,7 +138,7 @@ void LogStub::disableLogForAllLibModules( void )
 
 /******************************************************************************/
 void LogStub::log(
-      DBG_LEVEL_T dbgLvl,
+      DC3DbgLevel_t dbgLvl,
       const char *pFuncName,
       int wLineNumber,
       ModuleSrc_t moduleSrc,

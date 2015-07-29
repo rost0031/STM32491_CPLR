@@ -1774,6 +1774,7 @@ dbg_slow_printf(&quot;Constructor\n&quot;);</code>
 #include &quot;project_includes.h&quot;           /* Includes common to entire project. */
 #include &quot;bsp.h&quot;          /* For seconds to bsp tick conversion (SEC_TO_TICK) */
 #include &quot;I2C1DevMgr.h&quot;
+#include &quot;stm32f4xx_dma.h&quot;                           /* For DMA functionality */
 
 /* Compile-time called macros ------------------------------------------------*/
 Q_DEFINE_THIS_FILE                  /* For QSPY to know the name of this file */

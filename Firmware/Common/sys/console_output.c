@@ -71,7 +71,7 @@ void MENU_printf(
 
 /******************************************************************************/
 void CON_output(
-      DBG_LEVEL_T dbgLvl,
+      DC3DbgLevel_t dbgLvl,
       volatile DC3MsgRoute src,
       volatile DC3MsgRoute dst,
       const char *pFuncName,
@@ -171,7 +171,7 @@ void CON_output(
 
 /******************************************************************************/
 void CON_slow_output(
-      DBG_LEVEL_T dbgLvl,
+      DC3DbgLevel_t dbgLvl,
       const char *pFuncName,
       uint16_t wLineNumber,
       char *fmt,
