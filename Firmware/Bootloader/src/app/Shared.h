@@ -49,29 +49,6 @@ enum AO_Priorities {
    ETH_PRIORITY,       /**< Priority of LWIP AO which handles ethernet comms. */
 };
 
-/**
- * @brief   Specify access type.
- * Some functions allow user to specify whether access is performed via event
- * driven (QP) or via direct access to HW using slow, blocking function calls.
- *
- * @note: Once the threads/Active Objects (AOs) have been started (end of main),
- * access should be limited to event driven interface.  In the event of a major
- * crash, and before all the threads/AOs have been started, access should be
- * the blocking kind.
- */
-typedef enum AccessType {
-   ACCESS_NONE       = 0,  /**< No access type.  Used as a default value  */
-   ACCESS_BARE_METAL,      /**< Blocking access where no RTOS services are
-                                running. All returns are done via passed in
-                                buffer */
-   ACCESS_QPC,             /**< Non-blocking access performed from QPC Active
-                                Objects. All returns are done via events that
-                                requesting AO should know how to handle */
-   ACCESS_FREERTOS         /**< Non-blocking access performed from a FreeRTOS
-                                thread.  All returns are done via a QEQueue that
-                                the requesting thread should wait on */
-} AccessType_t;
-
 /* Exported constants --------------------------------------------------------*/
 /* Exported functions --------------------------------------------------------*/
 #endif                                                           /* SHARED_H_ */

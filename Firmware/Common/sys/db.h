@@ -118,11 +118,11 @@ typedef struct {
  * @brief   Get a string representation of a DB element.
  *
  * @param  [in] elem: DC3DBElem_t that specifies what element to retrieve.
- *    @arg DB_MAGIC_WORD: only used to validate that the DB even exists.
- *    @arg DB_VERSION: version of the DB.  To be used for future upgrades.
- *    @arg DB_MAC_ADDR: MAC address stored in the RO part of DB.
- *    @arg DB_IP_ADDR: IP address stored in the RW part of DB.
- *    @arg DB_SN: Serial number stored in the RO part of DB.
+ *    @arg _DC3_DB_MAGIC_WORD: only used to validate that the DB even exists.
+ *    @arg _DC3_DB_VERSION: version of the DB.  To be used for future upgrades.
+ *    @arg _DC3_DB_MAC_ADDR: MAC address stored in the RO part of DB.
+ *    @arg _DC3_DB_IP_ADDR: IP address stored in the RW part of DB.
+ *    @arg _DC3_DB_SN: Serial number stored in the RO part of DB.
  * @return str: char* representation of DB element if found,
  *             "" if not found.
  */
@@ -134,17 +134,17 @@ const char* const DB_elemToStr( const DC3DBElem_t elem );
  * This function checks for a magic number at the beginning of the EEPROM and
  * the version to see if they match what's expected.
  *
- * @param  [in] accessType: AccessType_t that specifies how the function is being
- * accessed.
- *    @arg ACCESS_BARE_METAL: blocking access that is slow.  Don't use once the
- *                            RTOS is running.
- *    @arg ACCESS_QPC:        non-blocking, event based access.
- *    @arg ACCESS_FREERTOS:   non-blocking, but waits on queue to know the status.
+ * @param  [in] accessType: DC3AccessType_t that specifies how the function is
+ * being accessed.
+ *    @arg _DC3_ACCESS_BARE: blocking access that is slow.  Don't use once the
+ *                           RTOS is running.
+ *    @arg _DC3_ACCESS_QPC:  non-blocking, event based access.
+ *    @arg _DC3_ACCESS_FRT:   non-blocking, but waits on queue to know the status.
  * @return DC3Error_t: status of the read operation
  *    @arg ERR_NONE: if no errors occurred
  *    other errors if found.
  */
-const DC3Error_t DB_isValid( const AccessType_t accessType );
+const DC3Error_t DB_isValid( const DC3AccessType_t accessType );
 
 /**
  * @brief   Initialize the settings DB in EEPROM to a stored default.
@@ -152,17 +152,17 @@ const DC3Error_t DB_isValid( const AccessType_t accessType );
  * This function initializes the settings DB in EEPROM to a stored default.
  * This should only happen if it is found to be invalid by DB_isValid().
  *
- * @param  [in] accessType: AccessType_t that specifies how the function is being
+ * @param  [in] accessType: DC3AccessType_t that specifies how the function is being
  * accessed.
- *    @arg ACCESS_BARE_METAL: blocking access that is slow.  Don't use once the
+ *    @arg _DC3_ACCESS_BARE: blocking access that is slow.  Don't use once the
  *                            RTOS is running.
- *    @arg ACCESS_QPC:        non-blocking, event based access.
- *    @arg ACCESS_FREERTOS:   non-blocking, but waits on queue to know the status.
+ *    @arg _DC3_ACCESS_QPC:        non-blocking, event based access.
+ *    @arg _DC3_ACCESS_FRT:   non-blocking, but waits on queue to know the status.
  * @return DC3Error_t: status of the read operation
  *    @arg ERR_NONE: if no errors occurred
  *    other errors if found.
  */
-const DC3Error_t DB_initToDefault( const AccessType_t accessType  );
+const DC3Error_t DB_initToDefault( const DC3AccessType_t accessType  );
 
 /**
  * @brief   Get an element from the settings DB.
@@ -170,21 +170,21 @@ const DC3Error_t DB_initToDefault( const AccessType_t accessType  );
  * This function retrieves an element from the database of settings.
  *
  * @param  [in] elem: DC3DBElem_t that specifies what element to retrieve.
- *    @arg DB_MAGIC_WORD: only used to validate that the DB even exists.
- *    @arg DB_VERSION: version of the DB.  To be used for future upgrades.
- *    @arg DB_MAC_ADDR: MAC address stored in the RO part of DB.
- *    @arg DB_IP_ADDR: IP address stored in the RW part of DB.
- *    @arg DB_SN: Serial number stored in the RO part of DB.
+ *    @arg _DC3_DB_MAGIC_WORD: only used to validate that the DB even exists.
+ *    @arg _DC3_DB_VERSION: version of the DB.  To be used for future upgrades.
+ *    @arg _DC3_DB_MAC_ADDR: MAC address stored in the RO part of DB.
+ *    @arg _DC3_DB_IP_ADDR: IP address stored in the RW part of DB.
+ *    @arg _DC3_DB_SN: Serial number stored in the RO part of DB.
  *
  * @param  [out] *pBuffer: uint8_t pointer to a buffer where to store the
  *                         retrieved element.
  * @param  [in] bufSize: size of the pBuffer.
- * @param  [in] accessType: AccessType_t that specifies how the function is being
+ * @param  [in] accessType: DC3AccessType_t that specifies how the function is being
  * accessed.
- *    @arg ACCESS_BARE_METAL: blocking access that is slow.  Don't use once the
+ *    @arg _DC3_ACCESS_BARE: blocking access that is slow.  Don't use once the
  *                            RTOS is running.
- *    @arg ACCESS_QPC:        non-blocking, event based access.
- *    @arg ACCESS_FREERTOS:   non-blocking, but waits on queue to know the status.
+ *    @arg _DC3_ACCESS_QPC:        non-blocking, event based access.
+ *    @arg _DC3_ACCESS_FRT:   non-blocking, but waits on queue to know the status.
  * @return DC3Error_t: status of the read operation
  *    @arg ERR_NONE: if no errors occurred
  *    other errors if found.
@@ -193,7 +193,7 @@ const DC3Error_t DB_getElemBLK(
       const DC3DBElem_t elem,
       uint8_t* pBuffer,
       const size_t bufSize,
-      const AccessType_t accessType
+      const DC3AccessType_t accessType
 );
 
 /**
@@ -212,12 +212,12 @@ const DC3Error_t DB_getElemBLK(
  * @param  [in] *pBuffer: uint8_t pointer to a buffer where to element to be set
  *                         is.
  * @param  [in] bufSize: size of the pBuffer.
- * @param  [in] accessType: AccessType_t that specifies how the function is being
+ * @param  [in] accessType: DC3AccessType_t that specifies how the function is being
  * accessed.
- *    @arg ACCESS_BARE_METAL: blocking access that is slow.  Don't use once the
+ *    @arg _DC3_ACCESS_BARE: blocking access that is slow.  Don't use once the
  *                            RTOS is running.
- *    @arg ACCESS_QPC:        non-blocking, event based access.
- *    @arg ACCESS_FREERTOS:   non-blocking, but waits on queue to know the status.
+ *    @arg _DC3_ACCESS_QPC:        non-blocking, event based access.
+ *    @arg _DC3_ACCESS_FRT:   non-blocking, but waits on queue to know the status.
  * @return DC3Error_t: status of the read operation
  *    @arg ERR_NONE: if no errors occurred
  *    other errors if found.
@@ -226,7 +226,7 @@ const DC3Error_t DB_setElemBLK(
       const DC3DBElem_t elem,
       const uint8_t* const pBuffer,
       const size_t bufSize,
-      const AccessType_t accessType
+      const DC3AccessType_t accessType
 );
 
 /**
@@ -234,11 +234,11 @@ const DC3Error_t DB_setElemBLK(
  *
  * @param [in] elem: DC3DBElem_t that specifies the DB element
  * @return DB_ElemLoc_t:
- *    @arg DB_EEPROM: element lives in the R/W EEPROM
- *    @arg DB_SN_ROM: element lives in the R/O SNR section of EEPROM
- *    @arg DB_UI_ROM: element lives in the R/O UI64 section of EEPROM
- *    @arg DB_GPIO:   element is specified via a GPIO pin
- *    @arg DB_FLASH:  element lives in the main FLASH memory
+ *    @arg _DC3_DB_EEPROM: element lives in the R/W EEPROM
+ *    @arg _DC3_DB_SN_ROM: element lives in the R/O SNR section of EEPROM
+ *    @arg _DC3_DB_UI_ROM: element lives in the R/O UI64 section of EEPROM
+ *    @arg _DC3_DB_GPIO:   element is specified via a GPIO pin
+ *    @arg _DC3_DB_FLASH:  element lives in the main FLASH memory
  */
 const DB_ElemLoc_t DB_getElemLoc( const DC3DBElem_t elem );
 
@@ -281,9 +281,9 @@ const DC3I2CDevice_t DB_getI2CDev( const DB_ElemLoc_t loc );
  * stored exclusively in FLASH (and is read only).
  *
  * @param  [in] elem: DC3DBElem_t that specifies what element to retrieve.
- *    @arg DB_APPL_MAJ_VER: Major version of the Application FW image.
- *    @arg DB_APPL_MIN_VER: Minor version of the Application FW image.
- *    @arg DB_APPL_BUILD_DATETIME: Build datetime of the application FW image.
+ *    @arg _DC3_DB_APPL_MAJ_VER: Major version of the Application FW image.
+ *    @arg _DC3_DB_APPL_MIN_VER: Minor version of the Application FW image.
+ *    @arg _DC3_DB_APPL_BUILD_DATETIME: Build datetime of the application FW image.
  *
  * @param  [in] bufSize: size of the pBuffer.
  * @param  [out] *pBuffer: uint8_t pointer to a buffer where to store the

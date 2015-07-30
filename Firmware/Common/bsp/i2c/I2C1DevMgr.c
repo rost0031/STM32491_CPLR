@@ -128,7 +128,7 @@ typedef struct {
     /**< Specifies whether the request came from FreeRTOS thread or another AO.  This
          variable keeps track of whether the response needs to get added to the raw
          queue used to communicate with the FreeRTOS thread. */
-    AccessType_t accessType;
+    DC3AccessType_t accessType;
 
     /**< Keep track of how many bytes to write on the first page of the device */
     uint8_t writeSizeFirstPage;
@@ -378,7 +378,7 @@ static QState I2C1DevMgr_initial(I2C1DevMgr * const me, QEvt const * const e) {
     QActive_subscribe((QActive *)me, I2C1_DEV_RAW_MEM_WRITE_SIG);
     QActive_subscribe((QActive *)me, I2C1_DEV_RAW_MEM_READ_SIG);
 
-    me->accessType = ACCESS_QPC; /* Init to safe value */
+    me->accessType = _DC3_ACCESS_QPC; /* Init to safe value */
     return Q_TRAN(&I2C1DevMgr_Idle);
 }
 
@@ -465,7 +465,7 @@ static QState I2C1DevMgr_Busy(I2C1DevMgr * const me, QEvt const * const e) {
                 /* Change only the fields that could have changed since */
                 me->i2cReadDoneEvt->status = me->errorCode;
 
-                if ( ACCESS_FREERTOS == me->accessType ) {
+                if ( _DC3_ACCESS_FRT == me->accessType ) {
             #if CPLR_APP
                     /* Post directly to the "raw" queue for FreeRTOS task to read */
                     QEQueue_postFIFO(&CPLR_evtQueue, (QEvt *)me->i2cReadDoneEvt);
@@ -484,7 +484,7 @@ static QState I2C1DevMgr_Busy(I2C1DevMgr * const me, QEvt const * const e) {
                 /* Change only the fields that could have changed since */
                 me->i2cWriteDoneEvt->status = me->errorCode;
 
-                if ( ACCESS_FREERTOS == me->accessType ) {
+                if ( _DC3_ACCESS_FRT == me->accessType ) {
             #if CPLR_APP
                     /* Post directly to the "raw" queue for FreeRTOS task to read */
                     QEQueue_postFIFO(&CPLR_evtQueue, (QEvt *)me->i2cWriteDoneEvt);

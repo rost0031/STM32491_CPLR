@@ -221,12 +221,12 @@ const DC3Error_t I2C_calcPageWriteSizes(
  *    @arg EUI_ROM: EUI RO EEPROM memory that contains 64 bit MAC address.
  * @param [in] addr: internal memory address of the device on the I2C bus.
  * @param [in] bytesToRead : uint8_t variable specifying how many bytes to read.
- * @param  [in] accessType: AccessType_t that specifies how the function is being
+ * @param  [in] accessType: DC3AccessType_t that specifies how the function is being
  * accessed.
- *    @arg ACCESS_BARE_METAL: blocking access that is slow.  Don't use once the
+ *    @arg _DC3_ACCESS_BARE: blocking access that is slow.  Don't use once the
  *                            RTOS is running.
- *    @arg ACCESS_QPC:        non-blocking, event based access.
- *    @arg ACCESS_FREERTOS:   non-blocking, but waits on queue to know the status.
+ *    @arg _DC3_ACCESS_QPC:        non-blocking, event based access.
+ *    @arg _DC3_ACCESS_FRT:   non-blocking, but waits on queue to know the status.
  * @param [in] *callingAO: QActive pointer to the AO that called this function.
  *                         If called by a FreeRTOS thread, this should be NULL.
  * @return DC3Error_t: status of the read operation
@@ -236,7 +236,7 @@ const DC3Error_t I2C_readDevMemEVT(
       const DC3I2CDevice_t iDev,
       const uint16_t offset,
       const uint16_t bytesToRead,
-      const AccessType_t accType,
+      const DC3AccessType_t accType,
       const QActive* const callingAO
 );
 
@@ -251,12 +251,12 @@ const DC3Error_t I2C_readDevMemEVT(
  * @param [in] offset: uint16_t offset from beginning of device memory to write
  * to.
  * @param [in] bytesToWrite : uint16_t variable specifying how many bytes to write.
- * @param  [in] accessType: AccessType_t that specifies how the function is being
+ * @param  [in] accessType: DC3AccessType_t that specifies how the function is being
  * accessed.
- *    @arg ACCESS_BARE_METAL: blocking access that is slow.  Don't use once the
+ *    @arg _DC3_ACCESS_BARE: blocking access that is slow.  Don't use once the
  *                            RTOS is running.
- *    @arg ACCESS_QPC:        non-blocking, event based access.
- *    @arg ACCESS_FREERTOS:   non-blocking, but waits on queue to know the status.
+ *    @arg _DC3_ACCESS_QPC:        non-blocking, event based access.
+ *    @arg _DC3_ACCESS_FRT:   non-blocking, but waits on queue to know the status.
  * @param [in] *callingAO: QActive pointer to the AO that called this function.
  *                         If called by a FreeRTOS thread, this should be NULL.
  * @param [in] *pBuffer: uint8_t pointer to the buffer to store read data.
@@ -267,7 +267,7 @@ const DC3Error_t I2C_writeDevMemEVT(
       const DC3I2CDevice_t iDev,
       const uint16_t offset,
       const uint16_t bytesToWrite,
-      const AccessType_t accType,
+      const DC3AccessType_t accType,
       const QActive* const callingAO,
       const uint8_t* const pBuffer
 );
@@ -292,12 +292,12 @@ const DC3Error_t I2C_writeDevMemEVT(
  * @param [in] offset: uint16_t offset from beginning of device memory to read
  * from.
  * @param [in] bytesToRead : uint16_t variable specifying how many bytes to read.
- * @param  [in] accessType: AccessType_t that specifies how the function is being
+ * @param  [in] accessType: DC3AccessType_t that specifies how the function is being
  * accessed.
- *    @arg ACCESS_BARE_METAL: blocking access that is slow.  Don't use once the
+ *    @arg _DC3_ACCESS_BARE: blocking access that is slow.  Don't use once the
  *                            RTOS is running.
- *    @arg ACCESS_QPC:        non-blocking, event based access.
- *    @arg ACCESS_FREERTOS:   non-blocking, but waits on queue to know the status.
+ *    @arg _DC3_ACCESS_QPC:        non-blocking, event based access.
+ *    @arg _DC3_ACCESS_FRT:   non-blocking, but waits on queue to know the status.
  * @param [out] *pBuffer: uint8_t pointer to the buffer to store read data.
  * @param [in] bufSize: uint8_t maximum size of storage pointed to by *pBuffer
  * @return DC3Error_t: status of the read operation
@@ -307,7 +307,7 @@ const DC3Error_t I2C_readDevMemBLK(
       const DC3I2CDevice_t iDev,
       const uint16_t offset,
       const uint16_t bytesToRead,
-      const AccessType_t accType,
+      const DC3AccessType_t accType,
       uint8_t* const pBuffer,
       const uint8_t  bufSize
 );
@@ -327,12 +327,12 @@ const DC3Error_t I2C_readDevMemBLK(
  * @param [in] offset: uint16_t offset from beginning of device memory to write
  * to.
  * @param [in] bytesToWrite : uint16_t variable specifying how many bytes to write.
- * @param  [in] accessType: AccessType_t that specifies how the function is being
+ * @param  [in] accessType: DC3AccessType_t that specifies how the function is being
  * accessed.
- *    @arg ACCESS_BARE_METAL: blocking access that is slow.  Don't use once the
+ *    @arg _DC3_ACCESS_BARE: blocking access that is slow.  Don't use once the
  *                            RTOS is running.
- *    @arg ACCESS_QPC:        non-blocking, event based access.
- *    @arg ACCESS_FREERTOS:   non-blocking, but waits on queue to know the status.
+ *    @arg _DC3_ACCESS_QPC:        non-blocking, event based access.
+ *    @arg _DC3_ACCESS_FRT:   non-blocking, but waits on queue to know the status.
  * @param [out] *pBuffer: uint8_t pointer to the buffer to write.
  * @param [in] bufSize: uint8_t maximum size of storage pointed to by *pBuffer
  * @return DC3Error_t: status of the read operation
@@ -342,7 +342,7 @@ const DC3Error_t I2C_writeDevMemBLK(
       const DC3I2CDevice_t iDev,
       const uint16_t offset,
       const uint16_t bytesToWrite,
-      const AccessType_t accType,
+      const DC3AccessType_t accType,
       const uint8_t* pBuffer,
       const uint8_t  bufSize
 );

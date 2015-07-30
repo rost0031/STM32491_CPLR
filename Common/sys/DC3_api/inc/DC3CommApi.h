@@ -112,9 +112,16 @@ typedef enum DC3BootMode_t       DC3BootMode_t;
  */
 typedef enum DC3I2CDevice_t      DC3I2CDevice_t;
 
-/*! \enum DC3I2CDevice_t
+/*! \enum DC3AccessType_t
  * All the different access types available on the DC3 board and exposed through
  * the DC3 API.
+ * Some functions allow user to specify whether access is performed via event
+ * driven (QP) or via direct access to HW using slow, blocking function calls.
+ *
+ * @note: Once the threads/Active Objects (AOs) have been started (end of main),
+ * access should be limited to event driven interface.  In the event of a major
+ * crash, and before all the threads/AOs have been started, access should be
+ * the blocking kind.
  */
 typedef enum DC3AccessType_t     DC3AccessType_t;
 

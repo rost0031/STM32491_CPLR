@@ -232,7 +232,7 @@ const DC3Error_t I2C_readDevMemEVT(
       const DC3I2CDevice_t iDev,
       const uint16_t offset,
       const uint16_t bytesToRead,
-      const AccessType_t accType,
+      const DC3AccessType_t accType,
       const QActive* const callingAO
 )
 {
@@ -296,7 +296,7 @@ const DC3Error_t I2C_writeDevMemEVT(
       const DC3I2CDevice_t iDev,
       const uint16_t offset,
       const uint16_t bytesToWrite,
-      const AccessType_t accType,
+      const DC3AccessType_t accType,
       const QActive* const callingAO,
       const uint8_t* const pBuffer
 )
@@ -375,7 +375,7 @@ const DC3Error_t I2C_readDevMemBLK(
       const DC3I2CDevice_t iDev,
       const uint16_t offset,
       const uint16_t bytesToRead,
-      const AccessType_t accType,
+      const DC3AccessType_t accType,
       uint8_t* const pBuffer,
       const uint8_t  bufSize
 )
@@ -436,7 +436,7 @@ const DC3Error_t I2C_writeDevMemBLK(
       const DC3I2CDevice_t iDev,
       const uint16_t offset,
       const uint16_t bytesToWrite,
-      const AccessType_t accType,
+      const DC3AccessType_t accType,
       const uint8_t* const pBuffer,
       const uint8_t  bufSize
 )

@@ -97,7 +97,7 @@ const char* const DB_elemToStr( const DC3DBElem_t elem )
 }
 
 /******************************************************************************/
-const DC3Error_t DB_isValid( const AccessType_t accessType )
+const DC3Error_t DB_isValid( const DC3AccessType_t accessType )
 {
    DC3Error_t status = ERR_NONE;            /* keep track of success/failure */
 
@@ -106,7 +106,7 @@ const DC3Error_t DB_isValid( const AccessType_t accessType )
          _DC3_DB_MAGIC_WORD,
          (uint8_t *)&db_magicWord,
          sizeof(db_magicWord),
-         ACCESS_BARE_METAL
+         _DC3_ACCESS_BARE
    );
 
    if ( ERR_NONE != status ) {
@@ -127,7 +127,7 @@ const DC3Error_t DB_isValid( const AccessType_t accessType )
          _DC3_DB_VERSION,
          (uint8_t *)&db_version,
          sizeof(db_version),
-         ACCESS_BARE_METAL
+         _DC3_ACCESS_BARE
    );
 
    if ( ERR_NONE != status ) {
@@ -155,12 +155,12 @@ DB_isValid_ERR_HANDLE:            /* Handle any error that may have occurred. */
 }
 
 /******************************************************************************/
-const DC3Error_t DB_initToDefault( const AccessType_t accessType )
+const DC3Error_t DB_initToDefault( const DC3AccessType_t accessType )
 {
    DC3Error_t status = ERR_NONE;            /* keep track of success/failure */
 
    switch( accessType ) {
-      case ACCESS_BARE_METAL:
+      case _DC3_ACCESS_BARE:
          status = DB_setElemBLK(
                _DC3_DB_MAGIC_WORD,
                (uint8_t *)&DB_defaultEeepromSettings.dbMagicWord,
@@ -191,14 +191,14 @@ const DC3Error_t DB_initToDefault( const AccessType_t accessType )
             goto DB_initToDefault_ERR_HANDLE;
          }
 
-         break;                              /* end of case ACCESS_BARE_METAL */
+         break;                              /* end of case _DC3_ACCESS_BARE */
 
-      case ACCESS_QPC:
+      case _DC3_ACCESS_QPC:
          status = ERR_UNIMPLEMENTED;
          goto DB_initToDefault_ERR_HANDLE; /* Stop and jump to error handling */
          break;                                     /* end of case ACCESS_QPC */
 
-      case  ACCESS_FREERTOS:
+      case  _DC3_ACCESS_FRT:
          status = ERR_UNIMPLEMENTED;
          goto DB_initToDefault_ERR_HANDLE; /* Stop and jump to error handling */
          break;                                /* end of case ACCESS_FREERTOS */
@@ -225,7 +225,7 @@ const DC3Error_t DB_getElemBLK(
       const DC3DBElem_t elem,
       uint8_t* pBuffer,
       const size_t bufSize,
-      const AccessType_t accessType
+      const DC3AccessType_t accessType
 )
 {
    DC3Error_t status = ERR_NONE;            /* keep track of success/failure */
@@ -253,7 +253,7 @@ const DC3Error_t DB_getElemBLK(
                DB_I2C_devices[loc],          // DC3I2CDevice_t iDev,
                settingsDB[elem].offset,      // uint16_t offset,
                settingsDB[elem].size,        // uint16_t bytesToRead,
-               accessType,                   // AccessType_t accType,
+               accessType,                   // DC3AccessType_t accType,
                pBuffer,                      // uint8_t* pBuffer,
                bufSize                       // uint8_t  bufSize
          );
@@ -298,7 +298,7 @@ const DC3Error_t DB_setElemBLK(
       const DC3DBElem_t elem,
       const uint8_t* const pBuffer,
       const size_t bufSize,
-      const AccessType_t accessType
+      const DC3AccessType_t accessType
 )
 {
    DC3Error_t status = ERR_NONE; /* keep track of success/failure of operations. */
@@ -324,7 +324,7 @@ const DC3Error_t DB_setElemBLK(
                DB_I2C_devices[loc],                // DC3I2CDevice_t iDev,
                settingsDB[elem].offset,            // uint16_t offset,
                settingsDB[elem].size,              // uint16_t bytesToWrite,
-               accessType,                         // AccessType_t accType,
+               accessType,                         // DC3AccessType_t accType,
                pBuffer,                            // uint8_t* pBuffer,
                bufSize                             // uint8_t  bufSize
          );

@@ -68,7 +68,7 @@ void CPLR_Task( void* pvParameters )
                      _DC3_EEPROM,                                    // DC3I2CDevice_t iDev,
                      0x00,                                           // uint16_t offset,
                      17,                                             // uint16_t bytesToRead,
-                     ACCESS_FREERTOS,                                // AccessType_t accType,
+                     _DC3_ACCESS_FRT,                                // AccessType_t accType,
                      NULL                                            // QActive* callingAO
                );
                if ( ERR_NONE != status ) {
@@ -148,7 +148,7 @@ CPLR_Task_ERR_HANDLE:             /* Handle any error that may have occurred. */
          /* Print error if exists */
          ERR_COND_OUTPUT(
                status,
-               ACCESS_FREERTOS,
+               _DC3_ACCESS_FRT,
                "Error 0x%08x occurred in FreeRTOS thread!!!\n",
                status
          );

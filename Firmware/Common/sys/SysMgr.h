@@ -56,7 +56,7 @@ typedef struct {
     QEvt super;
 
     /**< Specifies whether the request came from FreeRTOS thread or another AO */
-    AccessType_t accessType;
+    DC3AccessType_t accessType;
 
     /**< DB element */
     DC3DBElem_t dbElem;
@@ -71,7 +71,7 @@ typedef struct {
     QEvt super;
 
     /**< Specifies whether the request came from FreeRTOS thread or another AO */
-    AccessType_t accessType;
+    DC3AccessType_t accessType;
 
     /**< DB element */
     DC3DBElem_t dbElem;

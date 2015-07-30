@@ -68,7 +68,7 @@ typedef struct {
     uint16_t bytes;
 
     /**< Specifies whether the request came from FreeRTOS thread or another AO */
-    AccessType_t accessType;
+    DC3AccessType_t accessType;
 
     /**< Which I2C device to read */
     DC3I2CDevice_t i2cDev;
@@ -92,7 +92,7 @@ typedef struct {
     uint8_t dataBuf[MAX_I2C_READ_LEN];
 
     /**< Specifies whether the request came from FreeRTOS thread or another AO */
-    AccessType_t accessType;
+    DC3AccessType_t accessType;
 
     /**< Which I2C device to read */
     DC3I2CDevice_t i2cDev;

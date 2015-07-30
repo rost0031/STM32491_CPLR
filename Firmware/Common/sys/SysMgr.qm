@@ -9,7 +9,7 @@
    <documentation>/**
  * @brief Event struct type for specifying a DB read request.
  */</documentation>
-   <attribute name="accessType" type="AccessType_t" visibility="0x01" properties="0x00">
+   <attribute name="accessType" type="DC3AccessType_t" visibility="0x01" properties="0x00">
     <documentation>/**&lt; Specifies whether the request came from FreeRTOS thread or another AO */</documentation>
    </attribute>
    <attribute name="dbElem" type="DC3DBElem_t" visibility="0x01" properties="0x00">
@@ -20,7 +20,7 @@
    <documentation>/**
  * @brief Event struct type for specifying a DB read request.
  */</documentation>
-   <attribute name="accessType" type="AccessType_t" visibility="0x01" properties="0x00">
+   <attribute name="accessType" type="DC3AccessType_t" visibility="0x01" properties="0x00">
     <documentation>/**&lt; Specifies whether the request came from FreeRTOS thread or another AO */</documentation>
    </attribute>
    <attribute name="dbElem" type="DC3DBElem_t" visibility="0x01" properties="0x00">
@@ -82,7 +82,7 @@
    <attribute name="dbTimerEvt" type="QTimeEvt" visibility="0x01" properties="0x00">
     <documentation>/**&lt; QPC timer Used to timeout DB accesses. */</documentation>
    </attribute>
-   <attribute name="accessType" type="AccessType_t" visibility="0x01" properties="0x00">
+   <attribute name="accessType" type="DC3AccessType_t" visibility="0x01" properties="0x00">
     <documentation>/**&lt; Access type of current request (used for DB access) */</documentation>
    </attribute>
    <attribute name="dbCmd" type="DB_Operation_t" visibility="0x01" properties="0x00">
@@ -185,7 +185,7 @@ QTimeEvt_disarm(&amp;me-&gt;dbTimerEvt);</entry>
       <entry>/* Clear out all the variables on entry to Idle state.  By this point, any error
  * feedback should have already happened. */
 me-&gt;errorCode       = ERR_NONE;
-me-&gt;accessType      = ACCESS_NONE;
+me-&gt;accessType      = _DC3_ACCESS_NONE;
 me-&gt;dbCmd           = DB_OP_NONE;
 me-&gt;dataLen         = 0;
 me-&gt;currRetry       = 0;
@@ -313,7 +313,7 @@ if ( me-&gt;dbCmd == DB_OP_READ ) {
     MEMCPY(evt-&gt;dataBuf, me-&gt;dataBuf, evt-&gt;dataLen);
     DBG_printf(&quot;Publishing DB_GET_ELEM_DONE_SIG with %d len and error 0x%08x\n&quot;,evt-&gt;dataLen, evt-&gt;status);
 
-    if ( ACCESS_FREERTOS == me-&gt;accessType ) {
+    if ( _DC3_ACCESS_FRT == me-&gt;accessType ) {
 #if CPLR_APP
         /* Post directly to the &quot;raw&quot; queue for FreeRTOS task to read */
         QEQueue_postFIFO(&amp;CPLR_evtQueue, (QEvt *)evt);
@@ -335,7 +335,7 @@ if ( me-&gt;dbCmd == DB_OP_READ ) {
     evt-&gt;status = me-&gt;errorCode;
     evt-&gt;dbElem  = me-&gt;dbElem;
 
-    if ( ACCESS_FREERTOS == me-&gt;accessType ) {
+    if ( _DC3_ACCESS_FRT == me-&gt;accessType ) {
 #if CPLR_APP
         /* Post directly to the &quot;raw&quot; queue for FreeRTOS task to read */
         QEQueue_postFIFO(&amp;CPLR_evtQueue, (QEvt *)evt);
@@ -365,7 +365,7 @@ if ( me-&gt;dbCmd == DB_OP_READ ) {
     evt-&gt;status = me-&gt;errorCode;
     evt-&gt;dbElem  = me-&gt;dbElem;
 
-    if ( ACCESS_FREERTOS == me-&gt;accessType ) {
+    if ( _DC3_ACCESS_FRT == me-&gt;accessType ) {
 #if CPLR_APP
         /* Post directly to the &quot;raw&quot; queue for FreeRTOS task to read */
         QEQueue_postFIFO(&amp;CPLR_evtQueue, (QEvt *)evt);
@@ -530,7 +530,7 @@ QACTIVE_POST(AO_SysMgr, evt, me);</action>
 /* Post to SysMgr to get the build datetime first since it's the one most likely to
  * be incorrect */
 DBReadReqEvt *evt = Q_NEW(DBReadReqEvt, DB_READ_SIG);
-evt-&gt;accessType = ACCESS_QPC;
+evt-&gt;accessType = _DC3_ACCESS_QPC;
 evt-&gt;dbElem = _DC3_DB_MAGIC_WORD;
 QACTIVE_POST(AO_SysMgr, (QEvt *)(evt), AO_SysMgr);</entry>
         <exit>QTimeEvt_disarm(&amp;me-&gt;dbTimerEvt);                  /* Disarm timer on exit */</exit>
@@ -614,7 +614,7 @@ uint32_t dbMagicWord = DB_MAGIC_WORD_DEF;
 
 /* Post to SysMgr to set the build datetime since it doesn't match the compiled one */
 DBWriteReqEvt *evt = Q_NEW(DBWriteReqEvt, DB_WRITE_SIG);
-evt-&gt;accessType = ACCESS_QPC;
+evt-&gt;accessType = _DC3_ACCESS_QPC;
 evt-&gt;dbElem = _DC3_DB_MAGIC_WORD;
 evt-&gt;dataLen =  DB_getElemSize(_DC3_DB_MAGIC_WORD);
 MEMCPY(evt-&gt;dataBuf, (uint8_t *)&amp;dbMagicWord, evt-&gt;dataLen);
@@ -645,7 +645,7 @@ QACTIVE_POST(AO_SysMgr, (QEvt *)(evt), me);</entry>
 /* Post to SysMgr to get the build datetime first since it's the one most likely to
  * be incorrect */
 DBReadReqEvt *evt = Q_NEW(DBReadReqEvt, DB_READ_SIG);
-evt-&gt;accessType = ACCESS_QPC;
+evt-&gt;accessType = _DC3_ACCESS_QPC;
 evt-&gt;dbElem = _DC3_DB_VERSION;
 QACTIVE_POST(AO_SysMgr, (QEvt *)(evt), AO_SysMgr);</entry>
         <exit>QTimeEvt_disarm(&amp;me-&gt;dbTimerEvt);                  /* Disarm timer on exit */</exit>
@@ -730,7 +730,7 @@ me-&gt;isDBValid = true;</action>
 /* Post to SysMgr to get the build datetime first since it's the one most likely to
  * be incorrect */
 DBReadReqEvt *evt = Q_NEW(DBReadReqEvt, DB_READ_SIG);
-evt-&gt;accessType = ACCESS_QPC;
+evt-&gt;accessType = _DC3_ACCESS_QPC;
 evt-&gt;dbElem = _DC3_DB_BOOT_BUILD_DATETIME;
 QACTIVE_POST(AO_SysMgr, (QEvt *)(evt), me);</entry>
         <tran trig="I2C1_DEV_READ_DONE">
@@ -829,7 +829,7 @@ DBG_printf(&quot;Bootloader datetime match\n&quot;);</action>
 
 /* Post to SysMgr to set the build datetime since it doesn't match the compiled one */
 DBWriteReqEvt *evt = Q_NEW(DBWriteReqEvt, DB_WRITE_SIG);
-evt-&gt;accessType = ACCESS_QPC;
+evt-&gt;accessType = _DC3_ACCESS_QPC;
 evt-&gt;dbElem = _DC3_DB_VERSION;
 evt-&gt;dataLen =  DB_getElemSize(_DC3_DB_VERSION);
 uint16_t dbVersion = DB_VERSION_DEF;
@@ -872,7 +872,7 @@ ERR_printf(&quot;Out of retries when attempting to reset DB to a valid state. Er
 
 /* Post to SysMgr to set the build datetime since it doesn't match the compiled one */
 DBWriteReqEvt *evt = Q_NEW(DBWriteReqEvt, DB_WRITE_SIG);
-evt-&gt;accessType = ACCESS_QPC;
+evt-&gt;accessType = _DC3_ACCESS_QPC;
 evt-&gt;dbElem = _DC3_DB_BOOT_BUILD_DATETIME;
 evt-&gt;dataLen =  DB_getElemSize(_DC3_DB_BOOT_BUILD_DATETIME);
 MEMCPY(evt-&gt;dataBuf, (uint8_t *)BUILD_DATE, evt-&gt;dataLen);
@@ -899,7 +899,7 @@ QACTIVE_POST(AO_SysMgr, (QEvt *)(evt), me);</entry>
 
 /* Post to SysMgr to set the major version since we no longer trust it */
 DBWriteReqEvt *evt = Q_NEW(DBWriteReqEvt, DB_WRITE_SIG);
-evt-&gt;accessType = ACCESS_QPC;
+evt-&gt;accessType = _DC3_ACCESS_QPC;
 evt-&gt;dbElem = _DC3_DB_BOOT_MAJ;
 evt-&gt;dataLen =  DB_getElemSize(_DC3_DB_BOOT_MAJ);
 evt-&gt;dataBuf[0] = FW_VER_MAJOR;
@@ -928,7 +928,7 @@ QACTIVE_POST(AO_SysMgr, (QEvt *)(evt), me);</entry>
         <entry>/* Post to SysMgr to get the build datetime first since it's the one most likely to
  * be incorrect */
 DBReadReqEvt *evt = Q_NEW(DBReadReqEvt, DB_READ_SIG);
-evt-&gt;accessType = ACCESS_QPC;
+evt-&gt;accessType = _DC3_ACCESS_QPC;
 evt-&gt;dbElem = _DC3_DB_BOOT_MAJ;
 QACTIVE_POST(AO_SysMgr, (QEvt *)(evt), me);</entry>
         <tran trig="I2C1_DEV_READ_DONE">
@@ -990,7 +990,7 @@ END_ERROR_CHECK:</action>
         <entry>/* Post to SysMgr to get the build datetime first since it's the one most likely to
  * be incorrect */
 DBReadReqEvt *evt = Q_NEW(DBReadReqEvt, DB_READ_SIG);
-evt-&gt;accessType = ACCESS_QPC;
+evt-&gt;accessType = _DC3_ACCESS_QPC;
 evt-&gt;dbElem = _DC3_DB_BOOT_MIN;
 QACTIVE_POST(AO_SysMgr, (QEvt *)(evt), me);</entry>
         <tran trig="I2C1_DEV_READ_DONE">
@@ -1054,7 +1054,7 @@ END_ERROR_CHECK:</action>
 
 /* Post to SysMgr to set the major version since we no longer trust it */
 DBWriteReqEvt *evt = Q_NEW(DBWriteReqEvt, DB_WRITE_SIG);
-evt-&gt;accessType = ACCESS_QPC;
+evt-&gt;accessType = _DC3_ACCESS_QPC;
 evt-&gt;dbElem = _DC3_DB_BOOT_MIN;
 evt-&gt;dataLen =  DB_getElemSize(_DC3_DB_BOOT_MIN);
 evt-&gt;dataBuf[0] = FW_VER_MINOR;

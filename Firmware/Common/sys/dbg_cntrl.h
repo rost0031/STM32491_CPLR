@@ -258,11 +258,11 @@ extern uint32_t  glbDbgConfig; /**< Allow global access to debug info */
 #define ERR_COND_OUTPUT(status, accessType, fmt, ...) {                       \
       if ((status) != ERR_NONE) {                                             \
          switch( accessType ) {                                               \
-            case ACCESS_FREERTOS:                                             \
-            case ACCESS_QPC:                                                  \
+            case _DC3_ACCESS_FRT:                                             \
+            case _DC3_ACCESS_QPC:                                             \
                ERR_printf(fmt, ##__VA_ARGS__);                                \
                break;                                                         \
-            case ACCESS_BARE_METAL:                                           \
+            case _DC3_ACCESS_BARE:                                            \
             default:                                                          \
                err_slow_printf(fmt, ##__VA_ARGS__);                           \
                break;                                                         \

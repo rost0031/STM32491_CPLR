@@ -62,7 +62,7 @@ const DC3Error_t I2C_readDevMemFRT(
          iDev,                                        // DC3I2CDevice_t iDev,
          offset,                                      // uint16_t offset,
          nBytesToRead,                                // uint16_t bytesToRead,
-         ACCESS_FREERTOS,                             // AccessType_t accType,
+         _DC3_ACCESS_FRT,                             // AccessType_t accType,
          (QActive *)NULL                              // QActive* callingAO
    );
 
@@ -104,7 +104,7 @@ const DC3Error_t I2C_readDevMemFRT(
 I2C_readDevMemFRT_ERR_HANDLER:    /* Handle any error that may have occurred. */
    ERR_COND_OUTPUT(
          status,
-         ACCESS_FREERTOS,
+         _DC3_ACCESS_FRT,
          "Error 0x%08x reading I2C device %s on %s at mem addr 0x%02x\n",
          status,
          I2C_devToStr(iDev),
@@ -143,7 +143,7 @@ const DC3Error_t I2C_writeDevMemFRT(
          iDev,                                        // DC3I2CDevice_t iDev,
          offset,                                      // uint16_t offset,
          nBytesToWrite,                               // uint16_t bytesToRead,
-         ACCESS_FREERTOS,                             // AccessType_t accType,
+         _DC3_ACCESS_FRT,                             // AccessType_t accType,
          (QActive *)NULL,                             // QActive* callingAO
          pBuffer                                      // uint8_t* pBuffer
    );
@@ -181,7 +181,7 @@ const DC3Error_t I2C_writeDevMemFRT(
 I2C_writeDevMemFRT_ERR_HANDLER:   /* Handle any error that may have occurred. */
    ERR_COND_OUTPUT(
          status,
-         ACCESS_FREERTOS,
+         _DC3_ACCESS_FRT,
          "Error 0x%08x writing I2C device %s on %s at mem addr 0x%02x\n",
          status,
          I2C_devToStr(iDev),
