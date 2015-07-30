@@ -267,12 +267,12 @@ const size_t DB_getElemSize( const DC3DBElem_t elem );
  *
  * @param [in] loc: DB_ElemLoc_t that specifies location where the DB element
  * lives.
- * @return I2C_Dev_t:
- *    @arg EEPROM: eeprom device
- *    @arg SN_ROM: R/O SN eeprom section
- *    @arg EUI_ROM: R/O EUI eeprom section
+ * @return DC3I2CDevice_t:
+ *    @arg _DC3_EEPROM: eeprom device
+ *    @arg _DC3_SNROM: R/O SN eeprom section
+ *    @arg _DC3_EUIROM: R/O EUI eeprom section
  */
-const I2C_Dev_t DB_getI2CDev( const DB_ElemLoc_t loc );
+const DC3I2CDevice_t DB_getI2CDev( const DB_ElemLoc_t loc );
 
 /**
  * @brief   Get an element stored in the FLASH section of settings DB.

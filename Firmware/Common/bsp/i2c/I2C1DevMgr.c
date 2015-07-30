@@ -84,7 +84,7 @@ typedef struct {
     /**< Specifies which I2CBus1 device is currently being handled by this AO.
      * This should be set when a new I2C_READ_START or I2C_WRITE_START events come
      * in.  Those events should contain the device for which they are meant for. */
-    I2C_Dev_t iDev;
+    DC3I2CDevice_t iDev;
 
     /**< Which I2C bus this AO is responsible for.  This variable is set on
          startup and is used to index into the structure that holds all the

@@ -15,7 +15,7 @@
    <attribute name="accessType" type="AccessType_t" visibility="0x01" properties="0x00">
     <documentation>/**&lt; Specifies whether the request came from FreeRTOS thread or another AO */</documentation>
    </attribute>
-   <attribute name="i2cDev" type="I2C_Dev_t" visibility="0x01" properties="0x00">
+   <attribute name="i2cDev" type="DC3I2CDevice_t" visibility="0x01" properties="0x00">
     <documentation>/**&lt; Which I2C device to read */</documentation>
    </attribute>
   </class>
@@ -35,7 +35,7 @@
    <attribute name="accessType" type="AccessType_t" visibility="0x01" properties="0x00">
     <documentation>/**&lt; Specifies whether the request came from FreeRTOS thread or another AO */</documentation>
    </attribute>
-   <attribute name="i2cDev" type="I2C_Dev_t" visibility="0x01" properties="0x00">
+   <attribute name="i2cDev" type="DC3I2CDevice_t" visibility="0x01" properties="0x00">
     <documentation>/**&lt; Which I2C device to read */</documentation>
    </attribute>
   </class>
@@ -52,7 +52,7 @@
    <attribute name="status" type="DC3Error_t" visibility="0x01" properties="0x00">
     <documentation>/**&lt; Status of the operation */</documentation>
    </attribute>
-   <attribute name="i2cDev" type="I2C_Dev_t" visibility="0x01" properties="0x00">
+   <attribute name="i2cDev" type="DC3I2CDevice_t" visibility="0x01" properties="0x00">
     <documentation>/**&lt; Which I2C device was accessed */</documentation>
    </attribute>
   </class>
@@ -66,7 +66,7 @@
    <attribute name="status" type="DC3Error_t" visibility="0x01" properties="0x00">
     <documentation>/**&lt; Status of the operation */</documentation>
    </attribute>
-   <attribute name="i2cDev" type="I2C_Dev_t" visibility="0x01" properties="0x00">
+   <attribute name="i2cDev" type="DC3I2CDevice_t" visibility="0x01" properties="0x00">
     <documentation>/**&lt; Which I2C device was accessed */</documentation>
    </attribute>
   </class>
@@ -88,7 +88,7 @@
    <attribute name="deferredEvtQSto[100]" type="QTimeEvt const *" visibility="0x01" properties="0x00">
     <documentation>/**&lt; Storage for deferred event queue. */</documentation>
    </attribute>
-   <attribute name="iDev" type="I2C_Dev_t" visibility="0x01" properties="0x00">
+   <attribute name="iDev" type="DC3I2CDevice_t" visibility="0x01" properties="0x00">
     <documentation>/**&lt; Specifies which I2CBus1 device is currently being handled by this AO.
  * This should be set when a new I2C_READ_START or I2C_WRITE_START events come
  * in.  Those events should contain the device for which they are meant for. */</documentation>

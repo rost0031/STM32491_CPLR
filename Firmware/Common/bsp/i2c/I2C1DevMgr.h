@@ -71,7 +71,7 @@ typedef struct {
     AccessType_t accessType;
 
     /**< Which I2C device to read */
-    I2C_Dev_t i2cDev;
+    DC3I2CDevice_t i2cDev;
 } I2CReadReqEvt;
 
 /**
@@ -95,7 +95,7 @@ typedef struct {
     AccessType_t accessType;
 
     /**< Which I2C device to read */
-    I2C_Dev_t i2cDev;
+    DC3I2CDevice_t i2cDev;
 } I2CWriteReqEvt;
 
 /**
@@ -116,7 +116,7 @@ typedef struct {
     DC3Error_t status;
 
     /**< Which I2C device was accessed */
-    I2C_Dev_t i2cDev;
+    DC3I2CDevice_t i2cDev;
 } I2CReadDoneEvt;
 
 /**
@@ -134,7 +134,7 @@ typedef struct {
     DC3Error_t status;
 
     /**< Which I2C device was accessed */
-    I2C_Dev_t i2cDev;
+    DC3I2CDevice_t i2cDev;
 } I2CWriteDoneEvt;
 
 

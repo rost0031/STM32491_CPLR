@@ -37,11 +37,11 @@ DBG_DEFINE_THIS_MODULE( DBG_MODL_I2C_DEV ); /* For debug system to ID this modul
  * @brief An internal structure that holds settings for I2C devices on all I2C
  * busses.
  */
-I2C_DevSettings_t s_I2C_Dev[MAX_I2C_DEV] =
+I2C_DevSettings_t s_I2C_Dev[_DC3_MaxI2CDev] =
 {
       {
             /* "External" device settings */
-            EEPROM,                    /**< i2c_dev */
+            _DC3_EEPROM,                    /**< i2c_dev */
             I2CBus1,                   /**< i2c_bus */
             1,                         /**< i2c_dev_addr_size */
             0xA0,                      /**< i2c_dev_addr */
@@ -55,7 +55,7 @@ I2C_DevSettings_t s_I2C_Dev[MAX_I2C_DEV] =
       },
       {
             /* "External" device settings */
-            SN_ROM,                    /**< i2c_dev */
+            _DC3_SNROM,                    /**< i2c_dev */
             I2CBus1,                   /**< i2c_bus */
             1,                         /**< i2c_dev_addr_size */
             0xB0,                      /**< i2c_dev_addr */
@@ -69,7 +69,7 @@ I2C_DevSettings_t s_I2C_Dev[MAX_I2C_DEV] =
       },
       {
             /* "External" device settings */
-            EUI_ROM,                   /**< i2c_dev */
+            _DC3_EUIROM,                   /**< i2c_dev */
             I2CBus1,                   /**< i2c_bus */
             1,                         /**< i2c_dev_addr_size */
             0xB0,                      /**< i2c_dev_addr */
@@ -87,7 +87,7 @@ I2C_DevSettings_t s_I2C_Dev[MAX_I2C_DEV] =
 /* Private functions ---------------------------------------------------------*/
 
 /******************************************************************************/
-const uint8_t I2C_getDevAddrSize( const I2C_Dev_t iDev )
+const uint8_t I2C_getDevAddrSize( const DC3I2CDevice_t iDev )
 {
    /* Check inputs */
    assert_param( IS_I2C_DEVICE( iDev ) );
@@ -96,7 +96,7 @@ const uint8_t I2C_getDevAddrSize( const I2C_Dev_t iDev )
 }
 
 /******************************************************************************/
-const uint16_t I2C_getDevAddr( const I2C_Dev_t iDev )
+const uint16_t I2C_getDevAddr( const DC3I2CDevice_t iDev )
 {
    /* Check inputs */
    assert_param( IS_I2C_DEVICE( iDev ) );
@@ -105,7 +105,7 @@ const uint16_t I2C_getDevAddr( const I2C_Dev_t iDev )
 }
 
 /******************************************************************************/
-const uint8_t I2C_getMemAddrSize( const I2C_Dev_t iDev )
+const uint8_t I2C_getMemAddrSize( const DC3I2CDevice_t iDev )
 {
    /* Check inputs */
    assert_param( IS_I2C_DEVICE( iDev ) );
@@ -114,7 +114,7 @@ const uint8_t I2C_getMemAddrSize( const I2C_Dev_t iDev )
 }
 
 /******************************************************************************/
-const uint16_t I2C_getMemAddr( const I2C_Dev_t iDev )
+const uint16_t I2C_getMemAddr( const DC3I2CDevice_t iDev )
 {
    /* Check inputs */
    assert_param( IS_I2C_DEVICE( iDev ) );
@@ -123,7 +123,7 @@ const uint16_t I2C_getMemAddr( const I2C_Dev_t iDev )
 }
 
 /******************************************************************************/
-void I2C_setI2CMemAddr( const I2C_Dev_t iDev, const uint16_t addr )
+void I2C_setI2CMemAddr( const DC3I2CDevice_t iDev, const uint16_t addr )
 {
    /* Check inputs */
    assert_param( IS_I2C_DEVICE( iDev ) );
@@ -132,7 +132,7 @@ void I2C_setI2CMemAddr( const I2C_Dev_t iDev, const uint16_t addr )
 }
 
 /******************************************************************************/
-const uint16_t I2C_getMinMemAddr( const I2C_Dev_t iDev )
+const uint16_t I2C_getMinMemAddr( const DC3I2CDevice_t iDev )
 {
    /* Check inputs */
    assert_param( IS_I2C_DEVICE( iDev ) );
@@ -141,7 +141,7 @@ const uint16_t I2C_getMinMemAddr( const I2C_Dev_t iDev )
 }
 
 /******************************************************************************/
-const uint16_t I2C_getMaxMemAddr( const I2C_Dev_t iDev )
+const uint16_t I2C_getMaxMemAddr( const DC3I2CDevice_t iDev )
 {
    /* Check inputs */
    assert_param( IS_I2C_DEVICE( iDev ) );
@@ -150,7 +150,7 @@ const uint16_t I2C_getMaxMemAddr( const I2C_Dev_t iDev )
 }
 
 /******************************************************************************/
-const uint8_t I2C_getPageSize( const I2C_Dev_t iDev )
+const uint8_t I2C_getPageSize( const DC3I2CDevice_t iDev )
 {
    /* Check inputs */
    assert_param( IS_I2C_DEVICE( iDev ) );
@@ -159,7 +159,7 @@ const uint8_t I2C_getPageSize( const I2C_Dev_t iDev )
 }
 
 /******************************************************************************/
-const I2C_Bus_t I2C_getBus( const I2C_Dev_t iDev )
+const I2C_Bus_t I2C_getBus( const DC3I2CDevice_t iDev )
 {
    /* Check inputs */
    assert_param( IS_I2C_DEVICE( iDev ) );
@@ -168,12 +168,12 @@ const I2C_Bus_t I2C_getBus( const I2C_Dev_t iDev )
 }
 
 /******************************************************************************/
-const char* const I2C_devToStr( const I2C_Dev_t iDev )
+const char* const I2C_devToStr( const DC3I2CDevice_t iDev )
 {
    switch ( iDev ) {
-      case EEPROM: return("EEPROM"); break;
-      case SN_ROM: return("SN_ROM"); break;
-      case EUI_ROM: return("EUI_ROM"); break;
+      case _DC3_EEPROM: return("EEPROM"); break;
+      case _DC3_SNROM: return("SN_ROM"); break;
+      case _DC3_EUIROM: return("EUI_ROM"); break;
       default: return(""); break;
    }
 }
@@ -201,7 +201,7 @@ const DC3Error_t I2C_calcPageWriteSizes(
 )
 {
    /* Check if we are going to write over the end of the eeprom */
-   if (i2cMemAddr + bytesToWrite > I2C_getMaxMemAddr( EEPROM )) {
+   if (i2cMemAddr + bytesToWrite > I2C_getMaxMemAddr( _DC3_EEPROM )) {
       return ( ERR_I2C1DEV_MEM_OUT_BOUNDS );
    }
 
@@ -229,7 +229,7 @@ const DC3Error_t I2C_calcPageWriteSizes(
 
 /******************************************************************************/
 const DC3Error_t I2C_readDevMemEVT(
-      const I2C_Dev_t iDev,
+      const DC3I2CDevice_t iDev,
       const uint16_t offset,
       const uint16_t bytesToRead,
       const AccessType_t accType,
@@ -250,9 +250,9 @@ const DC3Error_t I2C_readDevMemEVT(
    /* Check inputs, requested read boundaries, and figure out which signals will
     * be used to post the event to which AO. */
    switch( iDev ) {
-      case EEPROM:                              /* Intentionally fall through */
-      case SN_ROM:                              /* Intentionally fall through */
-      case EUI_ROM:
+      case _DC3_EEPROM:                              /* Intentionally fall through */
+      case _DC3_SNROM:                              /* Intentionally fall through */
+      case _DC3_EUIROM:
          /* These 3 devices are actually part of the same EEPROM chip (and thus
           * on the same I2C bus) but have different bus addresses.  They can all
           * be handled by this case. */
@@ -293,7 +293,7 @@ I2C_readDevMemEVT_ERR_HANDLER:    /* Handle any error that may have occurred. */
 
 /******************************************************************************/
 const DC3Error_t I2C_writeDevMemEVT(
-      const I2C_Dev_t iDev,
+      const DC3I2CDevice_t iDev,
       const uint16_t offset,
       const uint16_t bytesToWrite,
       const AccessType_t accType,
@@ -315,7 +315,7 @@ const DC3Error_t I2C_writeDevMemEVT(
    /* Check inputs, requested read boundaries, and figure out which signals will
     * be used to post the event to which AO. */
    switch( iDev ) {
-      case EEPROM:
+      case _DC3_EEPROM:
          /* These 3 devices are actually part of the same EEPROM chip (and thus
           * on the same I2C bus) but have different bus addresses.  They can all
           * be handled by this case. */
@@ -327,8 +327,8 @@ const DC3Error_t I2C_writeDevMemEVT(
          aoToPostTo = AO_I2C1DevMgr;
          break;
 
-      case SN_ROM:                              /* Intentionally fall through */
-      case EUI_ROM:
+      case _DC3_SNROM:                              /* Intentionally fall through */
+      case _DC3_EUIROM:
          status = ERR_I2C_DEV_IS_READ_ONLY;
          goto I2C_writeDevMemEVT_ERR_HANDLER;  /* Stop and jump to error handling */
          break;
@@ -372,7 +372,7 @@ I2C_writeDevMemEVT_ERR_HANDLER:   /* Handle any error that may have occurred. */
 
 /******************************************************************************/
 const DC3Error_t I2C_readDevMemBLK(
-      const I2C_Dev_t iDev,
+      const DC3I2CDevice_t iDev,
       const uint16_t offset,
       const uint16_t bytesToRead,
       const AccessType_t accType,
@@ -392,9 +392,9 @@ const DC3Error_t I2C_readDevMemBLK(
    }
 
    switch( iDev ) {
-      case EEPROM:                              /* Intentionally fall through */
-      case SN_ROM:                              /* Intentionally fall through */
-      case EUI_ROM:
+      case _DC3_EEPROM:                              /* Intentionally fall through */
+      case _DC3_SNROM:                              /* Intentionally fall through */
+      case _DC3_EUIROM:
          /* These 3 devices are actually part of the same EEPROM chip (and thus
           * on the same I2C bus) but have different bus addresses.  They can all
           * be handled by this case. */
@@ -433,7 +433,7 @@ I2C_readDevMemBLK_ERR_HANDLER:    /* Handle any error that may have occurred. */
 
 /******************************************************************************/
 const DC3Error_t I2C_writeDevMemBLK(
-      const I2C_Dev_t iDev,
+      const DC3I2CDevice_t iDev,
       const uint16_t offset,
       const uint16_t bytesToWrite,
       const AccessType_t accType,
@@ -453,8 +453,8 @@ const DC3Error_t I2C_writeDevMemBLK(
    }
 
    switch( iDev ) {
-      case EEPROM:
-         /* These 3 devices are actually part of the same EEPROM chip (and thus
+      case _DC3_EEPROM:
+         /* These 3 devices are actually part of the same _DC3_EEPROM chip (and thus
           * on the same I2C bus) but have different bus addresses.  They can all
           * be handled by this case. */
          if ( offset + bytesToWrite > I2C_getMaxMemAddr( iDev ) ) {
@@ -462,8 +462,8 @@ const DC3Error_t I2C_writeDevMemBLK(
             goto I2C_writeDevMemBLK_ERR_HANDLER;  /* Stop and jump to error handling */
          }
          break;
-      case EUI_ROM:                             /* Intentionally fall through */
-      case SN_ROM:
+      case _DC3_EUIROM:                             /* Intentionally fall through */
+      case _DC3_SNROM:
          status = ERR_I2C_DEV_IS_READ_ONLY;
          goto I2C_writeDevMemBLK_ERR_HANDLER;  /* Stop and jump to error handling */
          break;

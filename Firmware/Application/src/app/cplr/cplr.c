@@ -65,7 +65,7 @@ void CPLR_Task( void* pvParameters )
                /* Going to use this signal to test some stuff in this thread */
                /* Do a read from the EEPROM on the I2C Bus */
                status = I2C_readDevMemEVT(
-                     EEPROM,                                         // I2C_Dev_t iDev,
+                     _DC3_EEPROM,                                    // DC3I2CDevice_t iDev,
                      0x00,                                           // uint16_t offset,
                      17,                                             // uint16_t bytesToRead,
                      ACCESS_FREERTOS,                                // AccessType_t accType,
@@ -112,7 +112,7 @@ void CPLR_Task( void* pvParameters )
 
                DBG_printf("Issuing I2C_readDevMemFRT()\n");
                status = I2C_readDevMemFRT(
-                     EEPROM,                          // I2C_Dev_t iDev,
+                     _DC3_EEPROM,                     // DC3I2CDevice_t iDev,
                      0x00,                            // uint16_t offset,
                      buffer,                          // uint8_t *pBuffer,
                      sizeof(buffer),                  // uint16_t nBufferSize,

@@ -30,31 +30,6 @@ extern "C" {
 /* Exported defines ----------------------------------------------------------*/
 /* Exported types ------------------------------------------------------------*/
 /* Exported macros -----------------------------------------------------------*/
-/**
- * @brief   Macro to determine if an I2C device is defined in the system
- * @param [in] DEV:  I2C_Dev_t type I2C device specifier.
- * @retval
- *    1: Device exists and is valid
- *    0: Device doesn't exist or isn't defined
- */
-#define IS_I2C_DEVICE( DEV )                                                  \
-(                                                                             \
-   (DEV) == EEPROM ||                                                         \
-   (DEV) == SN_ROM ||                                                         \
-   (DEV) == EUI_ROM                                                           \
-)
-
-/**
- * @brief   Macro to determine if an I2C device is writable
- * @param [in] DEV:  I2C_Dev_t type I2C device specifier.
- * @retval
- *    1: Device writable
- *    0: Device is read only
- */
-#define IS_I2C_DEVICE_RW( DEV )                                               \
-(                                                                             \
-   (DEV) == EEPROM                                                            \
-)
 
 /**
  * @brief   Macro to determine if an I2C operation is defined in the system
@@ -78,48 +53,47 @@ extern "C" {
 /**
  * @brief   Get the device address size for the specified I2CBus1 device.
  *
- * @param [in]  iDev: I2C_Dev_t identifier to choose device
+ * @param [in]  iDev: DC3I2CDevice_t identifier to choose device
  *    @arg EEPROM: get the EEPROM device address
  *    @arg SN_ROM: get the SN_ROM device address
  *    @arg UIE_ROM: get the UIE_ROM device address
  * @return: uint8_t device address size of the requested device.
  */
-const uint8_t I2C_getDevAddrSize( const I2C_Dev_t iDev );
+const uint8_t I2C_getDevAddrSize( const DC3I2CDevice_t iDev );
 
 /**
  * @brief   Get the device address for the specified I2CBus1 device.
  *
- * @param [in]  iDev: I2C_Dev_t identifier to choose device
+ * @param [in]  iDev: DC3I2CDevice_t identifier to choose device
  *    @arg EEPROM: get the EEPROM device address
  *    @arg SN_ROM: get the SN_ROM device address
  *    @arg UIE_ROM: get the UIE_ROM device address
  * @return: uint16_t device address on the I2C Bus.
  */
-const uint16_t I2C_getDevAddr( const I2C_Dev_t iDev );
+const uint16_t I2C_getDevAddr( const DC3I2CDevice_t iDev );
 
 /**
  * @brief   Get the internal memory address size for the specified I2CBus1 device.
  *
- * @param [in]  iDev: I2C_Dev_t identifier to choose device
+ * @param [in]  iDev: DC3I2CDevice_t identifier to choose device
  *    @arg EEPROM: get the EEPROM device address
  *    @arg SN_ROM: get the SN_ROM device address
  *    @arg UIE_ROM: get the UIE_ROM device address
  * @return: uint8_t internal memory address size of the requested device.
  */
-const uint8_t I2C_getMemAddrSize( const I2C_Dev_t iDev );
+const uint8_t I2C_getMemAddrSize( const DC3I2CDevice_t iDev );
 
 /**
  * @brief   Get the last accessed internal memory address for the specified
  * I2CBus1 device.
  *
- * @param [in]  iDev: I2C_Dev_t identifier to choose device
+ * @param [in]  iDev: DC3I2CDevice_t identifier to choose device
  *    @arg EEPROM: get the EEPROM device address
  *    @arg SN_ROM: get the SN_ROM device address
  *    @arg UIE_ROM: get the UIE_ROM device address
  * @return: uint16_t memory address on the I2C Device.
  */
-const uint16_t I2C_getMemAddr( const I2C_Dev_t iDev );
-
+const uint16_t I2C_getMemAddr( const DC3I2CDevice_t iDev );
 
 /**
  * @brief   Set the last accessed internal memory address for the specified
@@ -129,71 +103,71 @@ const uint16_t I2C_getMemAddr( const I2C_Dev_t iDev );
  * don't have to keep telling the device where to read from.  Saves 2 I2C bus
  * operations per access.
  *
- * @param [in]  iDev: I2C_Dev_t identifier to choose device
+ * @param [in]  iDev: DC3I2CDevice_t identifier to choose device
  *    @arg EEPROM: get the EEPROM device address
  *    @arg SN_ROM: get the SN_ROM device address
  *    @arg UIE_ROM: get the UIE_ROM device address
  * @param [in]  addr: uint16_t last accessed memory address.
  * @return: None
  */
-void I2C_setI2CMemAddr( const I2C_Dev_t iDev, const uint16_t addr );
+void I2C_setI2CMemAddr( const DC3I2CDevice_t iDev, const uint16_t addr );
 
 /**
  * @brief   Get the first accessible internal memory address for the specified
  * I2CBus1 device.
  *
- * @param [in]  iDev: I2C_Dev_t identifier to choose device
+ * @param [in]  iDev: DC3I2CDevice_t identifier to choose device
  *    @arg EEPROM: get the EEPROM device address
  *    @arg SN_ROM: get the SN_ROM device address
  *    @arg UIE_ROM: get the UIE_ROM device address
  * @return: uint16_t first memory address on the I2C device.
  */
-const uint16_t I2C_getMinMemAddr( const I2C_Dev_t iDev );
+const uint16_t I2C_getMinMemAddr( const DC3I2CDevice_t iDev );
 
 /**
  * @brief   Get the last accessible internal memory address for the specified
  * I2CBus1 device.
  *
- * @param [in]  iDev: I2C_Dev_t identifier to choose device
+ * @param [in]  iDev: DC3I2CDevice_t identifier to choose device
  *    @arg EEPROM: get the EEPROM device address
  *    @arg SN_ROM: get the SN_ROM device address
  *    @arg UIE_ROM: get the UIE_ROM device address
  * @return: uint16_t last memory address on the I2C device.
  */
-const uint16_t I2C_getMaxMemAddr( const I2C_Dev_t iDev );
+const uint16_t I2C_getMaxMemAddr( const DC3I2CDevice_t iDev );
 
 /**
  * @brief   Get the page size for memory for the specified I2C device.
  *
- * @param [in]  iDev: I2C_Dev_t identifier to choose device
+ * @param [in]  iDev: DC3I2CDevice_t identifier to choose device
  *    @arg EEPROM: get the EEPROM device address
  *    @arg SN_ROM: get the SN_ROM device address
  *    @arg UIE_ROM: get the UIE_ROM device address
  * @return: uint16_t memory page size on the I2C device.
  */
-const uint8_t I2C_getPageSize( const I2C_Dev_t iDev );
+const uint8_t I2C_getPageSize( const DC3I2CDevice_t iDev );
 
 /**
  * @brief   Get the I2C bus of specified I2C device.
  *
- * @param [in]  iDev: I2C_Dev_t identifier to choose device
+ * @param [in]  iDev: DC3I2CDevice_t identifier to choose device
  *    @arg EEPROM: get the EEPROM device address
  *    @arg SN_ROM: get the SN_ROM device address
  *    @arg UIE_ROM: get the UIE_ROM device address
  * @return: uint16_t memory page size on the I2C device.
  */
-const I2C_Bus_t I2C_getBus( const I2C_Dev_t iDev );
+const I2C_Bus_t I2C_getBus( const DC3I2CDevice_t iDev );
 
 /**
  * @brief   Get the string representation of the I2C device.
  *
- * @param [in]  iDev: I2C_Dev_t identifier to choose device
+ * @param [in]  iDev: DC3I2CDevice_t identifier to choose device
  *    @arg EEPROM
  *    @arg SN_ROM
  *    @arg UIE_ROM
  * @return: string representation of the I2C device.
  */
-const char* const I2C_devToStr( const I2C_Dev_t iDev );
+const char* const I2C_devToStr( const DC3I2CDevice_t iDev );
 
 /**
  * @brief   Get the string representation of the I2C operation
@@ -241,7 +215,7 @@ const DC3Error_t I2C_calcPageWriteSizes(
  * @note:  This function should only be called from RTOS controlled thread/AO.
  * It is non-blocking and instantly returns.
  *
- * @param [in] iDev: I2C_Dev_t type specifying the I2C Device.
+ * @param [in] iDev: DC3I2CDevice_t type specifying the I2C Device.
  *    @arg EEPROM: 256 bytes of main EEPROM memory
  *    @arg SN_ROM: SN RO EEPROM memory that contains 128 bit unique id
  *    @arg EUI_ROM: EUI RO EEPROM memory that contains 64 bit MAC address.
@@ -259,7 +233,7 @@ const DC3Error_t I2C_calcPageWriteSizes(
  *    @arg ERR_NONE: if no errors occurred
  */
 const DC3Error_t I2C_readDevMemEVT(
-      const I2C_Dev_t iDev,
+      const DC3I2CDevice_t iDev,
       const uint16_t offset,
       const uint16_t bytesToRead,
       const AccessType_t accType,
@@ -272,7 +246,7 @@ const DC3Error_t I2C_readDevMemEVT(
  * @note:  This function should only be called from RTOS controlled thread/AO.
  * It is non-blocking and instantly returns.
  *
- * @param [in] iDev: I2C_Dev_t type specifying the I2C Device.
+ * @param [in] iDev: DC3I2CDevice_t type specifying the I2C Device.
  *    @arg EEPROM: 256 bytes of main EEPROM memory
  * @param [in] offset: uint16_t offset from beginning of device memory to write
  * to.
@@ -290,7 +264,7 @@ const DC3Error_t I2C_readDevMemEVT(
  *    @arg ERR_NONE: if no errors occurred
  */
 const DC3Error_t I2C_writeDevMemEVT(
-      const I2C_Dev_t iDev,
+      const DC3I2CDevice_t iDev,
       const uint16_t offset,
       const uint16_t bytesToWrite,
       const AccessType_t accType,
@@ -311,7 +285,7 @@ const DC3Error_t I2C_writeDevMemEVT(
  * objects. It's for use in case of crashes and before the entire system has
  * come up.
  *
- * @param [in] iDev: I2C_Dev_t type specifying the I2C Device.
+ * @param [in] iDev: DC3I2CDevice_t type specifying the I2C Device.
  *    @arg EEPROM: 256 bytes of main EEPROM memory
  *    @arg SN_ROM: SN RO EEPROM memory that contains 128 bit unique id
  *    @arg EUI_ROM: EUI RO EEPROM memory that contains 64 bit MAC address.
@@ -330,7 +304,7 @@ const DC3Error_t I2C_writeDevMemEVT(
  *    @arg ERR_NONE: if no errors occurred
  */
 const DC3Error_t I2C_readDevMemBLK(
-      const I2C_Dev_t iDev,
+      const DC3I2CDevice_t iDev,
       const uint16_t offset,
       const uint16_t bytesToRead,
       const AccessType_t accType,
@@ -346,7 +320,7 @@ const DC3Error_t I2C_readDevMemBLK(
  * objects. It's for use in case of crashes and before the entire system has
  * come up.
  *
- * @param [in] iDev: I2C_Dev_t type specifying the I2C Device.
+ * @param [in] iDev: DC3I2CDevice_t type specifying the I2C Device.
  *    @arg EEPROM: 256 bytes of main EEPROM memory
  *    @arg SN_ROM: SN RO EEPROM memory that contains 128 bit unique id
  *    @arg EUI_ROM: EUI RO EEPROM memory that contains 64 bit MAC address.
@@ -365,7 +339,7 @@ const DC3Error_t I2C_readDevMemBLK(
  *    @arg ERR_NONE: if no errors occurred
  */
 const DC3Error_t I2C_writeDevMemBLK(
-      const I2C_Dev_t iDev,
+      const DC3I2CDevice_t iDev,
       const uint16_t offset,
       const uint16_t bytesToWrite,
       const AccessType_t accType,

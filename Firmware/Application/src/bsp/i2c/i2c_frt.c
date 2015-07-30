@@ -35,7 +35,7 @@ DBG_DEFINE_THIS_MODULE( DBG_MODL_I2C_DEV ); /* For debug system to ID this modul
 
 /******************************************************************************/
 const DC3Error_t I2C_readDevMemFRT(
-      const I2C_Dev_t iDev,
+      const DC3I2CDevice_t iDev,
       const uint16_t offset,
       uint8_t* const pBuffer,
       const uint16_t nBufferSize,
@@ -59,7 +59,7 @@ const DC3Error_t I2C_readDevMemFRT(
 
    /* Issue a non-blocking call to read I2C */
    status = I2C_readDevMemEVT(
-         iDev,                                        // I2C_Dev_t iDev,
+         iDev,                                        // DC3I2CDevice_t iDev,
          offset,                                      // uint16_t offset,
          nBytesToRead,                                // uint16_t bytesToRead,
          ACCESS_FREERTOS,                             // AccessType_t accType,
@@ -116,7 +116,7 @@ I2C_readDevMemFRT_ERR_HANDLER:    /* Handle any error that may have occurred. */
 
 /******************************************************************************/
 const DC3Error_t I2C_writeDevMemFRT(
-      const I2C_Dev_t iDev,
+      const DC3I2CDevice_t iDev,
       const uint16_t offset,
       const uint8_t* const pBuffer,
       const uint16_t nBufferSize,
@@ -140,7 +140,7 @@ const DC3Error_t I2C_writeDevMemFRT(
 
    /* Issue a non-blocking call to read I2C */
    status = I2C_writeDevMemEVT(
-         iDev,                                        // I2C_Dev_t iDev,
+         iDev,                                        // DC3I2CDevice_t iDev,
          offset,                                      // uint16_t offset,
          nBytesToWrite,                               // uint16_t bytesToRead,
          ACCESS_FREERTOS,                             // AccessType_t accType,

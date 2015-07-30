@@ -134,25 +134,13 @@ typedef struct I2C_BusSettings
 } I2C_BusSettings_t;
 
 /**
- * @brief I2C_Device_t
- * I2C Devices available on all the I2C busses.
- */
-typedef enum I2C_Devices {
-   EEPROM  = 0,                         /**< EEPROM attached to I2C */
-   SN_ROM,
-   EUI_ROM,
-   /* Insert more I2C device enumerations here... */
-   MAX_I2C_DEV     /**< Maximum number of available I2C devices on I2CBus1 */
-} I2C_Dev_t;
-
-/**
  * @brief I2C_DeviceSettings_t
  * Settings for the various I2C devices that are attached to the I2C busses.
  */
 typedef struct I2C_DeviceSettings
 {
    /* "External" device settings */
-   const I2C_Dev_t         i2c_dev;          /**< System I2C device specifier */
+   const DC3I2CDevice_t    i2c_dev;          /**< System I2C device specifier */
    const I2C_Bus_t         i2c_bus;          /**< Which I2C bus the device is on */
    const uint16_t          i2c_dev_addr_size;  /**< Size of the I2C device address */
    const uint16_t          i2c_dev_addr;  /**< I2C Device address of the device */
@@ -167,20 +155,6 @@ typedef struct I2C_DeviceSettings
 } I2C_DevSettings_t;
 
 /* Exported macros -----------------------------------------------------------*/
-/**
- * @brief   Macro to determine if an I2C device is defined in the system
- * @param [in] DEV:  I2C_Dev_t type I2C device specifier.
- * @retval
- *    1: Device exists and is valid
- *    0: Device doesn't exist or isn't defined
- */
-#define IS_I2C_DEVICE( DEV )                                                  \
-(                                                                             \
-   (DEV) == EEPROM ||                                                         \
-   (DEV) == SN_ROM ||                                                         \
-   (DEV) == EUI_ROM                                                           \
-)
-
 /* Exported constants --------------------------------------------------------*/
 /* Exported variables --------------------------------------------------------*/
 /* Exported functions --------------------------------------------------------*/

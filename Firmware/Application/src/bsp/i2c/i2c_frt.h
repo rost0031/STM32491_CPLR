@@ -42,10 +42,10 @@ extern "C" {
  * and wake the task.  This function then resumes and retrieves the data out of
  * the queue, parses it, fills in the appropriate buffers and status and returns.
  *
- * @param [in] iDev: I2C_Dev_t type specifying the I2C Device.
- *    @arg EEPROM: 256 bytes of main EEPROM memory
- *    @arg SN_ROM: SN RO EEPROM memory that contains 128 bit unique id
- *    @arg EUI_ROM: EUI RO EEPROM memory that contains 64 bit MAC address.
+ * @param [in] iDev: DC3I2CDevice_t type specifying the I2C Device.
+ *    @arg _DC3_EEPROM: 256 bytes of main EEPROM memory
+ *    @arg _DC3_SNROM: SN RO EEPROM memory that contains 128 bit unique id
+ *    @arg _DC3_EUIROM: EUI RO EEPROM memory that contains 64 bit MAC address.
  * @param [in] offset: uint8_t offset from beginning of the device where to read
  *             the data from.  Lower level functions will calculate the
  *             appropriate memory addresses.
@@ -59,7 +59,7 @@ extern "C" {
  *    @arg ERR_NONE: if no errors occurred
  */
 const DC3Error_t I2C_readDevMemFRT(
-      const I2C_Dev_t iDev,
+      const DC3I2CDevice_t iDev,
       const uint16_t offset,
       uint8_t* const pBuffer,
       const uint16_t nBufferSize,
@@ -77,8 +77,8 @@ const DC3Error_t I2C_readDevMemFRT(
  * and wake the task.  This function then resumes and retrieves the data out of
  * the queue, parses it, fills in the appropriate buffers and status and returns.
  *
- * @param [in] iDev: I2C_Dev_t type specifying the I2C Device.
- *    @arg EEPROM: 256 bytes of main EEPROM memory
+ * @param [in] iDev: DC3I2CDevice_t type specifying the I2C Device.
+ *    @arg _DC3_EEPROM: 256 bytes of main EEPROM memory
  * @param [in] offset: uint8_t offset from beginning of the device where to write
  *             the data to.  Lower level functions will calculate the
  *             appropriate memory addresses.
@@ -92,7 +92,7 @@ const DC3Error_t I2C_readDevMemFRT(
  *    @arg ERR_NONE: if no errors occurred
  */
 const DC3Error_t I2C_writeDevMemFRT(
-      const I2C_Dev_t iDev,
+      const DC3I2CDevice_t iDev,
       const uint16_t offset,
       const uint8_t* const pBuffer,
       const uint16_t nBufferSize,

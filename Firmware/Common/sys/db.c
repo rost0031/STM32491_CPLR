@@ -58,10 +58,10 @@ static const SettingsDB_Desc_t settingsDB[_DC3_DB_MAX_ELEM] = {
  * Array to lookup the I2C device for the DB elements which are stored on some
  * I2C device
  */
-static const I2C_Dev_t DB_I2C_devices[] = {
-      EEPROM,
-      SN_ROM,
-      EUI_ROM,
+static const DC3I2CDevice_t DB_I2C_devices[] = {
+      _DC3_EEPROM,
+      _DC3_SNROM,
+      _DC3_EUIROM,
 };
 
 /**< Default settings that belong in the main memory of the EEPROM */
@@ -250,7 +250,7 @@ const DC3Error_t DB_getElemBLK(
       case DB_SN_ROM:                           /* Intentionally fall through */
       case DB_UI_ROM:
          status = I2C_readDevMemBLK(
-               DB_I2C_devices[loc],          // I2C_Dev_t iDev,
+               DB_I2C_devices[loc],          // DC3I2CDevice_t iDev,
                settingsDB[elem].offset,      // uint16_t offset,
                settingsDB[elem].size,        // uint16_t bytesToRead,
                accessType,                   // AccessType_t accType,
@@ -321,7 +321,7 @@ const DC3Error_t DB_setElemBLK(
    switch( loc ) {
       case DB_EEPROM:
          status = I2C_writeDevMemBLK(
-               DB_I2C_devices[loc],                // I2C_Dev_t iDev,
+               DB_I2C_devices[loc],                // DC3I2CDevice_t iDev,
                settingsDB[elem].offset,            // uint16_t offset,
                settingsDB[elem].size,              // uint16_t bytesToWrite,
                accessType,                         // AccessType_t accType,
@@ -375,7 +375,7 @@ const size_t DB_getElemSize( const DC3DBElem_t elem )
 }
 
 /******************************************************************************/
-const I2C_Dev_t DB_getI2CDev( const DB_ElemLoc_t loc )
+const DC3I2CDevice_t DB_getI2CDev( const DB_ElemLoc_t loc )
 {
    return( DB_I2C_devices[loc] );
 }
