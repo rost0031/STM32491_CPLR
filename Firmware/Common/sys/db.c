@@ -37,21 +37,21 @@ DBG_DEFINE_THIS_MODULE( DBG_MODL_DB );  /* For debug system to ID this module */
 /* Private variables and Local objects ---------------------------------------*/
 
 /**< Array to specify where all the DB elements reside */
-static const SettingsDB_Desc_t settingsDB[DB_MAX_ELEM] = {
-      { DB_MAGIC_WORD,          DB_EEPROM,  DB_SIZE_OF_ELEM(SettingsDB_t, dbMagicWord), DB_LOC_OF_ELEM(SettingsDB_t, dbMagicWord)},
-      { DB_VERSION,             DB_EEPROM,  DB_SIZE_OF_ELEM(SettingsDB_t, dbVersion)  , DB_LOC_OF_ELEM(SettingsDB_t, dbVersion)  },
-      { DB_MAC_ADDR,            DB_UI_ROM,  6                                         , 2                                        },
-      { DB_IP_ADDR,             DB_EEPROM,  DB_SIZE_OF_ELEM(SettingsDB_t, ipAddr)     , DB_LOC_OF_ELEM(SettingsDB_t, ipAddr)     },
-      { DB_SN,                  DB_SN_ROM,  16                                        , 0                                        },
-      { DB_BOOT_MAJ,            DB_EEPROM,  DB_SIZE_OF_ELEM(SettingsDB_t, bootMajVer) , DB_LOC_OF_ELEM(SettingsDB_t, bootMajVer) },
-      { DB_BOOT_MIN,            DB_EEPROM,  DB_SIZE_OF_ELEM(SettingsDB_t, bootMinVer) , DB_LOC_OF_ELEM(SettingsDB_t, bootMinVer) },
-      { DB_BOOT_BUILD_DATETIME, DB_EEPROM,  DB_SIZE_OF_ELEM(SettingsDB_t, bootBuildDT), DB_LOC_OF_ELEM(SettingsDB_t, bootBuildDT)},
-      { DB_APPL_MAJ,            DB_FLASH ,  FLASH_APPL_MAJ_VER_LEN                    , FLASH_APPL_MAJ_VER_ADDR                  },
-      { DB_APPL_MIN,            DB_FLASH ,  FLASH_APPL_MIN_VER_LEN                    , FLASH_APPL_MIN_VER_ADDR                  },
-      { DB_APPL_BUILD_DATETIME, DB_FLASH ,  FLASH_APPL_BUILD_DATETIME_LEN             , FLASH_APPL_BUILD_DATETIME_ADDR           },
-      { DB_FPGA_MAJ,            DB_EEPROM,  DB_SIZE_OF_ELEM(SettingsDB_t, fpgaMajVer) , DB_LOC_OF_ELEM(SettingsDB_t, fpgaMajVer) },
-      { DB_FPGA_MIN,            DB_EEPROM,  DB_SIZE_OF_ELEM(SettingsDB_t, fpgaMinVer) , DB_LOC_OF_ELEM(SettingsDB_t, fpgaMinVer) },
-      { DB_FPGA_BUILD_DATETIME, DB_EEPROM,  DB_SIZE_OF_ELEM(SettingsDB_t, fpgaBuildDT), DB_LOC_OF_ELEM(SettingsDB_t, fpgaBuildDT)},
+static const SettingsDB_Desc_t settingsDB[_DC3_DB_MAX_ELEM] = {
+      { _DC3_DB_MAGIC_WORD,          DB_EEPROM,  DB_SIZE_OF_ELEM(SettingsDB_t, dbMagicWord), DB_LOC_OF_ELEM(SettingsDB_t, dbMagicWord)},
+      { _DC3_DB_VERSION,             DB_EEPROM,  DB_SIZE_OF_ELEM(SettingsDB_t, dbVersion)  , DB_LOC_OF_ELEM(SettingsDB_t, dbVersion)  },
+      { _DC3_DB_MAC_ADDR,            DB_UI_ROM,  6                                         , 2                                        },
+      { _DC3_DB_IP_ADDR,             DB_EEPROM,  DB_SIZE_OF_ELEM(SettingsDB_t, ipAddr)     , DB_LOC_OF_ELEM(SettingsDB_t, ipAddr)     },
+      { _DC3_DB_SN,                  DB_SN_ROM,  16                                        , 0                                        },
+      { _DC3_DB_BOOT_MAJ,            DB_EEPROM,  DB_SIZE_OF_ELEM(SettingsDB_t, bootMajVer) , DB_LOC_OF_ELEM(SettingsDB_t, bootMajVer) },
+      { _DC3_DB_BOOT_MIN,            DB_EEPROM,  DB_SIZE_OF_ELEM(SettingsDB_t, bootMinVer) , DB_LOC_OF_ELEM(SettingsDB_t, bootMinVer) },
+      { _DC3_DB_BOOT_BUILD_DATETIME, DB_EEPROM,  DB_SIZE_OF_ELEM(SettingsDB_t, bootBuildDT), DB_LOC_OF_ELEM(SettingsDB_t, bootBuildDT)},
+      { _DC3_DB_APPL_MAJ,            DB_FLASH ,  FLASH_APPL_MAJ_VER_LEN                    , FLASH_APPL_MAJ_VER_ADDR                  },
+      { _DC3_DB_APPL_MIN,            DB_FLASH ,  FLASH_APPL_MIN_VER_LEN                    , FLASH_APPL_MIN_VER_ADDR                  },
+      { _DC3_DB_APPL_BUILD_DATETIME, DB_FLASH ,  FLASH_APPL_BUILD_DATETIME_LEN             , FLASH_APPL_BUILD_DATETIME_ADDR           },
+      { _DC3_DB_FPGA_MAJ,            DB_EEPROM,  DB_SIZE_OF_ELEM(SettingsDB_t, fpgaMajVer) , DB_LOC_OF_ELEM(SettingsDB_t, fpgaMajVer) },
+      { _DC3_DB_FPGA_MIN,            DB_EEPROM,  DB_SIZE_OF_ELEM(SettingsDB_t, fpgaMinVer) , DB_LOC_OF_ELEM(SettingsDB_t, fpgaMinVer) },
+      { _DC3_DB_FPGA_BUILD_DATETIME, DB_EEPROM,  DB_SIZE_OF_ELEM(SettingsDB_t, fpgaBuildDT), DB_LOC_OF_ELEM(SettingsDB_t, fpgaBuildDT)},
 };
 
 /**
@@ -75,24 +75,24 @@ static const SettingsDB_t DB_defaultEeepromSettings = {
 /* Private functions ---------------------------------------------------------*/
 
 /******************************************************************************/
-const char* const DB_elemToStr( const DB_Elem_t elem )
+const char* const DB_elemToStr( const DC3DBElem_t elem )
 {
    switch ( elem ) {
-      case DB_MAGIC_WORD:           return("DB_MAGIC_WORD");            break;
-      case DB_VERSION:              return("DB_VERSION");               break;
-      case DB_MAC_ADDR:             return("DB_MAC_ADDR");              break;
-      case DB_IP_ADDR:              return("DB_IP_ADDR");               break;
-      case DB_SN:                   return("DB_SN");                    break;
-      case DB_BOOT_MAJ:             return("DB_BOOT_MAJ");              break;
-      case DB_BOOT_MIN:             return("DB_BOOT_MIN");              break;
-      case DB_BOOT_BUILD_DATETIME:  return("DB_BOOT_BUILD_DATETIME");   break;
-      case DB_APPL_MAJ:             return("DB_APPL_MAJ");              break;
-      case DB_APPL_MIN:             return("DB_APPL_MIN");              break;
-      case DB_APPL_BUILD_DATETIME:  return("DB_APPL_BUILD_DATETIME");   break;
-      case DB_FPGA_MAJ:             return("DB_FPGA_MAJ");              break;
-      case DB_FPGA_MIN:             return("DB_FPGA_MIN");              break;
-      case DB_FPGA_BUILD_DATETIME:  return("DB_FPGA_BUILD_DATETIME");   break;
-      default:                      return("");                         break;
+      case _DC3_DB_MAGIC_WORD:          return("DB_MAGIC_WORD");          break;
+      case _DC3_DB_VERSION:             return("DB_VERSION");             break;
+      case _DC3_DB_MAC_ADDR:            return("DB_MAC_ADDR");            break;
+      case _DC3_DB_IP_ADDR:             return("DB_IP_ADDR");             break;
+      case _DC3_DB_SN:                  return("DB_SN");                  break;
+      case _DC3_DB_BOOT_MAJ:            return("DB_BOOT_MAJ");            break;
+      case _DC3_DB_BOOT_MIN:            return("DB_BOOT_MIN");            break;
+      case _DC3_DB_BOOT_BUILD_DATETIME: return("DB_BOOT_BUILD_DATETIME"); break;
+      case _DC3_DB_APPL_MAJ:            return("DB_APPL_MAJ");            break;
+      case _DC3_DB_APPL_MIN:            return("DB_APPL_MIN");            break;
+      case _DC3_DB_APPL_BUILD_DATETIME: return("DB_APPL_BUILD_DATETIME"); break;
+      case _DC3_DB_FPGA_MAJ:            return("DB_FPGA_MAJ");            break;
+      case _DC3_DB_FPGA_MIN:            return("DB_FPGA_MIN");            break;
+      case _DC3_DB_FPGA_BUILD_DATETIME: return("DB_FPGA_BUILD_DATETIME"); break;
+      default:                          return("");                       break;
    }
 }
 
@@ -103,7 +103,7 @@ const DC3Error_t DB_isValid( const AccessType_t accessType )
 
    uint32_t db_magicWord = 0;
    status = DB_getElemBLK(
-         DB_MAGIC_WORD,
+         _DC3_DB_MAGIC_WORD,
          (uint8_t *)&db_magicWord,
          sizeof(db_magicWord),
          ACCESS_BARE_METAL
@@ -124,7 +124,7 @@ const DC3Error_t DB_isValid( const AccessType_t accessType )
 
    uint16_t db_version = 0;
    status = DB_getElemBLK(
-         DB_VERSION,
+         _DC3_DB_VERSION,
          (uint8_t *)&db_version,
          sizeof(db_version),
          ACCESS_BARE_METAL
@@ -162,7 +162,7 @@ const DC3Error_t DB_initToDefault( const AccessType_t accessType )
    switch( accessType ) {
       case ACCESS_BARE_METAL:
          status = DB_setElemBLK(
-               DB_MAGIC_WORD,
+               _DC3_DB_MAGIC_WORD,
                (uint8_t *)&DB_defaultEeepromSettings.dbMagicWord,
                sizeof(DB_defaultEeepromSettings.dbMagicWord),
                accessType
@@ -172,7 +172,7 @@ const DC3Error_t DB_initToDefault( const AccessType_t accessType )
          }
 
          status = DB_setElemBLK(
-               DB_VERSION,
+               _DC3_DB_VERSION,
                (uint8_t *)&DB_defaultEeepromSettings.dbVersion,
                sizeof(DB_defaultEeepromSettings.dbVersion),
                accessType
@@ -182,7 +182,7 @@ const DC3Error_t DB_initToDefault( const AccessType_t accessType )
          }
 
          status = DB_setElemBLK(
-               DB_IP_ADDR,
+               _DC3_DB_IP_ADDR,
                (uint8_t *)&DB_defaultEeepromSettings.ipAddr,
                sizeof(DB_defaultEeepromSettings.ipAddr),
                accessType
@@ -222,7 +222,7 @@ DB_initToDefault_ERR_HANDLE:      /* Handle any error that may have occurred. */
 
 /******************************************************************************/
 const DC3Error_t DB_getElemBLK(
-      const DB_Elem_t elem,
+      const DC3DBElem_t elem,
       uint8_t* pBuffer,
       const size_t bufSize,
       const AccessType_t accessType
@@ -295,7 +295,7 @@ DB_getElemBLK_ERR_HANDLE:         /* Handle any error that may have occurred. */
 
 /******************************************************************************/
 const DC3Error_t DB_setElemBLK(
-      const DB_Elem_t elem,
+      const DC3DBElem_t elem,
       const uint8_t* const pBuffer,
       const size_t bufSize,
       const AccessType_t accessType
@@ -357,19 +357,19 @@ DB_getElemBLK_ERR_HANDLE:         /* Handle any error that may have occurred. */
 }
 
 /******************************************************************************/
-const DB_ElemLoc_t DB_getElemLoc( const DB_Elem_t elem )
+const DB_ElemLoc_t DB_getElemLoc( const DC3DBElem_t elem )
 {
    return( settingsDB[elem].loc );
 }
 
 /******************************************************************************/
-const uint32_t DB_getElemOffset( const DB_Elem_t elem )
+const uint32_t DB_getElemOffset( const DC3DBElem_t elem )
 {
    return( settingsDB[elem].offset );
 }
 
 /******************************************************************************/
-const size_t DB_getElemSize( const DB_Elem_t elem )
+const size_t DB_getElemSize( const DC3DBElem_t elem )
 {
    return( settingsDB[elem].size );
 }
@@ -382,7 +382,7 @@ const I2C_Dev_t DB_getI2CDev( const DB_ElemLoc_t loc )
 
 /******************************************************************************/
 const DC3Error_t DB_readEEPROM(
-      const DB_Elem_t elem,
+      const DC3DBElem_t elem,
       const uint8_t bufferSize,
       uint8_t* const buffer,
       uint16_t* resultLen
@@ -395,15 +395,15 @@ const DC3Error_t DB_readEEPROM(
    DC3Error_t status = ERR_NONE;
 
    switch( elem ) {
-      case DB_APPL_MAJ:
+      case _DC3_DB_APPL_MAJ:
          buffer[0] = FLASH_readApplMajVer();
          *resultLen = 1;
          break;
-      case DB_APPL_MIN:
+      case _DC3_DB_APPL_MIN:
          buffer[0] = FLASH_readApplMinVer();
          *resultLen = 1;
          break;
-      case DB_APPL_BUILD_DATETIME:
+      case _DC3_DB_APPL_BUILD_DATETIME:
          status = FLASH_readApplBuildDatetime( buffer, bufferSize );
          if ( ERR_NONE == status ) {
             *resultLen = DC3_DATETIME_LEN;

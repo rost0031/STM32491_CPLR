@@ -91,7 +91,7 @@ typedef struct {
     uint16_t dataLen;
 
     /**< DB element to get or set with the current request (used for DB access to guarantee a reply) */
-    DB_Elem_t dbElem;
+    DC3DBElem_t dbElem;
 
     /**< Flag that keeps track of whether DB is valid.  Starts out false but gets set to
      * true after checking. */
@@ -821,7 +821,7 @@ static QState SysMgr_DBMagicWordCheck(SysMgr * const me, QEvt const * const e) {
              * be incorrect */
             DBReadReqEvt *evt = Q_NEW(DBReadReqEvt, DB_READ_SIG);
             evt->accessType = ACCESS_QPC;
-            evt->dbElem = DB_MAGIC_WORD;
+            evt->dbElem = _DC3_DB_MAGIC_WORD;
             QACTIVE_POST(AO_SysMgr, (QEvt *)(evt), AO_SysMgr);
             status_ = Q_HANDLED();
             break;
@@ -916,8 +916,8 @@ static QState SysMgr_ResetDBMagicWord(SysMgr * const me, QEvt const * const e) {
             /* Post to SysMgr to set the build datetime since it doesn't match the compiled one */
             DBWriteReqEvt *evt = Q_NEW(DBWriteReqEvt, DB_WRITE_SIG);
             evt->accessType = ACCESS_QPC;
-            evt->dbElem = DB_MAGIC_WORD;
-            evt->dataLen =  DB_getElemSize(DB_MAGIC_WORD);
+            evt->dbElem = _DC3_DB_MAGIC_WORD;
+            evt->dataLen =  DB_getElemSize(_DC3_DB_MAGIC_WORD);
             MEMCPY(evt->dataBuf, (uint8_t *)&dbMagicWord, evt->dataLen);
             QACTIVE_POST(AO_SysMgr, (QEvt *)(evt), me);
             status_ = Q_HANDLED();
@@ -959,7 +959,7 @@ static QState SysMgr_DBVersionCheck(SysMgr * const me, QEvt const * const e) {
              * be incorrect */
             DBReadReqEvt *evt = Q_NEW(DBReadReqEvt, DB_READ_SIG);
             evt->accessType = ACCESS_QPC;
-            evt->dbElem = DB_VERSION;
+            evt->dbElem = _DC3_DB_VERSION;
             QACTIVE_POST(AO_SysMgr, (QEvt *)(evt), AO_SysMgr);
             status_ = Q_HANDLED();
             break;
@@ -1055,7 +1055,7 @@ static QState SysMgr_BootLdrBuildDTCheck(SysMgr * const me, QEvt const * const e
              * be incorrect */
             DBReadReqEvt *evt = Q_NEW(DBReadReqEvt, DB_READ_SIG);
             evt->accessType = ACCESS_QPC;
-            evt->dbElem = DB_BOOT_BUILD_DATETIME;
+            evt->dbElem = _DC3_DB_BOOT_BUILD_DATETIME;
             QACTIVE_POST(AO_SysMgr, (QEvt *)(evt), me);
             status_ = Q_HANDLED();
             break;
@@ -1161,8 +1161,8 @@ static QState SysMgr_ResetDBVersion(SysMgr * const me, QEvt const * const e) {
             /* Post to SysMgr to set the build datetime since it doesn't match the compiled one */
             DBWriteReqEvt *evt = Q_NEW(DBWriteReqEvt, DB_WRITE_SIG);
             evt->accessType = ACCESS_QPC;
-            evt->dbElem = DB_VERSION;
-            evt->dataLen =  DB_getElemSize(DB_VERSION);
+            evt->dbElem = _DC3_DB_VERSION;
+            evt->dataLen =  DB_getElemSize(_DC3_DB_VERSION);
             uint16_t dbVersion = DB_VERSION_DEF;
             MEMCPY(evt->dataBuf, (uint8_t *)&dbVersion, evt->dataLen);
             QACTIVE_POST(AO_SysMgr, (QEvt *)(evt), me);
@@ -1211,8 +1211,8 @@ static QState SysMgr_SetBootLdrDatetime(SysMgr * const me, QEvt const * const e)
             /* Post to SysMgr to set the build datetime since it doesn't match the compiled one */
             DBWriteReqEvt *evt = Q_NEW(DBWriteReqEvt, DB_WRITE_SIG);
             evt->accessType = ACCESS_QPC;
-            evt->dbElem = DB_BOOT_BUILD_DATETIME;
-            evt->dataLen =  DB_getElemSize(DB_BOOT_BUILD_DATETIME);
+            evt->dbElem = _DC3_DB_BOOT_BUILD_DATETIME;
+            evt->dataLen =  DB_getElemSize(_DC3_DB_BOOT_BUILD_DATETIME);
             MEMCPY(evt->dataBuf, (uint8_t *)BUILD_DATE, evt->dataLen);
             QACTIVE_POST(AO_SysMgr, (QEvt *)(evt), me);
             status_ = Q_HANDLED();
@@ -1250,8 +1250,8 @@ static QState SysMgr_SetBootLdrMajVer(SysMgr * const me, QEvt const * const e) {
             /* Post to SysMgr to set the major version since we no longer trust it */
             DBWriteReqEvt *evt = Q_NEW(DBWriteReqEvt, DB_WRITE_SIG);
             evt->accessType = ACCESS_QPC;
-            evt->dbElem = DB_BOOT_MAJ;
-            evt->dataLen =  DB_getElemSize(DB_BOOT_MAJ);
+            evt->dbElem = _DC3_DB_BOOT_MAJ;
+            evt->dataLen =  DB_getElemSize(_DC3_DB_BOOT_MAJ);
             evt->dataBuf[0] = FW_VER_MAJOR;
 
             DBG_printf("Bootloader major version in byffer after copy: %d\n", evt->dataBuf[0] );
@@ -1291,7 +1291,7 @@ static QState SysMgr_BootLdrMajVerCheck(SysMgr * const me, QEvt const * const e)
              * be incorrect */
             DBReadReqEvt *evt = Q_NEW(DBReadReqEvt, DB_READ_SIG);
             evt->accessType = ACCESS_QPC;
-            evt->dbElem = DB_BOOT_MAJ;
+            evt->dbElem = _DC3_DB_BOOT_MAJ;
             QACTIVE_POST(AO_SysMgr, (QEvt *)(evt), me);
             status_ = Q_HANDLED();
             break;
@@ -1360,7 +1360,7 @@ static QState SysMgr_BootLdrMinVerCheck(SysMgr * const me, QEvt const * const e)
              * be incorrect */
             DBReadReqEvt *evt = Q_NEW(DBReadReqEvt, DB_READ_SIG);
             evt->accessType = ACCESS_QPC;
-            evt->dbElem = DB_BOOT_MIN;
+            evt->dbElem = _DC3_DB_BOOT_MIN;
             QACTIVE_POST(AO_SysMgr, (QEvt *)(evt), me);
             status_ = Q_HANDLED();
             break;
@@ -1431,8 +1431,8 @@ static QState SysMgr_SetBootLdrMinVer(SysMgr * const me, QEvt const * const e) {
             /* Post to SysMgr to set the major version since we no longer trust it */
             DBWriteReqEvt *evt = Q_NEW(DBWriteReqEvt, DB_WRITE_SIG);
             evt->accessType = ACCESS_QPC;
-            evt->dbElem = DB_BOOT_MIN;
-            evt->dataLen =  DB_getElemSize(DB_BOOT_MIN);
+            evt->dbElem = _DC3_DB_BOOT_MIN;
+            evt->dataLen =  DB_getElemSize(_DC3_DB_BOOT_MIN);
             evt->dataBuf[0] = FW_VER_MINOR;
             QACTIVE_POST(AO_SysMgr, (QEvt *)(evt), me);
             status_ = Q_HANDLED();

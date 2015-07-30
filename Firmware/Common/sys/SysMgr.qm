@@ -12,7 +12,7 @@
    <attribute name="accessType" type="AccessType_t" visibility="0x01" properties="0x00">
     <documentation>/**&lt; Specifies whether the request came from FreeRTOS thread or another AO */</documentation>
    </attribute>
-   <attribute name="dbElem" type="DB_Elem_t" visibility="0x01" properties="0x00">
+   <attribute name="dbElem" type="DC3DBElem_t" visibility="0x01" properties="0x00">
     <documentation>/**&lt; DB element */</documentation>
    </attribute>
   </class>
@@ -23,7 +23,7 @@
    <attribute name="accessType" type="AccessType_t" visibility="0x01" properties="0x00">
     <documentation>/**&lt; Specifies whether the request came from FreeRTOS thread or another AO */</documentation>
    </attribute>
-   <attribute name="dbElem" type="DB_Elem_t" visibility="0x01" properties="0x00">
+   <attribute name="dbElem" type="DC3DBElem_t" visibility="0x01" properties="0x00">
     <documentation>/**&lt; DB element */</documentation>
    </attribute>
    <attribute name="dataBuf[MAX_DB_ELEM_SIZE]" type="uint8_t" visibility="0x01" properties="0x00">
@@ -37,7 +37,7 @@
    <documentation>/**
  * @brief Event struct type for specifying a DB read request.
  */</documentation>
-   <attribute name="dbElem" type="DB_Elem_t" visibility="0x01" properties="0x00">
+   <attribute name="dbElem" type="DC3DBElem_t" visibility="0x01" properties="0x00">
     <documentation>/**&lt; DB element */</documentation>
    </attribute>
    <attribute name="dataBuf[MAX_DB_ELEM_SIZE]" type="uint8_t" visibility="0x01" properties="0x00">
@@ -54,7 +54,7 @@
    <documentation>/**
  * @brief Event struct type for specifying a DB read request.
  */</documentation>
-   <attribute name="dbElem" type="DB_Elem_t" visibility="0x01" properties="0x00">
+   <attribute name="dbElem" type="DC3DBElem_t" visibility="0x01" properties="0x00">
     <documentation>/**&lt; DB element */</documentation>
    </attribute>
    <attribute name="status" type="DC3Error_t" visibility="0x01" properties="0x00">
@@ -94,7 +94,7 @@
    <attribute name="dataLen" type="uint16_t" visibility="0x01" properties="0x00">
     <documentation>/**&lt; Length of data in dataBuf */</documentation>
    </attribute>
-   <attribute name="dbElem" type="DB_Elem_t" visibility="0x01" properties="0x00">
+   <attribute name="dbElem" type="DC3DBElem_t" visibility="0x01" properties="0x00">
     <documentation>/**&lt; DB element to get or set with the current request (used for DB access to guarantee a reply) */</documentation>
    </attribute>
    <attribute name="isDBValid" type="bool" visibility="0x01" properties="0x00">
@@ -531,7 +531,7 @@ QACTIVE_POST(AO_SysMgr, evt, me);</action>
  * be incorrect */
 DBReadReqEvt *evt = Q_NEW(DBReadReqEvt, DB_READ_SIG);
 evt-&gt;accessType = ACCESS_QPC;
-evt-&gt;dbElem = DB_MAGIC_WORD;
+evt-&gt;dbElem = _DC3_DB_MAGIC_WORD;
 QACTIVE_POST(AO_SysMgr, (QEvt *)(evt), AO_SysMgr);</entry>
         <exit>QTimeEvt_disarm(&amp;me-&gt;dbTimerEvt);                  /* Disarm timer on exit */</exit>
         <tran trig="I2C1_DEV_READ_DONE">
@@ -615,8 +615,8 @@ uint32_t dbMagicWord = DB_MAGIC_WORD_DEF;
 /* Post to SysMgr to set the build datetime since it doesn't match the compiled one */
 DBWriteReqEvt *evt = Q_NEW(DBWriteReqEvt, DB_WRITE_SIG);
 evt-&gt;accessType = ACCESS_QPC;
-evt-&gt;dbElem = DB_MAGIC_WORD;
-evt-&gt;dataLen =  DB_getElemSize(DB_MAGIC_WORD);
+evt-&gt;dbElem = _DC3_DB_MAGIC_WORD;
+evt-&gt;dataLen =  DB_getElemSize(_DC3_DB_MAGIC_WORD);
 MEMCPY(evt-&gt;dataBuf, (uint8_t *)&amp;dbMagicWord, evt-&gt;dataLen);
 QACTIVE_POST(AO_SysMgr, (QEvt *)(evt), me);</entry>
         <tran trig="DB_OP_DONE" target="../../10">
@@ -646,7 +646,7 @@ QACTIVE_POST(AO_SysMgr, (QEvt *)(evt), me);</entry>
  * be incorrect */
 DBReadReqEvt *evt = Q_NEW(DBReadReqEvt, DB_READ_SIG);
 evt-&gt;accessType = ACCESS_QPC;
-evt-&gt;dbElem = DB_VERSION;
+evt-&gt;dbElem = _DC3_DB_VERSION;
 QACTIVE_POST(AO_SysMgr, (QEvt *)(evt), AO_SysMgr);</entry>
         <exit>QTimeEvt_disarm(&amp;me-&gt;dbTimerEvt);                  /* Disarm timer on exit */</exit>
         <tran trig="I2C1_DEV_READ_DONE">
@@ -731,7 +731,7 @@ me-&gt;isDBValid = true;</action>
  * be incorrect */
 DBReadReqEvt *evt = Q_NEW(DBReadReqEvt, DB_READ_SIG);
 evt-&gt;accessType = ACCESS_QPC;
-evt-&gt;dbElem = DB_BOOT_BUILD_DATETIME;
+evt-&gt;dbElem = _DC3_DB_BOOT_BUILD_DATETIME;
 QACTIVE_POST(AO_SysMgr, (QEvt *)(evt), me);</entry>
         <tran trig="I2C1_DEV_READ_DONE">
          <action>me-&gt;errorCode = ((I2CReadDoneEvt const *) e)-&gt;status;
@@ -830,8 +830,8 @@ DBG_printf(&quot;Bootloader datetime match\n&quot;);</action>
 /* Post to SysMgr to set the build datetime since it doesn't match the compiled one */
 DBWriteReqEvt *evt = Q_NEW(DBWriteReqEvt, DB_WRITE_SIG);
 evt-&gt;accessType = ACCESS_QPC;
-evt-&gt;dbElem = DB_VERSION;
-evt-&gt;dataLen =  DB_getElemSize(DB_VERSION);
+evt-&gt;dbElem = _DC3_DB_VERSION;
+evt-&gt;dataLen =  DB_getElemSize(_DC3_DB_VERSION);
 uint16_t dbVersion = DB_VERSION_DEF;
 MEMCPY(evt-&gt;dataBuf, (uint8_t *)&amp;dbVersion, evt-&gt;dataLen);
 QACTIVE_POST(AO_SysMgr, (QEvt *)(evt), me);</entry>
@@ -873,8 +873,8 @@ ERR_printf(&quot;Out of retries when attempting to reset DB to a valid state. Er
 /* Post to SysMgr to set the build datetime since it doesn't match the compiled one */
 DBWriteReqEvt *evt = Q_NEW(DBWriteReqEvt, DB_WRITE_SIG);
 evt-&gt;accessType = ACCESS_QPC;
-evt-&gt;dbElem = DB_BOOT_BUILD_DATETIME;
-evt-&gt;dataLen =  DB_getElemSize(DB_BOOT_BUILD_DATETIME);
+evt-&gt;dbElem = _DC3_DB_BOOT_BUILD_DATETIME;
+evt-&gt;dataLen =  DB_getElemSize(_DC3_DB_BOOT_BUILD_DATETIME);
 MEMCPY(evt-&gt;dataBuf, (uint8_t *)BUILD_DATE, evt-&gt;dataLen);
 QACTIVE_POST(AO_SysMgr, (QEvt *)(evt), me);</entry>
         <tran trig="DB_OP_DONE" target="../../12">
@@ -900,8 +900,8 @@ QACTIVE_POST(AO_SysMgr, (QEvt *)(evt), me);</entry>
 /* Post to SysMgr to set the major version since we no longer trust it */
 DBWriteReqEvt *evt = Q_NEW(DBWriteReqEvt, DB_WRITE_SIG);
 evt-&gt;accessType = ACCESS_QPC;
-evt-&gt;dbElem = DB_BOOT_MAJ;
-evt-&gt;dataLen =  DB_getElemSize(DB_BOOT_MAJ);
+evt-&gt;dbElem = _DC3_DB_BOOT_MAJ;
+evt-&gt;dataLen =  DB_getElemSize(_DC3_DB_BOOT_MAJ);
 evt-&gt;dataBuf[0] = FW_VER_MAJOR;
 
 DBG_printf(&quot;Bootloader major version in byffer after copy: %d\n&quot;, evt-&gt;dataBuf[0] );
@@ -929,7 +929,7 @@ QACTIVE_POST(AO_SysMgr, (QEvt *)(evt), me);</entry>
  * be incorrect */
 DBReadReqEvt *evt = Q_NEW(DBReadReqEvt, DB_READ_SIG);
 evt-&gt;accessType = ACCESS_QPC;
-evt-&gt;dbElem = DB_BOOT_MAJ;
+evt-&gt;dbElem = _DC3_DB_BOOT_MAJ;
 QACTIVE_POST(AO_SysMgr, (QEvt *)(evt), me);</entry>
         <tran trig="I2C1_DEV_READ_DONE">
          <action>me-&gt;errorCode = ((I2CReadDoneEvt const *) e)-&gt;status;
@@ -991,7 +991,7 @@ END_ERROR_CHECK:</action>
  * be incorrect */
 DBReadReqEvt *evt = Q_NEW(DBReadReqEvt, DB_READ_SIG);
 evt-&gt;accessType = ACCESS_QPC;
-evt-&gt;dbElem = DB_BOOT_MIN;
+evt-&gt;dbElem = _DC3_DB_BOOT_MIN;
 QACTIVE_POST(AO_SysMgr, (QEvt *)(evt), me);</entry>
         <tran trig="I2C1_DEV_READ_DONE">
          <action>me-&gt;errorCode = ((I2CReadDoneEvt const *) e)-&gt;status;
@@ -1055,8 +1055,8 @@ END_ERROR_CHECK:</action>
 /* Post to SysMgr to set the major version since we no longer trust it */
 DBWriteReqEvt *evt = Q_NEW(DBWriteReqEvt, DB_WRITE_SIG);
 evt-&gt;accessType = ACCESS_QPC;
-evt-&gt;dbElem = DB_BOOT_MIN;
-evt-&gt;dataLen =  DB_getElemSize(DB_BOOT_MIN);
+evt-&gt;dbElem = _DC3_DB_BOOT_MIN;
+evt-&gt;dataLen =  DB_getElemSize(_DC3_DB_BOOT_MIN);
 evt-&gt;dataBuf[0] = FW_VER_MINOR;
 QACTIVE_POST(AO_SysMgr, (QEvt *)(evt), me);</entry>
         <tran trig="DB_OP_DONE">

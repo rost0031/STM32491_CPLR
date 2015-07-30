@@ -374,8 +374,7 @@ enum DC3RamTest_t
 }
 
 //------------------------------------------------------------------------------
-// This enum defines all the different response types that can identify a msg
-// type.
+// This enum defines all the different debug levels that are used by DC3
 enum DC3DbgLevel_t 
 {
     DC3_DBG = 0;     // Lowest level of debugging.  Everything printed.
@@ -387,6 +386,38 @@ enum DC3DbgLevel_t
                      // DBG_LEVEL will be checked to issue a MENU signal instead of a
                      // LOG signal
     DC3_ISR = 5;     // Use this with isr_debug_slow_printf to get smaller printout
+}
+
+//------------------------------------------------------------------------------
+// This enum defines All the different settings that can exist in the settings 
+// database on the DC3 board.
+enum DC3DBElem_t 
+{
+    DC3_DB_MAGIC_WORD           = 0; // Magic word that specifies if a DB exists
+                                     // or needs to be init to a default.
+    DC3_DB_VERSION              = 1; // Keeps track of DB version to allow 
+                                     // upgrades and additions
+    DC3_DB_MAC_ADDR             = 2; // Mac address stored in the special UID 
+                                     // section of the RO EEPROM
+    DC3_DB_IP_ADDR              = 3; // IP address stored in main EEPROM
+    DC3_DB_SN                   = 4; // Serial number stored in the special SN 
+                                     // section of RO EEPROM
+    DC3_DB_BOOT_MAJ             = 5; // Major version of bootloader FW image
+    DC3_DB_BOOT_MIN             = 6; // Minor version of bootloader FW image
+    DC3_DB_BOOT_BUILD_DATETIME  = 7; // Build datetime of the bootloader FW image
+    DC3_DB_APPL_MAJ             = 8; // Major version of application FW image
+    DC3_DB_APPL_MIN             = 9, // Minor version of application FW image
+    DC3_DB_APPL_BUILD_DATETIME = 10; // Build datetime of the application FW image
+    DC3_DB_FPGA_MAJ            = 11; // Major version of FPGA FW image
+    DC3_DB_FPGA_MIN            = 12; // Minor version of FPGA FW image
+    DC3_DB_FPGA_BUILD_DATETIME = 13; // Build datetime of the FPGA FW image
+
+   // Add more elements here.  If adding elements after code is released, bump
+   // the DB_VERSION up and make sure to bump DB_MAX_ELEM to have the highest 
+   // number
+
+   DC3_DB_MAX_ELEM             = 14; // Max number of elements that can be stored.  
+                                     // ALWAYS LAST
 }
 
 //------------------------------------------------------------------------------

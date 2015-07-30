@@ -86,7 +86,7 @@ typedef enum {
  * Description type of each DB element (location, etc).
  */
 typedef struct {
-   DB_Elem_t    elem;  /**< Specifies which settings element is being described */
+   DC3DBElem_t  elem;  /**< Specifies which settings element is being described */
    DB_ElemLoc_t  loc;  /**< Specifies how the db element is stored */
    size_t       size;  /**< Specifies the size of the db element */
    uint32_t    offset; /**< Specifies the offset from beginning of EEPROM memory
@@ -117,7 +117,7 @@ typedef struct {
 /**
  * @brief   Get a string representation of a DB element.
  *
- * @param  [in] elem: DB_Elem_t that specifies what element to retrieve.
+ * @param  [in] elem: DC3DBElem_t that specifies what element to retrieve.
  *    @arg DB_MAGIC_WORD: only used to validate that the DB even exists.
  *    @arg DB_VERSION: version of the DB.  To be used for future upgrades.
  *    @arg DB_MAC_ADDR: MAC address stored in the RO part of DB.
@@ -126,7 +126,7 @@ typedef struct {
  * @return str: char* representation of DB element if found,
  *             "" if not found.
  */
-const char* const DB_elemToStr( const DB_Elem_t elem );
+const char* const DB_elemToStr( const DC3DBElem_t elem );
 
 /**
  * @brief   Check if Settings DB in EEPROM is valid.
@@ -169,7 +169,7 @@ const DC3Error_t DB_initToDefault( const AccessType_t accessType  );
  *
  * This function retrieves an element from the database of settings.
  *
- * @param  [in] elem: DB_Elem_t that specifies what element to retrieve.
+ * @param  [in] elem: DC3DBElem_t that specifies what element to retrieve.
  *    @arg DB_MAGIC_WORD: only used to validate that the DB even exists.
  *    @arg DB_VERSION: version of the DB.  To be used for future upgrades.
  *    @arg DB_MAC_ADDR: MAC address stored in the RO part of DB.
@@ -190,7 +190,7 @@ const DC3Error_t DB_initToDefault( const AccessType_t accessType  );
  *    other errors if found.
  */
 const DC3Error_t DB_getElemBLK(
-      const DB_Elem_t elem,
+      const DC3DBElem_t elem,
       uint8_t* pBuffer,
       const size_t bufSize,
       const AccessType_t accessType
@@ -204,7 +204,7 @@ const DC3Error_t DB_getElemBLK(
  * @note: Some elements in the DB cannot be set since they are in RO part of the
  * DB (RO EEPROM, GPIO, Flash, etc).
  *
- * @param  [in] elem: DB_Elem_t that specifies what element to set.
+ * @param  [in] elem: DC3DBElem_t that specifies what element to set.
  *    @arg DB_MAGIC_WORD: only used to validate that the DB even exists.
  *    @arg DB_VERSION: version of the DB.  To be used for future upgrades.
  *    @arg DB_IP_ADDR: IP address stored in the RW part of DB.
@@ -223,7 +223,7 @@ const DC3Error_t DB_getElemBLK(
  *    other errors if found.
  */
 const DC3Error_t DB_setElemBLK(
-      const DB_Elem_t elem,
+      const DC3DBElem_t elem,
       const uint8_t* const pBuffer,
       const size_t bufSize,
       const AccessType_t accessType
@@ -232,7 +232,7 @@ const DC3Error_t DB_setElemBLK(
 /**
  * @brief   Get the DB element location in the DB
  *
- * @param [in] elem: DB_Elem_t that specifies the DB element
+ * @param [in] elem: DC3DBElem_t that specifies the DB element
  * @return DB_ElemLoc_t:
  *    @arg DB_EEPROM: element lives in the R/W EEPROM
  *    @arg DB_SN_ROM: element lives in the R/O SNR section of EEPROM
@@ -240,23 +240,23 @@ const DC3Error_t DB_setElemBLK(
  *    @arg DB_GPIO:   element is specified via a GPIO pin
  *    @arg DB_FLASH:  element lives in the main FLASH memory
  */
-const DB_ElemLoc_t DB_getElemLoc( const DB_Elem_t elem );
+const DB_ElemLoc_t DB_getElemLoc( const DC3DBElem_t elem );
 
 /**
  * @brief   Get the DB element offset from the beginnging of its device
  *
- * @param [in] elem: DB_Elem_t that specifies the DB element
+ * @param [in] elem: DC3DBElem_t that specifies the DB element
  * @return uint32_t: offset from beginning of the element's device
  */
-const uint32_t DB_getElemOffset( const DB_Elem_t elem );
+const uint32_t DB_getElemOffset( const DC3DBElem_t elem );
 
 /**
  * @brief   Get the DB element size in DB
  *
- * @param [in] elem: DB_Elem_t that specifies the DB element
+ * @param [in] elem: DC3DBElem_t that specifies the DB element
  * @return size_t: size of the element in DB
  */
-const size_t DB_getElemSize( const DB_Elem_t elem );
+const size_t DB_getElemSize( const DC3DBElem_t elem );
 
 /**
  * @brief   Get the specific I2C device on which a specified DB element is
@@ -280,7 +280,7 @@ const I2C_Dev_t DB_getI2CDev( const DB_ElemLoc_t loc );
  * This function retrieves an element from the database portion of DB that is
  * stored exclusively in FLASH (and is read only).
  *
- * @param  [in] elem: DB_Elem_t that specifies what element to retrieve.
+ * @param  [in] elem: DC3DBElem_t that specifies what element to retrieve.
  *    @arg DB_APPL_MAJ_VER: Major version of the Application FW image.
  *    @arg DB_APPL_MIN_VER: Minor version of the Application FW image.
  *    @arg DB_APPL_BUILD_DATETIME: Build datetime of the application FW image.
@@ -295,7 +295,7 @@ const I2C_Dev_t DB_getI2CDev( const DB_ElemLoc_t loc );
  *    other errors if found.
  */
 const DC3Error_t DB_readEEPROM(
-      const DB_Elem_t elem,
+      const DC3DBElem_t elem,
       const uint8_t bufferSize,
       uint8_t* const buffer,
       uint16_t* resultLen

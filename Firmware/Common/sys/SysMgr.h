@@ -59,7 +59,7 @@ typedef struct {
     AccessType_t accessType;
 
     /**< DB element */
-    DB_Elem_t dbElem;
+    DC3DBElem_t dbElem;
 } DBReadReqEvt;
 
 /**
@@ -74,7 +74,7 @@ typedef struct {
     AccessType_t accessType;
 
     /**< DB element */
-    DB_Elem_t dbElem;
+    DC3DBElem_t dbElem;
 
     /**< Buffer that holds the data to write */
     uint8_t dataBuf[MAX_DB_ELEM_SIZE];
@@ -92,7 +92,7 @@ typedef struct {
     QEvt super;
 
     /**< DB element */
-    DB_Elem_t dbElem;
+    DC3DBElem_t dbElem;
 
     /**< Buffer that holds the data read from DB */
     uint8_t dataBuf[MAX_DB_ELEM_SIZE];
@@ -113,7 +113,7 @@ typedef struct {
     QEvt super;
 
     /**< DB element */
-    DB_Elem_t dbElem;
+    DC3DBElem_t dbElem;
 
     /**< Status of the operation */
     DC3Error_t status;
