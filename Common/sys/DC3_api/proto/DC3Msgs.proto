@@ -179,6 +179,11 @@
 //@max_string_length=32
 //@max_bytes_length=112
 
+
+//------------------------------------------------------------------------------
+// -------------- START of enumerations used by DC3 API ------------------------
+//------------------------------------------------------------------------------
+
 //------------------------------------------------------------------------------
 // See rules for DC3BasicMsg at the top of file.
 // 
@@ -326,6 +331,73 @@ enum DC3BootMode_t
                           // Application/SCIPSIII mode. 
     DC3_MaxBootModes = 4; // For error checking. This shouldn't be used.
 }
+
+//------------------------------------------------------------------------------
+// This enum defines all the different I2C devices that exist on the board 
+enum DC3I2CDevice_t
+{
+    DC3_EEPROM      = 0; // R/W EEPROM on I2C bus 1 
+    DC3_SNROM       = 1; // RO EEPROM on I2C bus 1 that contains a serial number.
+    DC3_EUIROM      = 2; // RO EEPROM on I2C bus 1 that contains Unique ID
+    DC3_MaxI2CDev   = 3; // For error checking. This shouldn't be used by users.
+}
+
+//------------------------------------------------------------------------------
+// This enum defines all the different I2C devices that exist on the board 
+enum DC3AccessType_t
+{
+    DC3_ACCESS_NONE = 0; // No access type.  Used as a default value 
+    DC3_ACCESS_BARE = 1; // Blocking access where no RTOS services are running. 
+                         // All returns are done via passed in buffer.  Very slow
+                         // and blocking. 
+    DC3_ACCESS_QPC  = 2; // Non-blocking access performed from QPC Active Objects.
+                         // All returns are done via events that requesting AO 
+                         // should know how to handle
+    DC3_ACCESS_FRT  = 3; // Non-blocking access performed from a FreeRTOS thread.
+                         // All returns are done via a QEQueue that the 
+                         // requesting thread should wait on. Note, this is only
+                         // available in Application boot mode.
+}
+
+//------------------------------------------------------------------------------
+// This enum defines all the different RAM memory tests that exist on the board 
+enum DC3RamTest_t
+{
+    DC3_RAM_TEST_NONE      = 0; // No test.  Used for error checking 
+    DC3_RAM_TEST_DATA_BUS  = 1; // Ram test that tests the integrity of the RAM 
+                                // data bus.  
+    DC3_RAM_TEST_ADDR_BUS  = 2; // Ram test that tests the integrity of the RAM 
+                                // address bus.
+    DC3_RAM_TEST_DEV_INT   = 3; // Ram test that tests the integrity of the RAM 
+                                // device itself.
+    DC3_RAM_TEST_MAX       = 4; // Max number of tests.  Used for error checking.                               
+}
+
+//------------------------------------------------------------------------------
+// This enum defines all the different response types that can identify a msg
+// type.
+enum DC3DbgLevel_t 
+{
+    DC3_DBG = 0;     // Lowest level of debugging.  Everything printed.
+    DC3_LOG = 1;     // Basic logging.
+    DC3_WRN = 2;     // Warnings. Always printed.
+    DC3_ERR = 3;     // Critical errors.  Always printed.
+    DC3_CON = 4;     // This is reserved for printing to the console as part of
+                     // regular operation and nothing will be prepended.  Also, the
+                     // DBG_LEVEL will be checked to issue a MENU signal instead of a
+                     // LOG signal
+    DC3_ISR = 5;     // Use this with isr_debug_slow_printf to get smaller printout
+}
+
+//------------------------------------------------------------------------------
+// --------------- END of enumerations used by DC3 API -------------------------
+//------------------------------------------------------------------------------
+
+
+
+//------------------------------------------------------------------------------
+// ---------- START of message definitions used by DC3 API ---------------------
+//------------------------------------------------------------------------------
 
 //------------------------------------------------------------------------------
 // START DC3BasicMsg
@@ -776,34 +848,6 @@ message DC3FlashDataPayloadMsg
 // END DC3I2CWriteMsg
 //------------------------------------------------------------------------------
 
-
-//------------------------------------------------------------------------------
-// This enum defines all the different I2C devices that exist on the board 
-enum DC3I2CDevice_t
-{
-    DC3_EEPROM      = 0; // R/W EEPROM on I2C bus 1 
-    DC3_SNROM       = 1; // RO EEPROM on I2C bus 1 that contains a serial number.
-    DC3_EUIROM      = 2; // RO EEPROM on I2C bus 1 that contains Unique ID
-    DC3_MaxI2CDev   = 3; // For error checking. This shouldn't be used by users.
-}
-
-//------------------------------------------------------------------------------
-// This enum defines all the different I2C devices that exist on the board 
-enum DC3AccessType_t
-{
-    DC3_ACCESS_NONE = 0; // No access type.  Used as a default value 
-    DC3_ACCESS_BARE = 1; // Blocking access where no RTOS services are running. 
-                         // All returns are done via passed in buffer.  Very slow
-                         // and blocking. 
-    DC3_ACCESS_QPC  = 2; // Non-blocking access performed from QPC Active Objects.
-                         // All returns are done via events that requesting AO 
-                         // should know how to handle
-    DC3_ACCESS_FRT  = 3; // Non-blocking access performed from a FreeRTOS thread.
-                         // All returns are done via a QEQueue that the 
-                         // requesting thread should wait on. Note, this is only
-                         // available in Application boot mode.
-}
-
 //------------------------------------------------------------------------------
 // START DC3I2CDataPayloadMsg 
 // Msg Tag  - 12
@@ -826,21 +870,6 @@ message DC3I2CDataPayloadMsg
 }
 // END DC3I2CDataPayloadMsg.
 //------------------------------------------------------------------------------
-
-
-//------------------------------------------------------------------------------
-// This enum defines all the different RAM memory tests that exist on the board 
-enum DC3RamTest_t
-{
-    DC3_RAM_TEST_NONE      = 0; // No test.  Used for error checking 
-    DC3_RAM_TEST_DATA_BUS  = 1; // Ram test that tests the integrity of the RAM 
-                                // data bus.  
-    DC3_RAM_TEST_ADDR_BUS  = 2; // Ram test that tests the integrity of the RAM 
-                                // address bus.
-    DC3_RAM_TEST_DEV_INT   = 3; // Ram test that tests the integrity of the RAM 
-                                // device itself.
-    DC3_RAM_TEST_MAX       = 4; // Max number of tests.  Used for error checking.                               
-}
 
 //------------------------------------------------------------------------------
 // START DC3RamTestMsg
@@ -905,18 +934,7 @@ message DC3RamTestPayloadMsg
 // END DC3RamTestPayloadMsg.
 //------------------------------------------------------------------------------
 
+
 //------------------------------------------------------------------------------
-// This enum defines all the different response types that can identify a msg
-// type.
-enum DC3DbgLevel_t 
-{
-    DC3_DBG = 0;     // Lowest level of debugging.  Everything printed.
-    DC3_LOG = 1;     // Basic logging.
-    DC3_WRN = 2;     // Warnings. Always printed.
-    DC3_ERR = 3;     // Critical errors.  Always printed.
-    DC3_CON = 4;     // This is reserved for printing to the console as part of
-                     // regular operation and nothing will be prepended.  Also, the
-                     // DBG_LEVEL will be checked to issue a MENU signal instead of a
-                     // LOG signal
-    DC3_ISR = 5;     // Use this with isr_debug_slow_printf to get smaller printout
-}
+// ----------- END of message definitions used by DC3 API ----------------------
+//------------------------------------------------------------------------------

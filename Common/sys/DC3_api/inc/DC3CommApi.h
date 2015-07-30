@@ -57,11 +57,39 @@ extern "C" {
  * @note: To edit the enumerations, edit the DC3Msgs.proto file.
  *
  * @{ */
+
+/*! \enum DC3MsgName_t
+ * All the different message names available in the DC3 API.
+ */
 typedef enum DC3MsgName_t        DC3MsgName_t;
+
+/*! \enum DC3MsgType_t
+ * All the different message types available in the DC3 API.
+ */
 typedef enum DC3MsgType_t        DC3MsgType_t;
+
+/*! \enum DC3MsgRoute_t
+ * All the different message routes (sources and destinations) available in the
+ * DC3 API.
+ */
 typedef enum DC3MsgRoute_t       DC3MsgRoute_t;
+
+/*! \enum DC3MsgType_t
+ * All the different boot modes available in the DC3 API.  Also used to
+ * describe FW image types.
+ */
 typedef enum DC3BootMode_t       DC3BootMode_t;
+
+/*! \enum DC3I2CDevice_t
+ * All the different I2C devices available on the DC3 board and exposed through
+ * the DC3 API.
+ */
 typedef enum DC3I2CDevice_t      DC3I2CDevice_t;
+
+/*! \enum DC3I2CDevice_t
+ * All the different access types available on the DC3 board and exposed through
+ * the DC3 API.
+ */
 typedef enum DC3AccessType_t     DC3AccessType_t;
 
 /*! \enum DC3RamTest_t
