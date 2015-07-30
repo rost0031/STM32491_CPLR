@@ -904,3 +904,19 @@ message DC3RamTestPayloadMsg
 }
 // END DC3RamTestPayloadMsg.
 //------------------------------------------------------------------------------
+
+//------------------------------------------------------------------------------
+// This enum defines all the different response types that can identify a msg
+// type.
+enum DC3DbgLevel_t 
+{
+    DC3_DBG = 0;     // Lowest level of debugging.  Everything printed.
+    DC3_LOG = 1;     // Basic logging.
+    DC3_WRN = 2;     // Warnings. Always printed.
+    DC3_ERR = 3;     // Critical errors.  Always printed.
+    DC3_CON = 4;     // This is reserved for printing to the console as part of
+                     // regular operation and nothing will be prepended.  Also, the
+                     // DBG_LEVEL will be checked to issue a MENU signal instead of a
+                     // LOG signal
+    DC3_ISR = 5;     // Use this with isr_debug_slow_printf to get smaller printout
+}

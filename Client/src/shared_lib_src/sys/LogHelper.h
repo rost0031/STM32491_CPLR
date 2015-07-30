@@ -17,7 +17,6 @@
 #define LOGHELPER_H_
 
 /* Includes ------------------------------------------------------------------*/
-#include "DC3DbgLevels.h"
 #include "ClientModules.h"
 
 /* Exported defines ----------------------------------------------------------*/
@@ -77,7 +76,7 @@
 #define DBG_printf(logInstance, fmt, ...)                                     \
    do {                                                                       \
       if ( glbDbgConfig & this_module_ )                                      \
-         {logInstance->log( DBG, __func__, __LINE__, SRC_CLI_LIB,             \
+         {logInstance->log( _DC3_DBG, __func__, __LINE__, SRC_CLI_LIB,        \
                this_module_, fmt, ##__VA_ARGS__);}                            \
       } while (0)
 
@@ -92,7 +91,7 @@
 #define LOG_printf(logInstance, fmt, ...)                                     \
    do {                                                                       \
       if ( glbDbgConfig & this_module_ )                                      \
-         {logInstance->log( LOG, __func__, __LINE__, SRC_CLI_LIB,             \
+         {logInstance->log( _DC3_LOG, __func__, __LINE__, SRC_CLI_LIB,        \
                this_module_, fmt, ##__VA_ARGS__);}                            \
       } while (0)
 
@@ -105,7 +104,7 @@
  * @return  None.
  */
 #define WRN_printf(logInstance, fmt, ...)                                     \
-      do { logInstance->log(WRN, __func__, __LINE__, SRC_CLI_LIB,             \
+      do { logInstance->log(_DC3_WRN, __func__, __LINE__, SRC_CLI_LIB,        \
             this_module_, fmt, ##__VA_ARGS__);                                \
       } while (0)
 
@@ -118,7 +117,7 @@
  * @return  None.
  */
 #define ERR_printf(logInstance, fmt, ...)                                     \
-      do { logInstance->log(ERR, __func__, __LINE__, SRC_CLI_LIB,             \
+      do { logInstance->log(_DC3_ERR, __func__, __LINE__, SRC_CLI_LIB,        \
             this_module_, fmt, ##__VA_ARGS__);                                \
       } while (0)
 

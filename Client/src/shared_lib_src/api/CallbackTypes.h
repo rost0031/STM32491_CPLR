@@ -30,7 +30,6 @@ extern "C" {
 /* Includes ------------------------------------------------------------------*/
 /* Generated C headers should be included inside of extern C enclosure */
 #include "DC3CommApi.h"
-#include "DC3DbgLevels.h"
 #include "ClientModules.h"
 #ifdef __cplusplus
 }

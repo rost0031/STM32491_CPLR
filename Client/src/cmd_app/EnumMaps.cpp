@@ -19,7 +19,7 @@
 #include "KTree.hpp"
 
 /* Lib includes */
-#include "DC3DbgLevels.h"
+#include "DC3CommApi.h"
 #include "ClientModules.h"
 
 /* Namespaces ----------------------------------------------------------------*/

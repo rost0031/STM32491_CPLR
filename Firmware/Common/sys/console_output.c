@@ -95,7 +95,7 @@ void CON_output(
    /* 3. Based on the debug level specified by the calling macro, decide what to
     * prepend (if anything). */
    switch (dbgLvl) {
-      case DBG:
+      case _DC3_DBG:
          lrgDataEvt->dataLen += snprintf(
                (char *)&lrgDataEvt->dataBuf[lrgDataEvt->dataLen],
                DC3_MAX_MSG_LEN,
@@ -108,7 +108,7 @@ void CON_output(
                wLineNumber
          );
          break;
-      case LOG:
+      case _DC3_LOG:
          lrgDataEvt->dataLen += snprintf(
                (char *)&lrgDataEvt->dataBuf[lrgDataEvt->dataLen],
                DC3_MAX_MSG_LEN,
@@ -121,7 +121,7 @@ void CON_output(
                wLineNumber
          );
          break;
-      case WRN:
+      case _DC3_WRN:
          lrgDataEvt->dataLen += snprintf(
                (char *)&lrgDataEvt->dataBuf[lrgDataEvt->dataLen],
                DC3_MAX_MSG_LEN,
@@ -134,7 +134,7 @@ void CON_output(
                wLineNumber
          );
          break;
-      case ERR:
+      case _DC3_ERR:
          lrgDataEvt->dataLen += snprintf(
                (char *)&lrgDataEvt->dataBuf[lrgDataEvt->dataLen],
                DC3_MAX_MSG_LEN,
@@ -147,7 +147,7 @@ void CON_output(
                wLineNumber
          );
          break;
-      case CON: // This is not used so it should really never get here
+      case _DC3_CON: // This is not used so it should really never get here
       default:
          break;
    }
@@ -189,7 +189,7 @@ void CON_slow_output(
    /* 2. Based on the debug level specified by the calling macro, decide what to
     * prepend (if anything). */
    switch (dbgLvl) {
-      case DBG:
+      case _DC3_DBG:
          tmpBufferIndex += snprintf(
                tmpBuffer,
                DC3_MAX_MSG_LEN,
@@ -202,7 +202,7 @@ void CON_slow_output(
                wLineNumber
          );
          break;
-      case LOG:
+      case _DC3_LOG:
          tmpBufferIndex += snprintf(
                tmpBuffer,
                DC3_MAX_MSG_LEN,
@@ -215,7 +215,7 @@ void CON_slow_output(
                wLineNumber
          );
          break;
-      case WRN:
+      case _DC3_WRN:
          tmpBufferIndex += snprintf(
                tmpBuffer,
                DC3_MAX_MSG_LEN,
@@ -228,7 +228,7 @@ void CON_slow_output(
                wLineNumber
          );
          break;
-      case ERR:
+      case _DC3_ERR:
          tmpBufferIndex += snprintf(
                tmpBuffer,
                DC3_MAX_MSG_LEN,
@@ -241,7 +241,7 @@ void CON_slow_output(
                wLineNumber
          );
          break;
-      case ISR:
+      case _DC3_ISR:
          tmpBufferIndex += snprintf(
                tmpBuffer,
                DC3_MAX_MSG_LEN,
@@ -253,7 +253,7 @@ void CON_slow_output(
                wLineNumber
          );
          break;
-      case CON: // This is not used so don't prepend anything
+      case _DC3_CON: // This is not used so don't prepend anything
       default:
          break;
    }

@@ -52,7 +52,7 @@
 #include <boost/thread/thread.hpp>
 
 /* Api includes */
-#include "DC3DbgLevels.h"
+#include "DC3CommApi.h"
 
 /* Lib includes */
 #include "LogStub.h"
@@ -85,7 +85,7 @@
  * @note: Do not use "\n" or "<<endl" at the end of the stream since the boost
  * logger automatically appends it (with no way to turn it off, it seems).
  */
-#define DBG_out   BOOST_LOG_SEV(my_logger::get(), DBG)                        \
+#define DBG_out   BOOST_LOG_SEV(my_logger::get(), _DC3_DBG)                   \
       << "[" << "Exe" << "]"                                                  \
       << ":["<< maskableEnumToString(this_module_) << "] - "                  \
       << __func__ << "():" << __LINE__ << " - "
@@ -99,7 +99,7 @@
  * @note: Do not use "\n" or "<<endl" at the end of the stream since the boost
  * logger automatically appends it (with no way to turn it off, it seems).
  */
-#define LOG_out   BOOST_LOG_SEV(my_logger::get(), LOG)                        \
+#define LOG_out   BOOST_LOG_SEV(my_logger::get(), _DC3_LOG)                   \
       << "[" << "Exe" << "]"                                                  \
       << ":["<< maskableEnumToString(this_module_) << "] - "                  \
       << __func__ << "():" << __LINE__ << " - "
@@ -114,7 +114,7 @@
  * @note: Do not use "\n" or "<<endl" at the end of the stream since the boost
  * logger automatically appends it (with no way to turn it off, it seems).
  */
-#define WRN_out   BOOST_LOG_SEV(my_logger::get(), WRN)                        \
+#define WRN_out   BOOST_LOG_SEV(my_logger::get(), _DC3_WRN)                   \
       << "[" << "Exe" << "]"                                                  \
       << ":["<< maskableEnumToString(this_module_) << "] - "                  \
       << __func__ << "():" << __LINE__ << " - "
@@ -129,7 +129,7 @@
  * @note: Do not use "\n" or "<<endl" at the end of the stream since the boost
  * logger automatically appends it (with no way to turn it off, it seems).
  */
-#define ERR_out   BOOST_LOG_SEV(my_logger::get(), ERR)                        \
+#define ERR_out   BOOST_LOG_SEV(my_logger::get(), _DC3_ERR)                   \
       << "[" << "Exe" << "]"                                                  \
       << ":["<< maskableEnumToString(this_module_) << "] - "                  \
       << __func__ << "():" << __LINE__ << " - "
@@ -197,7 +197,7 @@
 #define MENU_print(message)                                                   \
    if (true) {                                                                \
       BOOST_LOG_SCOPED_LOGGER_TAG(my_menu::get(), "MenuStream", "conMenu");   \
-      BOOST_LOG_SEV(my_menu::get(), CON) << message;                          \
+      BOOST_LOG_SEV(my_menu::get(), _DC3_CON) << message;                     \
    } else ((void) 0)
 
 /**

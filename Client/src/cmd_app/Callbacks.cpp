@@ -107,7 +107,7 @@ void CLI_DC3LogCallback(
    size_t pos = 0;
 
    /* Get the debug level of the message */
-   DC3DbgLevel_t dbgLvl = CON;
+   DC3DbgLevel_t dbgLvl = _DC3_CON;
    string dbgLvlStr = "";
    string delim = "-";
    if ( (pos = message.find( delim )) != string::npos) {
@@ -115,19 +115,19 @@ void CLI_DC3LogCallback(
       dbgLvlStr = message.substr(0, pos);
 
       if ( string::npos != dbgLvlStr.find("DBG") ) {
-         dbgLvl = DBG;
+         dbgLvl = _DC3_DBG;
          message.erase(0, pos + delim.length());
       } else if ( string::npos != dbgLvlStr.find("LOG") ) {
-         dbgLvl = LOG;
+         dbgLvl = _DC3_LOG;
          message.erase(0, pos + delim.length());
       } else if ( string::npos != dbgLvlStr.find("WRN") ) {
-         dbgLvl = WRN;
+         dbgLvl = _DC3_WRN;
          message.erase(0, pos + delim.length());
       } else if ( string::npos != dbgLvlStr.find("ERR") ) {
-         dbgLvl = ERR;
+         dbgLvl = _DC3_ERR;
          message.erase(0, pos + delim.length());
       } else if ( string::npos != dbgLvlStr.find("ISR") ) {
-         dbgLvl = ISR;
+         dbgLvl = _DC3_ISR;
          message.erase(0, pos + delim.length());
       } else {
          WRN_out << "Unable to figure out debug level of a DC3 log msg";

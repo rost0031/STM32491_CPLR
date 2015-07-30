@@ -37,10 +37,10 @@
 #include "ArgParse.hpp"
 
 /* Lib includes */
-#include "DC3DbgLevels.h"
 #include "ClientModules.h"
 #include "LogStub.h"
 #include "ClientApi.h"
+#include "DC3CommApi.h"
 
 /* Namespaces ----------------------------------------------------------------*/
 using namespace std;
@@ -93,7 +93,7 @@ int main(int argc, char *argv[])
    pLogStub->enableLogForAllLibModules();
    pLogStub->disableLogForLibModule(MODULE_SER);       // Disable serial logging
    pLogStub->disableLogForLibModule(MODULE_MGR);      // Disable MainMgr logging
-   LOG_setDbgLvl(DBG); /* Set logging level */
+   LOG_setDbgLvl(_DC3_DBG);                                 // Set logging level
 
    // 4. Set up the client api and initialize its logging.  Users can call the
    // constructor that also sets up the communication at the same time but if

@@ -122,7 +122,7 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
-#include "DC3DbgLevels.h"                        /* For the shared dbg levels */
+#include "DC3CommApi.h"                          /* For the shared dbg levels */
 
 /* Exported defines ----------------------------------------------------------*/
 /**
@@ -309,7 +309,7 @@ extern uint32_t  glbDbgConfig; /**< Allow global access to debug info */
       do { \
          if (DEBUG) { \
             if ( glbDbgConfig & DBG_this_module_ ) { \
-               CON_output(DBG, _DC3_NoRoute, _DC3_NoRoute, __func__, __LINE__, fmt, \
+               CON_output(_DC3_DBG, _DC3_NoRoute, _DC3_NoRoute, __func__, __LINE__, fmt, \
                   ##__VA_ARGS__); \
             } \
          } \
@@ -319,7 +319,7 @@ extern uint32_t  glbDbgConfig; /**< Allow global access to debug info */
       do { \
          if (DEBUG) { \
             if ( glbDbgConfig & DBG_this_module_ ) { \
-               CON_slow_output(DBG, __func__, __LINE__, fmt, \
+               CON_slow_output(_DC3_DBG, __func__, __LINE__, fmt, \
                   ##__VA_ARGS__); \
             } \
          } \
@@ -355,12 +355,12 @@ extern uint32_t  glbDbgConfig; /**< Allow global access to debug info */
  */
 #ifndef SLOW_PRINTF
 #define LOG_printf(fmt, ...) \
-      do { CON_output(LOG, _DC3_NoRoute, _DC3_NoRoute, __func__, __LINE__, fmt, \
+      do { CON_output(_DC3_LOG, _DC3_NoRoute, _DC3_NoRoute, __func__, __LINE__, fmt, \
             ##__VA_ARGS__); \
       } while (0)
 #else
 #define LOG_printf(fmt, ...) \
-      do { CON_slow_output(LOG, __func__, __LINE__, fmt, \
+      do { CON_slow_output(_DC3_LOG, __func__, __LINE__, fmt, \
             ##__VA_ARGS__); \
       } while (0)
 #endif
@@ -393,12 +393,12 @@ extern uint32_t  glbDbgConfig; /**< Allow global access to debug info */
  */
 #ifndef SLOW_PRINTF
 #define WRN_printf(fmt, ...) \
-      do { CON_output(WRN, _DC3_NoRoute, _DC3_NoRoute, __func__, __LINE__, fmt, \
+      do { CON_output(_DC3_WRN, _DC3_NoRoute, _DC3_NoRoute, __func__, __LINE__, fmt, \
             ##__VA_ARGS__); \
       } while (0)
 #else
 #define WRN_printf(fmt, ...) \
-      do { CON_slow_output(WRN, __func__, __LINE__, fmt, \
+      do { CON_slow_output(_DC3_WRN, __func__, __LINE__, fmt, \
             ##__VA_ARGS__); \
       } while (0)
 #endif
@@ -431,12 +431,12 @@ extern uint32_t  glbDbgConfig; /**< Allow global access to debug info */
  */
 #ifndef SLOW_PRINTF
 #define ERR_printf(fmt, ...) \
-      do { CON_output(ERR, _DC3_NoRoute, _DC3_NoRoute, __func__, __LINE__, fmt, \
+      do { CON_output(_DC3_ERR, _DC3_NoRoute, _DC3_NoRoute, __func__, __LINE__, fmt, \
             ##__VA_ARGS__); \
       } while (0)
 #else
 #define ERR_printf(fmt, ...) \
-      do { CON_slow_output(ERR, __func__, __LINE__, fmt, \
+      do { CON_slow_output(_DC3_ERR, __func__, __LINE__, fmt, \
             ##__VA_ARGS__); \
       } while (0)
 #endif
@@ -474,12 +474,12 @@ extern uint32_t  glbDbgConfig; /**< Allow global access to debug info */
 /*
 #ifndef SLOW_PRINTF
 #define MENU_printf(dst, fmt, ...) \
-      do {  CON_output(CON, dst, dst, __func__, __LINE__, fmt, \
+      do {  CON_output(_DC3_CON, dst, dst, __func__, __LINE__, fmt, \
             ##__VA_ARGS__); \
       } while (0)
 #else
 #define MENU_printf(dst, fmt, ...) \
-      do { CON_slow_output(CON, __func__, __LINE__, fmt, \
+      do { CON_slow_output(_DC3_CON, __func__, __LINE__, fmt, \
             ##__VA_ARGS__); \
       } while (0)
 #endif
@@ -529,7 +529,7 @@ extern uint32_t  glbDbgConfig; /**< Allow global access to debug info */
       do { \
          if (DEBUG) { \
             if ( glbDbgConfig & DBG_this_module_ ) { \
-               CON_slow_output(DBG, __func__, __LINE__, fmt, \
+               CON_slow_output(_DC3_DBG, __func__, __LINE__, fmt, \
                      ##__VA_ARGS__); \
             } \
          } \
@@ -566,7 +566,7 @@ extern uint32_t  glbDbgConfig; /**< Allow global access to debug info */
  * @return None
  */
 #define log_slow_printf(fmt, ...) \
-      do { CON_slow_output(LOG, __func__, __LINE__, fmt, \
+      do { CON_slow_output(_DC3_LOG, __func__, __LINE__, fmt, \
             ##__VA_ARGS__); \
       } while (0)
 
@@ -601,7 +601,7 @@ extern uint32_t  glbDbgConfig; /**< Allow global access to debug info */
  * @return None
  */
 #define wrn_slow_printf(fmt, ...) \
-      do { CON_slow_output(WRN, __func__, __LINE__, fmt, \
+      do { CON_slow_output(_DC3_WRN, __func__, __LINE__, fmt, \
             ##__VA_ARGS__); \
       } while (0)
 
@@ -636,7 +636,7 @@ extern uint32_t  glbDbgConfig; /**< Allow global access to debug info */
  * @return None
  */
 #define err_slow_printf(fmt, ...) \
-      do { CON_slow_output(ERR, __func__, __LINE__, fmt, \
+      do { CON_slow_output(_DC3_ERR, __func__, __LINE__, fmt, \
             ##__VA_ARGS__); \
       } while (0)
 
@@ -671,7 +671,7 @@ extern uint32_t  glbDbgConfig; /**< Allow global access to debug info */
  * @return None
  */
 #define isr_dbg_slow_printf(fmt, ...) \
-      do { if (DEBUG) CON_slow_output(ISR, __func__, __LINE__, fmt, \
+      do { if (DEBUG) CON_slow_output(_DC3_ISR, __func__, __LINE__, fmt, \
             ##__VA_ARGS__); \
       } while (0)
 

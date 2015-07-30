@@ -19,7 +19,6 @@
 #include <map>
 
 /* Api includes */
-#include "DC3DbgLevels.h"
 #include "DC3CommApi.h"
 
 /* Lib includes */

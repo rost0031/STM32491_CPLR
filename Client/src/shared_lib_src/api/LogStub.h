@@ -17,7 +17,7 @@
 #define LOGSTUB_H_
 
 /* Includes ------------------------------------------------------------------*/
-#include "DC3DbgLevels.h"
+#include "DC3CommApi.h"
 #include "ClientModules.h"
 #include "ApiErrorCodes.h"
 #include "CallbackTypes.h"

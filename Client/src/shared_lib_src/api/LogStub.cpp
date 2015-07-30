@@ -176,7 +176,7 @@ void LogStub::log(
       );
    } else {
       /* No callback registered.  If WRN or greater, just cerr it */
-      if (dbgLvl > LOG) {
+      if (dbgLvl > _DC3_LOG) {
          cerr << "[" << dbgLvl << "]" << pFuncName << "():" << wLineNumber << ":" << tmpBuffer << endl;
       }
    }

@@ -164,7 +164,7 @@ BOOST_LOG_GLOBAL_LOGGER_INIT(my_logger, logger_t)
 
    core::get()->add_sink(sink);                             /* Get the logger */
 
-   sink->set_filter( severity >= DBG );                    /* Set debug level */
+   sink->set_filter( severity >= _DC3_DBG );               /* Set debug level */
 
    sink->set_filter(!expressions::has_attr(menu_stream));
 
@@ -200,7 +200,7 @@ BOOST_LOG_GLOBAL_LOGGER_INIT(my_menu, logger_t)
 
    core::get()->add_sink(sink_menu);                        /* Get the logger */
 
-   sink_menu->set_filter( severity >= CON );               /* Set debug level */
+   sink_menu->set_filter( severity >= _DC3_CON );          /* Set debug level */
 
    sink_menu->set_filter(expressions::has_attr(menu_stream));
 
