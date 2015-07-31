@@ -66,7 +66,7 @@ extern "C" {
  * used for both naming the various modules and for checking whether their
  * debug capabilities have been enabled.
  */
-typedef enum DBG_MODULES {
+typedef enum CLI_DBG_MODULES {
    MODULE_GEN   = 0x00000001, /**< General module debugging (main, bsp, etc) */
    MODULE_SER   = 0x00000002, /**< Serial module debugging. */
    MODULE_UDP   = 0x00000004, /**< UDP ethernet module debugging. */

@@ -21,7 +21,7 @@
 #include "project_includes.h"
 
 /* Compile-time called macros ------------------------------------------------*/
-DBG_DEFINE_THIS_MODULE( DBG_MODL_ETH ); /* For debug system to ID this module */
+DBG_DEFINE_THIS_MODULE( DC3_DBG_MODL_ETH ); /* For debug system to ID this module */
 
 /**
  * @brief Sanity Check:  This interface driver will NOT work if the following

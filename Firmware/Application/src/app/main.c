@@ -32,7 +32,7 @@
 
 /* Compile-time called macros ------------------------------------------------*/
 Q_DEFINE_THIS_FILE                  /* For QSPY to know the name of this file */
-DBG_DEFINE_THIS_MODULE( DBG_MODL_GENERAL ); /* For debug system to ID this module */
+DBG_DEFINE_THIS_MODULE( DC3_DBG_MODL_GEN ); /* For debug system to ID this module */
 
 /* Private typedefs ----------------------------------------------------------*/
 /* Private defines -----------------------------------------------------------*/
@@ -103,18 +103,19 @@ int main(void)
     /* Enable debugging for select modules - Note: this has no effect in rel
      * builds since all DBG level logging is disabled and only LOG and up msgs
      * will get printed. */
-    DBG_ENABLE_DEBUG_FOR_MODULE(DBG_MODL_GENERAL);
-    DBG_ENABLE_DEBUG_FOR_MODULE(DBG_MODL_SERIAL);
-    DBG_ENABLE_DEBUG_FOR_MODULE(DBG_MODL_TIME);
-    DBG_ENABLE_DEBUG_FOR_MODULE(DBG_MODL_ETH);
-    DBG_DISABLE_DEBUG_FOR_MODULE(DBG_MODL_I2C);
-    DBG_ENABLE_DEBUG_FOR_MODULE(DBG_MODL_I2C_DEV);
-    DBG_ENABLE_DEBUG_FOR_MODULE(DBG_MODL_NOR);
-    DBG_ENABLE_DEBUG_FOR_MODULE(DBG_MODL_SDRAM);
-    DBG_ENABLE_DEBUG_FOR_MODULE(DBG_MODL_DBG);
-    DBG_ENABLE_DEBUG_FOR_MODULE(DBG_MODL_COMM);
-    DBG_ENABLE_DEBUG_FOR_MODULE(DBG_MODL_CPLR);
-    DBG_ENABLE_DEBUG_FOR_MODULE(DBG_MODL_SYS);
+    DBG_ENABLE_DEBUG_FOR_MODULE(DC3_DBG_MODL_GEN);
+    DBG_ENABLE_DEBUG_FOR_MODULE(DC3_DBG_MODL_SER);
+    DBG_ENABLE_DEBUG_FOR_MODULE(DC3_DBG_MODL_TIME);
+    DBG_ENABLE_DEBUG_FOR_MODULE(DC3_DBG_MODL_ETH);
+    DBG_DISABLE_DEBUG_FOR_MODULE(DC3_DBG_MODL_I2C);
+    DBG_ENABLE_DEBUG_FOR_MODULE(DC3_DBG_MODL_I2C_DEV);
+    DBG_ENABLE_DEBUG_FOR_MODULE(DC3_DBG_MODL_NOR);
+    DBG_ENABLE_DEBUG_FOR_MODULE(DC3_DBG_MODL_SDRAM);
+    DBG_ENABLE_DEBUG_FOR_MODULE(DC3_DBG_MODL_DBG);
+    DBG_ENABLE_DEBUG_FOR_MODULE(DC3_DBG_MODL_COMM);
+    DBG_ENABLE_DEBUG_FOR_MODULE(DC3_DBG_MODL_CPLR);
+    DBG_ENABLE_DEBUG_FOR_MODULE(DC3_DBG_MODL_SYS);
+    DBG_DISABLE_DEBUG_FOR_MODULE(DC3_DBG_MODL_DB);
 
     /* initialize the Board Support Package */
     BSP_init();

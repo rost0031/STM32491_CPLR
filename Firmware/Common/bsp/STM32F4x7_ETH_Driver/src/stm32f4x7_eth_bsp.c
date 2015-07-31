@@ -34,7 +34,7 @@
 
 /* Private typedef -----------------------------------------------------------*/
 /* Private define ------------------------------------------------------------*/
-DBG_DEFINE_THIS_MODULE( DBG_MODL_ETH ); /* For debug system to ID this module */
+DBG_DEFINE_THIS_MODULE( DC3_DBG_MODL_ETH ); /* For debug system to ID this module */
 
 /* Private macro -------------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/

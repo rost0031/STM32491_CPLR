@@ -145,31 +145,6 @@
 
 /* Exported types ------------------------------------------------------------*/
 
-/*! \enum DEBUG_MOD_T
- * These are the various system modules for which debugging can be
- * enabled/disabled.
- *
- * These are limited to 32 bit and must be maskable.  These enum masks will be
- * used for both naming the various modules and for checking whether their
- * debug capabilities have been enabled.
- */
-typedef enum DBG_MODULES {
-   DBG_MODL_GENERAL  = 0x00000001, /**< General module debugging (main, bsp, etc) */
-   DBG_MODL_SERIAL   = 0x00000002, /**< Serial module debugging. */
-   DBG_MODL_TIME     = 0x00000004, /**< Time module debugging. */
-   DBG_MODL_ETH      = 0x00000008, /**< Ethernet module debugging. */
-   DBG_MODL_I2C      = 0x00000010, /**< I2C module debugging. */
-   DBG_MODL_I2C_DEV  = 0x00000020, /**< I2C module debugging. */
-   DBG_MODL_NOR      = 0x00000040, /**< NOR Flash module debugging. */
-   DBG_MODL_SDRAM    = 0x00000080, /**< SDRAM module debugging. */
-   DBG_MODL_DBG      = 0x00000100, /**< MENU module debugging. */
-   DBG_MODL_COMM     = 0x00000200, /**< COMM module debugging. */
-   DBG_MODL_CPLR     = 0x00000400, /**< Coupler module debugging. */
-   DBG_MODL_DB       = 0x00000800, /**< Database module debugging. */
-   DBG_MODL_FLASH    = 0x00001000, /**< Flash module debugging (only in bootloader) */
-   DBG_MODL_SYS      = 0x00002000, /**< System module debugging */
-} DBG_MODL_T;
-
 /* Exported variables --------------------------------------------------------*/
 extern uint32_t  glbDbgConfig; /**< Allow global access to debug info */
 
@@ -192,7 +167,7 @@ extern uint32_t  glbDbgConfig; /**< Allow global access to debug info */
  * LOG_printf() functions are called.  The code will not compile without this.
  */
 #define DBG_DEFINE_THIS_MODULE( name_ ) \
-      static DBG_MODL_T const Q_ROM DBG_this_module_ = name_;
+      static DC3DbgModule_t const Q_ROM DBG_this_module_ = name_;
 
 /**
  * @brief   Enable debugging output for a given module.
