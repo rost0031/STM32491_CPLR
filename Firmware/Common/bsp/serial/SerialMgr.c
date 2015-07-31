@@ -127,12 +127,12 @@ QActive * const AO_SerialMgr = (QActive *)&l_SerialMgr;  /* "opaque" AO pointer 
  * @brief C "constructor" for SerialMgr "class".
  * Initializes all the timers and queues used by the AO, sets up a deferral
  * queue, and sets of the first state.
- * @param  None
- * @param  None
+ * @param [in] enSerialDbg: bool that specifies whether to enable debugging output
+ * over serial on startup of the AO.
  * @retval None
  */
 /*${AOs::SerialMgr_ctor} ...................................................*/
-void SerialMgr_ctor(void) {
+void SerialMgr_ctor(bool en) {
     SerialMgr *me = &l_SerialMgr;
     QActive_ctor(&me->super, (QStateHandler)&SerialMgr_initial);
     QTimeEvt_ctor(&me->serialTimerEvt, UART_DMA_TIMEOUT_SIG);
@@ -143,6 +143,36 @@ void SerialMgr_ctor(void) {
         (QEvt const **)( me->deferredEvtQSto ),
         Q_DIM(me->deferredEvtQSto)
     );
+
+    /* Let the caller determine whether serial debugging is enabled by default or not. */
+    me->isSerialDbgEnabled = en;
+}
+
+/**
+ * @brief Check if serial debug is enabled
+ *
+ * @param	None
+ * @retval 	bool:
+ *   @arg true : serial debug is enabled
+ *   @arg false: serial debug is disabled
+ */
+/*${AOs::SerialMgr_isDbgE~} ................................................*/
+bool SerialMgr_isDbgEnabled(void) {
+    SerialMgr *me = &l_SerialMgr;
+    return( me->isSerialDbgEnabled );
+}
+
+/**
+ * @brief Enable or disable debug over serial
+ *
+ * @param [in] en: bool that specifies if debug is to be enabled (true) or
+ * disabled (false)
+ * @retval 	None
+ */
+/*${AOs::SerialMgr_setDbg~} ................................................*/
+void SerialMgr_setDbgEnabled(bool en) {
+    SerialMgr *me = &l_SerialMgr;
+    me->isSerialDbgEnabled = en;
 }
 
 /**
@@ -165,8 +195,6 @@ static QState SerialMgr_initial(SerialMgr * const me, QEvt const * const e) {
     QS_FUN_DICTIONARY(&SerialMgr_Active);
     QS_FUN_DICTIONARY(&SerialMgr_Idle);
     QS_FUN_DICTIONARY(&SerialMgr_Busy);
-
-    me->isSerialDbgEnabled = true; // enable debug over serial by default.
 
     QActive_subscribe((QActive *)me, UART_DMA_START_SIG);
     QActive_subscribe((QActive *)me, DBG_LOG_SIG);
@@ -244,18 +272,7 @@ static QState SerialMgr_Idle(SerialMgr * const me, QEvt const * const e) {
         }
         /* ${AOs::SerialMgr::SM::Active::Idle::UART_DMA_START, ~} */
         case UART_DMA_START_SIG: /* intentionally fall through */
-        case CLI_SEND_DATA_SIG: {
-            /* Set up the DMA buffer here.  This copies the data from the event to the UART's
-             * private buffer as well to avoid someone overwriting it */
-            Serial_DMAConfig(
-                SERIAL_UART1,
-                (char *)((LrgDataEvt const *) e)->dataBuf,
-                ((LrgDataEvt const *) e)->dataLen
-            );
-            status_ = Q_TRAN(&SerialMgr_Busy);
-            break;
-        }
-        /* ${AOs::SerialMgr::SM::Active::Idle::DBG_MENU} */
+        case CLI_SEND_DATA_SIG: /* intentionally fall through */
         case DBG_MENU_SIG: {
             /* Set up the DMA buffer here.  This copies the data from the event to the UART's
              * private buffer as well to avoid someone overwriting it */

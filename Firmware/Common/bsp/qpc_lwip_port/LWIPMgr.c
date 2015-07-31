@@ -382,12 +382,12 @@ static void udp_rx_handler(
  * @brief C "constructor" for LWIP "class".
  * Initializes all the timers and queues used by the AO and sets of the
  * first state.
- * @param  None
- * @param  None
+ * @param [in] en: bool that specifies whether to enable debugging output over eth
+ * on startup of the AO.
  * @retval None
  */
 /*${AOs::LWIPMgr_ctor} .....................................................*/
-void LWIPMgr_ctor(void) {
+void LWIPMgr_ctor(bool en) {
     LWIPMgr *me = &l_LWIPMgr;
 
     QActive_ctor(&me->super, (QStateHandler)&LWIPMgr_initial);
@@ -400,6 +400,36 @@ void LWIPMgr_ctor(void) {
         (QEvt const **)( me->deferredEvtQSto ),
         Q_DIM(me->deferredEvtQSto)
     );
+
+    /* Let the caller determine whether serial debugging is enabled by default or not. */
+    me->isEthDbgEnabled = en;
+}
+
+/**
+ * @brief Check if eth debug is enabled
+ *
+ * @param	None
+ * @retval 	bool:
+ *   @arg true : eth debug is enabled
+ *   @arg false: eth debug is disabled
+ */
+/*${AOs::LWIPMgr_isDbgEna~} ................................................*/
+bool LWIPMgr_isDbgEnabled(void) {
+    LWIPMgr *me = &l_LWIPMgr;
+    return( me->isEthDbgEnabled );
+}
+
+/**
+ * @brief Enable or disable debug over eth
+ *
+ * @param [in] en: bool that specifies if debug is to be enabled (true) or
+ * disabled (false)
+ * @retval 	None
+ */
+/*${AOs::LWIPMgr_setDbgEn~} ................................................*/
+void LWIPMgr_setDbgEnabled(bool en) {
+    LWIPMgr *me = &l_LWIPMgr;
+    me->isEthDbgEnabled = en;
 }
 
 /**
@@ -436,8 +466,6 @@ static QState LWIPMgr_initial(LWIPMgr * const me, QEvt const * const e) {
     LWIPMgr_sysPort = 1500;
     LWIPMgr_logPort = 1501;
     LWIPMgr_cliPort = 1502;
-
-    me->isEthDbgEnabled = true; // Enable debugging over ethernet by default.
 
     /* Configure the hardware MAC address for the Ethernet Controller */
 

@@ -53,12 +53,35 @@
  * @brief C "constructor" for SerialMgr "class".
  * Initializes all the timers and queues used by the AO, sets up a deferral
  * queue, and sets of the first state.
- * @param  None
- * @param  None
+ * @param [in] enSerialDbg: bool that specifies whether to enable debugging output
+ * over serial on startup of the AO.
  * @retval None
  */
 /*${AOs::SerialMgr_ctor} ...................................................*/
-void SerialMgr_ctor(void);
+void SerialMgr_ctor(bool en);
+
+
+/**
+ * @brief Check if serial debug is enabled
+ *
+ * @param	None
+ * @retval 	bool:
+ *   @arg true : serial debug is enabled
+ *   @arg false: serial debug is disabled
+ */
+/*${AOs::SerialMgr_isDbgE~} ................................................*/
+bool SerialMgr_isDbgEnabled(void);
+
+
+/**
+ * @brief Enable or disable debug over serial
+ *
+ * @param [in] en: bool that specifies if debug is to be enabled (true) or
+ * disabled (false)
+ * @retval 	None
+ */
+/*${AOs::SerialMgr_setDbg~} ................................................*/
+void SerialMgr_setDbgEnabled(bool en);
 
 
 /**< "opaque" pointer to the Active Object */

@@ -186,8 +186,13 @@ int main(void)
 
     /* Instantiate the Active objects by calling their "constructors"         */
     dbg_slow_printf("Initializing AO constructors\n");
-    SerialMgr_ctor();
-    LWIPMgr_ctor();
+
+    /* Debug over serial is disabled on REL builds but enabled on DBG builds.*/
+    SerialMgr_ctor( DEBUG == 1 ? true : false );
+
+    /* Debug over ethernet is enabled on all builds but it doesn't output unless
+     * there's a connection over ethernet detected. */
+    LWIPMgr_ctor( true );
 
     /* Iterate though the available I2C busses on the system and call the ctor()
      * for each instance of the I2CBusMgr AO for each bus. */

@@ -258,9 +258,45 @@ enum DC3MsgName_t
     DC3RamTestMsg        = 13; // DC3BasicMsg  - Used to send an RAM test cmd.
     
     DC3RamTestPayloadMsg = 14; // DC3PayloadMsg - Used as a data payload by 
-                               // DC3RamTestMsg to send status and errors back.                  
+                               // DC3RamTestMsg to send status and errors back. 
+                               
+    DC3DbgEnableEthMsg   = 15; // DC3BasicMsg  - Used to enable dbg on eth. 
+                               // Uses no payload msg.
+                               
+    DC3DbgDisableEthMsg  = 16; // DC3BasicMsg  - Used to disable dbg on eth. 
+                               // Uses no payload msg.                                                              
+    
+    DC3DbgEnableSerMsg   = 17; // DC3BasicMsg  - Used to enable dbg on serial. 
+                               // Uses no payload msg.
+                               
+    DC3DbgDisableSerMsg  = 18; // DC3BasicMsg  - Used to disable dbg on serial. 
+                               // Uses no payload msg.
+                                                                
+    DC3DbgRstDefaultMsg  = 19; // DC3BasicMsg  - Used to reset the default dbg
+                               // levels and interfaces.  No payload.                                
+                               
+    DC3DbgEnableMsg      = 20; // DC3BasicMsg  - Used to enable debug for a 
+                               // given debug module. Uses DC3DbgPayloadMsg
+
+    DC3DbgDisableMsg     = 21; // DC3BasicMsg  - Used to disable debug for a 
+                               // given debug module. Uses DC3DbgPayloadMsg
+                               
+	DC3DbgGetCurrentMsg  = 22; // DC3BasicMsg  - Used to get the current debug 
+	                           // settings for all the modules of DC3. Uses 
+	                           // DC3DbgPayloadMsg
+	                                                                                  
+	DC3DbgSetCurrentMsg  = 23; // DC3BasicMsg  - Used to set the current debug 
+	                           // settings for all the modules of DC3. Uses
+                               // DC3DbgPayloadMsg
+	                           	                                                                                  
+    DC3DbgPayloadMsg     = 24; // DC3PayloadMsg - Used as a data payload by 
+                               // DC3DbgEnableMsg and DC3DbgDisableMsg to enable
+                               // and disable debugging of various system 
+                               // components on the DC3.  Also used by 
+                               // DC3DbgGetCurrentMsg and DC3DbgSetCurrentMsg to
+                               // set and get the entire debug settings group.                      
                               
-                                                                                      
+                              
 }
 
 //------------------------------------------------------------------------------
@@ -406,7 +442,7 @@ enum DC3DBElem_t
     DC3_DB_BOOT_MIN             = 6; // Minor version of bootloader FW image
     DC3_DB_BOOT_BUILD_DATETIME  = 7; // Build datetime of the bootloader FW image
     DC3_DB_APPL_MAJ             = 8; // Major version of application FW image
-    DC3_DB_APPL_MIN             = 9, // Minor version of application FW image
+    DC3_DB_APPL_MIN             = 9; // Minor version of application FW image
     DC3_DB_APPL_BUILD_DATETIME = 10; // Build datetime of the application FW image
     DC3_DB_FPGA_MAJ            = 11; // Major version of FPGA FW image
     DC3_DB_FPGA_MIN            = 12; // Minor version of FPGA FW image
@@ -964,6 +1000,349 @@ message DC3RamTestPayloadMsg
 }
 // END DC3RamTestPayloadMsg.
 //------------------------------------------------------------------------------
+
+//------------------------------------------------------------------------------
+// START DC3DbgEnableEthMsg
+// Msg Tag  - 15
+// Msg Type - DC3BasicMsg.  Uses DC3BasicMsg structure. No definition needed
+// Msg Desc - This message is used to enable dbg on ethernet debug port. 
+//
+// No message definition needed.  Uses DC3BasicMsg with DC3StatusPayloadMsg
+// as a payload for DC3_Done.
+// Example:
+// Client                                                             DC3 Board
+//   |                                                                      |
+// *Send*  [[************DC3BasicMsg**********]\n]>>>>>>>>>>>>>>>>>>>>>>>>>*Rec*
+//          < msgName = DC3DbgEnableEthMsg         
+//          < msgID   = [uint32]                        
+//          < msgType = DC3_Req                  
+//          < msgProgReq = [0|1]
+//          < msgRoute = [DC3MsgRoute_t]
+//          < msgPayload = DC3NoMsg
+// *Rec*  [[**************DC3BasicMsg***********]\n]<<<<<<<<<<<<<<<<<<<<<<<*Send*
+//          < msgName = DC3DbgEnableEthMsg
+//          < msgID   = [uint32]                   
+//          < msgType = DC3_Ack                        
+//          < msgProgReq = [0|1]
+//          < msgRoute = [DC3MsgRoute_t]
+//          < msgPayload = DC3NoMsg
+// *Rec*  [[************DC3BasicMsg**********][**DC3PayloadMsg**]\n]<<<<<<<<*Send*
+//          < msgName = DC3DbgEnableEthMsg      < errorCode = DC3_ERR_CODE  
+//          < msgID   = [uint32]               
+//          < msgType = DC3_Done                  
+//          < msgProgReq = [0|1]
+//          < msgRoute = [DC3MsgRoute_t]
+//          < msgPayload = DC3StatusPayloadMsg
+// END DC3DbgEnableEthMsg
+//------------------------------------------------------------------------------
+
+//------------------------------------------------------------------------------
+// START DC3DbgDisableEthMsg
+// Msg Tag  - 16
+// Msg Type - DC3BasicMsg.  Uses DC3BasicMsg structure. No definition needed
+// Msg Desc - This message is used to disable dbg on ethernet debug port. 
+//
+// No message definition needed.  Uses DC3BasicMsg with DC3StatusPayloadMsg
+// as a payload for DC3_Done.
+// Example:
+// Client                                                             DC3 Board
+//   |                                                                      |
+// *Send*  [[************DC3BasicMsg**********]\n]>>>>>>>>>>>>>>>>>>>>>>>>>*Rec*
+//          < msgName = DC3DbgDisableEthMsg         
+//          < msgID   = [uint32]                        
+//          < msgType = DC3_Req                  
+//          < msgProgReq = [0|1]
+//          < msgRoute = [DC3MsgRoute_t]
+//          < msgPayload = DC3NoMsg
+// *Rec*  [[**************DC3BasicMsg***********]\n]<<<<<<<<<<<<<<<<<<<<<<<*Send*
+//          < msgName = DC3DbgDisableEthMsg
+//          < msgID   = [uint32]                   
+//          < msgType = DC3_Ack                        
+//          < msgProgReq = [0|1]
+//          < msgRoute = [DC3MsgRoute_t]
+//          < msgPayload = DC3NoMsg
+// *Rec*  [[************DC3BasicMsg**********][**DC3PayloadMsg**]\n]<<<<<<<<*Send*
+//          < msgName = DC3DbgDisableEthMsg      < errorCode = DC3_ERR_CODE  
+//          < msgID   = [uint32]               
+//          < msgType = DC3_Done                  
+//          < msgProgReq = [0|1]
+//          < msgRoute = [DC3MsgRoute_t]
+//          < msgPayload = DC3StatusPayloadMsg
+// END DC3DbgDisableEthMsg
+//------------------------------------------------------------------------------
+
+//------------------------------------------------------------------------------
+// START DC3DbgEnableSerMsg
+// Msg Tag  - 17
+// Msg Type - DC3BasicMsg.  Uses DC3BasicMsg structure. No definition needed
+// Msg Desc - This message is used to enable dbg on serial debug port. 
+//
+// No message definition needed.  Uses DC3BasicMsg with DC3StatusPayloadMsg
+// as a payload for DC3_Done.
+// Example:
+// Client                                                             DC3 Board
+//   |                                                                      |
+// *Send*  [[************DC3BasicMsg**********]\n]>>>>>>>>>>>>>>>>>>>>>>>>>*Rec*
+//          < msgName = DC3DbgEnableSerMsg         
+//          < msgID   = [uint32]                        
+//          < msgType = DC3_Req                  
+//          < msgProgReq = [0|1]
+//          < msgRoute = [DC3MsgRoute_t]
+//          < msgPayload = DC3NoMsg
+// *Rec*  [[**************DC3BasicMsg***********]\n]<<<<<<<<<<<<<<<<<<<<<<<*Send*
+//          < msgName = DC3DbgEnableSerMsg
+//          < msgID   = [uint32]                   
+//          < msgType = DC3_Ack                        
+//          < msgProgReq = [0|1]
+//          < msgRoute = [DC3MsgRoute_t]
+//          < msgPayload = DC3NoMsg
+// *Rec*  [[************DC3BasicMsg**********][**DC3PayloadMsg**]\n]<<<<<<<<*Send*
+//          < msgName = DC3DbgEnableSerMsg      < errorCode = DC3_ERR_CODE  
+//          < msgID   = [uint32]               
+//          < msgType = DC3_Done                  
+//          < msgProgReq = [0|1]
+//          < msgRoute = [DC3MsgRoute_t]
+//          < msgPayload = DC3StatusPayloadMsg
+// END DC3DbgEnableSerMsg
+//------------------------------------------------------------------------------
+
+//------------------------------------------------------------------------------
+// START DC3DbgDisableSerMsg
+// Msg Tag  - 18
+// Msg Type - DC3BasicMsg.  Uses DC3BasicMsg structure. No definition needed
+// Msg Desc - This message is used to disable dbg on serial debug port. 
+//
+// No message definition needed.  Uses DC3BasicMsg with DC3StatusPayloadMsg
+// as a payload for DC3_Done.
+// Example:
+// Client                                                             DC3 Board
+//   |                                                                      |
+// *Send*  [[************DC3BasicMsg**********]\n]>>>>>>>>>>>>>>>>>>>>>>>>>*Rec*
+//          < msgName = DC3DbgDisableSerMsg         
+//          < msgID   = [uint32]                        
+//          < msgType = DC3_Req                  
+//          < msgProgReq = [0|1]
+//          < msgRoute = [DC3MsgRoute_t]
+//          < msgPayload = DC3NoMsg
+// *Rec*  [[**************DC3BasicMsg***********]\n]<<<<<<<<<<<<<<<<<<<<<<<*Send*
+//          < msgName = DC3DbgDisableSerMsg
+//          < msgID   = [uint32]                   
+//          < msgType = DC3_Ack                        
+//          < msgProgReq = [0|1]
+//          < msgRoute = [DC3MsgRoute_t]
+//          < msgPayload = DC3NoMsg
+// *Rec*  [[************DC3BasicMsg**********][**DC3PayloadMsg**]\n]<<<<<<<<*Send*
+//          < msgName = DC3DbgDisableSerMsg      < errorCode = DC3_ERR_CODE  
+//          < msgID   = [uint32]               
+//          < msgType = DC3_Done                  
+//          < msgProgReq = [0|1]
+//          < msgRoute = [DC3MsgRoute_t]
+//          < msgPayload = DC3StatusPayloadMsg
+// END DC3DbgDisableSerMsg
+//------------------------------------------------------------------------------
+
+//------------------------------------------------------------------------------
+// START DC3DbgRstDefaultMsg
+// Msg Tag  - 19
+// Msg Type - DC3BasicMsg.  Uses DC3BasicMsg structure. No definition needed
+// Msg Desc - This message is used to reset all debugging settings to compiled
+//            defaults, including levels and which ports debug is enabled on.
+//
+// No message definition needed.  Uses DC3BasicMsg with DC3DbgPayloadMsg
+// as a payload for DC3_Done.
+// Example:
+// Client                                                             DC3 Board
+//   |                                                                      |
+// *Send*  [[************DC3BasicMsg**********]\n]>>>>>>>>>>>>>>>>>>>>>>>>>*Rec*
+//          < msgName = DC3DbgRstDefaultMsg         
+//          < msgID   = [uint32]                        
+//          < msgType = DC3_Req                  
+//          < msgProgReq = [0|1]
+//          < msgRoute = [DC3MsgRoute_t]
+//          < msgPayload = DC3NoMsg
+// *Rec*  [[**************DC3BasicMsg***********]\n]<<<<<<<<<<<<<<<<<<<<<<<*Send*
+//          < msgName = DC3DbgRstDefaultMsg
+//          < msgID   = [uint32]                   
+//          < msgType = DC3_Ack                        
+//          < msgProgReq = [0|1]
+//          < msgRoute = [DC3MsgRoute_t]
+//          < msgPayload = DC3NoMsg
+// *Rec*  [[************DC3BasicMsg**********][**DC3PayloadMsg**]\n]<<<<<<<<*Send*
+//          < msgName = DC3DbgRstDefaultMsg      < errorCode = DC3_ERR_CODE  
+//          < msgID   = [uint32]                 < uint32_t dbgSettings
+//          < msgType = DC3_Done                 
+//          < msgProgReq = [0|1]                 
+//          < msgRoute = [DC3MsgRoute_t]
+//          < msgPayload = DC3DbgPayloadMsg
+// END DC3DbgDisableSerMsg
+//------------------------------------------------------------------------------
+                                                                                             
+//------------------------------------------------------------------------------
+// START DC3DbgEnableMsg
+// Msg Tag  - 20
+// Msg Type - DC3BasicMsg.  Uses DC3BasicMsg structure. No definition needed
+// Msg Desc - This message enables a given debug module while leaving the rest
+//            of the debug settings untouched.
+//
+// No message definition needed.  Uses DC3BasicMsg with DC3DbgPayloadMsg
+// as a payload for DC3_Ack and DC3_Done.
+// Example:
+// Client                                                             DC3 Board
+//   |                                                                      |
+// *Send*  [[************DC3BasicMsg**********][**DC3PayloadMsg**]\n]>>>>>>*Rec*
+//          < msgName = DC3DbgEnableMsg          < errorCode = Not used
+//          < msgID   = [uint32]                 < uint32_t dbgSettings        
+//          < msgType = DC3_Req                  
+//          < msgProgReq = [0|1]
+//          < msgRoute = [DC3MsgRoute_t]
+//          < msgPayload = DC3NoMsg
+// *Rec*  [[**************DC3BasicMsg***********]\n]<<<<<<<<<<<<<<<<<<<<<<<*Send*
+//          < msgName = DC3DbgEnableMsg
+//          < msgID   = [uint32]                   
+//          < msgType = DC3_Ack                        
+//          < msgProgReq = [0|1]
+//          < msgRoute = [DC3MsgRoute_t]
+//          < msgPayload = DC3NoMsg
+// *Rec*  [[************DC3BasicMsg**********][**DC3PayloadMsg**]\n]<<<<<<<<*Send*
+//          < msgName = DC3DbgEnableMsg          < errorCode = ERR_CODE
+//          < msgID   = [uint32]                 < uint32_t dbgSettings
+//          < msgType = DC3_Done                 
+//          < msgProgReq = [0|1]                 
+//          < msgRoute = [DC3MsgRoute_t]
+//          < msgPayload = DC3DbgPayloadMsg
+// END DC3DbgDisableSerMsg
+//------------------------------------------------------------------------------                               
+                                                                                             
+//------------------------------------------------------------------------------
+// START DC3DbgDisableMsg
+// Msg Tag  - 21
+// Msg Type - DC3BasicMsg.  Uses DC3BasicMsg structure. No definition needed
+// Msg Desc - This message disables a given debug module while leaving the rest
+//            of the debug settings untouched.
+//
+// No message definition needed.  Uses DC3BasicMsg with DC3DbgPayloadMsg
+// as a payload for DC3_Ack and DC3_Done.
+// Example:
+// Client                                                             DC3 Board
+//   |                                                                      |
+// *Send*  [[************DC3BasicMsg**********][**DC3PayloadMsg**]\n]>>>>>>*Rec*
+//          < msgName = DC3DbgDisableMsg         < errorCode = Not used
+//          < msgID   = [uint32]                 < uint32_t dbgSettings        
+//          < msgType = DC3_Req                  
+//          < msgProgReq = [0|1]
+//          < msgRoute = [DC3MsgRoute_t]
+//          < msgPayload = DC3NoMsg
+// *Rec*  [[**************DC3BasicMsg***********]\n]<<<<<<<<<<<<<<<<<<<<<<<*Send*
+//          < msgName = DC3DbgDisableMsg
+//          < msgID   = [uint32]                   
+//          < msgType = DC3_Ack                        
+//          < msgProgReq = [0|1]
+//          < msgRoute = [DC3MsgRoute_t]
+//          < msgPayload = DC3NoMsg
+// *Rec*  [[************DC3BasicMsg**********][**DC3PayloadMsg**]\n]<<<<<<<<*Send*
+//          < msgName = DC3DbgDisableMsg         < errorCode = ERR_CODE
+//          < msgID   = [uint32]                 < uint32_t dbgSettings
+//          < msgType = DC3_Done                 
+//          < msgProgReq = [0|1]                 
+//          < msgRoute = [DC3MsgRoute_t]
+//          < msgPayload = DC3DbgPayloadMsg
+// END DC3DbgDisableMsg
+//------------------------------------------------------------------------------    
+                                                                                             
+//------------------------------------------------------------------------------
+// START DC3DbgGetCurrentMsg
+// Msg Tag  - 22
+// Msg Type - DC3BasicMsg.  Uses DC3BasicMsg structure. No definition needed
+// Msg Desc - This message retrieves the entire debug bitfield which represents
+//            the settings of all the debug modules.
+//
+// No message definition needed.  Uses DC3BasicMsg with DC3DbgPayloadMsg
+// as a payload of DC3_Done.
+// Example:
+// Client                                                             DC3 Board
+//   |                                                                      |
+// *Send*  [[************DC3BasicMsg**********][**DC3PayloadMsg**]\n]>>>>>>*Rec*
+//          < msgName = DC3DbgGetCurrentMsg
+//          < msgID   = [uint32]                   
+//          < msgType = DC3_Req                  
+//          < msgProgReq = [0|1]
+//          < msgRoute = [DC3MsgRoute_t]
+//          < msgPayload = DC3NoMsg
+// *Rec*  [[**************DC3BasicMsg***********]\n]<<<<<<<<<<<<<<<<<<<<<<<*Send*
+//          < msgName = DC3DbgGetCurrentMsg
+//          < msgID   = [uint32]                   
+//          < msgType = DC3_Ack                        
+//          < msgProgReq = [0|1]
+//          < msgRoute = [DC3MsgRoute_t]
+//          < msgPayload = DC3NoMsg
+// *Rec*  [[************DC3BasicMsg**********][**DC3PayloadMsg**]\n]<<<<<<<<*Send*
+//          < msgName = DC3DbgGetCurrentMsg      < errorCode = ERR_CODE
+//          < msgID   = [uint32]                 < uint32_t dbgSettings
+//          < msgType = DC3_Done                 
+//          < msgProgReq = [0|1]                 
+//          < msgRoute = [DC3MsgRoute_t]
+//          < msgPayload = DC3DbgPayloadMsg
+// END DC3DbgGetCurrentMsg
+//------------------------------------------------------------------------------    
+
+//------------------------------------------------------------------------------
+// START DC3DbgSetCurrentMsg
+// Msg Tag  - 23
+// Msg Type - DC3BasicMsg.  Uses DC3BasicMsg structure. No definition needed
+// Msg Desc - This message sets the debug bitfield to whatever is sent, 
+//            overwriting all debug module fields.  
+//
+// No message definition needed.  Uses DC3BasicMsg with DC3DbgPayloadMsg
+// as a payload for DC3_Ack and DC3_Done.
+// Example:
+// Client                                                             DC3 Board
+//   |                                                                      |
+// *Send*  [[************DC3BasicMsg**********][**DC3PayloadMsg**]\n]>>>>>>*Rec*
+//          < msgName = DC3DbgSetCurrentMsg      < errorCode = Not used
+//          < msgID   = [uint32]                 < uint32_t dbgSettings        
+//          < msgType = DC3_Req                  
+//          < msgProgReq = [0|1]
+//          < msgRoute = [DC3MsgRoute_t]
+//          < msgPayload = DC3NoMsg
+// *Rec*  [[**************DC3BasicMsg***********]\n]<<<<<<<<<<<<<<<<<<<<<<<*Send*
+//          < msgName = DC3DbgSetCurrentMsg
+//          < msgID   = [uint32]                   
+//          < msgType = DC3_Ack                        
+//          < msgProgReq = [0|1]
+//          < msgRoute = [DC3MsgRoute_t]
+//          < msgPayload = DC3NoMsg
+// *Rec*  [[************DC3BasicMsg**********][**DC3PayloadMsg**]\n]<<<<<<<<*Send*
+//          < msgName = DC3DbgSetCurrentMsg      < errorCode = ERR_CODE
+//          < msgID   = [uint32]                 < uint32_t dbgSettings
+//          < msgType = DC3_Done                 
+//          < msgProgReq = [0|1]                 
+//          < msgRoute = [DC3MsgRoute_t]
+//          < msgPayload = DC3DbgPayloadMsg
+// END DC3DbgSetCurrentMsg
+//------------------------------------------------------------------------------   
+
+//------------------------------------------------------------------------------
+// START DC3DbgPayloadMsg 
+// Msg Tag  - 24
+// Msg Type - DC3PayloadMsg.  
+// Msg Desc - Sent appended to the various DC3Dbg basic msgs for both DC3_Ack 
+//            and DC3_Prog and DC3_Done msgs. Used as a data payload by 
+//            DC3DbgEnableMsg and DC3DbgDisableMsg to enable and disable 
+//            debugging of various system components on the DC3.  Also used by 
+//            DC3DbgGetCurrentMsg and DC3DbgSetCurrentMsg to set and get the 
+//            entire debug settings group.
+// 
+// (See examples in description of DC3Dbg****Msg ).
+//
+// Non-standard Field Description: (see below)
+message DC3DbgPayloadMsg 
+{
+	required uint32     errorCode = 1; // DC3ErrorCode that specifies status
+                                       // of the requested operation.
+    required uint32   dbgSettings = 2; // debug module bitfield.                                       
+}
+// END DC3DbgPayloadMsg.
+//------------------------------------------------------------------------------ 
 
 
 //------------------------------------------------------------------------------

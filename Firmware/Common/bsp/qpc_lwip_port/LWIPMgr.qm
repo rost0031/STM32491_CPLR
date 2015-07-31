@@ -112,8 +112,6 @@ LWIPMgr_sysPort = 1500;
 LWIPMgr_logPort = 1501;
 LWIPMgr_cliPort = 1502;
 
-me-&gt;isEthDbgEnabled = true; // Enable debugging over ethernet by default.
-
 /* Configure the hardware MAC address for the Ethernet Controller */
 
 /*
@@ -615,28 +613,6 @@ QTimeEvt_rearm(
   <attribute name="AO_LWIPMgr" type="QActive * const" visibility="0x00" properties="0x00">
    <documentation>/**&lt; &quot;opaque&quot; pointer to the Active Object */</documentation>
   </attribute>
-  <operation name="LWIPMgr_ctor" type="void" visibility="0x00" properties="0x00">
-   <documentation>/**
- * @brief C &quot;constructor&quot; for LWIP &quot;class&quot;.
- * Initializes all the timers and queues used by the AO and sets of the
- * first state.
- * @param  None
- * @param  None
- * @retval None
- */</documentation>
-   <code>LWIPMgr *me = &amp;l_LWIPMgr;
-
-QActive_ctor(&amp;me-&gt;super, (QStateHandler)&amp;LWIPMgr_initial);
-QTimeEvt_ctor(&amp;me-&gt;te_LWIP_SLOW_TICK, LWIP_SLOW_TICK_SIG);
-QTimeEvt_ctor(&amp;me-&gt;te_TcpSend, TCP_TIMEOUT_SIG);
-
-/* Initialize the deferred event queue and storage for it */
-QEQueue_init(
-    &amp;me-&gt;deferredEvtQueue,
-    (QEvt const **)( me-&gt;deferredEvtQSto ),
-    Q_DIM(me-&gt;deferredEvtQSto)
-);</code>
-  </operation>
   <operation name="LWIP_tcpPoll" type="err_t" visibility="0x02" properties="0x00">
    <documentation>/**
  * @brief: A callback function that handles the start of a RECV on a TCP socket.
@@ -1077,6 +1053,56 @@ if ( es != NULL ) {
 }
 return ret_err;</code>
   </operation>
+  <operation name="LWIPMgr_ctor" type="void" visibility="0x00" properties="0x00">
+   <documentation>/**
+ * @brief C &quot;constructor&quot; for LWIP &quot;class&quot;.
+ * Initializes all the timers and queues used by the AO and sets of the
+ * first state.
+ * @param [in] en: bool that specifies whether to enable debugging output over eth
+ * on startup of the AO.
+ * @retval None
+ */</documentation>
+   <parameter name="en" type="bool"/>
+   <code>LWIPMgr *me = &amp;l_LWIPMgr;
+
+QActive_ctor(&amp;me-&gt;super, (QStateHandler)&amp;LWIPMgr_initial);
+QTimeEvt_ctor(&amp;me-&gt;te_LWIP_SLOW_TICK, LWIP_SLOW_TICK_SIG);
+QTimeEvt_ctor(&amp;me-&gt;te_TcpSend, TCP_TIMEOUT_SIG);
+
+/* Initialize the deferred event queue and storage for it */
+QEQueue_init(
+    &amp;me-&gt;deferredEvtQueue,
+    (QEvt const **)( me-&gt;deferredEvtQSto ),
+    Q_DIM(me-&gt;deferredEvtQSto)
+);
+
+/* Let the caller determine whether serial debugging is enabled by default or not. */
+me-&gt;isEthDbgEnabled = en;</code>
+  </operation>
+  <operation name="LWIPMgr_isDbgEnabled" type="bool" visibility="0x00" properties="0x00">
+   <documentation>/**
+ * @brief Check if eth debug is enabled
+ *
+ * @param	None
+ * @retval 	bool:
+ *   @arg true : eth debug is enabled
+ *   @arg false: eth debug is disabled
+ */</documentation>
+   <code>LWIPMgr *me = &amp;l_LWIPMgr;
+return( me-&gt;isEthDbgEnabled );</code>
+  </operation>
+  <operation name="LWIPMgr_setDbgEnabled" type="void" visibility="0x00" properties="0x00">
+   <documentation>/**
+ * @brief Enable or disable debug over eth
+ *
+ * @param [in] en: bool that specifies if debug is to be enabled (true) or 
+ * disabled (false)
+ * @retval 	None
+ */</documentation>
+   <parameter name="en" type="bool"/>
+   <code>LWIPMgr *me = &amp;l_LWIPMgr;
+me-&gt;isEthDbgEnabled = en;</code>
+  </operation>
  </package>
  <directory name=".">
   <file name="LWIPMgr_gen.c">
@@ -1195,6 +1221,8 @@ static void udp_rx_handler(
 /* Private functions ---------------------------------------------------------*/
 
 $define(AOs::LWIPMgr_ctor)
+$define(AOs::LWIPMgr_isDbgEnabled)
+$define(AOs::LWIPMgr_setDbgEnabled)
 $define(AOs::LWIPMgr)
 
 /* Common TCP functions */
@@ -1329,6 +1357,8 @@ $declare(Events)
 /* Exported constants --------------------------------------------------------*/
 /* Exported functions --------------------------------------------------------*/
 $declare(AOs::LWIPMgr_ctor)
+$declare(AOs::LWIPMgr_isDbgEnabled)
+$declare(AOs::LWIPMgr_setDbgEnabled)
 $declare(AOs::AO_LWIPMgr)
 
 /**

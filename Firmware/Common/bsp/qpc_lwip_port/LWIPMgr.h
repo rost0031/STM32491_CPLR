@@ -92,12 +92,35 @@ typedef struct {
  * @brief C "constructor" for LWIP "class".
  * Initializes all the timers and queues used by the AO and sets of the
  * first state.
- * @param  None
- * @param  None
+ * @param [in] en: bool that specifies whether to enable debugging output over eth
+ * on startup of the AO.
  * @retval None
  */
 /*${AOs::LWIPMgr_ctor} .....................................................*/
-void LWIPMgr_ctor(void);
+void LWIPMgr_ctor(bool en);
+
+
+/**
+ * @brief Check if eth debug is enabled
+ *
+ * @param	None
+ * @retval 	bool:
+ *   @arg true : eth debug is enabled
+ *   @arg false: eth debug is disabled
+ */
+/*${AOs::LWIPMgr_isDbgEna~} ................................................*/
+bool LWIPMgr_isDbgEnabled(void);
+
+
+/**
+ * @brief Enable or disable debug over eth
+ *
+ * @param [in] en: bool that specifies if debug is to be enabled (true) or
+ * disabled (false)
+ * @retval 	None
+ */
+/*${AOs::LWIPMgr_setDbgEn~} ................................................*/
+void LWIPMgr_setDbgEnabled(bool en);
 
 
 /**< "opaque" pointer to the Active Object */
