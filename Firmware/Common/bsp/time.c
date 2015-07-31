@@ -203,9 +203,9 @@ static uint32_t TIME_getLSIFrequency( void )
 }
 
 /******************************************************************************/
-time_T TIME_getTime( void )
+stm32Time_t TIME_getTime( void )
 {
-   time_T time;
+   stm32Time_t time;
    RTC_TimeTypeDef RTC_TimeStructure;
 
    /* Get the current Time and Date */

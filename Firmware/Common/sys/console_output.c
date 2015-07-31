@@ -82,7 +82,7 @@ void CON_output(
 {
    /* 1. Get the time first so the printout of the event is as close as possible
     * to when it actually occurred */
-   time_T time = TIME_getTime();
+   stm32Time_t time = TIME_getTime();
 
    /* 2. Construct a new msg event pointer and allocate storage in the QP event
     * pool.  Allocate with margin so we can fall back on regular slow printfs if
@@ -180,7 +180,7 @@ void CON_slow_output(
 {
    /* 1. Get the time first so the printout of the event is as close as possible
     * to when it actually occurred */
-   time_T time = TIME_getTime();
+   stm32Time_t time = TIME_getTime();
 
    /* Temporary local buffer and index to compose the msg */
    char tmpBuffer[DC3_MAX_MSG_LEN];

@@ -40,7 +40,7 @@ typedef struct
 {
    RTC_TimeTypeDef   hour_min_sec;   /**< STM32 Time struct with h, m, and s. */
    uint32_t          sub_sec;    /**< uint32_t subsecond timer from 0 - 1000. */
-}time_T;
+}stm32Time_t;
 
 /* Exported constants --------------------------------------------------------*/
 /* Exported functions --------------------------------------------------------*/
@@ -64,7 +64,7 @@ void TIME_Init( void );
  * @param  None
  * @return time: a time_T structure containing the current time.
  */
-time_T TIME_getTime( void );
+stm32Time_t TIME_getTime( void );
 
 /**
  * @}
