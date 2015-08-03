@@ -22,7 +22,7 @@
 #include "DC3CommApi.h"
 
 /* Lib includes */
-#include "ClientModules.h"
+#include "ApiDbgModules.h"
 
 
 /* Exported defines ----------------------------------------------------------*/
@@ -60,7 +60,6 @@ void CLI_AckCallback(
       struct DC3BasicMsg basicMsgStruct
 );
 
-
 /**
  * @brief   Callback for an Done msg coming from the coupler board.
  *
@@ -78,13 +77,39 @@ void CLI_DoneCallback(
       DC3PayloadMsgUnion_t payloadMsgUnion
 );
 
-
+/**
+ * @brief   Callback for printing debug statements from the library.
+ *
+ * This is a callback which should be instantiated to handle primary output from
+ * the DC3 Api library.
+ *
+ * @param [in] dbgLevel: DC3DbgLevel_t that specifies the log priority of the msg
+ *    @arg _DC3_DBG: Lowest level of debugging.  Everything printed.
+ *    @arg _DC3_LOG: Basic logging.
+ *    @arg _DC3_WRN: Warnings.  Non-critical errors that may have occurred that
+ *                   allow  operations to continue.
+ *    @arg _DC3_ERR: Critical errors. Operations will stop if these occurred.
+ *    @arg _DC3_CON: This is reserved for printing to the console as part of
+ *                   regular operation and nothing will be prepended. The
+ *                   client has no use for this. - DO NOT USE.
+ *    @arg _DC3_ISR: This debug msg came from an ISR. The client has no use for
+ *                   this. - DO NOT USE.
+ *
+ * @param [in] *pFuncName: const char * string specifying the calling function's
+ *              name.
+ * @param [in]  wLineNumber: int line number where the call occurred.
+ * @param [in]  module: ModuleId_t that specifies which module called it.
+ * @param [in] *fmt: char* fmt va args type argument.
+ * @param [in]  ...: additional va args type arguments.
+ *
+ * @return: None.
+ */
 void CLI_LibLogCallback(
       DC3DbgLevel_t dbgLvl,
       const char *pFuncName,
       int wLineNumber,
-      ModuleSrc_t moduleSrc,
-      ModuleId_t moduleId,
+      ApiDbgModuleSrc_t moduleSrc,
+      ApiDbgModuleId_t moduleId,
       char *fmt,
       ...
 );

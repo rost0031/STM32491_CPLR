@@ -30,7 +30,7 @@ extern "C" {
 /* Includes ------------------------------------------------------------------*/
 /* Generated C headers should be included inside of extern C enclosure */
 #include "DC3CommApi.h"
-#include "ClientModules.h"
+#include "ApiDbgModules.h"
 #ifdef __cplusplus
 }
 #endif
@@ -114,15 +114,16 @@ typedef void (*DC3_DC3LogHandler_t)(
  * a gui.
  *
  * @param [in] dbgLevel: DC3DbgLevel_t that specifies the log priority of the msg
- *    @arg DBG: Lowest level of debugging.  Everything printed.
- *    @arg LOG: Basic logging.
- *    @arg WRN: Warnings.  Non-critical errors that may have occurred that allow
- *              operations to continue.
- *    @arg ERR: Critical errors. Operations will stop if these occurred.
- *    @arg CON: This is reserved for printing to the console as part of regular
- *              operation and nothing will be prepended.  The client has no use
- *              for this.
- *    @arg ISR: This debug msg came from an ISR
+ *    @arg _DC3_DBG: Lowest level of debugging.  Everything printed.
+ *    @arg _DC3_LOG: Basic logging.
+ *    @arg _DC3_WRN: Warnings.  Non-critical errors that may have occurred that
+ *                   allow  operations to continue.
+ *    @arg _DC3_ERR: Critical errors. Operations will stop if these occurred.
+ *    @arg _DC3_CON: This is reserved for printing to the console as part of
+ *                   regular operation and nothing will be prepended. The
+ *                   client has no use for this. - DO NOT USE.
+ *    @arg _DC3_ISR: This debug msg came from an ISR. The client has no use for
+ *                   this. - DO NOT USE.
  *
  * @param [in] *pFuncName: const char * string specifying the calling function's
  *              name.
@@ -135,8 +136,8 @@ typedef void (*DC3_LibLogHandler_t)(
       DC3DbgLevel_t logLevel,
       const char *pFuncName,
       int wLineNumber,
-      ModuleSrc_t moduleSrc,
-      ModuleId_t moduleId,
+      ApiDbgModuleSrc_t moduleSrc,
+      ApiDbgModuleId_t moduleId,
       char *fmt,
       ...
 );

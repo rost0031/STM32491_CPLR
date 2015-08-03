@@ -1,6 +1,7 @@
 /**
  * @file    EnumMaps.cpp
- * Template class that provides enum to string and back functionality.
+ * Template class that provides enum to string (and back, though not very well
+ * tested and not currently used) functionality.
  *
  * @date    04/06/2015
  * @author  Harry Rostovtsev
@@ -16,10 +17,12 @@
 #include "EnumMaps.hpp"
 #include "Logging.hpp"
 #include "KTree.hpp"
+#include "CliDbgModules.hpp"
 
 /* Lib includes */
 #include "DC3CommApi.h"
-#include "ClientModules.h"
+#include "ApiDbgModules.h"
+
 
 /* Namespaces ----------------------------------------------------------------*/
 using namespace std;
@@ -30,31 +33,6 @@ using namespace std;
 /* Private defines -----------------------------------------------------------*/
 /* Private macros ------------------------------------------------------------*/
 /* Private variables and Local objects ---------------------------------------*/
-
-/**
- * @brief String values for ModuleId_t enums
- */
-template<> std::map<ModuleId_t, std::string> enumStrings<ModuleId_t>::data = {
-      { MODULE_GEN     , "Gen"   },
-      { MODULE_SER     , "Ser"   },
-      { MODULE_UDP     , "Udp"   },
-      { MODULE_MGR     , "Mgr"   },
-      { MODULE_LOG     , "Log"   },
-      { MODULE_FWL     , "FwL"   },
-      { MODULE_API     , "Api"   },
-      { MODULE_EXT     , "Ext"   },
-      { MODULE_COM     , "Com"   },
-};
-
-/**
- * @brief String values for ModuleSrc_t enums
- */
-template<> std::map<ModuleSrc_t, std::string> enumStrings<ModuleSrc_t>::data = {
-      { SRC_CLI_EXT    , "Ext"   },
-      { SRC_CLI_LIB    , "Lib"   },
-      { SRC_DC3_APPL   , "App"   },
-      { SRC_DC3_BOOT   , "Btl"   },
-};
 
 /**
  * @brief String values for DC3MsgName_t enums
@@ -124,7 +102,6 @@ template<> std::map<DC3AccessType_t, std::string> enumStrings<DC3AccessType_t>::
       { _DC3_ACCESS_FRT    , "FRT" },
 };
 
-
 /**
  * @brief String values for DC3RamTest_t enums
  */
@@ -135,6 +112,77 @@ template<> std::map<DC3RamTest_t, std::string> enumStrings<DC3RamTest_t>::data =
       { _DC3_RAM_TEST_DEV_INT    , "DeviceTest" },
       { _DC3_RAM_TEST_MAX        , "InvalidTest" },
 };
+
+/**
+ * @brief DC3DbgLevel_t enum to strings map
+ */
+template<> std::map<DC3DbgLevel_t, std::string> enumStrings<DC3DbgLevel_t>::data = {
+      { _DC3_DBG   , "DBG" },
+      { _DC3_LOG   , "LOG" },
+      { _DC3_WRN   , "WRN" },
+      { _DC3_ERR   , "ERR" },
+      { _DC3_CON   , "CON" },
+      { _DC3_ISR   , "ISR" },
+};
+
+/**
+ * @brief DC3DbgModule_t enum to strings map
+ */
+template<> std::map<DC3DbgModule_t, std::string> enumStrings<DC3DbgModule_t>::data = {
+      { DC3_DBG_MODL_GEN      , "GENERAL Module"   },
+      { DC3_DBG_MODL_SER      , "SERIAL Module"    },
+      { DC3_DBG_MODL_TIME     , "TIME Module"      },
+      { DC3_DBG_MODL_ETH      , "ETH Module"       },
+      { DC3_DBG_MODL_I2C      , "I2C BUS Module"   },
+      { DC3_DBG_MODL_I2C_DEV  , "I2C DEV Module"   },
+      { DC3_DBG_MODL_NOR      , "NOR/FPGA Module"  },
+      { DC3_DBG_MODL_SDRAM    , "SDRAM Module"     },
+      { DC3_DBG_MODL_DBG      , "DEBUG_OUT Module" },
+      { DC3_DBG_MODL_COMM     , "COMMMGR Module"   },
+      { DC3_DBG_MODL_CPLR     , "CPLR Main Module" },
+      { DC3_DBG_MODL_DB       , "DATABASE Module"  },
+      { DC3_DBG_MODL_FLASH    , "FLASH Module"     },
+      { DC3_DBG_MODL_SYS      , "SYSMGR Module"    },
+};
+
+
+/**
+ * @brief String values for ApiDbgModuleId_t enums
+ */
+template<> std::map<ApiDbgModuleId_t, std::string> enumStrings<ApiDbgModuleId_t>::data = {
+      { MODULE_GEN     , "Gen"   },
+      { MODULE_SER     , "Ser"   },
+      { MODULE_UDP     , "Udp"   },
+      { MODULE_LOG     , "Log"   },
+      { MODULE_FWL     , "FwL"   },
+      { MODULE_COM     , "Com"   },
+      { MODULE_API     , "Api"   },
+      { MODULE_MSG     , "Msg"   },
+};
+
+/**
+ * @brief String values for CliDbgModuleId_t enums
+ */
+template<> std::map<CliDbgModuleId_t, std::string> enumStrings<CliDbgModuleId_t>::data = {
+      { CLI_DBG_MODULE_GEN     , "GEN"   },
+      { CLI_DBG_MODULE_ARG     , "ARG"   },
+      { CLI_DBG_MODULE_CBS     , "CBS"   },
+      { CLI_DBG_MODULE_LOG     , "LOG"   },
+      { CLI_DBG_MODULE_CMD     , "CMD"   },
+      { CLI_DBG_MODULE_MNU     , "MNU"   },
+      { CLI_DBG_MODULE_KTR     , "KTR"   },
+      { CLI_DBG_MODULE_HLP     , "HLP"   },
+};
+
+/**
+ * @brief String values for ModuleSrc_t enums
+ */
+template<> std::map<ApiDbgModuleSrc_t, std::string> enumStrings<ApiDbgModuleSrc_t>::data = {
+      { CLI_SRC_EXT    , "Ext"   },
+      { CLI_SRC_API    , "API"   },
+      { CLI_SRC_DC3    , "DC3"   },
+};
+
 
 /**
  * @brief String values for MenuAction_t enums
@@ -183,38 +231,6 @@ template<> std::map<MenuAction_t, std::string> enumStrings<MenuAction_t>::data =
       { MENU_DC3_DIS_SDRAM_DBG_MODULE     , "Menu disable DC3 SDRAM module debugging state" },
       { MENU_DC3_EN_DBGS_DBG_MODULE       , "Menu enable DC3 Debug system module debugging state" },
       { MENU_DC3_DIS_DBGS_DBG_MODULE      , "Menu disable DC3 Debug system module debugging state" },
-};
-
-/**
- * @brief DC3DbgLevel_t enum to strings map
- */
-template<> std::map<DC3DbgLevel_t, std::string> enumStrings<DC3DbgLevel_t>::data = {
-      { _DC3_DBG   , "DBG" },
-      { _DC3_LOG   , "LOG" },
-      { _DC3_WRN   , "WRN" },
-      { _DC3_ERR   , "ERR" },
-      { _DC3_CON   , "CON" },
-      { _DC3_ISR   , "ISR" },
-};
-
-/**
- * @brief DC3DbgModule_t enum to strings map
- */
-template<> std::map<DC3DbgModule_t, std::string> enumStrings<DC3DbgModule_t>::data = {
-      { DC3_DBG_MODL_GEN      , "GENERAL Module"   },
-      { DC3_DBG_MODL_SER      , "SERIAL Module"    },
-      { DC3_DBG_MODL_TIME     , "TIME Module"      },
-      { DC3_DBG_MODL_ETH      , "ETH Module"       },
-      { DC3_DBG_MODL_I2C      , "I2C BUS Module"   },
-      { DC3_DBG_MODL_I2C_DEV  , "I2C DEV Module"   },
-      { DC3_DBG_MODL_NOR      , "NOR/FPGA Module"  },
-      { DC3_DBG_MODL_SDRAM    , "SDRAM Module"     },
-      { DC3_DBG_MODL_DBG      , "DEBUG_OUT Module" },
-      { DC3_DBG_MODL_COMM     , "COMMMGR Module"   },
-      { DC3_DBG_MODL_CPLR     , "CPLR Main Module" },
-      { DC3_DBG_MODL_DB       , "DATABASE Module"  },
-      { DC3_DBG_MODL_FLASH    , "FLASH Module"     },
-      { DC3_DBG_MODL_SYS      , "SYSMGR Module"    },
 };
 
 /* Private function prototypes -----------------------------------------------*/

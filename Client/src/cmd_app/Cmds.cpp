@@ -20,6 +20,7 @@
 /* App includes */
 #include "Cmds.hpp"
 #include "ArgParse.hpp"
+#include "CliDbgModules.hpp"
 
 /* Namespaces ----------------------------------------------------------------*/
 using namespace std;
@@ -30,7 +31,7 @@ using namespace po;
 /* Private typedefs ----------------------------------------------------------*/
 /* Private defines -----------------------------------------------------------*/
 /* Private macros ------------------------------------------------------------*/
-MODULE_NAME( MODULE_EXT );
+CLI_MODULE_NAME( CLI_DBG_MODULE_CMD );
 
 /* Private variables and Local objects ---------------------------------------*/
 /* Private function prototypes -----------------------------------------------*/

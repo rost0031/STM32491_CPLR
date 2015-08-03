@@ -157,13 +157,12 @@
  * @param [in] *funcName: const char pointer to the function name where this
  *              was called.
  * @param [in]  lineNum: line number in the file that this was called.
- * @param [in]  moduleSrc: ModuleSrc_t that specifies where the logging is
+ * @param [in]  moduleSrc: ApiDbgModuleSrc_t that specifies where the logging is
  *              coming from
- *    @arg SRC_CLI_EXT: from an external caller of the library
- *    @arg SRC_CLI_LIB: from the library itself
- *    @arg SRC_DC3_APPL: from DC3 Application
- *    @arg SRC_DC3_BOOT: from DC3 Bootloader
- * @param [in]  moduleId: ModuleId_t that specifies which module in the lib
+ *    @arg CLI_SRC_EXT: from an external caller of the library
+ *    @arg CLI_SRC_API: from the library itself
+ *    @arg CLI_SRC_DC3: from DC3 board
+ * @param [in]  moduleId: ApiDbgModuleId_t that specifies which module in the lib
  *              this is coming from.  This only makes sense if
  *              moduleSrc == SRC_CLI_LIB.
  *    @arg MODULE_GEN: General modules.

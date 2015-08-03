@@ -31,13 +31,13 @@
 #include "Logging.hpp"
 #include "Callbacks.hpp"
 #include "EnumMaps.hpp"
-#include "Utils.hpp"
 #include "Menu.hpp"
 #include "Cmds.hpp"
 #include "ArgParse.hpp"
+#include "CliDbgModules.hpp"
 
 /* Lib includes */
-#include "ClientModules.h"
+#include "ApiDbgModules.h"
 #include "LogStub.h"
 #include "ClientApi.h"
 #include "DC3CommApi.h"
@@ -50,7 +50,7 @@ namespace po = boost::program_options;
 using namespace po;
 
 /* Compile-time called macros ------------------------------------------------*/
-MODULE_NAME( MODULE_EXT );
+CLI_MODULE_NAME( CLI_DBG_MODULE_GEN );
 
 /* Private typedefs ----------------------------------------------------------*/
 /* Private defines -----------------------------------------------------------*/
@@ -92,7 +92,6 @@ int main(int argc, char *argv[])
    // 3. Enable and disable logging for various modules in the library
    pLogStub->enableLogForAllLibModules();
    pLogStub->disableLogForLibModule(MODULE_SER);       // Disable serial logging
-   pLogStub->disableLogForLibModule(MODULE_MGR);      // Disable MainMgr logging
    LOG_setDbgLvl(_DC3_DBG);                                 // Set logging level
 
    // 4. Set up the client api and initialize its logging.  Users can call the

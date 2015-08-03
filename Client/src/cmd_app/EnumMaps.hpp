@@ -21,10 +21,11 @@
 #include <iterator>
 
 /* Api includes */
-#include "ClientModules.h"
+#include "ApiDbgModules.h"
 
 /* App includes */
 #include "Logging.hpp"
+#include "CliDbgModules.hpp"
 
 /* Exported defines ----------------------------------------------------------*/
 /* Exported macros -----------------------------------------------------------*/
@@ -40,7 +41,6 @@
  */
 template<typename T> struct enumStrings
 {
-//    static char const* data[];
     static std::map<T, std::string> data;
 };
 

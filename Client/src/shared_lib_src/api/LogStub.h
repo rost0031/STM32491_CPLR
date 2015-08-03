@@ -18,7 +18,7 @@
 
 /* Includes ------------------------------------------------------------------*/
 #include "DC3CommApi.h"
-#include "ClientModules.h"
+#include "ApiDbgModules.h"
 #include "ApiErrorCodes.h"
 #include "CallbackTypes.h"
 #include <cstddef>
@@ -111,27 +111,27 @@ public:
    /**
     * @brief   Enable logging for a given module of the library.
     * Enable DBG and LOG level messages from a given module of the library.
-    * See ModuleId_t for module options.
+    * See ApiDbgModuleId_t for module options.
     *
-    * @param [in] moduleId: ModuleId_t that specifies which module to enable
+    * @param [in] moduleId: ApiDbgModuleId_t that specifies which module to enable
     * logging for.
     * @return: None.
     */
-   void enableLogForLibModule( ModuleId_t moduleId );
+   void enableLogForLibModule( ApiDbgModuleId_t moduleId );
 
    /**
     * @brief   Disable logging for a given module of the library.
     * Disable DBG and LOG level messages from a given module of the library.
-    * See ModuleId_t for module options.
+    * See ApiDbgModuleId_t for module options.
     *
     * @note: WRN and ERR level messages cannot be silenced but they should not
     * appear unless there's an actual problem.
     *
-    * @param [in] moduleId: ModuleId_t that specifies which module to disable
+    * @param [in] moduleId: ApiDbgModuleId_t that specifies which module to disable
     * logging for.
     * @return: None.
     */
-   void disableLogForLibModule( ModuleId_t moduleId );
+   void disableLogForLibModule( ApiDbgModuleId_t moduleId );
 
    /**
     * @brief   Enable logging for all library modules.
@@ -165,13 +165,13 @@ public:
     * @param [in] *pFuncName: const char pointer to the function name where this
     *              was called.
     * @param [in]  wLineNumber: line number in the file that this was called.
-    * @param [in]  moduleSrc: ModuleSrc_t that specifies where the logging is
+    * @param [in]  moduleSrc: ApiDbgModuleSrc_t that specifies where the logging is
     *              coming from
     *    @arg SRC_CLI_EXT: from an external caller of the library
     *    @arg SRC_CLI_LIB: from the library itself
     *    @arg SRC_DC3_APPL: from DC3 Application
     *    @arg SRC_DC3_BOOT: from DC3 Bootloader
-    * @param [in]  moduleId: ModuleId_t that specifies which module in the lib
+    * @param [in]  moduleId: ApiDbgModuleId_t that specifies which module in the lib
     *              this is coming from.  This only makes sense if
     *              moduleSrc == SRC_CLI_LIB.
     *    @arg MODULE_GEN: General modules.
@@ -188,8 +188,8 @@ public:
          DC3DbgLevel_t dbgLvl,
          const char *pFuncName,
          int wLineNumber,
-         ModuleSrc_t moduleSrc,
-         ModuleId_t moduleId,
+         ApiDbgModuleSrc_t moduleSrc,
+         ApiDbgModuleId_t moduleId,
          char *fmt,
          ...
    );

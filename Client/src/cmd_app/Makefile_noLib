@@ -173,13 +173,11 @@ CPP_SRCS                    = serial.cpp \
                               fwLdr.cpp \
                               ClientApi.cpp \
                               LogStub.cpp \
-                              msg_utils.cpp \
                               main.cpp \
                               Callbacks.cpp \
                               Help.cpp \
                               EnumMaps.cpp \
                               Logging.cpp \
-                              Utils.cpp \
                               KTree.cpp \
                               Menu.cpp \
                               Cmds.cpp \

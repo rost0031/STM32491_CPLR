@@ -16,12 +16,13 @@
 #include "Callbacks.hpp"
 #include "Logging.hpp"
 #include "LogStub.h"
+#include "CliDbgModules.hpp"
 
 /* Namespaces ----------------------------------------------------------------*/
 using namespace std;
 
 /* Compile-time called macros ------------------------------------------------*/
-MODULE_NAME( MODULE_LOG );
+CLI_MODULE_NAME( CLI_DBG_MODULE_CBS );
 
 /* Private typedefs ----------------------------------------------------------*/
 /* Private defines -----------------------------------------------------------*/
@@ -68,8 +69,8 @@ void CLI_LibLogCallback(
       DC3DbgLevel_t dbgLvl,
       const char *pFuncName,
       int wLineNumber,
-      ModuleSrc_t moduleSrc,
-      ModuleId_t moduleId,
+      ApiDbgModuleSrc_t moduleSrc,
+      ApiDbgModuleId_t moduleId,
       char *fmt,
       ...
 )

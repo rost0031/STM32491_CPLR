@@ -20,7 +20,7 @@
 #include <stdarg.h>
 #include <cstring>
 #include "LogHelper.h"
-#include "ClientModules.h"
+#include "ApiDbgModules.h"
 
 /* Namespaces ----------------------------------------------------------------*/
 using namespace std;
@@ -113,13 +113,13 @@ APIError_t LogStub::setDC3LogCallBack(
 }
 
 /******************************************************************************/
-void LogStub::enableLogForLibModule( ModuleId_t moduleId )
+void LogStub::enableLogForLibModule( ApiDbgModuleId_t moduleId )
 {
    DBG_ENABLE_DEBUG_FOR_MODULE( moduleId );
 }
 
 /******************************************************************************/
-void LogStub::disableLogForLibModule( ModuleId_t moduleId )
+void LogStub::disableLogForLibModule( ApiDbgModuleId_t moduleId )
 {
    DBG_DISABLE_DEBUG_FOR_MODULE( moduleId );
 }
@@ -141,8 +141,8 @@ void LogStub::log(
       DC3DbgLevel_t dbgLvl,
       const char *pFuncName,
       int wLineNumber,
-      ModuleSrc_t moduleSrc,
-      ModuleId_t moduleId,
+      ApiDbgModuleSrc_t moduleSrc,
+      ApiDbgModuleId_t moduleId,
       char *fmt,
       ...
 )

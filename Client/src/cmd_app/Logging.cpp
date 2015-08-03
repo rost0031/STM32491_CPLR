@@ -22,12 +22,13 @@
 
 /* Lib includes */
 #include "LogStub.h"
-#include "ClientModules.h"
+#include "ApiDbgModules.h"
 
 /* App includes */
 #include "Callbacks.hpp"
 #include "EnumMaps.hpp"
 #include "Logging.hpp"
+#include "CliDbgModules.hpp"
 
 #include <iostream>
 
@@ -36,7 +37,8 @@ using namespace std;
 using namespace boost::log;
 
 /* Compile-time called macros ------------------------------------------------*/
-MODULE_NAME( MODULE_EXT )
+CLI_MODULE_NAME( CLI_DBG_MODULE_LOG )
+
 BOOST_LOG_ATTRIBUTE_KEYWORD(severity, "Severity", DC3DbgLevel_t)
 BOOST_LOG_ATTRIBUTE_KEYWORD(counter, "LineCounter", int)
 BOOST_LOG_ATTRIBUTE_KEYWORD(timestamp, "Timestamp", boost::posix_time::ptime)

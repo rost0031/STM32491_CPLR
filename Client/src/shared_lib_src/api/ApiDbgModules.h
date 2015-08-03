@@ -14,8 +14,8 @@
  */
 
 /* Define to prevent recursive inclusion -------------------------------------*/
-#ifndef CLIENTMODULES_H_
-#define CLIENTMODULES_H_
+#ifndef APIDBGMODULES_H_
+#define APIDBGMODULES_H_
 
 #ifdef __cplusplus
 extern "C" {
@@ -55,7 +55,7 @@ extern "C" {
  * LOG_printf() functions are called.  The code will not compile without this.
  */
 #define MODULE_NAME( name_ ) \
-      static ModuleId_t const this_module_ = name_;
+      static ApiDbgModuleId_t const this_module_ = name_;
 
 /* Exported types ------------------------------------------------------------*/
 
@@ -66,19 +66,16 @@ extern "C" {
  * used for both naming the various modules and for checking whether their
  * debug capabilities have been enabled.
  */
-typedef enum CLI_DBG_MODULES {
+typedef enum API_DBG_MODULES {
    MODULE_GEN   = 0x00000001, /**< General module debugging (main, bsp, etc) */
    MODULE_SER   = 0x00000002, /**< Serial module debugging. */
    MODULE_UDP   = 0x00000004, /**< UDP ethernet module debugging. */
-   MODULE_MGR   = 0x00000008, /**< MainMgr AO module debugging. */
-   MODULE_LOG   = 0x00000010, /**< LogStub module */
-   MODULE_FWL   = 0x00000020, /**< FW loader module */
+   MODULE_LOG   = 0x00000008, /**< LogStub module */
+   MODULE_FWL   = 0x00000010, /**< FW loader module */
+   MODULE_COM   = 0x00000020, /**< Comm interface module */
    MODULE_API   = 0x00000040, /**< ClientApi module */
-   MODULE_COM   = 0x00000080, /**< Comm interface module */
-   MODULE_MSG   = 0x00000100, /**< Msg interface module */
-
-   MODULE_EXT   = 0x80000000, /**< This should be used by external callers of the library */
-} ModuleId_t;
+   MODULE_MSG   = 0x00000080, /**< Msg interface module */
+} ApiDbgModuleId_t;
 
 /**
  * @brief Sources of modules available in the Client API.
@@ -87,14 +84,13 @@ typedef enum CLI_DBG_MODULES {
  * used for identifying the source of various messages and debug statements
  */
 typedef enum DBG_SOURCES {
-   SRC_CLI_EXT  = 0x00000001, /**< Caller of the client library is the source */
-   SRC_CLI_LIB  = 0x00000002, /**< Client library is the source */
-   SRC_DC3_APPL = 0x00000003, /**< DC3 Application is the source */
-   SRC_DC3_BOOT = 0x00000004, /**< DC3 Bootloader is the source */
-} ModuleSrc_t;
+   CLI_SRC_EXT  = 0x00000001, /**< Caller of the client library is the source */
+   CLI_SRC_API  = 0x00000002, /**< Client library is the source */
+   CLI_SRC_DC3  = 0x00000003, /**< DC3 board is the source */
+} ApiDbgModuleSrc_t;
 
 /* Exported functions --------------------------------------------------------*/
 /* Exported classes ----------------------------------------------------------*/
 
-#endif                                                    /* CLIENTMODULES_H_ */
+#endif                                                    /* APIDBGMODULES_H_ */
 /******** Copyright (C) 2015 Datacard. All rights reserved *****END OF FILE****/

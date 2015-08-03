@@ -124,7 +124,6 @@ CPP_SRCS                    = main.cpp \
                               Help.cpp \
                               EnumMaps.cpp \
                               Logging.cpp \
-                              Utils.cpp \
                               KTree.cpp \
                               Menu.cpp \
                               Cmds.cpp \

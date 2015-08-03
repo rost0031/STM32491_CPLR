@@ -453,7 +453,7 @@ template<typename T> bool ARG_userInputNum(
 )
 {
    // Allows the generated template functions to use logging facilities
-   MODULE_NAME( MODULE_EXT );
+   CLI_MODULE_NAME( CLI_DBG_MODULE_ARG );
 
    stringstream ss;
    ss << msg << endl; // print the explanation msg and ask for the actual value

@@ -14,12 +14,13 @@
 #include "Help.hpp"
 #include "Logging.hpp"
 #include "EnumMaps.hpp"
+#include "CliDbgModules.hpp"
 
 /* Namespaces ----------------------------------------------------------------*/
 using namespace std;
 
 /* Compile-time called macros ------------------------------------------------*/
-MODULE_NAME( MODULE_EXT );
+CLI_MODULE_NAME( CLI_DBG_MODULE_HLP );
 
 /* Private typedefs ----------------------------------------------------------*/
 /* Private defines -----------------------------------------------------------*/

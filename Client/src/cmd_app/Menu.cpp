@@ -22,6 +22,7 @@
 #include "KTree.hpp"
 #include "Cmds.hpp"
 #include "ArgParse.hpp"
+#include "CliDbgModules.hpp"
 
 /* Lib includes */
 
@@ -29,7 +30,7 @@
 using namespace std;
 
 /* Compile-time called macros ------------------------------------------------*/
-MODULE_NAME( MODULE_EXT );
+CLI_MODULE_NAME( CLI_DBG_MODULE_MNU );
 
 /* Private typedefs ----------------------------------------------------------*/
 /* Private defines -----------------------------------------------------------*/
