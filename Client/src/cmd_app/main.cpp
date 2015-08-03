@@ -70,6 +70,11 @@ int main(int argc, char *argv[])
    appName = appName.substr(found+1);
    LOG_out << "Starting " << appName;
 
+   DBG_out << "Testing ENUM_getString: " << ENUM_getString(DC3_DBG_MODL_GEN, enumMap<DC3DbgModule_t>::m_enumMap);
+
+
+//      ARG_getEnumFromAllowedStr(valueStr, allowedStrings<T>::m_allowedStrings);
+
    // 1. Create a new LogStub instance.  This allows setting of logging
    // callbacks to the rest of the client library.  Safe to do this without
    // try/catch since no exceptions are thrown from library.

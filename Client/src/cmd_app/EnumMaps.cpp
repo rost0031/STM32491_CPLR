@@ -196,6 +196,38 @@ template<> char const* enumStrings<MenuAction_t>::data[] =  {
          "Menu Set DC3 mode to Bootloader",        /**< MENU_SET_BOOT */
 };
 
+/**
+ * @brief DC3DbgLevel_t enum to strings map
+ */
+template<> std::map<DC3DbgLevel_t, std::string> enumMap<DC3DbgLevel_t>::m_enumMap = {
+      { _DC3_DBG   , "DBG" },
+      { _DC3_LOG   , "LOG" },
+      { _DC3_WRN   , "WRN" },
+      { _DC3_ERR   , "ERR" },
+      { _DC3_CON   , "CON" },
+      { _DC3_ISR   , "ISR" },
+};
+
+/**
+ * @brief DC3DbgModule_t enum to strings map
+ */
+template<> std::map<DC3DbgModule_t, std::string> enumMap<DC3DbgModule_t>::m_enumMap = {
+      { DC3_DBG_MODL_GEN      , "GENERAL Module"   },
+      { DC3_DBG_MODL_SER      , "SERIAL Module"    },
+      { DC3_DBG_MODL_TIME     , "TIME Module"      },
+      { DC3_DBG_MODL_ETH      , "ETH Module"       },
+      { DC3_DBG_MODL_I2C      , "I2C BUS Module"   },
+      { DC3_DBG_MODL_I2C_DEV  , "I2C DEV Module"   },
+      { DC3_DBG_MODL_NOR      , "NOR/FPGA Module"  },
+      { DC3_DBG_MODL_SDRAM    , "SDRAM Module"     },
+      { DC3_DBG_MODL_DBG      , "DEBUG_OUT Module" },
+      { DC3_DBG_MODL_COMM     , "COMMMGR Module"   },
+      { DC3_DBG_MODL_CPLR     , "CPLR Main Module" },
+      { DC3_DBG_MODL_DB       , "DATABASE Module"  },
+      { DC3_DBG_MODL_FLASH    , "FLASH Module"     },
+      { DC3_DBG_MODL_SYS      , "SYSMGR Module"    },
+};
+
 /* Private function prototypes -----------------------------------------------*/
 /* Private functions ---------------------------------------------------------*/
 /******************************************************************************/

@@ -286,7 +286,7 @@ APIError_t CMD_runGetDbgModules(
    // Execute (and block) on this command
    if( API_ERR_NONE == (statusAPI = client->DC3_getDbgModules(statusDC3, dbgModules))) {
 
-      ss << "Finished get_dbg_modules cmd. Command ";
+      ss << "Finished get_dbg_modules cmd. Command " << endl;
       if (ERR_NONE == *statusDC3) {
          ss << "completed with no errors. DC3 debug module states are as follows: " << endl;
          ss << " -- Debug Module name -- " << "   " << " -- State -- " << endl;

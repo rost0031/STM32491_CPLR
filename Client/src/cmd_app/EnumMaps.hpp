@@ -123,6 +123,59 @@ template<typename T> std::istream& operator>>(
     }
     return str;
 }
+
+
+
+/**
+ * @brief   Storage for all the maps of maskable enums to their string equivalents.
+ *
+ * This is the type that will hold all the strings for maskable enumerations.
+ * Each enumerate type will declare its own specialization. Any enum that does
+ * not have a specialization will generate a compiler error indicating that
+ * there is no definition of this variable (as there should be no definition of
+ * a generic version).
+ */
+template<typename T> struct enumMap
+{
+    static std::map<T, std::string> m_enumMap;
+};
+
+/**
+ * @brief   Operator that does the actual conversion from enum to a string.
+ * @param [in] str: ostream type to output to.
+ * @param [in] data: template param of enum that is getting converted.
+ * @return  stream with output in string form.
+ *
+ * @note: THIS ONLY WORKS IN C++11 and above and requires boost str algorithms
+ */
+template<typename T> const std::string& ENUM_getString(
+      T enumKey,
+      std::map< T, std::string>& m_enumMap
+)
+{
+   return( m_enumMap[enumKey]);
+//   // iterate over the map elements
+//   auto begin  = std::begin(enumMap<T>::m_enumMap);
+//   auto end    = std::end(enumMap<T>::m_enumMap);
+//   auto itr    = begin;
+//
+//   for( itr = begin; itr != end; ++itr ) {
+//      // found match
+//      if ( boost::iequals((*v_itr), str) ) {
+//         return( (itr->first) );
+//      }
+//
+//   }
+//
+//   // Throw an exception if string was not found in the map.
+//   std::stringstream ss;
+//   ss << "value " << str << " not found in any of the allowed strings";
+//   throw std::invalid_argument(ss.str());
+}
+
+
+
+
 /* Exported functions --------------------------------------------------------*/
 const std::string getModuleIdStr( const ModuleId_t a );
 const std::string getModuleSrcStr( const ModuleSrc_t a );
