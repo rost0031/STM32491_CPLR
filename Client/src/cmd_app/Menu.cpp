@@ -50,23 +50,60 @@ APIError_t MENU_run( ClientApi *client )
    currMenuNode = root;
 
    root->addChild( "DBG", "Debug control" );
+   root->findChild("DBG")->addChild( "DC3", "Debug output control on the (DC3)" );
+   root->findChild("DBG")->findChild("DC3")->addChild( "EDE", "(E)nable (D)ebug output over (e)thernet", MENU_DC3_EN_ETH_DBG );
+   root->findChild("DBG")->findChild("DC3")->addChild( "DDE", "(D)isable (D)ebug output over (e)thernet", MENU_DC3_DIS_ETH_DBG );
+   root->findChild("DBG")->findChild("DC3")->addChild( "EDS", "(E)nable (D)ebug output over (s)erial", MENU_DC3_EN_SER_DBG );
+   root->findChild("DBG")->findChild("DC3")->addChild( "DDS", "(D)isable (D)ebug output over (s)erial", MENU_DC3_DIS_SER_DBG );
+   root->findChild("DBG")->findChild("DC3")->addChild( "GET", "(Get) DC3 debug module status", MENU_DC3_GET_DBG_MODULES );
+   root->findChild("DBG")->findChild("DC3")->addChild( "ECC", "(E)nable DC3 (C)oupler (C)ontrol debug module", MENU_DC3_EN_CPLR_DBG_MODULE );
+   root->findChild("DBG")->findChild("DC3")->addChild( "DCC", "(D)isable DC3 (C)oupler (C)ontrol debug module", MENU_DC3_DIS_CPLR_DBG_MODULE );
+   root->findChild("DBG")->findChild("DC3")->addChild( "EGD", "(E)nable DC3 (G)ENERAL (d)ebug module", MENU_DC3_EN_GEN_DBG_MODULE );
+   root->findChild("DBG")->findChild("DC3")->addChild( "DGD", "(D)isable DC3 (G)ENERAL (d)ebug module", MENU_DC3_DIS_GEN_DBG_MODULE );
+   root->findChild("DBG")->findChild("DC3")->addChild( "ESD", "(E)nable DC3 (S)ERIAL (d)ebug module", MENU_DC3_EN_SER_DBG_MODULE );
+   root->findChild("DBG")->findChild("DC3")->addChild( "DSD", "(D)isable DC3 (S)ERIAL (d)ebug module", MENU_DC3_DIS_SER_DBG_MODULE );
+   root->findChild("DBG")->findChild("DC3")->addChild( "ETD", "(E)nable DC3 (T)IME (d)ebug module", MENU_DC3_EN_TIME_DBG_MODULE );
+   root->findChild("DBG")->findChild("DC3")->addChild( "DTD", "(D)isable DC3 (T)IMEL (d)ebug module", MENU_DC3_DIS_TIME_DBG_MODULE );
+   root->findChild("DBG")->findChild("DC3")->addChild( "EED", "(E)nable DC3 (E)TH (d)ebug module", MENU_DC3_EN_ETH_DBG_MODULE );
+   root->findChild("DBG")->findChild("DC3")->addChild( "DED", "(D)isable DC3 (E)TH (d)ebug module", MENU_DC3_DIS_ETH_DBG_MODULE );
+   root->findChild("DBG")->findChild("DC3")->addChild( "EIB", "(E)nable DC3 (I)2c (B)us debug module", MENU_DC3_EN_I2C_DBG_MODULE );
+   root->findChild("DBG")->findChild("DC3")->addChild( "DIB", "(D)isable DC3 (I)2c (B)us debug module", MENU_DC3_DIS_I2C_DBG_MODULE );
+   root->findChild("DBG")->findChild("DC3")->addChild( "EID", "(E)nable DC3 (I)2c (D)evice debug module", MENU_DC3_EN_I2C_DEV_DBG_MODULE );
+   root->findChild("DBG")->findChild("DC3")->addChild( "DID", "(D)isable DC3 (I)2c (D)evice debug module", MENU_DC3_DIS_I2C_DEV_DBG_MODULE );
+   root->findChild("DBG")->findChild("DC3")->addChild( "ECD", "(E)nable DC3 (C)omm debug module", MENU_DC3_EN_COMM_DBG_MODULE );
+   root->findChild("DBG")->findChild("DC3")->addChild( "DCD", "(D)isable DC3 (C)omm debug module", MENU_DC3_DIS_COMM_DBG_MODULE );
+   root->findChild("DBG")->findChild("DC3")->addChild( "EDB", "(E)nable DC3 (D)ata(B)ase debug module", MENU_DC3_EN_DB_DBG_MODULE );
+   root->findChild("DBG")->findChild("DC3")->addChild( "DDB", "(D)isable DC3 (D)ata(B)ase debug module", MENU_DC3_DIS_DB_DBG_MODULE );
+   root->findChild("DBG")->findChild("DC3")->addChild( "EFL", "(E)nable DC3 (FL)ash debug module", MENU_DC3_EN_FLASH_DBG_MODULE );
+   root->findChild("DBG")->findChild("DC3")->addChild( "DFL", "(D)isable DC3 (FL)ash debug module", MENU_DC3_DIS_FLASH_DBG_MODULE );
+   root->findChild("DBG")->findChild("DC3")->addChild( "ESY", "(E)nable DC3 (Sy)stem debug module", MENU_DC3_EN_SYS_DBG_MODULE );
+   root->findChild("DBG")->findChild("DC3")->addChild( "DSY", "(D)isable DC3 (Sy)stem debug module", MENU_DC3_DIS_SYS_DBG_MODULE );
+   root->findChild("DBG")->findChild("DC3")->addChild( "ENO", "(E)nable DC3 (NO)R debug module", MENU_DC3_EN_NOR_DBG_MODULE );
+   root->findChild("DBG")->findChild("DC3")->addChild( "DNO", "(D)isable DC3 (NO)R debug module", MENU_DC3_DIS_NOR_DBG_MODULE );
+   root->findChild("DBG")->findChild("DC3")->addChild( "ESR", "(E)nable DC3 (S)d(R)am debug module", MENU_DC3_EN_SDRAM_DBG_MODULE );
+   root->findChild("DBG")->findChild("DC3")->addChild( "DSR", "(D)isable DC3 (S)d(R)am debug module", MENU_DC3_DIS_SDRAM_DBG_MODULE );
+   root->findChild("DBG")->findChild("DC3")->addChild( "EDS", "(E)nable DC3 (D)ebug (S)ystem debug module", MENU_DC3_EN_DBGS_DBG_MODULE );
+   root->findChild("DBG")->findChild("DC3")->addChild( "DDS", "(D)isable DC3 (D)ebug (S)ystem debug module", MENU_DC3_DIS_DBGS_DBG_MODULE );
+
+   root->findChild("DBG")->addChild( "CLI", "Debug output control on the (Cli)ent" );
+
    root->addChild( "SYS", "System tests" );
 
-   root->findChild("SYS")->addChild( "MEM", "Memory tests" );
+   root->findChild("SYS")->addChild( "MEM", "(Mem)ory tests" );
    root->findChild("SYS")->findChild("MEM")->addChild("RAM", "Test RAM", MENU_RAM_TEST );
 
    root->findChild("SYS")->addChild( "MDE", "DC3 mode commands" );
-   root->findChild("SYS")->findChild("MDE")->addChild( "GET", "Get DC3 boot mode", MENU_GET_MODE );
-   root->findChild("SYS")->findChild("MDE")->addChild( "SEA", "Set DC3 boot mode to Application", MENU_SET_APPL );
-   root->findChild("SYS")->findChild("MDE")->addChild( "SEB", "Set DC3 boot mode to Bootloader", MENU_SET_BOOT );
+   root->findChild("SYS")->findChild("MDE")->addChild( "GET", "(Get) DC3 boot mode", MENU_GET_MODE );
+   root->findChild("SYS")->findChild("MDE")->addChild( "SEA", "(Se)t DC3 boot mode to (A)pplication", MENU_SET_APPL );
+   root->findChild("SYS")->findChild("MDE")->addChild( "SEB", "(Se)t DC3 boot mode to (B)ootloader", MENU_SET_BOOT );
 
    root->findChild("SYS")->addChild( "I2C", "I2C tests" );
-   root->findChild("SYS")->findChild("I2C")->addChild( "REE", "Read EEPROM on I2C" );
-   root->findChild("SYS")->findChild("I2C")->findChild("REE")->addChild( "DEF", "Read EEPROM on I2C with default start and number of bytes", MENU_I2C_READ_TEST_DEF );
-   root->findChild("SYS")->findChild("I2C")->findChild("REE")->addChild( "CUS", "Read EEPROM on I2C with custom start and number of bytes", MENU_I2C_READ_TEST_CUS );
+   root->findChild("SYS")->findChild("I2C")->addChild( "REE", "(R)ead (EE)PROM on I2C" );
+   root->findChild("SYS")->findChild("I2C")->findChild("REE")->addChild( "DEF", "Read EEPROM on I2C with (def)ault start and number of bytes", MENU_I2C_READ_TEST_DEF );
+   root->findChild("SYS")->findChild("I2C")->findChild("REE")->addChild( "CUS", "Read EEPROM on I2C with (cus)tom start and number of bytes", MENU_I2C_READ_TEST_CUS );
    root->findChild("SYS")->findChild("I2C")->addChild( "WEE", "Write EEPROM on I2C" );
-   root->findChild("SYS")->findChild("I2C")->findChild("WEE")->addChild( "DEF", "Write EEPROM on I2C with default start and number of bytes", MENU_I2C_WRITE_TEST_DEF );
-   root->findChild("SYS")->findChild("I2C")->findChild("WEE")->addChild( "CUS", "Write EEPROM on I2C with custom start and number of bytes", MENU_I2C_WRITE_TEST_CUS );
+   root->findChild("SYS")->findChild("I2C")->findChild("WEE")->addChild( "DEF", "Write EEPROM on I2C with (def)ault start and number of bytes", MENU_I2C_WRITE_TEST_DEF );
+   root->findChild("SYS")->findChild("I2C")->findChild("WEE")->addChild( "CUS", "Write EEPROM on I2C with (cus)tom start and number of bytes", MENU_I2C_WRITE_TEST_CUS );
 
    // Finalize the menu node numbers.  This has to be called after all the items
    // have been added to the menu.  This function numbers all the nodes to allow
@@ -132,6 +169,9 @@ APIError_t MENU_run( ClientApi *client )
          } else {
             if ( !node->isLeaf() ) {
                currMenuNode = node;
+
+               // Only print menu during navigation.
+               MENU_printMenuExpAtCurrNode( currMenuNode, root ); // new
             } else {
                // Input is valid, extract the MENU_ACTION and handle it.
 
@@ -145,9 +185,6 @@ APIError_t MENU_run( ClientApi *client )
                MENU_parseAndExecAction( menuAction, client );
             }
          }
-         // Always print the expanded menu regardless of whether an option was
-         // successfully chosen or user error occurred.
-         MENU_printMenuExpAtCurrNode( currMenuNode, root );
       }
    }
 
@@ -382,6 +419,10 @@ APIError_t MENU_parseAndExecAction(
 
          break;
       }
+
+      case MENU_DC3_GET_DBG_MODULES:
+
+         break;
       case MENU_NO_ACTION:
          WRN_out << enumToString(menuAction) <<  " associated with this menu selection";
          break;

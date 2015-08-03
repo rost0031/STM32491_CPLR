@@ -681,6 +681,71 @@ APIError_t ClientApi::DC3_ramTest(
 }
 
 /******************************************************************************/
+APIError_t ClientApi::DC3_getDbgModules(
+      DC3Error_t *status,
+      uint32_t* dbgModules
+)
+{
+
+   this->enableMsgCallbacks();
+
+   /* These will be used for responses */
+   DC3BasicMsg basicMsg;
+   DC3PayloadMsgUnion_t payloadMsgUnion;
+
+   /* Common settings for most messages */
+   this->m_basicMsg._msgID       = this->m_msgId;
+   this->m_basicMsg._msgReqProg  = (unsigned long)this->m_bRequestProg;
+   this->m_basicMsg._msgRoute    = this->m_msgRoute;
+
+   /* Settings specific to this message */
+   this->m_basicMsg._msgType     = _DC3_Req;
+   this->m_basicMsg._msgName     = _DC3DbgGetCurrentMsg;
+   this->m_basicMsg._msgPayload  = _DC3NoMsg;
+
+   size_t size = DC3_MAX_MSG_LEN;
+   uint8_t *buffer = new uint8_t[size];                    /* Allocate buffer */
+   unsigned int bufferLen = 0;
+   bufferLen = DC3BasicMsg_write_delimited_to(&m_basicMsg, buffer, 0);
+   l_pComm->write_some((char *)buffer, bufferLen);                /* Send Req */
+
+   delete[] buffer;                                          /* Delete buffer */
+
+   memset(&basicMsg, 0, sizeof(basicMsg));
+   memset(&payloadMsgUnion, 0, sizeof(payloadMsgUnion));
+   APIError_t clientStatus = waitForResp(                  /* Wait for Ack */
+         &basicMsg,
+         &payloadMsgUnion,
+         HL_MAX_TOUT_SEC_CLI_WAIT_FOR_ACK
+   );
+
+   if ( API_ERR_NONE != clientStatus ) {                    /* Check response */
+      ERR_printf(m_pLog,
+            "Waiting for Ack received client Error: 0x%08x", clientStatus);
+      return clientStatus;
+   }
+
+   memset(&basicMsg, 0, sizeof(basicMsg));
+   memset(&payloadMsgUnion, 0, sizeof(payloadMsgUnion));
+   clientStatus = waitForResp(                           /* Wait for Done msg */
+         &basicMsg,
+         &payloadMsgUnion,
+         HL_MAX_TOUT_SEC_CLI_WAIT_FOR_SIMPLE_MSG_DONE
+   );
+   if ( API_ERR_NONE != clientStatus ) {                    /* Check response */
+      ERR_printf(m_pLog,
+            "Waiting for Done received client Error: 0x%08x", clientStatus);
+      return clientStatus;
+   } else {
+      *status = (DC3Error_t)payloadMsgUnion.dbgPayload._errorCode;
+      *dbgModules = payloadMsgUnion.dbgPayload._dbgSettings;
+   }
+
+   return clientStatus;
+
+}
+
+/******************************************************************************/
 APIError_t ClientApi::setNewConnection(
       const char *ipAddress,
       const char *pRemPort,
@@ -823,6 +888,15 @@ APIError_t ClientApi::pollForResp(
             DC3RamTestPayloadMsg_read_delimited_from(
                   (void*)msg.dataBuf,
                   &(payloadMsgUnion->ramTestPayload),
+                  offset
+            );
+            break;
+         case _DC3DbgPayloadMsg:
+            status = API_ERR_NONE;
+            DBG_printf( m_pLog, "Dbg payload detected");
+            DC3DbgPayloadMsg_read_delimited_from(
+                  (void*)msg.dataBuf,
+                  &(payloadMsgUnion->dbgPayload),
                   offset
             );
             break;

@@ -287,6 +287,29 @@ public:
          uint32_t* addr
    );
 
+
+   /**
+    * @brief   Blocking cmd to get the DBG module status from DC3.
+    * @param [out] *status: DC3Error_t pointer to the returned status of from
+    * the DC3 board.
+    *    @arg  ERR_NONE: success.
+    *    other error codes if failure.
+    * @note: unless this variable is set to ERR_NONE at the completion, the
+    * results of other returned data should not be trusted.
+    *
+    * @param [out] *dbgModules: uint32_t pointer where to store the OR'ed  dbg
+    * module enables.
+    *
+    * @return: APIError_t status of the client executing the command.
+    *    @arg  API_ERR_NONE: success
+    *    other error codes if failure.
+    */
+   APIError_t DC3_getDbgModules(
+         DC3Error_t *status,
+         uint32_t* dbgModules
+   );
+
+
    /****************************************************************************
     *                    Client control functionality
     ***************************************************************************/

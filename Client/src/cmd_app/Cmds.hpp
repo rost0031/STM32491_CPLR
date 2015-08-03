@@ -181,6 +181,29 @@ APIError_t CMD_runWriteI2C(
       const DC3I2CDevice_t dev,
       const DC3AccessType_t  acc
 );
+
+/**
+ * @brief   Wrapper around the UI for write_i2c command
+ *
+ * @param [in] *client: ClientApi pointer to the API object to provide access
+ * to the DC3
+ * @param [out] *statusDC3: DC3Error_t status returned from DC3.
+ *    @arg  ERR_NONE: success.
+ *    other error codes if failure.
+ * @note: unless this variable is set to ERR_NONE at the completion, the
+ * results of other returned data should not be trusted.
+ * @param [out] *dbgModules: pointer to where to store the bitfield indicating
+ * the state of the dbg modules enable/disable states.
+ *
+ * @return: APIError_t status of the client executing the command.
+ *    @arg  API_ERR_NONE: success
+ *    other error codes if failures.
+ */
+APIError_t CMD_runGetDbgModules(
+      ClientApi* client,
+      DC3Error_t* statusDC3,
+      uint32_t* dbgModules
+);
 /* Exported classes ----------------------------------------------------------*/
 
 

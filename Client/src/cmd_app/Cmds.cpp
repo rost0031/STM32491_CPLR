@@ -268,6 +268,44 @@ APIError_t CMD_runWriteI2C(
 
    return( statusAPI );
 }
+
+/******************************************************************************/
+APIError_t CMD_runGetDbgModules(
+      ClientApi* client,
+      DC3Error_t* statusDC3,
+      uint32_t* dbgModules
+)
+{
+   APIError_t statusAPI = API_ERR_NONE;
+
+   CON_print("*** Starting get_dbg_modules cmd to get the state of debug modules on DC3... ***");
+
+   stringstream ss;
+   ss << "*** "; // Prepend so start and end of command output are easily visible
+
+   // Execute (and block) on this command
+   if( API_ERR_NONE == (statusAPI = client->DC3_getDbgModules(statusDC3, dbgModules))) {
+
+      ss << "Finished get_dbg_modules cmd. Command ";
+      if (ERR_NONE == *statusDC3) {
+         ss << "completed with no errors. DC3 debug module states are as follows: " << endl;
+         ss << " -- Debug Module name -- " << "   " << " -- State -- " << endl;
+         ss << " General (main, bsp, etc)" << " : " << " ";
+      } else {
+         ss << "FAILED with ERROR: 0x" << setw(8) << setfill('0') << hex << *statusDC3 << dec;
+      }
+
+   } else {
+      ss << "Unable to complete get_dbg_modules cmd to DC3 due to API error: "
+            << "0x" << setw(8) << setfill('0') << hex << statusAPI << dec;
+   }
+
+   ss << " ***"; // Append so start and end of command output are easily visible
+   CON_print(ss.str());                                      // output to screen
+
+   return( statusAPI );
+}
+
 /* Private class prototypes --------------------------------------------------*/
 /* Private classes -----------------------------------------------------------*/
 
