@@ -290,8 +290,22 @@ APIError_t CMD_runGetDbgModules(
       ss << "Finished get_dbg_modules cmd. Command " << endl;
       if (ERR_NONE == *statusDC3) {
          ss << "completed with no errors. DC3 debug module states are as follows: " << endl;
-         ss << " -- Debug Module name -- " << "   " << " -- State -- " << endl;
-         ss << " General (main, bsp, etc)" << " : " << " ";
+         ss << setw(18) << setfill(' ') << " -- Debug Module name -- "           <<  "   " << " -- State -- " << endl;
+         ss << setw(18) << setfill(' ') << enumToString( DC3_DBG_MODL_GEN )      <<  " : " << ( *dbgModules & DC3_DBG_MODL_GEN   ? " On" : " Off" ) << endl;
+         ss << setw(18) << setfill(' ') << enumToString( DC3_DBG_MODL_SER )      <<  " : " << ( *dbgModules & DC3_DBG_MODL_SER   ? " On" : " Off" ) << endl;
+         ss << setw(18) << setfill(' ') << enumToString( DC3_DBG_MODL_TIME )     <<  " : " << ( *dbgModules & DC3_DBG_MODL_TIME  ? " On" : " Off" ) << endl;
+         ss << setw(18) << setfill(' ') << enumToString( DC3_DBG_MODL_ETH )      <<  " : " << ( *dbgModules & DC3_DBG_MODL_ETH   ? " On" : " Off" ) << endl;
+         ss << setw(18) << setfill(' ') << enumToString( DC3_DBG_MODL_I2C )      <<  " : " << ( *dbgModules & DC3_DBG_MODL_I2C   ? " On" : " Off" ) << endl;
+         ss << setw(18) << setfill(' ') << enumToString( DC3_DBG_MODL_I2C_DEV )  <<  " : " << ( *dbgModules & DC3_DBG_MODL_I2C_DEV ? " On" : " Off" ) << endl;
+         ss << setw(18) << setfill(' ') << enumToString( DC3_DBG_MODL_NOR )      <<  " : " << ( *dbgModules & DC3_DBG_MODL_NOR   ? " On" : " Off" ) << endl;
+         ss << setw(18) << setfill(' ') << enumToString( DC3_DBG_MODL_SDRAM )    <<  " : " << ( *dbgModules & DC3_DBG_MODL_SDRAM ? " On" : " Off" ) << endl;
+         ss << setw(18) << setfill(' ') << enumToString( DC3_DBG_MODL_DBG )      <<  " : " << ( *dbgModules & DC3_DBG_MODL_DBG   ? " On" : " Off" ) << endl;
+         ss << setw(18) << setfill(' ') << enumToString( DC3_DBG_MODL_COMM )     <<  " : " << ( *dbgModules & DC3_DBG_MODL_COMM  ? " On" : " Off" ) << endl;
+         ss << setw(18) << setfill(' ') << enumToString( DC3_DBG_MODL_CPLR )     <<  " : " << ( *dbgModules & DC3_DBG_MODL_CPLR  ? " On" : " Off" ) << endl;
+         ss << setw(18) << setfill(' ') << enumToString( DC3_DBG_MODL_DB )       <<  " : " << ( *dbgModules & DC3_DBG_MODL_DB    ? " On" : " Off" ) << endl;
+         ss << setw(18) << setfill(' ') << enumToString( DC3_DBG_MODL_FLASH )    <<  " : " << ( *dbgModules & DC3_DBG_MODL_FLASH ? " On" : " Off" ) << endl;
+         ss << setw(18) << setfill(' ') << enumToString( DC3_DBG_MODL_SYS )      <<  " : " << ( *dbgModules & DC3_DBG_MODL_SYS   ? " On" : " Off" ) << endl;
+
       } else {
          ss << "FAILED with ERROR: 0x" << setw(8) << setfill('0') << hex << *statusDC3 << dec;
       }

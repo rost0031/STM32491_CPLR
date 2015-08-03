@@ -421,10 +421,12 @@ APIError_t MENU_parseAndExecAction(
          break;
       }
 
-      case MENU_DC3_GET_DBG_MODULES:
-
+      case MENU_DC3_GET_DBG_MODULES:{;
+         uint32_t dbgModules = 0;
+         status = CMD_runGetDbgModules( client, &statusDC3, &dbgModules );
          break;
-      case MENU_NO_ACTION:
+      }
+      case MENU_NO_ACTION:;
          WRN_out << enumToString(menuAction) <<  " associated with this menu selection";
          break;
       default:
