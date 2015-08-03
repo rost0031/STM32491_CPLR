@@ -19,10 +19,6 @@
 #include <string>
 #include <algorithm>
 #include <iterator>
-#include <typeinfo>
-
-/* Boost includes */
-#include <boost/fusion/container/map.hpp>
 
 /* Api includes */
 #include "ClientModules.h"
@@ -33,7 +29,7 @@
 /* Exported defines ----------------------------------------------------------*/
 /* Exported macros -----------------------------------------------------------*/
 /* Exported types ------------------------------------------------------------*/
-//using namespace boost::fusion;
+
 /**
  * @brief   Storage for all the maps.
  *
@@ -45,7 +41,6 @@
 template<typename T> struct enumStrings
 {
 //    static char const* data[];
-//    static boost::fusion::map<T, std::string> m_map;
     static std::map<T, std::string> data;
 };
 
@@ -125,100 +120,7 @@ template<typename T> std::istream& operator>>(
     return str;
 }
 
-
-
-/**
- * @brief   Storage for all the maps of maskable enums to their string equivalents.
- *
- * This is the type that will hold all the strings for maskable enumerations.
- * Each enumerate type will declare its own specialization. Any enum that does
- * not have a specialization will generate a compiler error indicating that
- * there is no definition of this variable (as there should be no definition of
- * a generic version).
- */
-//template<typename T> struct enumMap
-//{
-//    static std::map<T, std::string> m_enumMap;
-//};
-
-/**
- * @brief   Operator that does the actual conversion from enum to a string.
- * @param [in] str: ostream type to output to.
- * @param [in] data: template param of enum that is getting converted.
- * @return  stream with output in string form.
- *
- * @note: THIS ONLY WORKS IN C++11 and above and requires boost str algorithms
- */
-template<typename T> const std::string& ENUM_getString(
-      T enumKey,
-      std::map< T, std::string>& m_enumMap
-)
-{
-   return( m_enumMap[enumKey]);
-//   // iterate over the map elements
-//   auto begin  = std::begin(enumMap<T>::m_enumMap);
-//   auto end    = std::end(enumMap<T>::m_enumMap);
-//   auto itr    = begin;
-//
-//   for( itr = begin; itr != end; ++itr ) {
-//      // found match
-//      if ( boost::iequals((*v_itr), str) ) {
-//         return( (itr->first) );
-//      }
-//
-//   }
-//
-//   // Throw an exception if string was not found in the map.
-//   std::stringstream ss;
-//   ss << "value " << str << " not found in any of the allowed strings";
-//   throw std::invalid_argument(ss.str());
-}
-
-
-
-
 /* Exported functions --------------------------------------------------------*/
-const std::string getModuleIdStr( const ModuleId_t a );
-const std::string getModuleSrcStr( const ModuleSrc_t a );
-
-/*! \p getParamString : Figures out which getString function to call based on
- * the type passed in.  The types are defined in the Redwood API redwood_msgs.h
- * file.
- *
- * \param [in] value: an enum of a type that exists in redwood_msgs.h.
- * \tparam: Any enum type that exists in redwood_msgs.h.  Can be one of the
- * following:
- *   @RespType
- *
- * @code
- * string val = getParamString< WhichStepMtr > (  _InterstageDrive );
- * cout << "val is " << val << endl;
- * int invalid_val = getParamValue< WhichStepMtr > (  4 );
- * cout << "invalid_val is " << invalid_val << endl;
- * @endcode
- *
- * Output:
- * val is "_InterstageDrive"
- * invalid_val is "Unknown type"
- *
- * "val" is 4 since _InterstageDrive corresponds to a value of 4 in the
- * WhichStepMtr enum set.
- * "invalid_val" passed in an invalid string so the out put is a string
- * "Unknown type ..." - This won't compile even.
- */
-template<typename T> const std::string maskableEnumToString( T value )
-{
-   if ( typeid(T) == typeid( ModuleId_t ) )   {
-      return( getModuleIdStr( (ModuleId_t) value) );
-   } else if ( typeid(T) == typeid( ModuleSrc_t ) ) {
-      return( getModuleSrcStr( (ModuleSrc_t) value) );
-   } else {
-      std::ostringstream oss(NULL);
-      oss << typeid(T).name() <<"(" << value << ")" << "unknown";
-      return  oss.str();
-   }
-};
-
 /* Exported classes ----------------------------------------------------------*/
 /**
 * @class Template class that converts enums to strings and back.

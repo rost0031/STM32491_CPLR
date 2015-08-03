@@ -87,7 +87,7 @@
  */
 #define DBG_out   BOOST_LOG_SEV(my_logger::get(), _DC3_DBG)                   \
       << "[" << "Exe" << "]"                                                  \
-      << ":["<< maskableEnumToString(this_module_) << "] - "                  \
+      << ":["<< enumToString(this_module_) << "] - "                  \
       << __func__ << "():" << __LINE__ << " - "
 
 /**
@@ -101,7 +101,7 @@
  */
 #define LOG_out   BOOST_LOG_SEV(my_logger::get(), _DC3_LOG)                   \
       << "[" << "Exe" << "]"                                                  \
-      << ":["<< maskableEnumToString(this_module_) << "] - "                  \
+      << ":["<< enumToString(this_module_) << "] - "                  \
       << __func__ << "():" << __LINE__ << " - "
 
 
@@ -116,7 +116,7 @@
  */
 #define WRN_out   BOOST_LOG_SEV(my_logger::get(), _DC3_WRN)                   \
       << "[" << "Exe" << "]"                                                  \
-      << ":["<< maskableEnumToString(this_module_) << "] - "                  \
+      << ":["<< enumToString(this_module_) << "] - "                  \
       << __func__ << "():" << __LINE__ << " - "
 
 
@@ -131,7 +131,7 @@
  */
 #define ERR_out   BOOST_LOG_SEV(my_logger::get(), _DC3_ERR)                   \
       << "[" << "Exe" << "]"                                                  \
-      << ":["<< maskableEnumToString(this_module_) << "] - "                  \
+      << ":["<< enumToString(this_module_) << "] - "                  \
       << __func__ << "():" << __LINE__ << " - "
 
 
@@ -177,8 +177,8 @@
  */
 #define LIB_out( dbgLvl, funcName, lineNum, moduleSrc, moduleId, message )    \
    BOOST_LOG_SEV(my_logger::get(), dbgLvl)                                    \
-   << "[" << setw(3) << maskableEnumToString(moduleSrc) << "]"                \
-   << ":[" << setw(3) << maskableEnumToString(moduleId) << "] - "             \
+   << "[" << setw(3) << enumToString(moduleSrc) << "]"                \
+   << ":[" << setw(3) << enumToString(moduleId) << "] - "             \
    << funcName << "():" << lineNum << " - "<< message;
 
 /**
