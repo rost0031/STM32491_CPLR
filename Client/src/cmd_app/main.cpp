@@ -70,7 +70,7 @@ int main(int argc, char *argv[])
    appName = appName.substr(found+1);
    LOG_out << "Starting " << appName;
 
-   DBG_out << "Testing ENUM_getString: " << ENUM_getString(DC3_DBG_MODL_GEN, enumMap<DC3DbgModule_t>::m_enumMap);
+//   DBG_out << "Testing ENUM_getString: " << ENUM_getString(DC3_DBG_MODL_GEN, enumMap<DC3DbgModule_t>::m_enumMap);
 
 
 //      ARG_getEnumFromAllowedStr(valueStr, allowedStrings<T>::m_allowedStrings);

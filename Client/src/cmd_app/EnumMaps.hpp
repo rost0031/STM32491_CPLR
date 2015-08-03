@@ -44,8 +44,9 @@
  */
 template<typename T> struct enumStrings
 {
-    static char const* data[];
+//    static char const* data[];
 //    static boost::fusion::map<T, std::string> m_map;
+    static std::map<T, std::string> data;
 };
 
 /**
@@ -135,10 +136,10 @@ template<typename T> std::istream& operator>>(
  * there is no definition of this variable (as there should be no definition of
  * a generic version).
  */
-template<typename T> struct enumMap
-{
-    static std::map<T, std::string> m_enumMap;
-};
+//template<typename T> struct enumMap
+//{
+//    static std::map<T, std::string> m_enumMap;
+//};
 
 /**
  * @brief   Operator that does the actual conversion from enum to a string.
