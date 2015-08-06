@@ -77,22 +77,22 @@ APIError_t ClientApi::DC3_getMode(DC3Error_t *status, DC3BootMode_t *mode)
    this->m_basicMsg._msgPayload  = _DC3NoMsg;
 
    size_t size = DC3_MAX_MSG_LEN;
-   uint8_t *buffer = new uint8_t[size];                    /* Allocate buffer */
+   uint8_t *buffer = new uint8_t[size];                       // Allocate buffer
    unsigned int bufferLen = 0;
    bufferLen = DC3BasicMsg_write_delimited_to(&m_basicMsg, buffer, 0);
-   l_pComm->write_some((char *)buffer, bufferLen);                /* Send Req */
+   l_pComm->write_some((char *)buffer, bufferLen);                   // Send Req
 
-   delete[] buffer;                                          /* Delete buffer */
+   delete[] buffer;                                             // Delete buffer
 
    memset(&basicMsg, 0, sizeof(basicMsg));
    memset(&payloadMsgUnion, 0, sizeof(payloadMsgUnion));
-   APIError_t clientStatus = waitForResp(                  /* Wait for Ack */
+   APIError_t clientStatus = waitForResp(                        // Wait for Ack
          &basicMsg,
          &payloadMsgUnion,
          HL_MAX_TOUT_SEC_CLI_WAIT_FOR_ACK
    );
 
-   if ( API_ERR_NONE != clientStatus ) {                    /* Check response */
+   if ( API_ERR_NONE != clientStatus ) {                       // Check response
       ERR_printf(m_pLog,
             "Waiting for Ack received client Error: 0x%08x", clientStatus);
       return clientStatus;
@@ -116,12 +116,12 @@ APIError_t ClientApi::DC3_getMode(DC3Error_t *status, DC3BootMode_t *mode)
 
    memset(&basicMsg, 0, sizeof(basicMsg));
    memset(&payloadMsgUnion, 0, sizeof(payloadMsgUnion));
-   clientStatus = waitForResp(                           /* Wait for Done msg */
+   clientStatus = waitForResp(                                 // Check response
          &basicMsg,
          &payloadMsgUnion,
          HL_MAX_TOUT_SEC_CLI_WAIT_FOR_SIMPLE_MSG_DONE
    );
-   if ( API_ERR_NONE != clientStatus ) {                    /* Check response */
+   if ( API_ERR_NONE != clientStatus ) {                       // Check response
       ERR_printf(m_pLog,
             "Waiting for Done received client Error: 0x%08x", clientStatus);
       return clientStatus;
@@ -156,23 +156,23 @@ APIError_t ClientApi::DC3_setMode(DC3Error_t *status, DC3BootMode_t mode)
    this->m_bootmodePayloadMsg._errorCode = ERR_NONE; // This field is ignored in Req msgs.
 
    size_t size = DC3_MAX_MSG_LEN;
-   uint8_t *buffer = new uint8_t[size];                    /* Allocate buffer */
+   uint8_t *buffer = new uint8_t[size];                       // Allocate buffer
    unsigned int bufferLen = 0;
    bufferLen = DC3BasicMsg_write_delimited_to(&m_basicMsg, buffer, 0);
    bufferLen = DC3BootModePayloadMsg_write_delimited_to(&m_bootmodePayloadMsg, buffer, bufferLen);
-   l_pComm->write_some((char *)buffer, bufferLen);                /* Send Req */
+   l_pComm->write_some((char *)buffer, bufferLen);                   // Send Req
 
-   delete[] buffer;                                          /* Delete buffer */
+   delete[] buffer;                                             // Delete buffer
 
    memset(&basicMsg, 0, sizeof(basicMsg));
    memset(&payloadMsgUnion, 0, sizeof(payloadMsgUnion));
-   APIError_t clientStatus = waitForResp(                  /* Wait for Ack */
+   APIError_t clientStatus = waitForResp(                        // Wait for Ack
          &basicMsg,
          &payloadMsgUnion,
          HL_MAX_TOUT_SEC_CLI_WAIT_FOR_ACK
    );
 
-   if ( API_ERR_NONE != clientStatus ) {                    /* Check response */
+   if ( API_ERR_NONE != clientStatus ) {                       // Check response
       ERR_printf(m_pLog,
             "Waiting for Ack received client Error: 0x%08x", clientStatus);
       return clientStatus;
@@ -180,12 +180,12 @@ APIError_t ClientApi::DC3_setMode(DC3Error_t *status, DC3BootMode_t mode)
 
    memset(&basicMsg, 0, sizeof(basicMsg));
    memset(&payloadMsgUnion, 0, sizeof(payloadMsgUnion));
-   clientStatus = waitForResp(                           /* Wait for Done msg */
+   clientStatus = waitForResp(                                 // Check response
          &basicMsg,
          &payloadMsgUnion,
          HL_MAX_TOUT_SEC_CLI_WAIT_FOR_SIMPLE_MSG_DONE
    );
-   if ( API_ERR_NONE != clientStatus ) {                    /* Check response */
+   if ( API_ERR_NONE != clientStatus ) {                       // Check response
       ERR_printf(m_pLog,
             "Waiting for Done received client Error: 0x%08x", clientStatus);
       return clientStatus;
@@ -302,18 +302,18 @@ APIError_t ClientApi::DC3_flashFW(
 
    bufferLen = DC3BasicMsg_write_delimited_to(&m_basicMsg, buffer, 0);
    bufferLen = DC3FlashMetaPayloadMsg_write_delimited_to(&m_flashMetaPayloadMsg, buffer, bufferLen);
-   l_pComm->write_some((char *)buffer, bufferLen);                /* Send Req */
+   l_pComm->write_some((char *)buffer, bufferLen);                   // Send Req
 
    /* 2. Wait for Ack */
    memset(&basicMsg, 0, sizeof(basicMsg));
    memset(&payloadMsgUnion, 0, sizeof(payloadMsgUnion));
-   clientStatus = waitForResp(                                /* Wait for Ack */
+   clientStatus = waitForResp(                                   // Wait for Ack
          &basicMsg,
          &payloadMsgUnion,
          HL_MAX_TOUT_SEC_CLI_WAIT_FOR_ACK
    );
 
-   if ( API_ERR_NONE != clientStatus ) {                    /* Check response */
+   if ( API_ERR_NONE != clientStatus ) {                       // Check response
       ERR_printf(m_pLog,
             "Waiting for Ack received client Error: 0x%08x", clientStatus);
       return clientStatus;
@@ -322,13 +322,13 @@ APIError_t ClientApi::DC3_flashFW(
    /* 3. Wait for Done with status payload */
    memset(&basicMsg, 0, sizeof(basicMsg));
    memset(&payloadMsgUnion, 0, sizeof(payloadMsgUnion));
-   clientStatus = waitForResp(                               /* Wait for Done */
+   clientStatus = waitForResp(                                  // Wait for Done
          &basicMsg,
          &payloadMsgUnion,
          LL_MAX_TOUT_SEC_CLI_FW_META_WAIT
    );
 
-   if ( API_ERR_NONE != clientStatus ) {                    /* Check response */
+   if ( API_ERR_NONE != clientStatus ) {                       // Check response
       ERR_printf(m_pLog,
             "Waiting for Done received client Error: 0x%08x", clientStatus);
       return clientStatus;
@@ -376,18 +376,18 @@ APIError_t ClientApi::DC3_flashFW(
       bufferLen = DC3BasicMsg_write_delimited_to(&m_basicMsg, buffer, 0);
       bufferLen = DC3FlashDataPayloadMsg_write_delimited_to(&m_flashDataPayloadMsg, buffer, bufferLen);
 //      DBG_printf(m_pLog, "BufferLen is %d", bufferLen);
-      l_pComm->write_some((char *)buffer, bufferLen);             /* Send Req */
+      l_pComm->write_some((char *)buffer, bufferLen);                // Send Req
 
       /* 6. Wait for Ack */
       memset(&basicMsg, 0, sizeof(basicMsg));
       memset(&payloadMsgUnion, 0, sizeof(payloadMsgUnion));
-      clientStatus = waitForResp(                            /* Wait for Done */
+      clientStatus = waitForResp(                               // Wait for Done
             &basicMsg,
             &payloadMsgUnion,
             HL_MAX_TOUT_SEC_CLI_WAIT_FOR_ACK
       );
 
-      if ( API_ERR_NONE != clientStatus ) {                 /* Check response */
+      if ( API_ERR_NONE != clientStatus ) {                    // Check response
          ERR_printf(m_pLog,
                "Waiting for Ack received client Error: 0x%08x", clientStatus);
          return clientStatus;
@@ -432,7 +432,7 @@ APIError_t ClientApi::DC3_flashFW(
        * transfered. */
       bytesTransferred += m_flashDataPayloadMsg._dataBuf_len;
 
-      if ( nPacketSeqNum == m_flashMetaPayloadMsg._imageNumPackets ) {               /* Last packet */
+      if ( nPacketSeqNum == m_flashMetaPayloadMsg._imageNumPackets ) { // Last packet
          DBG_printf(
                m_pLog,
                "This should be the last packet (%d of %d total)...",
@@ -488,23 +488,23 @@ APIError_t ClientApi::DC3_readI2C(
             "Sending I2CRead with dev %d", this->m_i2cDataPayloadMsg._i2cDev);
 
    size_t size = DC3_MAX_MSG_LEN;
-   uint8_t *buffer = new uint8_t[size];                    /* Allocate buffer */
+   uint8_t *buffer = new uint8_t[size];                       // Allocate buffer
    unsigned int bufferLen = 0;
    bufferLen = DC3BasicMsg_write_delimited_to(&m_basicMsg, buffer, 0);
    bufferLen = DC3I2CDataPayloadMsg_write_delimited_to(&m_i2cDataPayloadMsg, buffer, bufferLen);
-   l_pComm->write_some((char *)buffer, bufferLen);                /* Send Req */
+   l_pComm->write_some((char *)buffer, bufferLen);                   // Send Req
 
-   delete[] buffer;                                          /* Delete buffer */
+   delete[] buffer;                                             // Delete buffer
 
    memset(&basicMsg, 0, sizeof(basicMsg));
    memset(&payloadMsgUnion, 0, sizeof(payloadMsgUnion));
-   APIError_t clientStatus = waitForResp(                  /* Wait for Ack */
+   APIError_t clientStatus = waitForResp(                        // Wait for Ack
          &basicMsg,
          &payloadMsgUnion,
          HL_MAX_TOUT_SEC_CLI_WAIT_FOR_ACK
    );
 
-   if ( API_ERR_NONE != clientStatus ) {                    /* Check response */
+   if ( API_ERR_NONE != clientStatus ) {                       // Check response
       ERR_printf(m_pLog,
             "Waiting for Ack received client Error: 0x%08x", clientStatus);
       return clientStatus;
@@ -512,12 +512,12 @@ APIError_t ClientApi::DC3_readI2C(
 
    memset(&basicMsg, 0, sizeof(basicMsg));
    memset(&payloadMsgUnion, 0, sizeof(payloadMsgUnion));
-   clientStatus = waitForResp(                           /* Wait for Done msg */
+   clientStatus = waitForResp(                                 // Check response
          &basicMsg,
          &payloadMsgUnion,
          HL_MAX_TOUT_SEC_CLI_WAIT_FOR_SIMPLE_MSG_DONE
    );
-   if ( API_ERR_NONE != clientStatus ) {                    /* Check response */
+   if ( API_ERR_NONE != clientStatus ) {                       // Check response
       ERR_printf(m_pLog,
             "Waiting for Done received client Error: 0x%08x", clientStatus);
       return clientStatus;
@@ -573,23 +573,23 @@ APIError_t ClientApi::DC3_writeI2C(
             "Sending write_i2c with dev %d", this->m_i2cDataPayloadMsg._i2cDev);
 
    size_t size = DC3_MAX_MSG_LEN;
-   uint8_t *buffer = new uint8_t[size];                    /* Allocate buffer */
+   uint8_t *buffer = new uint8_t[size];                       // Allocate buffer
    unsigned int bufferLen = 0;
    bufferLen = DC3BasicMsg_write_delimited_to(&m_basicMsg, buffer, 0);
    bufferLen = DC3I2CDataPayloadMsg_write_delimited_to(&m_i2cDataPayloadMsg, buffer, bufferLen);
-   l_pComm->write_some((char *)buffer, bufferLen);                /* Send Req */
+   l_pComm->write_some((char *)buffer, bufferLen);                   // Send Req
 
-   delete[] buffer;                                          /* Delete buffer */
+   delete[] buffer;                                             // Delete buffer
 
    memset(&basicMsg, 0, sizeof(basicMsg));
    memset(&payloadMsgUnion, 0, sizeof(payloadMsgUnion));
-   APIError_t clientStatus = waitForResp(                  /* Wait for Ack */
+   APIError_t clientStatus = waitForResp(                        // Wait for Ack
          &basicMsg,
          &payloadMsgUnion,
          HL_MAX_TOUT_SEC_CLI_WAIT_FOR_ACK
    );
 
-   if ( API_ERR_NONE != clientStatus ) {                    /* Check response */
+   if ( API_ERR_NONE != clientStatus ) {                       // Check response
       ERR_printf(m_pLog,
             "Waiting for Ack received client Error: 0x%08x", clientStatus);
       return clientStatus;
@@ -597,12 +597,12 @@ APIError_t ClientApi::DC3_writeI2C(
 
    memset(&basicMsg, 0, sizeof(basicMsg));
    memset(&payloadMsgUnion, 0, sizeof(payloadMsgUnion));
-   clientStatus = waitForResp(                           /* Wait for Done msg */
+   clientStatus = waitForResp(                                 // Check response
          &basicMsg,
          &payloadMsgUnion,
          HL_MAX_TOUT_SEC_CLI_WAIT_FOR_SIMPLE_MSG_DONE
    );
-   if ( API_ERR_NONE != clientStatus ) {                    /* Check response */
+   if ( API_ERR_NONE != clientStatus ) {                       // Check response
       ERR_printf(m_pLog,
             "Waiting for Done received client Error: 0x%08x", clientStatus);
       return clientStatus;
@@ -637,22 +637,22 @@ APIError_t ClientApi::DC3_ramTest(
    this->m_basicMsg._msgPayload  = _DC3NoMsg;
 
    size_t size = DC3_MAX_MSG_LEN;
-   uint8_t *buffer = new uint8_t[size];                    /* Allocate buffer */
+   uint8_t *buffer = new uint8_t[size];                       // Allocate buffer
    unsigned int bufferLen = 0;
    bufferLen = DC3BasicMsg_write_delimited_to(&m_basicMsg, buffer, 0);
-   l_pComm->write_some((char *)buffer, bufferLen);                /* Send Req */
+   l_pComm->write_some((char *)buffer, bufferLen);                   // Send Req
 
-   delete[] buffer;                                          /* Delete buffer */
+   delete[] buffer;                                             // Delete buffer
 
    memset(&basicMsg, 0, sizeof(basicMsg));
    memset(&payloadMsgUnion, 0, sizeof(payloadMsgUnion));
-   APIError_t clientStatus = waitForResp(                  /* Wait for Ack */
+   APIError_t clientStatus = waitForResp(                        // Wait for Ack
          &basicMsg,
          &payloadMsgUnion,
          HL_MAX_TOUT_SEC_CLI_WAIT_FOR_ACK
    );
 
-   if ( API_ERR_NONE != clientStatus ) {                    /* Check response */
+   if ( API_ERR_NONE != clientStatus ) {                       // Check response
       ERR_printf(m_pLog,
             "Waiting for Ack received client Error: 0x%08x", clientStatus);
       return clientStatus;
@@ -704,22 +704,22 @@ APIError_t ClientApi::DC3_getDbgModules(
    this->m_basicMsg._msgPayload  = _DC3NoMsg;
 
    size_t size = DC3_MAX_MSG_LEN;
-   uint8_t *buffer = new uint8_t[size];                    /* Allocate buffer */
+   uint8_t *buffer = new uint8_t[size];                       // Allocate buffer
    unsigned int bufferLen = 0;
    bufferLen = DC3BasicMsg_write_delimited_to(&m_basicMsg, buffer, 0);
-   l_pComm->write_some((char *)buffer, bufferLen);                /* Send Req */
+   l_pComm->write_some((char *)buffer, bufferLen);                   // Send Req
 
-   delete[] buffer;                                          /* Delete buffer */
+   delete[] buffer;                                             // Delete buffer
 
    memset(&basicMsg, 0, sizeof(basicMsg));
    memset(&payloadMsgUnion, 0, sizeof(payloadMsgUnion));
-   APIError_t clientStatus = waitForResp(                  /* Wait for Ack */
+   APIError_t clientStatus = waitForResp(                     // Wait for Ack
          &basicMsg,
          &payloadMsgUnion,
          HL_MAX_TOUT_SEC_CLI_WAIT_FOR_ACK
    );
 
-   if ( API_ERR_NONE != clientStatus ) {                    /* Check response */
+   if ( API_ERR_NONE != clientStatus ) {                       // Check response
       ERR_printf(m_pLog,
             "Waiting for Ack received client Error: 0x%08x", clientStatus);
       return clientStatus;
@@ -727,12 +727,12 @@ APIError_t ClientApi::DC3_getDbgModules(
 
    memset(&basicMsg, 0, sizeof(basicMsg));
    memset(&payloadMsgUnion, 0, sizeof(payloadMsgUnion));
-   clientStatus = waitForResp(                           /* Wait for Done msg */
+   clientStatus = waitForResp(                                 // Check response
          &basicMsg,
          &payloadMsgUnion,
          HL_MAX_TOUT_SEC_CLI_WAIT_FOR_SIMPLE_MSG_DONE
    );
-   if ( API_ERR_NONE != clientStatus ) {                    /* Check response */
+   if ( API_ERR_NONE != clientStatus ) {                       // Check response
       ERR_printf(m_pLog,
             "Waiting for Done received client Error: 0x%08x", clientStatus);
       return clientStatus;
@@ -745,11 +745,89 @@ APIError_t ClientApi::DC3_getDbgModules(
 
 }
 
+
+/******************************************************************************/
+APIError_t ClientApi::DC3_setDbgModules(
+      DC3Error_t* status,
+      uint32_t* dbgModuleSet,
+      bool bEnable,
+      bool bOverWrite
+)
+{
+   this->enableMsgCallbacks();
+
+   /* These will be used for responses */
+   DC3BasicMsg basicMsg;
+   DC3PayloadMsgUnion_t payloadMsgUnion;
+
+   /* Common settings for most messages */
+   this->m_basicMsg._msgID       = this->m_msgId;
+   this->m_basicMsg._msgReqProg  = (unsigned long)this->m_bRequestProg;
+   this->m_basicMsg._msgRoute    = this->m_msgRoute;
+
+   /* Settings specific to this message */
+   this->m_basicMsg._msgType     = _DC3_Req;
+   if ( bOverWrite ) {
+      this->m_basicMsg._msgName     = _DC3DbgSetCurrentMsg;
+   } else {
+      if ( bEnable ) {
+         this->m_basicMsg._msgName     = _DC3DbgEnableMsg;
+      } else {
+         this->m_basicMsg._msgName     = _DC3DbgDisableMsg;
+      }
+   }
+   this->m_basicMsg._msgPayload  = _DC3DbgPayloadMsg;
+
+   this->m_dbgPayloadMsg._dbgSettings = *dbgModuleSet;
+   this->m_dbgPayloadMsg._errorCode = ERR_NONE; // This field is ignored in Req msgs.
+
+   size_t size = DC3_MAX_MSG_LEN;
+   uint8_t *buffer = new uint8_t[size];                       // Allocate buffer
+   unsigned int bufferLen = 0;
+   bufferLen = DC3BasicMsg_write_delimited_to(&m_basicMsg, buffer, 0);
+   bufferLen = DC3DbgPayloadMsg_write_delimited_to(&m_dbgPayloadMsg, buffer, bufferLen);
+   l_pComm->write_some((char *)buffer, bufferLen);                   // Send Req
+
+   delete[] buffer;                                             // Delete buffer
+
+   memset(&basicMsg, 0, sizeof(basicMsg));
+   memset(&payloadMsgUnion, 0, sizeof(payloadMsgUnion));
+   APIError_t clientStatus = waitForResp(                        // Wait for Ack
+         &basicMsg,
+         &payloadMsgUnion,
+         HL_MAX_TOUT_SEC_CLI_WAIT_FOR_ACK
+   );
+
+   if ( API_ERR_NONE != clientStatus ) {                       // Check response
+      ERR_printf(m_pLog,
+            "Waiting for Ack received client Error: 0x%08x", clientStatus);
+      return clientStatus;
+   }
+
+   memset(&basicMsg, 0, sizeof(basicMsg));
+   memset(&payloadMsgUnion, 0, sizeof(payloadMsgUnion));
+   clientStatus = waitForResp(                                 // Check response
+         &basicMsg,
+         &payloadMsgUnion,
+         HL_MAX_TOUT_SEC_CLI_WAIT_FOR_SIMPLE_MSG_DONE
+   );
+   if ( API_ERR_NONE != clientStatus ) {                       // Check response
+      ERR_printf(m_pLog,
+            "Waiting for Done received client Error: 0x%08x", clientStatus);
+      return clientStatus;
+   } else {
+      *status = (DC3Error_t)payloadMsgUnion.dbgPayload._errorCode;
+      *dbgModuleSet = payloadMsgUnion.dbgPayload._dbgSettings;
+   }
+
+   return clientStatus;
+}
+
 /******************************************************************************/
 APIError_t ClientApi::setNewConnection(
-      const char *ipAddress,
-      const char *pRemPort,
-      const char *pLocPort
+      const char* ipAddress,
+      const char* pRemPort,
+      const char* pLocPort
 )
 {
    try {

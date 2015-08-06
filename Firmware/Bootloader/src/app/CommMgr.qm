@@ -232,6 +232,13 @@ switch( me-&gt;msgPayloadName ) {
             me-&gt;basicMsgOffset
         );
         break;
+    case _DC3DbgPayloadMsg:
+        DC3DbgPayloadMsg_read_delimited_from(
+            ((LrgDataEvt *) e)-&gt;dataBuf,
+            &amp;(me-&gt;payloadMsgUnion.dbgPayload),
+            me-&gt;basicMsgOffset
+        );
+        break;
     default:
         WRN_printf(
             &quot;Unknown payload detected: %d, this is probably an error\n&quot;,
@@ -355,6 +362,14 @@ switch( me-&gt;msgPayloadName ) {
         DBG_printf(&quot;Sending RamTest payload\n&quot;);
         evt-&gt;dataLen = DC3RamTestPayloadMsg_write_delimited_to(
             (void*)&amp;(me-&gt;payloadMsgUnion.ramTestPayload),
+            evt-&gt;dataBuf,
+            evt-&gt;dataLen
+        );
+        break;
+    case _DC3DbgPayloadMsg:
+        DBG_printf(&quot;Sending DC3DbgPayloadMsg payload\n&quot;);
+        evt-&gt;dataLen = DC3DbgPayloadMsg_write_delimited_to(
+            (void*)&amp;(me-&gt;payloadMsgUnion.dbgPayload),
             evt-&gt;dataBuf,
             evt-&gt;dataLen
         );
@@ -834,6 +849,99 @@ QACTIVE_POST(AO_FlashMgr, (QEvt *)(evt), AO_CommMgr);
 </action>
          <choice_glyph conn="111,23,4,1,37,-26">
           <action box="-8,35,10,2"/>
+         </choice_glyph>
+        </choice>
+        <choice target="../../../../1">
+         <guard brief="DbgGetCurrent?">_DC3DbgGetCurrentMsg == me-&gt;basicMsg._msgName</guard>
+         <action>me-&gt;errorCode = ERR_NONE;
+
+DBG_printf(&quot;_DC3DbgGetCurrentMsg decoded, attempting to decode payload (if exists)\n&quot;);
+
+/* Compose Done response.  We can re-use the current structure and it will be used by
+ * the exit action of the parent state to send the msg.  Here, we only set up fields
+ * that are specific to this response. We can also destructively change the payload
+ * name since we are sending a response right after this. */
+me-&gt;msgPayloadName = _DC3DbgPayloadMsg;
+
+/* Don't change the basicMsg name since it should be the same in all cases. */
+me-&gt;basicMsg._msgPayload = me-&gt;msgPayloadName;
+me-&gt;payloadMsgUnion.dbgPayload._errorCode = me-&gt;errorCode;
+me-&gt;payloadMsgUnion.dbgPayload._dbgSettings  = glbDbgConfig;
+DBG_printf(&quot;Setting dbgPayload payload with dbgSettings: 0x%08x\n&quot;, me-&gt;payloadMsgUnion.dbgPayload._dbgSettings);</action>
+         <choice_glyph conn="111,23,4,1,56,-77">
+          <action box="-12,54,11,2"/>
+         </choice_glyph>
+        </choice>
+        <choice target="../../../../1">
+         <guard brief="DbgSetCurrent?">_DC3DbgSetCurrentMsg == me-&gt;basicMsg._msgName</guard>
+         <action>me-&gt;errorCode = ERR_NONE;
+
+DBG_printf(&quot;_DC3DbgSetCurrentMsg decoded, attempting to decode payload (if exists)\n&quot;);
+
+/* Compose Done response.  We can re-use the current structure and it will be used by
+ * the exit action of the parent state to send the msg.  Here, we only set up fields
+ * that are specific to this response. We can also destructively change the payload
+ * name since we are sending a response right after this. */
+me-&gt;msgPayloadName = _DC3DbgPayloadMsg;
+
+/* Set the debugging modules bitfield to what was sent over, overwriting all settings.*/
+DBG_SET_DEBUG_FOR_ALL_MODULES( me-&gt;payloadMsgUnion.dbgPayload._dbgSettings );
+
+/* Don't change the basicMsg name since it should be the same in all cases. */
+me-&gt;basicMsg._msgPayload = me-&gt;msgPayloadName;
+me-&gt;payloadMsgUnion.dbgPayload._errorCode = me-&gt;errorCode;
+me-&gt;payloadMsgUnion.dbgPayload._dbgSettings  = glbDbgConfig;
+DBG_printf(&quot;Setting dbgPayload payload with dbgSettings: 0x%08x\n&quot;, me-&gt;payloadMsgUnion.dbgPayload._dbgSettings);</action>
+         <choice_glyph conn="111,23,4,1,59,-77">
+          <action box="-12,57,11,2"/>
+         </choice_glyph>
+        </choice>
+        <choice target="../../../../1">
+         <guard brief="DC3DbgEnable?">_DC3DbgEnableMsg == me-&gt;basicMsg._msgName</guard>
+         <action>me-&gt;errorCode = ERR_NONE;
+
+DBG_printf(&quot;_DC3DbgEnableMsg decoded, attempting to decode payload (if exists)\n&quot;);
+
+/* Compose Done response.  We can re-use the current structure and it will be used by
+ * the exit action of the parent state to send the msg.  Here, we only set up fields
+ * that are specific to this response. We can also destructively change the payload
+ * name since we are sending a response right after this. */
+me-&gt;msgPayloadName = _DC3DbgPayloadMsg;
+
+/* Enable debug module sent over in the message.*/
+DBG_ENABLE_DEBUG_FOR_MODULE( me-&gt;payloadMsgUnion.dbgPayload._dbgSettings );
+
+/* Don't change the basicMsg name since it should be the same in all cases. */
+me-&gt;basicMsg._msgPayload = me-&gt;msgPayloadName;
+me-&gt;payloadMsgUnion.dbgPayload._errorCode = me-&gt;errorCode;
+me-&gt;payloadMsgUnion.dbgPayload._dbgSettings  = glbDbgConfig;
+DBG_printf(&quot;Setting dbgPayload payload with dbgSettings: 0x%08x\n&quot;, me-&gt;payloadMsgUnion.dbgPayload._dbgSettings);</action>
+         <choice_glyph conn="111,23,4,1,62,-77">
+          <action box="-12,60,11,2"/>
+         </choice_glyph>
+        </choice>
+        <choice target="../../../../1">
+         <guard brief="DC3DbgDisable?">_DC3DbgDisableMsg == me-&gt;basicMsg._msgName</guard>
+         <action>me-&gt;errorCode = ERR_NONE;
+
+DBG_printf(&quot;_DC3DbgDisableMsg decoded, attempting to decode payload (if exists)\n&quot;);
+
+/* Compose Done response.  We can re-use the current structure and it will be used by
+ * the exit action of the parent state to send the msg.  Here, we only set up fields
+ * that are specific to this response. We can also destructively change the payload
+ * name since we are sending a response right after this. */
+me-&gt;msgPayloadName = _DC3DbgPayloadMsg;
+
+/* Disable debug module sent over in the message.*/
+DBG_DISABLE_DEBUG_FOR_MODULE( me-&gt;payloadMsgUnion.dbgPayload._dbgSettings );
+
+/* Don't change the basicMsg name since it should be the same in all cases. */
+me-&gt;basicMsg._msgPayload = me-&gt;msgPayloadName;
+me-&gt;payloadMsgUnion.dbgPayload._errorCode = me-&gt;errorCode;
+me-&gt;payloadMsgUnion.dbgPayload._dbgSettings  = glbDbgConfig;
+DBG_printf(&quot;Setting dbgPayload payload with dbgSettings: 0x%08x\n&quot;, me-&gt;payloadMsgUnion.dbgPayload._dbgSettings);</action>
+         <choice_glyph conn="111,23,4,1,65,-77">
+          <action box="-12,63,11,2"/>
          </choice_glyph>
         </choice>
         <tran_glyph conn="111,19,2,-1,4">

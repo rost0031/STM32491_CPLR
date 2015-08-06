@@ -35,7 +35,37 @@ CLI_MODULE_NAME( CLI_DBG_MODULE_CMD );
 
 /* Private variables and Local objects ---------------------------------------*/
 /* Private function prototypes -----------------------------------------------*/
+/**
+ * @brief   Output dbgModules bitfield to a human readable stringstream
+ * @param [in|out]: stringstream ref to output to.
+ * @param [in] dbgModuleSet: uint32_t bitfield representation of the dbgModule
+ * states.
+ *
+ * @return: None
+ */
+static void CMD_dbgModulesToStream( stringstream& ss, uint32_t dbgModules);
+
 /* Private functions ---------------------------------------------------------*/
+
+/******************************************************************************/
+static void CMD_dbgModulesToStream( stringstream& ss, uint32_t dbgModules)
+{
+   ss << setw(24) << setfill(' ') << " -- Debug Module name --"            <<  "   " << "-- State --" << endl;
+   ss << setw(20) << setfill(' ') << enumToString( DC3_DBG_MODL_GEN )      <<  "     :     " << ( dbgModules & DC3_DBG_MODL_GEN   ? " On" : " Off" ) << endl;
+   ss << setw(20) << setfill(' ') << enumToString( DC3_DBG_MODL_SER )      <<  "     :     " << ( dbgModules & DC3_DBG_MODL_SER   ? " On" : " Off" ) << endl;
+   ss << setw(20) << setfill(' ') << enumToString( DC3_DBG_MODL_TIME )     <<  "     :     " << ( dbgModules & DC3_DBG_MODL_TIME  ? " On" : " Off" ) << endl;
+   ss << setw(20) << setfill(' ') << enumToString( DC3_DBG_MODL_ETH )      <<  "     :     " << ( dbgModules & DC3_DBG_MODL_ETH   ? " On" : " Off" ) << endl;
+   ss << setw(20) << setfill(' ') << enumToString( DC3_DBG_MODL_I2C )      <<  "     :     " << ( dbgModules & DC3_DBG_MODL_I2C   ? " On" : " Off" ) << endl;
+   ss << setw(20) << setfill(' ') << enumToString( DC3_DBG_MODL_I2C_DEV )  <<  "     :     " << ( dbgModules & DC3_DBG_MODL_I2C_DEV ? " On" : " Off" ) << endl;
+   ss << setw(20) << setfill(' ') << enumToString( DC3_DBG_MODL_NOR )      <<  "     :     " << ( dbgModules & DC3_DBG_MODL_NOR   ? " On" : " Off" ) << endl;
+   ss << setw(20) << setfill(' ') << enumToString( DC3_DBG_MODL_SDRAM )    <<  "     :     " << ( dbgModules & DC3_DBG_MODL_SDRAM ? " On" : " Off" ) << endl;
+   ss << setw(20) << setfill(' ') << enumToString( DC3_DBG_MODL_DBG )      <<  "     :     " << ( dbgModules & DC3_DBG_MODL_DBG   ? " On" : " Off" ) << endl;
+   ss << setw(20) << setfill(' ') << enumToString( DC3_DBG_MODL_COMM )     <<  "     :     " << ( dbgModules & DC3_DBG_MODL_COMM  ? " On" : " Off" ) << endl;
+   ss << setw(20) << setfill(' ') << enumToString( DC3_DBG_MODL_CPLR )     <<  "     :     " << ( dbgModules & DC3_DBG_MODL_CPLR  ? " On" : " Off" ) << endl;
+   ss << setw(20) << setfill(' ') << enumToString( DC3_DBG_MODL_DB )       <<  "     :     " << ( dbgModules & DC3_DBG_MODL_DB    ? " On" : " Off" ) << endl;
+   ss << setw(20) << setfill(' ') << enumToString( DC3_DBG_MODL_FLASH )    <<  "     :     " << ( dbgModules & DC3_DBG_MODL_FLASH ? " On" : " Off" ) << endl;
+   ss << setw(20) << setfill(' ') << enumToString( DC3_DBG_MODL_SYS )      <<  "     :     " << ( dbgModules & DC3_DBG_MODL_SYS   ? " On" : " Off" ) << endl;
+}
 
 /******************************************************************************/
 APIError_t CMD_runRamTest( ClientApi* client )
@@ -289,23 +319,9 @@ APIError_t CMD_runGetDbgModules(
 
       ss << "Finished get_dbg_modules cmd. Command " << endl;
       if (ERR_NONE == *statusDC3) {
-         ss << "completed with no errors. DC3 debug module states are as follows: " << endl;
-         ss << setw(18) << setfill(' ') << " -- Debug Module name -- "           <<  "   " << " -- State -- " << endl;
-         ss << setw(18) << setfill(' ') << enumToString( DC3_DBG_MODL_GEN )      <<  " : " << ( *dbgModules & DC3_DBG_MODL_GEN   ? " On" : " Off" ) << endl;
-         ss << setw(18) << setfill(' ') << enumToString( DC3_DBG_MODL_SER )      <<  " : " << ( *dbgModules & DC3_DBG_MODL_SER   ? " On" : " Off" ) << endl;
-         ss << setw(18) << setfill(' ') << enumToString( DC3_DBG_MODL_TIME )     <<  " : " << ( *dbgModules & DC3_DBG_MODL_TIME  ? " On" : " Off" ) << endl;
-         ss << setw(18) << setfill(' ') << enumToString( DC3_DBG_MODL_ETH )      <<  " : " << ( *dbgModules & DC3_DBG_MODL_ETH   ? " On" : " Off" ) << endl;
-         ss << setw(18) << setfill(' ') << enumToString( DC3_DBG_MODL_I2C )      <<  " : " << ( *dbgModules & DC3_DBG_MODL_I2C   ? " On" : " Off" ) << endl;
-         ss << setw(18) << setfill(' ') << enumToString( DC3_DBG_MODL_I2C_DEV )  <<  " : " << ( *dbgModules & DC3_DBG_MODL_I2C_DEV ? " On" : " Off" ) << endl;
-         ss << setw(18) << setfill(' ') << enumToString( DC3_DBG_MODL_NOR )      <<  " : " << ( *dbgModules & DC3_DBG_MODL_NOR   ? " On" : " Off" ) << endl;
-         ss << setw(18) << setfill(' ') << enumToString( DC3_DBG_MODL_SDRAM )    <<  " : " << ( *dbgModules & DC3_DBG_MODL_SDRAM ? " On" : " Off" ) << endl;
-         ss << setw(18) << setfill(' ') << enumToString( DC3_DBG_MODL_DBG )      <<  " : " << ( *dbgModules & DC3_DBG_MODL_DBG   ? " On" : " Off" ) << endl;
-         ss << setw(18) << setfill(' ') << enumToString( DC3_DBG_MODL_COMM )     <<  " : " << ( *dbgModules & DC3_DBG_MODL_COMM  ? " On" : " Off" ) << endl;
-         ss << setw(18) << setfill(' ') << enumToString( DC3_DBG_MODL_CPLR )     <<  " : " << ( *dbgModules & DC3_DBG_MODL_CPLR  ? " On" : " Off" ) << endl;
-         ss << setw(18) << setfill(' ') << enumToString( DC3_DBG_MODL_DB )       <<  " : " << ( *dbgModules & DC3_DBG_MODL_DB    ? " On" : " Off" ) << endl;
-         ss << setw(18) << setfill(' ') << enumToString( DC3_DBG_MODL_FLASH )    <<  " : " << ( *dbgModules & DC3_DBG_MODL_FLASH ? " On" : " Off" ) << endl;
-         ss << setw(18) << setfill(' ') << enumToString( DC3_DBG_MODL_SYS )      <<  " : " << ( *dbgModules & DC3_DBG_MODL_SYS   ? " On" : " Off" ) << endl;
-
+         ss << "completed with no errors. ***" << endl;
+         ss << "*** DC3 debug module states are as follows ***" << endl;
+         CMD_dbgModulesToStream( ss, *dbgModules);
       } else {
          ss << "FAILED with ERROR: 0x" << setw(8) << setfill('0') << hex << *statusDC3 << dec;
       }
@@ -321,6 +337,59 @@ APIError_t CMD_runGetDbgModules(
    return( statusAPI );
 }
 
+/******************************************************************************/
+APIError_t CMD_runSetDbgModule(
+      ClientApi* client,
+      DC3Error_t* statusDC3,
+      uint32_t* dbgModuleSet,
+      bool bEnable,
+      bool bOverWrite
+)
+{
+   APIError_t statusAPI = API_ERR_NONE;
+   stringstream ss;
+
+   // Conditional printout since this command does so many different things
+   ss << "*** Starting set_dbg_modules cmd to ";
+   if (bOverWrite) {
+      ss << "overwrite the dbg modules states bitfield ";
+   } else {
+      if (bEnable) {
+         ss << "enable ";
+      } else {
+         ss << "disable ";
+      }
+      ss << "the " << enumToString((DC3DbgModule_t) *dbgModuleSet) << " debug module ";
+   }
+   ss << "on DC3... ***";
+   CON_print(ss.str());
+
+   ss.str(std::string()); // It's the only way to actually clear the stringstream
+
+   ss << "*** "; // Prepend so start and end of command output are easily visible
+
+   // Execute (and block) on this command
+   if( API_ERR_NONE == (statusAPI = client->DC3_setDbgModules(statusDC3, dbgModuleSet, bEnable, bOverWrite))) {
+
+      ss << "Finished set_dbg_modules cmd. Command " << endl;
+      if (ERR_NONE == *statusDC3) {
+         ss << "completed with no errors. ***" << endl;
+         ss << "*** DC3 debug module states are as follows ***" << endl;
+         CMD_dbgModulesToStream( ss, *dbgModuleSet);
+      } else {
+         ss << "FAILED with ERROR: 0x" << setw(8) << setfill('0') << hex << *statusDC3 << dec;
+      }
+
+   } else {
+      ss << "Unable to complete set_dbg_modules cmd to DC3 due to API error: "
+            << "0x" << setw(8) << setfill('0') << hex << statusAPI << dec;
+   }
+
+   ss << " ***"; // Append so start and end of command output are easily visible
+   CON_print(ss.str());                                      // output to screen
+
+   return( statusAPI );
+}
 /* Private class prototypes --------------------------------------------------*/
 /* Private classes -----------------------------------------------------------*/
 

@@ -51,40 +51,72 @@ APIError_t MENU_run( ClientApi *client )
    currMenuNode = root;
 
    root->addChild( "DBG", "Debug control" );
+
    root->findChild("DBG")->addChild( "DC3", "Debug output control on the (DC3)" );
-   root->findChild("DBG")->findChild("DC3")->addChild( "EDE", "(E)nable (D)ebug output over (e)thernet", MENU_DC3_EN_ETH_DBG );
-   root->findChild("DBG")->findChild("DC3")->addChild( "DDE", "(D)isable (D)ebug output over (e)thernet", MENU_DC3_DIS_ETH_DBG );
-   root->findChild("DBG")->findChild("DC3")->addChild( "EDS", "(E)nable (D)ebug output over (s)erial", MENU_DC3_EN_SER_DBG );
-   root->findChild("DBG")->findChild("DC3")->addChild( "DDS", "(D)isable (D)ebug output over (s)erial", MENU_DC3_DIS_SER_DBG );
-   root->findChild("DBG")->findChild("DC3")->addChild( "GET", "(Get) DC3 debug module status", MENU_DC3_GET_DBG_MODULES );
-   root->findChild("DBG")->findChild("DC3")->addChild( "ECC", "(E)nable DC3 (C)oupler (C)ontrol debug module", MENU_DC3_EN_CPLR_DBG_MODULE );
-   root->findChild("DBG")->findChild("DC3")->addChild( "DCC", "(D)isable DC3 (C)oupler (C)ontrol debug module", MENU_DC3_DIS_CPLR_DBG_MODULE );
-   root->findChild("DBG")->findChild("DC3")->addChild( "EGD", "(E)nable DC3 (G)ENERAL (d)ebug module", MENU_DC3_EN_GEN_DBG_MODULE );
-   root->findChild("DBG")->findChild("DC3")->addChild( "DGD", "(D)isable DC3 (G)ENERAL (d)ebug module", MENU_DC3_DIS_GEN_DBG_MODULE );
-   root->findChild("DBG")->findChild("DC3")->addChild( "ESD", "(E)nable DC3 (S)ERIAL (d)ebug module", MENU_DC3_EN_SER_DBG_MODULE );
-   root->findChild("DBG")->findChild("DC3")->addChild( "DSD", "(D)isable DC3 (S)ERIAL (d)ebug module", MENU_DC3_DIS_SER_DBG_MODULE );
-   root->findChild("DBG")->findChild("DC3")->addChild( "ETD", "(E)nable DC3 (T)IME (d)ebug module", MENU_DC3_EN_TIME_DBG_MODULE );
-   root->findChild("DBG")->findChild("DC3")->addChild( "DTD", "(D)isable DC3 (T)IMEL (d)ebug module", MENU_DC3_DIS_TIME_DBG_MODULE );
-   root->findChild("DBG")->findChild("DC3")->addChild( "EED", "(E)nable DC3 (E)TH (d)ebug module", MENU_DC3_EN_ETH_DBG_MODULE );
-   root->findChild("DBG")->findChild("DC3")->addChild( "DED", "(D)isable DC3 (E)TH (d)ebug module", MENU_DC3_DIS_ETH_DBG_MODULE );
-   root->findChild("DBG")->findChild("DC3")->addChild( "EIB", "(E)nable DC3 (I)2c (B)us debug module", MENU_DC3_EN_I2C_DBG_MODULE );
-   root->findChild("DBG")->findChild("DC3")->addChild( "DIB", "(D)isable DC3 (I)2c (B)us debug module", MENU_DC3_DIS_I2C_DBG_MODULE );
-   root->findChild("DBG")->findChild("DC3")->addChild( "EID", "(E)nable DC3 (I)2c (D)evice debug module", MENU_DC3_EN_I2C_DEV_DBG_MODULE );
-   root->findChild("DBG")->findChild("DC3")->addChild( "DID", "(D)isable DC3 (I)2c (D)evice debug module", MENU_DC3_DIS_I2C_DEV_DBG_MODULE );
-   root->findChild("DBG")->findChild("DC3")->addChild( "ECD", "(E)nable DC3 (C)omm debug module", MENU_DC3_EN_COMM_DBG_MODULE );
-   root->findChild("DBG")->findChild("DC3")->addChild( "DCD", "(D)isable DC3 (C)omm debug module", MENU_DC3_DIS_COMM_DBG_MODULE );
-   root->findChild("DBG")->findChild("DC3")->addChild( "EDB", "(E)nable DC3 (D)ata(B)ase debug module", MENU_DC3_EN_DB_DBG_MODULE );
-   root->findChild("DBG")->findChild("DC3")->addChild( "DDB", "(D)isable DC3 (D)ata(B)ase debug module", MENU_DC3_DIS_DB_DBG_MODULE );
-   root->findChild("DBG")->findChild("DC3")->addChild( "EFL", "(E)nable DC3 (FL)ash debug module", MENU_DC3_EN_FLASH_DBG_MODULE );
-   root->findChild("DBG")->findChild("DC3")->addChild( "DFL", "(D)isable DC3 (FL)ash debug module", MENU_DC3_DIS_FLASH_DBG_MODULE );
-   root->findChild("DBG")->findChild("DC3")->addChild( "ESY", "(E)nable DC3 (Sy)stem debug module", MENU_DC3_EN_SYS_DBG_MODULE );
-   root->findChild("DBG")->findChild("DC3")->addChild( "DSY", "(D)isable DC3 (Sy)stem debug module", MENU_DC3_DIS_SYS_DBG_MODULE );
-   root->findChild("DBG")->findChild("DC3")->addChild( "ENO", "(E)nable DC3 (NO)R debug module", MENU_DC3_EN_NOR_DBG_MODULE );
-   root->findChild("DBG")->findChild("DC3")->addChild( "DNO", "(D)isable DC3 (NO)R debug module", MENU_DC3_DIS_NOR_DBG_MODULE );
-   root->findChild("DBG")->findChild("DC3")->addChild( "ESR", "(E)nable DC3 (S)d(R)am debug module", MENU_DC3_EN_SDRAM_DBG_MODULE );
-   root->findChild("DBG")->findChild("DC3")->addChild( "DSR", "(D)isable DC3 (S)d(R)am debug module", MENU_DC3_DIS_SDRAM_DBG_MODULE );
-   root->findChild("DBG")->findChild("DC3")->addChild( "EDS", "(E)nable DC3 (D)ebug (S)ystem debug module", MENU_DC3_EN_DBGS_DBG_MODULE );
-   root->findChild("DBG")->findChild("DC3")->addChild( "DDS", "(D)isable DC3 (D)ebug (S)ystem debug module", MENU_DC3_DIS_DBGS_DBG_MODULE );
+   root->findChild("DBG")->findChild("DC3")->addChild( "DEV", "Debug device output control");
+   root->findChild("DBG")->findChild("DC3")->findChild( "DEV" )->addChild( "EDE", "(E)nable (D)ebug output over (e)thernet", MENU_DC3_EN_ETH_DBG );
+   root->findChild("DBG")->findChild("DC3")->findChild( "DEV" )->addChild( "DDE", "(D)isable (D)ebug output over (e)thernet", MENU_DC3_DIS_ETH_DBG );
+   root->findChild("DBG")->findChild("DC3")->findChild( "DEV" )->addChild( "EDS", "(E)nable (D)ebug output over (s)erial", MENU_DC3_EN_SER_DBG );
+   root->findChild("DBG")->findChild("DC3")->findChild( "DEV" )->addChild( "DDS", "(D)isable (D)ebug output over (s)erial", MENU_DC3_DIS_SER_DBG );
+
+   root->findChild("DBG")->findChild("DC3")->addChild( "MOD", "Debug module control");
+   root->findChild("DBG")->findChild("DC3")->findChild( "MOD" )->addChild( "GET", "(Get) DC3 debug module status", MENU_DC3_GET_DBG_MODULES );
+
+   root->findChild("DBG")->findChild("DC3")->findChild( "MOD" )->addChild( "CPL", "DC3 Coupler Main module");
+   root->findChild("DBG")->findChild("DC3")->findChild( "MOD" )->findChild( "CPL" )->addChild( "E", "Enable DC3 COUPLER MAIN debug module", MENU_DC3_EN_CPLR_DBG_MODULE );
+   root->findChild("DBG")->findChild("DC3")->findChild( "MOD" )->findChild( "CPL" )->addChild( "D", "Disable DC3 COUPLER MAIN debug module", MENU_DC3_DIS_CPLR_DBG_MODULE );
+
+   root->findChild("DBG")->findChild("DC3")->findChild( "MOD" )->addChild( "GEN", "General (main, bsp, etc) module");
+   root->findChild("DBG")->findChild("DC3")->findChild( "MOD" )->findChild( "GEN" )->addChild( "E", "Enable GENERAL debug module", MENU_DC3_EN_GEN_DBG_MODULE );
+   root->findChild("DBG")->findChild("DC3")->findChild( "MOD" )->findChild( "GEN" )->addChild( "D", "Disable GENERAL debug module", MENU_DC3_DIS_GEN_DBG_MODULE );
+
+   root->findChild("DBG")->findChild("DC3")->findChild( "MOD" )->addChild( "SER", "Serial module");
+   root->findChild("DBG")->findChild("DC3")->findChild( "MOD" )->findChild( "SER" )->addChild( "E", "Enable SERIAL debug module", MENU_DC3_EN_SER_DBG_MODULE );
+   root->findChild("DBG")->findChild("DC3")->findChild( "MOD" )->findChild( "SER" )->addChild( "D", "Disable SERIAL debug module", MENU_DC3_DIS_SER_DBG_MODULE );
+
+   root->findChild("DBG")->findChild("DC3")->findChild( "MOD" )->addChild( "TIM", "Time and timer module");
+   root->findChild("DBG")->findChild("DC3")->findChild( "MOD" )->findChild( "TIM" )->addChild( "E", "Enable TIME debug module", MENU_DC3_EN_TIME_DBG_MODULE );
+   root->findChild("DBG")->findChild("DC3")->findChild( "MOD" )->findChild( "TIM" )->addChild( "D", "Disable TIME debug module", MENU_DC3_DIS_TIME_DBG_MODULE );
+
+   root->findChild("DBG")->findChild("DC3")->findChild( "MOD" )->addChild( "ETH", "Ethernet module");
+   root->findChild("DBG")->findChild("DC3")->findChild( "MOD" )->findChild( "ETH" )->addChild( "E", "Enable ETHERNET debug module", MENU_DC3_EN_ETH_DBG_MODULE );
+   root->findChild("DBG")->findChild("DC3")->findChild( "MOD" )->findChild( "ETH" )->addChild( "D", "Disable ETHERNET debug module", MENU_DC3_DIS_ETH_DBG_MODULE );
+
+   root->findChild("DBG")->findChild("DC3")->findChild( "MOD" )->addChild( "I2B", "I2C Bus module");
+   root->findChild("DBG")->findChild("DC3")->findChild( "MOD" )->findChild( "I2B" )->addChild( "E", "Enable I2C Bus debug module", MENU_DC3_EN_I2C_DBG_MODULE );
+   root->findChild("DBG")->findChild("DC3")->findChild( "MOD" )->findChild( "I2B" )->addChild( "D", "Disable I2C Bus debug module", MENU_DC3_DIS_I2C_DBG_MODULE );
+
+   root->findChild("DBG")->findChild("DC3")->findChild( "MOD" )->addChild( "I2D", "I2C Device module");
+   root->findChild("DBG")->findChild("DC3")->findChild( "MOD" )->findChild( "I2D" )->addChild( "E", "Enable I2C Device debug module", MENU_DC3_EN_I2C_DEV_DBG_MODULE );
+   root->findChild("DBG")->findChild("DC3")->findChild( "MOD" )->findChild( "I2D" )->addChild( "D", "Disable I2C Device debug module", MENU_DC3_DIS_I2C_DEV_DBG_MODULE );
+
+   root->findChild("DBG")->findChild("DC3")->findChild( "MOD" )->addChild( "CMM", "CommMgr and Comm module");
+   root->findChild("DBG")->findChild("DC3")->findChild( "MOD" )->findChild( "CMM" )->addChild( "E", "Enable COMM debug module", MENU_DC3_EN_COMM_DBG_MODULE );
+   root->findChild("DBG")->findChild("DC3")->findChild( "MOD" )->findChild( "CMM" )->addChild( "D", "Disable COMM debug module", MENU_DC3_DIS_COMM_DBG_MODULE );
+
+   root->findChild("DBG")->findChild("DC3")->findChild( "MOD" )->addChild( "DBS", "Database and Settings module");
+   root->findChild("DBG")->findChild("DC3")->findChild( "MOD" )->findChild( "DBS" )->addChild( "E", "Enable DB & Settings debug module", MENU_DC3_EN_DB_DBG_MODULE );
+   root->findChild("DBG")->findChild("DC3")->findChild( "MOD" )->findChild( "DBS" )->addChild( "D", "Disable DB & Settings debug module", MENU_DC3_DIS_DB_DBG_MODULE );
+
+   root->findChild("DBG")->findChild("DC3")->findChild( "MOD" )->addChild( "SYS", "SYS and SyshMgr module");
+   root->findChild("DBG")->findChild("DC3")->findChild( "MOD" )->findChild( "SYS" )->addChild( "E", "Enable SYS debug module", MENU_DC3_EN_SYS_DBG_MODULE );
+   root->findChild("DBG")->findChild("DC3")->findChild( "MOD" )->findChild( "SYS" )->addChild( "D", "Disable SYS debug module", MENU_DC3_DIS_SYS_DBG_MODULE );
+
+   root->findChild("DBG")->findChild("DC3")->findChild( "MOD" )->addChild( "NOR", "NOR module");
+   root->findChild("DBG")->findChild("DC3")->findChild( "MOD" )->findChild( "NOR" )->addChild( "E", "Enable NOR debug module", MENU_DC3_EN_NOR_DBG_MODULE );
+   root->findChild("DBG")->findChild("DC3")->findChild( "MOD" )->findChild( "NOR" )->addChild( "D", "Disable NOR debug module", MENU_DC3_DIS_NOR_DBG_MODULE );
+
+   root->findChild("DBG")->findChild("DC3")->findChild( "MOD" )->addChild( "RAM", "SDRAM module");
+   root->findChild("DBG")->findChild("DC3")->findChild( "MOD" )->findChild( "RAM" )->addChild( "E", "Enable SDRAM debug module", MENU_DC3_EN_NOR_DBG_MODULE );
+   root->findChild("DBG")->findChild("DC3")->findChild( "MOD" )->findChild( "RAM" )->addChild( "D", "Disable SDRAM debug module", MENU_DC3_DIS_NOR_DBG_MODULE );
+
+   root->findChild("DBG")->findChild("DC3")->findChild( "MOD" )->addChild( "DBG", "Debug control (DBG) module");
+   root->findChild("DBG")->findChild("DC3")->findChild( "MOD" )->findChild( "DBG" )->addChild( "E", "Enable DBG debug module", MENU_DC3_EN_DBGS_DBG_MODULE );
+   root->findChild("DBG")->findChild("DC3")->findChild( "MOD" )->findChild( "DBG" )->addChild( "D", "Disable DBG debug module", MENU_DC3_DIS_DBGS_DBG_MODULE );
+
+   root->findChild("DBG")->findChild("DC3")->findChild( "MOD" )->addChild( "FLS", "FLASH and FlashMgr module (Bootloader Only)");
+   root->findChild("DBG")->findChild("DC3")->findChild( "MOD" )->findChild( "FLS" )->addChild( "E", "Enable FLASH debug module", MENU_DC3_EN_FLASH_DBG_MODULE );
+   root->findChild("DBG")->findChild("DC3")->findChild( "MOD" )->findChild( "FLS" )->addChild( "D", "Disable FLASH debug module", MENU_DC3_DIS_FLASH_DBG_MODULE );
 
    root->findChild("DBG")->addChild( "CLI", "Debug output control on the (Cli)ent" );
 
@@ -426,11 +458,98 @@ APIError_t MENU_parseAndExecAction(
          status = CMD_runGetDbgModules( client, &statusDC3, &dbgModules );
          break;
       }
+
+      case MENU_DC3_EN_GEN_DBG_MODULE:             // Fall through intentionally
+      case MENU_DC3_EN_SER_DBG_MODULE:             // Fall through intentionally
+      case MENU_DC3_EN_TIME_DBG_MODULE:            // Fall through intentionally
+      case MENU_DC3_EN_ETH_DBG_MODULE:             // Fall through intentionally
+      case MENU_DC3_EN_I2C_DBG_MODULE:             // Fall through intentionally
+      case MENU_DC3_EN_I2C_DEV_DBG_MODULE:         // Fall through intentionally
+      case MENU_DC3_EN_COMM_DBG_MODULE:            // Fall through intentionally
+      case MENU_DC3_EN_CPLR_DBG_MODULE:            // Fall through intentionally
+      case MENU_DC3_EN_DB_DBG_MODULE:              // Fall through intentionally
+      case MENU_DC3_EN_FLASH_DBG_MODULE:           // Fall through intentionally
+      case MENU_DC3_EN_SYS_DBG_MODULE:             // Fall through intentionally
+      case MENU_DC3_EN_NOR_DBG_MODULE:             // Fall through intentionally
+      case MENU_DC3_EN_SDRAM_DBG_MODULE:           // Fall through intentionally
+      case MENU_DC3_EN_DBGS_DBG_MODULE: {;    // local scope and ; for label fix
+         uint32_t dbgModuleSet = 0;
+         if ( MENU_DC3_EN_GEN_DBG_MODULE == menuAction)           dbgModuleSet = DC3_DBG_MODL_GEN;
+         else if ( MENU_DC3_EN_SER_DBG_MODULE == menuAction)      dbgModuleSet = DC3_DBG_MODL_SER;
+         else if ( MENU_DC3_EN_TIME_DBG_MODULE== menuAction)      dbgModuleSet = DC3_DBG_MODL_TIME;
+         else if ( MENU_DC3_EN_ETH_DBG_MODULE== menuAction)       dbgModuleSet = DC3_DBG_MODL_ETH;
+         else if ( MENU_DC3_EN_I2C_DBG_MODULE== menuAction)       dbgModuleSet = DC3_DBG_MODL_I2C;
+         else if ( MENU_DC3_EN_I2C_DEV_DBG_MODULE == menuAction)  dbgModuleSet = DC3_DBG_MODL_I2C_DEV;
+         else if ( MENU_DC3_EN_COMM_DBG_MODULE== menuAction)      dbgModuleSet = DC3_DBG_MODL_COMM;
+         else if ( MENU_DC3_EN_CPLR_DBG_MODULE== menuAction)      dbgModuleSet = DC3_DBG_MODL_CPLR;
+         else if ( MENU_DC3_EN_DB_DBG_MODULE== menuAction)        dbgModuleSet = DC3_DBG_MODL_DB;
+         else if ( MENU_DC3_EN_FLASH_DBG_MODULE== menuAction)     dbgModuleSet = DC3_DBG_MODL_FLASH;
+         else if ( MENU_DC3_EN_SYS_DBG_MODULE== menuAction)       dbgModuleSet = DC3_DBG_MODL_SYS;
+         else if ( MENU_DC3_EN_NOR_DBG_MODULE== menuAction)       dbgModuleSet = DC3_DBG_MODL_NOR;
+         else if ( MENU_DC3_EN_SDRAM_DBG_MODULE== menuAction)     dbgModuleSet = DC3_DBG_MODL_SDRAM;
+         else if ( MENU_DC3_EN_DBGS_DBG_MODULE== menuAction)      dbgModuleSet = DC3_DBG_MODL_DBG;
+         // Run the cmd with bEnable = true indicating an enable and
+         // bOverWrite = false indicating to only touch that field and not the
+         // rest
+         status = CMD_runSetDbgModule(
+               client,
+               &statusDC3,
+               &dbgModuleSet,
+               true,
+               false
+         );
+      }
+      break;
+
+      case MENU_DC3_DIS_GEN_DBG_MODULE:            // Fall through intentionally
+      case MENU_DC3_DIS_SER_DBG_MODULE:            // Fall through intentionally
+      case MENU_DC3_DIS_TIME_DBG_MODULE:           // Fall through intentionally
+      case MENU_DC3_DIS_ETH_DBG_MODULE:            // Fall through intentionally
+      case MENU_DC3_DIS_I2C_DBG_MODULE:            // Fall through intentionally
+      case MENU_DC3_DIS_I2C_DEV_DBG_MODULE:        // Fall through intentionally
+      case MENU_DC3_DIS_COMM_DBG_MODULE:           // Fall through intentionally
+      case MENU_DC3_DIS_CPLR_DBG_MODULE:           // Fall through intentionally
+      case MENU_DC3_DIS_DB_DBG_MODULE:             // Fall through intentionally
+      case MENU_DC3_DIS_FLASH_DBG_MODULE:          // Fall through intentionally
+      case MENU_DC3_DIS_SYS_DBG_MODULE:            // Fall through intentionally
+      case MENU_DC3_DIS_NOR_DBG_MODULE:            // Fall through intentionally
+      case MENU_DC3_DIS_SDRAM_DBG_MODULE:          // Fall through intentionally
+      case MENU_DC3_DIS_DBGS_DBG_MODULE: {;   // local scope and ; for label fix
+         uint32_t dbgModuleSet = 0;
+         if ( MENU_DC3_EN_GEN_DBG_MODULE == menuAction)           dbgModuleSet = DC3_DBG_MODL_GEN;
+         else if ( MENU_DC3_DIS_SER_DBG_MODULE == menuAction)     dbgModuleSet = DC3_DBG_MODL_SER;
+         else if ( MENU_DC3_DIS_TIME_DBG_MODULE== menuAction)     dbgModuleSet = DC3_DBG_MODL_TIME;
+         else if ( MENU_DC3_DIS_ETH_DBG_MODULE== menuAction)      dbgModuleSet = DC3_DBG_MODL_ETH;
+         else if ( MENU_DC3_DIS_I2C_DBG_MODULE== menuAction)      dbgModuleSet = DC3_DBG_MODL_I2C;
+         else if ( MENU_DC3_DIS_I2C_DEV_DBG_MODULE == menuAction) dbgModuleSet = DC3_DBG_MODL_I2C_DEV;
+         else if ( MENU_DC3_DIS_COMM_DBG_MODULE== menuAction)     dbgModuleSet = DC3_DBG_MODL_COMM;
+         else if ( MENU_DC3_DIS_CPLR_DBG_MODULE== menuAction)     dbgModuleSet = DC3_DBG_MODL_CPLR;
+         else if ( MENU_DC3_DIS_DB_DBG_MODULE== menuAction)       dbgModuleSet = DC3_DBG_MODL_DB;
+         else if ( MENU_DC3_DIS_FLASH_DBG_MODULE== menuAction)    dbgModuleSet = DC3_DBG_MODL_FLASH;
+         else if ( MENU_DC3_DIS_SYS_DBG_MODULE== menuAction)      dbgModuleSet = DC3_DBG_MODL_SYS;
+         else if ( MENU_DC3_DIS_NOR_DBG_MODULE== menuAction)      dbgModuleSet = DC3_DBG_MODL_NOR;
+         else if ( MENU_DC3_DIS_SDRAM_DBG_MODULE== menuAction)    dbgModuleSet = DC3_DBG_MODL_SDRAM;
+         else if ( MENU_DC3_DIS_DBGS_DBG_MODULE== menuAction)     dbgModuleSet = DC3_DBG_MODL_DBG;
+         // Run the cmd with bEnable = false indicating a disable and
+         // bOverWrite = false indicating to only touch that field and not the
+         // rest
+         DBG_out << "Disabling " << enumToString((DC3DbgModule_t)dbgModuleSet) << " module";
+         status = CMD_runSetDbgModule(
+               client,
+               &statusDC3,
+               &dbgModuleSet,
+               false,
+               false
+         );
+      }
+      break;
+
+
       case MENU_NO_ACTION:;
          WRN_out << enumToString(menuAction) <<  " associated with this menu selection";
          break;
       default:
-         ERR_out << "Unknown action (" << menuAction << ")";
+         ERR_out << "Unknown menu action item: (" << menuAction << ") " << enumToString(menuAction);
          break;
    }
 

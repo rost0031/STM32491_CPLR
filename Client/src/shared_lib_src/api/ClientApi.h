@@ -70,13 +70,14 @@ private:
    boost::thread m_workerThread;          /**< Thread to start MainMgr and QF */
 
    /* All the different msg structures that exist */
-   struct DC3BasicMsg          m_basicMsg;
-   struct DC3StatusPayloadMsg  m_statusPayloadMsg;
-   struct DC3VersionPayloadMsg m_versionPayloadMsg;
-   struct DC3BootModePayloadMsg m_bootmodePayloadMsg;
+   struct DC3BasicMsg            m_basicMsg;
+   struct DC3StatusPayloadMsg    m_statusPayloadMsg;
+   struct DC3VersionPayloadMsg   m_versionPayloadMsg;
+   struct DC3BootModePayloadMsg  m_bootmodePayloadMsg;
    struct DC3FlashMetaPayloadMsg m_flashMetaPayloadMsg;
    struct DC3FlashDataPayloadMsg m_flashDataPayloadMsg;
-   struct DC3I2CDataPayloadMsg m_i2cDataPayloadMsg;
+   struct DC3I2CDataPayloadMsg   m_i2cDataPayloadMsg;
+   struct DC3DbgPayloadMsg       m_dbgPayloadMsg;
 
    uint8_t dataBuf[1000];
    int dataLen;
@@ -309,7 +310,77 @@ public:
          uint32_t* dbgModules
    );
 
+   /**
+    * @brief   Blocking cmd to enable debugging a given module on DC3.
+    * @param [out] *status: DC3Error_t pointer to the returned status of from
+    * the DC3 board.
+    *    @arg  ERR_NONE: success.
+    *    other error codes if failure.
+    * @note: unless this variable is set to ERR_NONE at the completion, the
+    * results of other returned data should not be trusted.
+    *
+    * @param [in|out] dbgModuleSet: uint32_t pointer specifying which module to
+    * enable (in) and the state of all dbg modules (out) upon return.
+    *
+    * @return: APIError_t status of the client executing the command.
+    *    @arg  API_ERR_NONE: success
+    *    other error codes if failure.
+    */
+   APIError_t DC3_enDbgModule(
+         DC3Error_t* status,
+         uint32_t* dbgModuleSet
+   );
 
+   /**
+    * @brief   Blocking cmd to enable/disable debugging module(s) on DC3.
+    *
+    * This function allows to both enable and disable debugging for individual
+    * modules.  This is controlled by the bEnable flag, where:
+    *    @arg true:  enable
+    *    @arg false: disable
+    *
+    * as well as controlling individual debug modules vs replacing the
+    * entire bitfield set. This is controlled by bOverWrite flag, where:
+    *    @arg false: leave the other debug modules as they are and only change
+    *                the passed in field
+    *    @arg true:  overwrite the entire debug bitfield with the passed in
+    *                value composed of ORed DC3DbgModule_t fields.
+    *
+    * @note: the bEnable flag is ignored if bOverWrite is set to true since this
+    * option just sets the bitfield to whatever is passed in.
+    *
+    * @param [out] *status: DC3Error_t pointer to the returned status of from
+    * the DC3 board.
+    *    @arg  ERR_NONE: success.
+    *    other error codes if failure.
+    * @note: unless this variable is set to ERR_NONE at the completion, the
+    * results of other returned data should not be trusted.
+    *
+    * @param [in|out] dbgModuleSet: uint32_t pointer specifying which module to
+    * enable/disable (in) and the state of all dbg modules (out) upon return.
+    *
+    * @param [in] bEnable: bool flag that controls whether to enable or disable
+    * the passed in bitfield.
+    *    @arg true:  enable
+    *    @arg false: disable
+    *
+    * @param [in] bOverWrite: bool flag that controls whether individual debug
+    * module is enabled/disabled vs replacing the entire bitfield.
+    *    @arg false: leave the other debug modules as they are and only change
+    *                the passed in field
+    *    @arg true:  overwrite the entire debug bitfield with the passed in
+    *                value composed of ORed DC3DbgModule_t fields.
+    *
+    * @return: APIError_t status of the client executing the command.
+    *    @arg  API_ERR_NONE: success
+    *    other error codes if failure.
+    */
+   APIError_t DC3_setDbgModules(
+         DC3Error_t* status,
+         uint32_t* dbgModuleSet,
+         bool bEnable,
+         bool bOverWrite
+   );
    /****************************************************************************
     *                    Client control functionality
     ***************************************************************************/
@@ -321,9 +392,9 @@ public:
     * @return  None.
     */
    APIError_t setNewConnection(
-         const char *ipAddress,
-         const char *pRemPort,
-         const char *pLocPort
+         const char* ipAddress,
+         const char* pRemPort,
+         const char* pLocPort
    );
 
    /**

@@ -161,6 +161,7 @@ extern uint32_t  glbDbgConfig; /**< Allow global access to debug info */
  * information.
  *
  * @param[in] @c name_: DBG_MODL_T enum representing the module.
+ * @return  None
  *
  * @note 1: This macro should __not__ be terminated by a semicolon.
  * @note 2: This macro MUST be present in the file if DBG_printf() or
@@ -173,6 +174,7 @@ extern uint32_t  glbDbgConfig; /**< Allow global access to debug info */
  * @brief   Enable debugging output for a given module.
  *
  * @param [in] @c name_: DBG_MODL_T enum representing the module.
+ * @return  None
  */
 #define DBG_ENABLE_DEBUG_FOR_MODULE( name_ ) \
       glbDbgConfig |= name_;
@@ -181,6 +183,7 @@ extern uint32_t  glbDbgConfig; /**< Allow global access to debug info */
  * @brief   Disable debugging output for a given module.
  *
  * @param [in] @c name_: DBG_MODL_T enum representing the module.
+ * @return  None
  */
 #define DBG_DISABLE_DEBUG_FOR_MODULE( name_ ) \
       glbDbgConfig &= ~name_;
@@ -189,6 +192,7 @@ extern uint32_t  glbDbgConfig; /**< Allow global access to debug info */
  * @brief   Toggle debugging output for a given module.
  *
  * @param [in] @c name_: DBG_MODL_T enum representing the module.
+ * @return  None
  */
 #define DBG_TOGGLE_DEBUG_FOR_MODULE( name_ ) \
       glbDbgConfig ^= name_;
@@ -197,14 +201,26 @@ extern uint32_t  glbDbgConfig; /**< Allow global access to debug info */
  * @brief   Toggle debugging output for a given module.
  *
  * @param [in] @c name_: DBG_MODL_T enum representing the module.
+ * @return  None
  */
 #define DBG_CHECK_DEBUG_FOR_MODULE( name_ ) \
       ( glbDbgConfig & name_ )
+
 /**
  * @brief   Disable debugging output for all modules.
+ * @param   None
+ * @return  None
  */
 #define DBG_DISABLE_DEBUG_FOR_ALL_MODULES( ) \
       glbDbgConfig = 0x00000000;
+
+/**
+ * @brief   Disable debugging output for all modules.
+ * @param   None
+ * @return  None
+ */
+#define DBG_SET_DEBUG_FOR_ALL_MODULES( dbgSetting_ ) \
+      glbDbgConfig = dbgSetting_;
 
 /**
  * @brief   Conditional error output
