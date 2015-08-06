@@ -544,6 +544,18 @@ APIError_t MENU_parseAndExecAction(
       }
       break;
 
+      case MENU_DC3_EN_ETH_DBG:
+         status = CMD_runSetDbgDevice( client, &statusDC3, _DC3_EthCli, true );
+         break;
+      case MENU_DC3_DIS_ETH_DBG:
+         status = CMD_runSetDbgDevice( client, &statusDC3, _DC3_EthCli, false );
+         break;
+      case MENU_DC3_EN_SER_DBG:
+         status = CMD_runSetDbgDevice( client, &statusDC3, _DC3_Serial, true );
+         break;
+      case MENU_DC3_DIS_SER_DBG:
+         status = CMD_runSetDbgDevice( client, &statusDC3, _DC3_Serial, false );
+         break;
 
       case MENU_NO_ACTION:;
          WRN_out << enumToString(menuAction) <<  " associated with this menu selection";

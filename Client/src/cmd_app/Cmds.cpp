@@ -390,6 +390,57 @@ APIError_t CMD_runSetDbgModule(
 
    return( statusAPI );
 }
+
+
+/******************************************************************************/
+APIError_t CMD_runSetDbgDevice(
+      ClientApi* client,
+      DC3Error_t* statusDC3,
+      DC3MsgRoute_t device,
+      bool bEnable
+)
+{
+   APIError_t statusAPI = API_ERR_NONE;
+   stringstream ss;
+
+   // Conditional printout since this command does so many different things
+   ss << "*** Starting set_dbg_device cmd to ";
+   if (bEnable) {
+      ss << "enable ";
+   } else {
+      ss << "disable ";
+   }
+
+   ss << "debugging output on " << enumToString(device) << " device on the DC3 ***";
+   CON_print(ss.str());
+
+   ss.str(std::string()); // It's the only way to actually clear the stringstream
+
+   ss << "*** "; // Prepend so start and end of command output are easily visible
+
+   // Execute (and block) on this command
+   if( API_ERR_NONE == (statusAPI = client->DC3_setDbgDevice(statusDC3, device, bEnable))) {
+
+      ss << "Finished set_dbg_modules cmd. Command " << endl;
+      if (ERR_NONE == *statusDC3) {
+         ss << "completed with no errors. ***" << endl;
+         ss << "*** DC3 debugging output over " << enumToString(device)
+               << " is now " << (( true == bEnable ) ? " enabled " : "disabled ");
+      } else {
+         ss << "FAILED with ERROR: 0x" << setw(8) << setfill('0') << hex << *statusDC3 << dec;
+      }
+
+   } else {
+      ss << "Unable to complete set_dbg_modules cmd to DC3 due to API error: "
+            << "0x" << setw(8) << setfill('0') << hex << statusAPI << dec;
+
+   }
+
+   ss << " ***"; // Append so start and end of command output are easily visible
+   CON_print(ss.str());                                      // output to screen
+
+   return( statusAPI );
+}
 /* Private class prototypes --------------------------------------------------*/
 /* Private classes -----------------------------------------------------------*/
 

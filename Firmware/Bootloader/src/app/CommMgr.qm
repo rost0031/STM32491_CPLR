@@ -944,6 +944,98 @@ DBG_printf(&quot;Setting dbgPayload payload with dbgSettings: 0x%08x\n&quot;, me
           <action box="-12,63,11,2"/>
          </choice_glyph>
         </choice>
+        <choice target="../../../../1">
+         <guard brief="DC3DbgEnableEth?">_DC3DbgEnableEthMsg == me-&gt;basicMsg._msgName</guard>
+         <action>me-&gt;errorCode = ERR_NONE;
+
+DBG_printf(&quot;_DC3DbgEnableEthMsg decoded, attempting to decode payload (if exists)\n&quot;);
+
+/* Compose Done response.  We can re-use the current structure and it will be used by
+ * the exit action of the parent state to send the msg.  Here, we only set up fields
+ * that are specific to this response. We can also destructively change the payload
+ * name since we are sending a response right after this. */
+me-&gt;msgPayloadName = _DC3StatusPayloadMsg;
+
+/* Enable debug output over ethernet */
+LWIPMgr_setDbgEnabled( true );
+
+/* Don't change the basicMsg name since it should be the same in all cases. */
+me-&gt;basicMsg._msgPayload = me-&gt;msgPayloadName;
+me-&gt;payloadMsgUnion.statusPayload._errorCode = me-&gt;errorCode;
+</action>
+         <choice_glyph conn="111,23,4,1,68,-77">
+          <action box="-14,66,13,2"/>
+         </choice_glyph>
+        </choice>
+        <choice target="../../../../1">
+         <guard brief="DC3DbgDisableEth?">_DC3DbgDisableEthMsg == me-&gt;basicMsg._msgName</guard>
+         <action>me-&gt;errorCode = ERR_NONE;
+
+DBG_printf(&quot;_DC3DbgDisableEthMsg decoded, attempting to decode payload (if exists)\n&quot;);
+
+/* Compose Done response.  We can re-use the current structure and it will be used by
+ * the exit action of the parent state to send the msg.  Here, we only set up fields
+ * that are specific to this response. We can also destructively change the payload
+ * name since we are sending a response right after this. */
+me-&gt;msgPayloadName = _DC3StatusPayloadMsg;
+
+/* Disable debug output over ethernet */
+LWIPMgr_setDbgEnabled( false );
+
+/* Don't change the basicMsg name since it should be the same in all cases. */
+me-&gt;basicMsg._msgPayload = me-&gt;msgPayloadName;
+me-&gt;payloadMsgUnion.statusPayload._errorCode = me-&gt;errorCode;
+</action>
+         <choice_glyph conn="111,23,4,1,71,-77">
+          <action box="-14,69,13,2"/>
+         </choice_glyph>
+        </choice>
+        <choice target="../../../../1">
+         <guard brief="DC3DbgEnableSer?">_DC3DbgEnableSerMsg == me-&gt;basicMsg._msgName</guard>
+         <action>me-&gt;errorCode = ERR_NONE;
+
+DBG_printf(&quot;_DC3DbgEnableSerMsg decoded, attempting to decode payload (if exists)\n&quot;);
+
+/* Compose Done response.  We can re-use the current structure and it will be used by
+ * the exit action of the parent state to send the msg.  Here, we only set up fields
+ * that are specific to this response. We can also destructively change the payload
+ * name since we are sending a response right after this. */
+me-&gt;msgPayloadName = _DC3StatusPayloadMsg;
+
+/* Enable debug output over serial */
+SerialMgr_setDbgEnabled( true );
+
+/* Don't change the basicMsg name since it should be the same in all cases. */
+me-&gt;basicMsg._msgPayload = me-&gt;msgPayloadName;
+me-&gt;payloadMsgUnion.statusPayload._errorCode = me-&gt;errorCode;
+</action>
+         <choice_glyph conn="111,23,4,1,74,-77">
+          <action box="-14,72,13,2"/>
+         </choice_glyph>
+        </choice>
+        <choice target="../../../../1">
+         <guard brief="DC3DbgDisableSer?">_DC3DbgDisableSerMsg == me-&gt;basicMsg._msgName</guard>
+         <action>me-&gt;errorCode = ERR_NONE;
+
+DBG_printf(&quot;_DC3DbgDisableSerMsg decoded, attempting to decode payload (if exists)\n&quot;);
+
+/* Compose Done response.  We can re-use the current structure and it will be used by
+ * the exit action of the parent state to send the msg.  Here, we only set up fields
+ * that are specific to this response. We can also destructively change the payload
+ * name since we are sending a response right after this. */
+me-&gt;msgPayloadName = _DC3StatusPayloadMsg;
+
+/* Enable debug output over serial */
+SerialMgr_setDbgEnabled( false );
+
+/* Don't change the basicMsg name since it should be the same in all cases. */
+me-&gt;basicMsg._msgPayload = me-&gt;msgPayloadName;
+me-&gt;payloadMsgUnion.statusPayload._errorCode = me-&gt;errorCode;
+</action>
+         <choice_glyph conn="111,23,4,1,77,-77">
+          <action box="-14,75,13,2"/>
+         </choice_glyph>
+        </choice>
         <tran_glyph conn="111,19,2,-1,4">
          <action box="0,0,12,2"/>
         </tran_glyph>

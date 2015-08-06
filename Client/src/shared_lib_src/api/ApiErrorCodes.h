@@ -61,6 +61,7 @@ typedef enum APIErrors
    /* General error category.                     0x00000001 - 0x0000FFFF */
    API_ERR_INVALID_CALLBACK                                    = 0x00000001,
    API_ERR_TIMEOUT_WAITING_FOR_RESP                            = 0x00000002,
+   API_ERR_DEV_INVALID_DEBUG_OUTPUT                            = 0x00000003,
 
    /* Serial error category.                     0x00010000 - 0x0001FFFF */
    API_ERR_SER_EXCEPTION_CAUGHT                                = 0x00010000,
@@ -82,11 +83,11 @@ typedef enum APIErrors
    API_ERR_MSG_UNKNOWN_PAYLOAD                                 = 0x00040006,
    API_ERR_MSG_UNABLE_TO_GET_FROM_QUEUE                        = 0x00040007,
 
-   /* Memory error category                      0x00005000 - 0x0005FFFF */
+   /* Memory error category                      0x00050000 - 0x0005FFFF */
    API_ERR_MEM_NULL_VALUE                                      = 0x00050000,
    API_ERR_MEM_BUFFER_LEN                                      = 0x00050001,
 
-   /* FW loader error category                   0x00006000 - 0x0006FFFF */
+   /* FW loader error category                   0x00060000 - 0x0006FFFF */
    API_ERR_FW_FILENAME_INVALID                                 = 0x00060000,
    API_ERR_FW_FILENAME_INVALID_EXT                             = 0x00060001,
    API_ERR_FW_FILENAME_MISSING_VER                             = 0x00060002,

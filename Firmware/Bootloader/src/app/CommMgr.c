@@ -1154,6 +1154,90 @@ static QState CommMgr_ValidateMsg(CommMgr * const me, QEvt const * const e) {
                 DBG_printf("Setting dbgPayload payload with dbgSettings: 0x%08x\n", me->payloadMsgUnion.dbgPayload._dbgSettings);
                 status_ = Q_TRAN(&CommMgr_Idle);
             }
+            /* ${AOs::CommMgr::SM::Active::Busy::ValidateMsg::MSG_PROCESS::[DC3DbgEnableEth~} */
+            else if (_DC3DbgEnableEthMsg == me->basicMsg._msgName) {
+                me->errorCode = ERR_NONE;
+
+                DBG_printf("_DC3DbgEnableEthMsg decoded, attempting to decode payload (if exists)\n");
+
+                /* Compose Done response.  We can re-use the current structure and it will be used by
+                 * the exit action of the parent state to send the msg.  Here, we only set up fields
+                 * that are specific to this response. We can also destructively change the payload
+                 * name since we are sending a response right after this. */
+                me->msgPayloadName = _DC3StatusPayloadMsg;
+
+                /* Enable debug output over ethernet */
+                LWIPMgr_setDbgEnabled( true );
+
+                /* Don't change the basicMsg name since it should be the same in all cases. */
+                me->basicMsg._msgPayload = me->msgPayloadName;
+                me->payloadMsgUnion.statusPayload._errorCode = me->errorCode;
+
+                status_ = Q_TRAN(&CommMgr_Idle);
+            }
+            /* ${AOs::CommMgr::SM::Active::Busy::ValidateMsg::MSG_PROCESS::[DC3DbgDisableEt~} */
+            else if (_DC3DbgDisableEthMsg == me->basicMsg._msgName) {
+                me->errorCode = ERR_NONE;
+
+                DBG_printf("_DC3DbgDisableEthMsg decoded, attempting to decode payload (if exists)\n");
+
+                /* Compose Done response.  We can re-use the current structure and it will be used by
+                 * the exit action of the parent state to send the msg.  Here, we only set up fields
+                 * that are specific to this response. We can also destructively change the payload
+                 * name since we are sending a response right after this. */
+                me->msgPayloadName = _DC3StatusPayloadMsg;
+
+                /* Disable debug output over ethernet */
+                LWIPMgr_setDbgEnabled( false );
+
+                /* Don't change the basicMsg name since it should be the same in all cases. */
+                me->basicMsg._msgPayload = me->msgPayloadName;
+                me->payloadMsgUnion.statusPayload._errorCode = me->errorCode;
+
+                status_ = Q_TRAN(&CommMgr_Idle);
+            }
+            /* ${AOs::CommMgr::SM::Active::Busy::ValidateMsg::MSG_PROCESS::[DC3DbgEnableSer~} */
+            else if (_DC3DbgEnableSerMsg == me->basicMsg._msgName) {
+                me->errorCode = ERR_NONE;
+
+                DBG_printf("_DC3DbgEnableSerMsg decoded, attempting to decode payload (if exists)\n");
+
+                /* Compose Done response.  We can re-use the current structure and it will be used by
+                 * the exit action of the parent state to send the msg.  Here, we only set up fields
+                 * that are specific to this response. We can also destructively change the payload
+                 * name since we are sending a response right after this. */
+                me->msgPayloadName = _DC3StatusPayloadMsg;
+
+                /* Enable debug output over serial */
+                SerialMgr_setDbgEnabled( true );
+
+                /* Don't change the basicMsg name since it should be the same in all cases. */
+                me->basicMsg._msgPayload = me->msgPayloadName;
+                me->payloadMsgUnion.statusPayload._errorCode = me->errorCode;
+
+                status_ = Q_TRAN(&CommMgr_Idle);
+            }
+            /* ${AOs::CommMgr::SM::Active::Busy::ValidateMsg::MSG_PROCESS::[DC3DbgDisableSe~} */
+            else if (_DC3DbgDisableSerMsg == me->basicMsg._msgName) {
+                me->errorCode = ERR_NONE;
+
+                DBG_printf("_DC3DbgDisableSerMsg decoded, attempting to decode payload (if exists)\n");
+
+                /* Compose Done response.  We can re-use the current structure and it will be used by
+                 * the exit action of the parent state to send the msg.  Here, we only set up fields
+                 * that are specific to this response. We can also destructively change the payload
+                 * name since we are sending a response right after this. */
+                me->msgPayloadName = _DC3StatusPayloadMsg;
+
+                /* Enable debug output over serial */
+                SerialMgr_setDbgEnabled( false );
+
+                /* Don't change the basicMsg name since it should be the same in all cases. */
+                me->basicMsg._msgPayload = me->msgPayloadName;
+                me->payloadMsgUnion.statusPayload._errorCode = me->errorCode;
+
+                status_ = Q_TRAN(&CommMgr_Idle);
+            }
             /* ${AOs::CommMgr::SM::Active::Busy::ValidateMsg::MSG_PROCESS::[else]} */
             else {
                 me->errorCode = ERR_MSG_UNKNOWN_BASIC;

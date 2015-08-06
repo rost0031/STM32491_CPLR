@@ -745,7 +745,6 @@ APIError_t ClientApi::DC3_getDbgModules(
 
 }
 
-
 /******************************************************************************/
 APIError_t ClientApi::DC3_setDbgModules(
       DC3Error_t* status,
@@ -770,12 +769,9 @@ APIError_t ClientApi::DC3_setDbgModules(
    if ( bOverWrite ) {
       this->m_basicMsg._msgName     = _DC3DbgSetCurrentMsg;
    } else {
-      if ( bEnable ) {
-         this->m_basicMsg._msgName     = _DC3DbgEnableMsg;
-      } else {
-         this->m_basicMsg._msgName     = _DC3DbgDisableMsg;
-      }
+      this->m_basicMsg._msgName  = (true == bEnable) ? _DC3DbgEnableMsg : _DC3DbgDisableMsg;
    }
+
    this->m_basicMsg._msgPayload  = _DC3DbgPayloadMsg;
 
    this->m_dbgPayloadMsg._dbgSettings = *dbgModuleSet;
@@ -818,6 +814,77 @@ APIError_t ClientApi::DC3_setDbgModules(
    } else {
       *status = (DC3Error_t)payloadMsgUnion.dbgPayload._errorCode;
       *dbgModuleSet = payloadMsgUnion.dbgPayload._dbgSettings;
+   }
+
+   return clientStatus;
+}
+
+/******************************************************************************/
+APIError_t ClientApi::DC3_setDbgDevice(
+      DC3Error_t* status,
+      DC3MsgRoute_t device,
+      bool bEnable
+)
+{
+   this->enableMsgCallbacks();
+
+   /* These will be used for responses */
+   DC3BasicMsg basicMsg;
+   DC3PayloadMsgUnion_t payloadMsgUnion;
+
+   /* Common settings for most messages */
+   this->m_basicMsg._msgID       = this->m_msgId;
+   this->m_basicMsg._msgReqProg  = (unsigned long)this->m_bRequestProg;
+   this->m_basicMsg._msgRoute    = this->m_msgRoute;
+
+   /* Settings specific to this message */
+   this->m_basicMsg._msgType     = _DC3_Req;
+
+   if ( _DC3_EthCli != device ) {
+      this->m_basicMsg._msgName = (true == bEnable) ? _DC3DbgEnableEthMsg : _DC3DbgDisableEthMsg;
+   } else if ( _DC3_Serial != device ) {
+      this->m_basicMsg._msgName = (true == bEnable) ? _DC3DbgEnableSerMsg : _DC3DbgDisableSerMsg;
+   } else {
+      return API_ERR_DEV_INVALID_DEBUG_OUTPUT;
+   }
+
+   this->m_basicMsg._msgPayload  = _DC3NoMsg;
+
+   size_t size = DC3_MAX_MSG_LEN;
+   uint8_t *buffer = new uint8_t[size];                       // Allocate buffer
+   unsigned int bufferLen = 0;
+   bufferLen = DC3BasicMsg_write_delimited_to(&m_basicMsg, buffer, 0);
+   l_pComm->write_some((char *)buffer, bufferLen);                   // Send Req
+
+   delete[] buffer;                                             // Delete buffer
+
+   memset(&basicMsg, 0, sizeof(basicMsg));
+   memset(&payloadMsgUnion, 0, sizeof(payloadMsgUnion));
+   APIError_t clientStatus = waitForResp(                        // Wait for Ack
+         &basicMsg,
+         &payloadMsgUnion,
+         HL_MAX_TOUT_SEC_CLI_WAIT_FOR_ACK
+   );
+
+   if ( API_ERR_NONE != clientStatus ) {                       // Check response
+      ERR_printf(m_pLog,
+            "Waiting for Ack received client Error: 0x%08x", clientStatus);
+      return clientStatus;
+   }
+
+   memset(&basicMsg, 0, sizeof(basicMsg));
+   memset(&payloadMsgUnion, 0, sizeof(payloadMsgUnion));
+   clientStatus = waitForResp(                                 // Check response
+         &basicMsg,
+         &payloadMsgUnion,
+         HL_MAX_TOUT_SEC_CLI_WAIT_FOR_SIMPLE_MSG_DONE
+   );
+   if ( API_ERR_NONE != clientStatus ) {                       // Check response
+      ERR_printf(m_pLog,
+            "Waiting for Done received client Error: 0x%08x", clientStatus);
+      return clientStatus;
+   } else {
+      *status = (DC3Error_t)payloadMsgUnion.statusPayload._errorCode;
    }
 
    return clientStatus;
