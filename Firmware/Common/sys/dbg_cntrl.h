@@ -146,7 +146,8 @@
 /* Exported types ------------------------------------------------------------*/
 
 /* Exported variables --------------------------------------------------------*/
-extern uint32_t  glbDbgConfig; /**< Allow global access to debug info */
+extern uint32_t  glbDbgConfig;         /**< Allow global access to debug info */
+extern uint8_t  glbDbgDeviceConfig;    /**< Allow global access to debug info */
 
 /* Exported constants --------------------------------------------------------*/
 /* Exported functions --------------------------------------------------------*/
@@ -160,7 +161,7 @@ extern uint32_t  glbDbgConfig; /**< Allow global access to debug info */
  * instance of the module name string to be used in printing of debugging
  * information.
  *
- * @param[in] @c name_: DBG_MODL_T enum representing the module.
+ * @param[in] @c name_: DC3DbgModule_t enum representing the module.
  * @return  None
  *
  * @note 1: This macro should __not__ be terminated by a semicolon.
@@ -173,7 +174,7 @@ extern uint32_t  glbDbgConfig; /**< Allow global access to debug info */
 /**
  * @brief   Enable debugging output for a given module.
  *
- * @param [in] @c name_: DBG_MODL_T enum representing the module.
+ * @param [in] @c name_: DC3DbgModule_t enum representing the module.
  * @return  None
  */
 #define DBG_ENABLE_DEBUG_FOR_MODULE( name_ ) \
@@ -182,7 +183,7 @@ extern uint32_t  glbDbgConfig; /**< Allow global access to debug info */
 /**
  * @brief   Disable debugging output for a given module.
  *
- * @param [in] @c name_: DBG_MODL_T enum representing the module.
+ * @param [in] @c name_: DC3DbgModule_t enum representing the module.
  * @return  None
  */
 #define DBG_DISABLE_DEBUG_FOR_MODULE( name_ ) \
@@ -191,7 +192,7 @@ extern uint32_t  glbDbgConfig; /**< Allow global access to debug info */
 /**
  * @brief   Toggle debugging output for a given module.
  *
- * @param [in] @c name_: DBG_MODL_T enum representing the module.
+ * @param [in] @c name_: DC3DbgModule_t enum representing the module.
  * @return  None
  */
 #define DBG_TOGGLE_DEBUG_FOR_MODULE( name_ ) \
@@ -200,7 +201,7 @@ extern uint32_t  glbDbgConfig; /**< Allow global access to debug info */
 /**
  * @brief   Toggle debugging output for a given module.
  *
- * @param [in] @c name_: DBG_MODL_T enum representing the module.
+ * @param [in] @c name_: DC3DbgModule_t enum representing the module.
  * @return  None
  */
 #define DBG_CHECK_DEBUG_FOR_MODULE( name_ ) \
@@ -221,6 +222,42 @@ extern uint32_t  glbDbgConfig; /**< Allow global access to debug info */
  */
 #define DBG_SET_DEBUG_FOR_ALL_MODULES( dbgSetting_ ) \
       glbDbgConfig = dbgSetting_;
+
+/**
+ * @brief   Enable debugging output over a given device.
+ *
+ * @param [in] @c dev_: DC3DbgDeviceSetting_t enum representing the device.
+ * @return  None
+ */
+#define DBG_ENABLE_DEVICE( dev_ ) \
+      glbDbgDeviceConfig |= dev_;
+
+/**
+ * @brief   Disable debugging output over a given device.
+ *
+ * @param [in] @c name_: DC3DbgDeviceSetting_t enum representing the device.
+ * @return  None
+ */
+#define DBG_DISABLE_DEVICE( dev_ ) \
+      glbDbgDeviceConfig &= ~dev_;
+
+/**
+ * @brief   Toggle debugging output for a given module.
+ *
+ * @param [in] @c name_: DC3DbgDeviceSetting_t enum representing the device.
+ * @return  None
+ */
+#define DBG_IS_DEVICE_ENABLED( dev_ ) \
+      ( glbDbgDeviceConfig & dev_ )
+
+/**
+ * @brief   Disable debugging output for a given module.
+ *
+ * @param [in] @c name_: DC3DbgDeviceSetting_t enum representing the device.
+ * @return  None
+ */
+#define DBG_DISABLE_ALL_DEVICES( ) \
+      glbDbgDeviceConfig = 0;
 
 /**
  * @brief   Conditional error output
@@ -669,6 +706,25 @@ extern uint32_t  glbDbgConfig; /**< Allow global access to debug info */
 #ifdef __cplusplus
 }
 #endif
+
+ /**
+  * @brief  Sets the default module debug settings and default devices.
+  *
+  * This function sets default settings for which debug modules are enabled
+  * and over which devices the debugging output is enabled over.
+  *
+  * This function is safe to call at any time.
+  *
+  * @note: this function behaves differently depending on whether the build is
+  * debug or release
+  *
+  * @note: this only sets the defaults in memory.  It DOES NOT save the settings
+  * to EEPROM.
+  *
+  * @param  None
+  * @return None
+  */
+ void DBG_setDefaults( void );
 
 /**
  * @} end group groupDbgSlow

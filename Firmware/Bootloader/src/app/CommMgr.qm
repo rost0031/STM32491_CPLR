@@ -957,7 +957,7 @@ DBG_printf(&quot;_DC3DbgEnableEthMsg decoded, attempting to decode payload (if e
 me-&gt;msgPayloadName = _DC3StatusPayloadMsg;
 
 /* Enable debug output over ethernet */
-LWIPMgr_setDbgEnabled( true );
+DBG_ENABLE_DEVICE( _DC3_DBG_DEV_ETH );
 
 /* Don't change the basicMsg name since it should be the same in all cases. */
 me-&gt;basicMsg._msgPayload = me-&gt;msgPayloadName;
@@ -980,7 +980,7 @@ DBG_printf(&quot;_DC3DbgDisableEthMsg decoded, attempting to decode payload (if 
 me-&gt;msgPayloadName = _DC3StatusPayloadMsg;
 
 /* Disable debug output over ethernet */
-LWIPMgr_setDbgEnabled( false );
+DBG_DISABLE_DEVICE( _DC3_DBG_DEV_ETH );
 
 /* Don't change the basicMsg name since it should be the same in all cases. */
 me-&gt;basicMsg._msgPayload = me-&gt;msgPayloadName;
@@ -1003,7 +1003,7 @@ DBG_printf(&quot;_DC3DbgEnableSerMsg decoded, attempting to decode payload (if e
 me-&gt;msgPayloadName = _DC3StatusPayloadMsg;
 
 /* Enable debug output over serial */
-SerialMgr_setDbgEnabled( true );
+DBG_ENABLE_DEVICE( _DC3_DBG_DEV_SER );
 
 /* Don't change the basicMsg name since it should be the same in all cases. */
 me-&gt;basicMsg._msgPayload = me-&gt;msgPayloadName;
@@ -1026,7 +1026,7 @@ DBG_printf(&quot;_DC3DbgDisableSerMsg decoded, attempting to decode payload (if 
 me-&gt;msgPayloadName = _DC3StatusPayloadMsg;
 
 /* Enable debug output over serial */
-SerialMgr_setDbgEnabled( false );
+DBG_DISABLE_DEVICE( _DC3_DBG_DEV_SER );
 
 /* Don't change the basicMsg name since it should be the same in all cases. */
 me-&gt;basicMsg._msgPayload = me-&gt;msgPayloadName;

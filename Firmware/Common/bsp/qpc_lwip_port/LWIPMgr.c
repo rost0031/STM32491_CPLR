@@ -143,7 +143,6 @@ typedef struct {
 
     /**< Local timer for TCP send timeout. */
     QTimeEvt te_TcpSend;
-    bool isEthDbgEnabled;
 } LWIPMgr;
 
 /* Keeps track of what port is used by logging TCP connection */
@@ -387,7 +386,7 @@ static void udp_rx_handler(
  * @retval None
  */
 /*${AOs::LWIPMgr_ctor} .....................................................*/
-void LWIPMgr_ctor(bool en) {
+void LWIPMgr_ctor(void) {
     LWIPMgr *me = &l_LWIPMgr;
 
     QActive_ctor(&me->super, (QStateHandler)&LWIPMgr_initial);
@@ -400,36 +399,6 @@ void LWIPMgr_ctor(bool en) {
         (QEvt const **)( me->deferredEvtQSto ),
         Q_DIM(me->deferredEvtQSto)
     );
-
-    /* Let the caller determine whether serial debugging is enabled by default or not. */
-    me->isEthDbgEnabled = en;
-}
-
-/**
- * @brief Check if eth debug is enabled
- *
- * @param	None
- * @retval 	bool:
- *   @arg true : eth debug is enabled
- *   @arg false: eth debug is disabled
- */
-/*${AOs::LWIPMgr_isDbgEna~} ................................................*/
-bool LWIPMgr_isDbgEnabled(void) {
-    LWIPMgr *me = &l_LWIPMgr;
-    return( me->isEthDbgEnabled );
-}
-
-/**
- * @brief Enable or disable debug over eth
- *
- * @param [in] en: bool that specifies if debug is to be enabled (true) or
- * disabled (false)
- * @retval 	None
- */
-/*${AOs::LWIPMgr_setDbgEn~} ................................................*/
-void LWIPMgr_setDbgEnabled(bool en) {
-    LWIPMgr *me = &l_LWIPMgr;
-    me->isEthDbgEnabled = en;
 }
 
 /**
@@ -536,7 +505,6 @@ static QState LWIPMgr_initial(LWIPMgr * const me, QEvt const * const e) {
     QActive_subscribe((QActive *)me, DBG_LOG_SIG);
     QActive_subscribe((QActive *)me, DBG_MENU_SIG);
     QActive_subscribe((QActive *)me, TCP_DONE_SIG);
-    QActive_subscribe((QActive *)me, ETH_DBG_TOGGLE_SIG);
 
     return Q_TRAN(&LWIPMgr_Idle);
 }
@@ -673,12 +641,6 @@ static QState LWIPMgr_Active(LWIPMgr * const me, QEvt const * const e) {
             status_ = Q_HANDLED();
             break;
         }
-        /* ${AOs::LWIPMgr::SM::Active::ETH_DBG_TOGGLE} */
-        case ETH_DBG_TOGGLE_SIG: {
-            me->isEthDbgEnabled = !(me->isEthDbgEnabled);
-            status_ = Q_HANDLED();
-            break;
-        }
         default: {
             status_ = Q_SUPER(&QHsm_top);
             break;
@@ -788,7 +750,7 @@ static QState LWIPMgr_Idle(LWIPMgr * const me, QEvt const * const e) {
              * infinite loop. */
             /************************************************************/
             /* ${AOs::LWIPMgr::SM::Active::Idle::DBG_LOG, ETH_LOG~::[EthDbgEnabled?]} */
-            if (true == me->isEthDbgEnabled) {
+            if (DBG_IS_DEVICE_ENABLED( _DC3_DBG_DEV_ETH )) {
                 /* ${AOs::LWIPMgr::SM::Active::Idle::DBG_LOG, ETH_LOG~::[EthDbgEnabled?]::[ConnExists?]} */
                 if (NULL != LWIPMgr_es_log) {
                     struct pbuf *p = pbuf_new(

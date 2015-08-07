@@ -83,12 +83,11 @@
    <attribute name="te_TcpSend" type="QTimeEvt" visibility="0x01" properties="0x00">
     <documentation>/**&lt; Local timer for TCP send timeout. */</documentation>
    </attribute>
-   <attribute name="isEthDbgEnabled" type="bool" visibility="0x01" properties="0x00"/>
    <attribute name="cliPort" type="uint16_t" visibility="0x01" properties="0x01">
     <documentation>/* Keeps track of what port is used by client UDP connection */</documentation>
    </attribute>
    <statechart>
-    <initial target="../1/6">
+    <initial target="../1/5">
      <action>(void)e;        /* suppress the compiler warning about unused parameter */
 
 uint8_t  macaddr[NETIF_MAX_HWADDR_LEN];
@@ -181,7 +180,6 @@ QActive_subscribe((QActive *)me, ETH_SYS_TCP_SEND_SIG);
 QActive_subscribe((QActive *)me, DBG_LOG_SIG);
 QActive_subscribe((QActive *)me, DBG_MENU_SIG);
 QActive_subscribe((QActive *)me, TCP_DONE_SIG);
-QActive_subscribe((QActive *)me, ETH_DBG_TOGGLE_SIG);
 </action>
      <initial_glyph conn="1,2,4,3,8,5">
       <action box="0,-2,6,2"/>
@@ -305,12 +303,6 @@ if (me-&gt;auto_ip_tmr &gt;= AUTOIP_TMR_INTERVAL) {
        <action box="0,-2,15,2"/>
       </tran_glyph>
      </tran>
-     <tran trig="ETH_DBG_TOGGLE">
-      <action>me-&gt;isEthDbgEnabled = !(me-&gt;isEthDbgEnabled);</action>
-      <tran_glyph conn="2,74,3,-1,15">
-       <action box="0,-2,15,2"/>
-      </tran_glyph>
-     </tran>
      <state name="Idle">
       <documentation>/**
  * @brief This state is for handling TCP send events.
@@ -363,7 +355,7 @@ if (QEQueue_getNFree(&amp;me-&gt;deferredEvtQueue) &gt; 0) {
     (u8_t *)((LrgDataEvt const *)e)-&gt;dataBuf,
     ((LrgDataEvt const *)e)-&gt;dataLen
 );</action>
-        <choice target="../../../../7">
+        <choice target="../../../../6">
          <guard>else</guard>
          <action>WRN_printf(&quot;MEM unavailable, trying again in a bit...\n&quot;);</action>
          <choice_glyph conn="58,14,4,3,6,40">
@@ -380,7 +372,7 @@ bool dataSent = LWIP_tcpSend(
     LWIPMgr_es_log
 );                                             // Queue data for sending
 pbuf_free(p);                                  // don't leak the pbuf!</action>
-         <choice target="../../../../../7">
+         <choice target="../../../../../6">
           <guard brief="Data not sent?">false == dataSent</guard>
           <action>pbuf_free(p);                                  // don't leak the pbuf!</action>
           <choice_glyph conn="72,14,5,3,26">
@@ -412,14 +404,14 @@ pbuf_free(p);                                  // don't leak the pbuf!</action>
  * infinite loop. */
 /************************************************************/</action>
        <choice>
-        <guard brief="EthDbgEnabled?">true == me-&gt;isEthDbgEnabled</guard>
+        <guard brief="EthDbgEnabled?">DBG_IS_DEVICE_ENABLED( _DC3_DBG_DEV_ETH )</guard>
         <choice>
          <guard brief="ConnExists?">NULL != LWIPMgr_es_log</guard>
          <action>struct pbuf *p = pbuf_new(
     (u8_t *)((LrgDataEvt const *)e)-&gt;dataBuf,
     ((LrgDataEvt const *)e)-&gt;dataLen
 );</action>
-         <choice target="../../../../../7">
+         <choice target="../../../../../6">
           <guard>else</guard>
           <action>WRN_printf(&quot;MEM unavailable, trying again in a bit...\n&quot;);</action>
           <choice_glyph conn="58,23,4,3,6,40">
@@ -436,7 +428,7 @@ bool dataSent = LWIP_tcpSend(
     LWIPMgr_es_log
 );                                             // Queue data for sending
 pbuf_free(p);                                  // don't leak the pbuf!</action>
-          <choice target="../../../../../../7">
+          <choice target="../../../../../../6">
            <guard brief="Data not sent?">false == dataSent</guard>
            <action>pbuf_free(p);                                  // don't leak the pbuf!</action>
            <choice_glyph conn="72,23,5,3,26">
@@ -497,7 +489,7 @@ if (me-&gt;upcb-&gt;remote_port != (uint16_t)0) {
     (u8_t *)((LrgDataEvt const *)e)-&gt;dataBuf,
     ((LrgDataEvt const *)e)-&gt;dataLen
 );</action>
-        <choice target="../../../../7">
+        <choice target="../../../../6">
          <guard>else</guard>
          <action>WRN_printf(&quot;MEM unavailable, trying again in a bit...\n&quot;);</action>
          <choice_glyph conn="58,35,4,3,6,40">
@@ -514,7 +506,7 @@ bool dataSent = LWIP_tcpSend(
     LWIPMgr_es_sys
 );                                             // Queue data for sending
 pbuf_free(p);                                  // don't leak the pbuf!</action>
-         <choice target="../../../../../7">
+         <choice target="../../../../../6">
           <guard brief="Data not sent?">false == dataSent</guard>
           <action>pbuf_free(p);                                  // don't leak the pbuf!</action>
           <choice_glyph conn="72,35,5,3,26">
@@ -573,7 +565,7 @@ QTimeEvt_rearm(
     SEC_TO_TICKS( LL_MAX_TIMEOUT_TCP_SEND_SEC )
 );</entry>
       <exit>QTimeEvt_disarm( &amp;me-&gt;te_TcpSend );</exit>
-      <tran trig="TCP_DONE" target="../../6">
+      <tran trig="TCP_DONE" target="../../5">
        <tran_glyph conn="98,50,3,1,-16">
         <action box="-15,-2,15,2"/>
        </tran_glyph>
@@ -591,7 +583,7 @@ QTimeEvt_rearm(
         <action box="0,-6,16,6"/>
        </tran_glyph>
       </tran>
-      <tran trig="TCP_TIMEOUT" target="../../6">
+      <tran trig="TCP_TIMEOUT" target="../../5">
        <action>ERR_printf(&quot;Timed out waiting for TCP acks.  Returning to Idle.  Data loss likely\n&quot;);</action>
        <tran_glyph conn="98,53,3,1,-16">
         <action box="-15,-2,13,2"/>
@@ -1062,7 +1054,6 @@ return ret_err;</code>
  * on startup of the AO.
  * @retval None
  */</documentation>
-   <parameter name="en" type="bool"/>
    <code>LWIPMgr *me = &amp;l_LWIPMgr;
 
 QActive_ctor(&amp;me-&gt;super, (QStateHandler)&amp;LWIPMgr_initial);
@@ -1074,34 +1065,7 @@ QEQueue_init(
     &amp;me-&gt;deferredEvtQueue,
     (QEvt const **)( me-&gt;deferredEvtQSto ),
     Q_DIM(me-&gt;deferredEvtQSto)
-);
-
-/* Let the caller determine whether serial debugging is enabled by default or not. */
-me-&gt;isEthDbgEnabled = en;</code>
-  </operation>
-  <operation name="LWIPMgr_isDbgEnabled" type="bool" visibility="0x00" properties="0x00">
-   <documentation>/**
- * @brief Check if eth debug is enabled
- *
- * @param	None
- * @retval 	bool:
- *   @arg true : eth debug is enabled
- *   @arg false: eth debug is disabled
- */</documentation>
-   <code>LWIPMgr *me = &amp;l_LWIPMgr;
-return( me-&gt;isEthDbgEnabled );</code>
-  </operation>
-  <operation name="LWIPMgr_setDbgEnabled" type="void" visibility="0x00" properties="0x00">
-   <documentation>/**
- * @brief Enable or disable debug over eth
- *
- * @param [in] en: bool that specifies if debug is to be enabled (true) or 
- * disabled (false)
- * @retval 	None
- */</documentation>
-   <parameter name="en" type="bool"/>
-   <code>LWIPMgr *me = &amp;l_LWIPMgr;
-me-&gt;isEthDbgEnabled = en;</code>
+);</code>
   </operation>
  </package>
  <directory name=".">
@@ -1221,8 +1185,6 @@ static void udp_rx_handler(
 /* Private functions ---------------------------------------------------------*/
 
 $define(AOs::LWIPMgr_ctor)
-$define(AOs::LWIPMgr_isDbgEnabled)
-$define(AOs::LWIPMgr_setDbgEnabled)
 $define(AOs::LWIPMgr)
 
 /* Common TCP functions */
@@ -1343,7 +1305,6 @@ static void udp_rx_handler(
  */
 enum LWIPMgrSignals {
     ETH_UDP_SEND_SIG = MAX_SHARED_SIG,
-    ETH_DBG_TOGGLE_SIG,
     ETH_LOG_TCP_SEND_SIG,
     ETH_SYS_TCP_SEND_SIG,
     ETH_TCP_DATA_RECV_SIG,
@@ -1357,8 +1318,6 @@ $declare(Events)
 /* Exported constants --------------------------------------------------------*/
 /* Exported functions --------------------------------------------------------*/
 $declare(AOs::LWIPMgr_ctor)
-$declare(AOs::LWIPMgr_isDbgEnabled)
-$declare(AOs::LWIPMgr_setDbgEnabled)
 $declare(AOs::AO_LWIPMgr)
 
 /**

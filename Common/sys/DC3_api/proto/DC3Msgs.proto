@@ -457,6 +457,18 @@ enum DC3DBElem_t
 }
 
 //------------------------------------------------------------------------------
+// These are the devices which can have debugging output over them enabled/disabled.
+//
+// These are limited to 8 bit and MUST BE MASKABLE.  These enum masks will be
+// used for both naming the debug output devices and for checking whether their
+// debug capabilities have been enabled.
+//
+enum DC3DbgDeviceSetting_t {
+   DC3_DBG_DEV_SER             = 1; // Debug output over serial is enabled
+   DC3_DBG_DEV_ETH             = 2; // Debug output over ethernet is enabled
+}
+
+//------------------------------------------------------------------------------
 // --------------- END of enumerations used by DC3 API -------------------------
 //------------------------------------------------------------------------------
 

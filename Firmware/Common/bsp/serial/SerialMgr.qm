@@ -21,12 +21,8 @@
    <attribute name="deferredEvtQSto[200]" type="QTimeEvt const *" visibility="0x01" properties="0x00">
     <documentation>/**&lt; Storage for deferred event queue. */</documentation>
    </attribute>
-   <attribute name="isSerialDbgEnabled" type="bool" visibility="0x01" properties="0x00">
-    <documentation>/**&lt; Keep track of whether serial debug is enabled or disabled.  Starts out enabled
- * but an event can enable it. */</documentation>
-   </attribute>
    <statechart>
-    <initial target="../1/1">
+    <initial target="../1/0">
      <action>(void)e;        /* suppress the compiler warning about unused parameter */
 
 QS_OBJ_DICTIONARY(&amp;l_SerialMgr);
@@ -40,8 +36,7 @@ QActive_subscribe((QActive *)me, UART_DMA_START_SIG);
 QActive_subscribe((QActive *)me, DBG_LOG_SIG);
 QActive_subscribe((QActive *)me, DBG_MENU_SIG);
 QActive_subscribe((QActive *)me, UART_DMA_DONE_SIG);
-QActive_subscribe((QActive *)me, UART_DMA_TIMEOUT_SIG);
-QActive_subscribe((QActive *)me, UART_DMA_DBG_TOGGLE_SIG);</action>
+QActive_subscribe((QActive *)me, UART_DMA_TIMEOUT_SIG);</action>
      <initial_glyph conn="1,2,4,3,11,5">
       <action box="0,-2,6,2"/>
      </initial_glyph>
@@ -65,12 +60,6 @@ QTimeEvt_postIn(
     SEC_TO_TICKS( LL_MAX_TIMEOUT_SERIAL_DMA_BUSY_SEC )
 );
 QTimeEvt_disarm(&amp;me-&gt;serialTimerEvt);</entry>
-     <tran trig="UART_DMA_DBG_TOGGLE">
-      <action>me-&gt;isSerialDbgEnabled = !(me-&gt;isSerialDbgEnabled);</action>
-      <tran_glyph conn="3,48,3,-1,21">
-       <action box="0,-2,20,2"/>
-      </tran_glyph>
-     </tran>
      <state name="Idle">
       <documentation>/**
  * @brief This state indicates that the DMA is currently idle and the
@@ -87,7 +76,7 @@ QActive_recall(
     (QActive *)me,
     &amp;me-&gt;deferredEvtQueue
 );</entry>
-      <tran trig="UART_DMA_START,  CLI_SEND_DATA, DBG_MENU" target="../../2">
+      <tran trig="UART_DMA_START,  CLI_SEND_DATA, DBG_MENU" target="../../1">
        <action>/* Set up the DMA buffer here.  This copies the data from the event to the UART's
  * private buffer as well to avoid someone overwriting it */
 Serial_DMAConfig(
@@ -100,8 +89,8 @@ Serial_DMAConfig(
        </tran_glyph>
       </tran>
       <tran trig="DBG_LOG">
-       <choice target="../../../2">
-        <guard brief="SerialDbgEnabled?">true == me-&gt;isSerialDbgEnabled</guard>
+       <choice target="../../../1">
+        <guard brief="SerialDbgEnabled?">DBG_IS_DEVICE_ENABLED( _DC3_DBG_DEV_SER )</guard>
         <action>/* Set up the DMA buffer here.  This copies the data from the event to the UART's
  * private buffer as well to avoid someone overwriting it */
 Serial_DMAConfig(
@@ -147,12 +136,12 @@ QTimeEvt_rearm(
 /* Start the DMA transfer over serial */
 Serial_DMAStartXfer( SERIAL_UART1 );</entry>
       <exit>QTimeEvt_disarm( &amp;me-&gt;serialTimerEvt ); /* Disarm timer on exit */</exit>
-      <tran trig="UART_DMA_DONE" target="../../1">
+      <tran trig="UART_DMA_DONE" target="../../0">
        <tran_glyph conn="56,33,3,1,-31">
         <action box="-14,-2,14,2"/>
        </tran_glyph>
       </tran>
-      <tran trig="UART_DMA_TIMEOUT" target="../../1">
+      <tran trig="UART_DMA_TIMEOUT" target="../../0">
        <action>err_slow_printf(&quot;UART DMA timeout occurred\n&quot;);</action>
        <tran_glyph conn="56,36,3,1,-31">
         <action box="-16,-2,16,2"/>
@@ -195,7 +184,6 @@ Serial_DMAStartXfer( SERIAL_UART1 );</entry>
  * over serial on startup of the AO.
  * @retval None
  */</documentation>
-   <parameter name="en" type="bool"/>
    <code>SerialMgr *me = &amp;l_SerialMgr;
 QActive_ctor(&amp;me-&gt;super, (QStateHandler)&amp;SerialMgr_initial);
 QTimeEvt_ctor(&amp;me-&gt;serialTimerEvt, UART_DMA_TIMEOUT_SIG);
@@ -205,34 +193,7 @@ QEQueue_init(
     &amp;me-&gt;deferredEvtQueue,
     (QEvt const **)( me-&gt;deferredEvtQSto ),
     Q_DIM(me-&gt;deferredEvtQSto)
-);
-
-/* Let the caller determine whether serial debugging is enabled by default or not. */
-me-&gt;isSerialDbgEnabled = en;</code>
-  </operation>
-  <operation name="SerialMgr_isDbgEnabled" type="bool" visibility="0x00" properties="0x00">
-   <documentation>/**
- * @brief Check if serial debug is enabled
- *
- * @param	None
- * @retval 	bool:
- *   @arg true : serial debug is enabled
- *   @arg false: serial debug is disabled
- */</documentation>
-   <code>SerialMgr *me = &amp;l_SerialMgr;
-return( me-&gt;isSerialDbgEnabled );</code>
-  </operation>
-  <operation name="SerialMgr_setDbgEnabled" type="void" visibility="0x00" properties="0x00">
-   <documentation>/**
- * @brief Enable or disable debug over serial
- *
- * @param [in] en: bool that specifies if debug is to be enabled (true) or 
- * disabled (false)
- * @retval 	None
- */</documentation>
-   <parameter name="en" type="bool"/>
-   <code>SerialMgr *me = &amp;l_SerialMgr;
-me-&gt;isSerialDbgEnabled = en;</code>
+);</code>
   </operation>
  </package>
  <directory name=".">
@@ -279,8 +240,6 @@ QActive * const AO_SerialMgr = (QActive *)&amp;l_SerialMgr;  /* &quot;opaque&quo
 /* Private function prototypes -----------------------------------------------*/
 /* Private functions ---------------------------------------------------------*/
 $define(AOs::SerialMgr_ctor)
-$define(AOs::SerialMgr_isDbgEnabled)
-$define(AOs::SerialMgr_setDbgEnabled)
 $define(AOs::SerialMgr)
 
 /**
@@ -323,8 +282,6 @@ $declare(Events)
 /* Exported constants --------------------------------------------------------*/
 /* Exported functions --------------------------------------------------------*/
 $declare(AOs::SerialMgr_ctor)
-$declare(AOs::SerialMgr_isDbgEnabled)
-$declare(AOs::SerialMgr_setDbgEnabled)
 $declare(AOs::AO_SerialMgr)
 
 /**

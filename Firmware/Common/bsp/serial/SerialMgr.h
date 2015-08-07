@@ -58,30 +58,7 @@
  * @retval None
  */
 /*${AOs::SerialMgr_ctor} ...................................................*/
-void SerialMgr_ctor(bool en);
-
-
-/**
- * @brief Check if serial debug is enabled
- *
- * @param	None
- * @retval 	bool:
- *   @arg true : serial debug is enabled
- *   @arg false: serial debug is disabled
- */
-/*${AOs::SerialMgr_isDbgE~} ................................................*/
-bool SerialMgr_isDbgEnabled(void);
-
-
-/**
- * @brief Enable or disable debug over serial
- *
- * @param [in] en: bool that specifies if debug is to be enabled (true) or
- * disabled (false)
- * @retval 	None
- */
-/*${AOs::SerialMgr_setDbg~} ................................................*/
-void SerialMgr_setDbgEnabled(bool en);
+void SerialMgr_ctor(void);
 
 
 /**< "opaque" pointer to the Active Object */

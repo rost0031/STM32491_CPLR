@@ -840,9 +840,9 @@ APIError_t ClientApi::DC3_setDbgDevice(
    /* Settings specific to this message */
    this->m_basicMsg._msgType     = _DC3_Req;
 
-   if ( _DC3_EthCli != device ) {
+   if ( _DC3_EthCli == device ) {
       this->m_basicMsg._msgName = (true == bEnable) ? _DC3DbgEnableEthMsg : _DC3DbgDisableEthMsg;
-   } else if ( _DC3_Serial != device ) {
+   } else if ( _DC3_Serial == device ) {
       this->m_basicMsg._msgName = (true == bEnable) ? _DC3DbgEnableSerMsg : _DC3DbgDisableSerMsg;
    } else {
       return API_ERR_DEV_INVALID_DEBUG_OUTPUT;

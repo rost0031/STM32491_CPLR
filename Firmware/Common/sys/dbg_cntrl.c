@@ -41,8 +41,61 @@ Q_DEFINE_THIS_FILE                  /* For QSPY to know the name of this file */
  */
 uint32_t  glbDbgConfig = 0;
 
+/**< This "global" variable is used to keep track of what debug output devices
+ * are currently enabled/disabled.
+ * @note 1: this var should not be accessed directly by the developer.
+ */
+uint8_t   glbDbgDeviceConfig = 0;
+
 /* Private function prototypes -----------------------------------------------*/
 /* Private functions ---------------------------------------------------------*/
+
+/******************************************************************************/
+void DBG_setDefaults( void )
+{
+   if (DEBUG) {                                                  // Debug builds
+
+      // Set the debug module settings
+      DBG_ENABLE_DEBUG_FOR_MODULE(DC3_DBG_MODL_GEN);
+      DBG_DISABLE_DEBUG_FOR_MODULE(DC3_DBG_MODL_SER);
+      DBG_DISABLE_DEBUG_FOR_MODULE(DC3_DBG_MODL_TIME);
+      DBG_ENABLE_DEBUG_FOR_MODULE(DC3_DBG_MODL_ETH);
+      DBG_DISABLE_DEBUG_FOR_MODULE(DC3_DBG_MODL_I2C);
+      DBG_ENABLE_DEBUG_FOR_MODULE(DC3_DBG_MODL_I2C_DEV);
+      DBG_ENABLE_DEBUG_FOR_MODULE(DC3_DBG_MODL_NOR);
+      DBG_ENABLE_DEBUG_FOR_MODULE(DC3_DBG_MODL_SDRAM);
+      DBG_ENABLE_DEBUG_FOR_MODULE(DC3_DBG_MODL_COMM);
+      DBG_ENABLE_DEBUG_FOR_MODULE(DC3_DBG_MODL_CPLR);
+      DBG_ENABLE_DEBUG_FOR_MODULE(DC3_DBG_MODL_FLASH);
+      DBG_ENABLE_DEBUG_FOR_MODULE(DC3_DBG_MODL_SYS);
+      DBG_ENABLE_DEBUG_FOR_MODULE(DC3_DBG_MODL_DB);
+
+      // Set the devices
+      DBG_ENABLE_DEVICE(_DC3_DBG_DEV_SER);
+      DBG_ENABLE_DEVICE(_DC3_DBG_DEV_ETH);
+
+   } else {                                                    // Release builds
+
+      // Set the debug module settings
+      DBG_DISABLE_DEBUG_FOR_MODULE(DC3_DBG_MODL_GEN);
+      DBG_DISABLE_DEBUG_FOR_MODULE(DC3_DBG_MODL_SER);
+      DBG_DISABLE_DEBUG_FOR_MODULE(DC3_DBG_MODL_TIME);
+      DBG_DISABLE_DEBUG_FOR_MODULE(DC3_DBG_MODL_ETH);
+      DBG_DISABLE_DEBUG_FOR_MODULE(DC3_DBG_MODL_I2C);
+      DBG_DISABLE_DEBUG_FOR_MODULE(DC3_DBG_MODL_I2C_DEV);
+      DBG_DISABLE_DEBUG_FOR_MODULE(DC3_DBG_MODL_NOR);
+      DBG_DISABLE_DEBUG_FOR_MODULE(DC3_DBG_MODL_SDRAM);
+      DBG_DISABLE_DEBUG_FOR_MODULE(DC3_DBG_MODL_COMM);
+      DBG_DISABLE_DEBUG_FOR_MODULE(DC3_DBG_MODL_CPLR);
+      DBG_DISABLE_DEBUG_FOR_MODULE(DC3_DBG_MODL_FLASH);
+      DBG_DISABLE_DEBUG_FOR_MODULE(DC3_DBG_MODL_SYS);
+      DBG_DISABLE_DEBUG_FOR_MODULE(DC3_DBG_MODL_DB);
+
+      // Set the devices
+      DBG_DISABLE_DEVICE(_DC3_DBG_DEV_SER);
+      DBG_ENABLE_DEVICE(_DC3_DBG_DEV_ETH);
+   }
+}
 
 /**
  * @} end addtogroup groupDbgCntrl

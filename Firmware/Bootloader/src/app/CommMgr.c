@@ -1167,7 +1167,7 @@ static QState CommMgr_ValidateMsg(CommMgr * const me, QEvt const * const e) {
                 me->msgPayloadName = _DC3StatusPayloadMsg;
 
                 /* Enable debug output over ethernet */
-                LWIPMgr_setDbgEnabled( true );
+                DBG_ENABLE_DEVICE( _DC3_DBG_DEV_ETH );
 
                 /* Don't change the basicMsg name since it should be the same in all cases. */
                 me->basicMsg._msgPayload = me->msgPayloadName;
@@ -1188,7 +1188,7 @@ static QState CommMgr_ValidateMsg(CommMgr * const me, QEvt const * const e) {
                 me->msgPayloadName = _DC3StatusPayloadMsg;
 
                 /* Disable debug output over ethernet */
-                LWIPMgr_setDbgEnabled( false );
+                DBG_DISABLE_DEVICE( _DC3_DBG_DEV_ETH );
 
                 /* Don't change the basicMsg name since it should be the same in all cases. */
                 me->basicMsg._msgPayload = me->msgPayloadName;
@@ -1209,7 +1209,7 @@ static QState CommMgr_ValidateMsg(CommMgr * const me, QEvt const * const e) {
                 me->msgPayloadName = _DC3StatusPayloadMsg;
 
                 /* Enable debug output over serial */
-                SerialMgr_setDbgEnabled( true );
+                DBG_ENABLE_DEVICE( _DC3_DBG_DEV_SER );
 
                 /* Don't change the basicMsg name since it should be the same in all cases. */
                 me->basicMsg._msgPayload = me->msgPayloadName;
@@ -1230,7 +1230,7 @@ static QState CommMgr_ValidateMsg(CommMgr * const me, QEvt const * const e) {
                 me->msgPayloadName = _DC3StatusPayloadMsg;
 
                 /* Enable debug output over serial */
-                SerialMgr_setDbgEnabled( false );
+                DBG_DISABLE_DEVICE( _DC3_DBG_DEV_SER );
 
                 /* Don't change the basicMsg name since it should be the same in all cases. */
                 me->basicMsg._msgPayload = me->msgPayloadName;
