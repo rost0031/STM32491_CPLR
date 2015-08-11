@@ -351,7 +351,42 @@ DC3Error_t CON_hexToStr(
       }
    }
    return( status );
+}
 
+/******************************************************************************/
+const char* const CON_accessToStr( const DC3AccessType_t acc )
+{
+   switch ( acc ) {
+      case _DC3_ACCESS_BARE:           return("BARE METAL");       break;
+      case _DC3_ACCESS_QPC:            return("QPC EVENTS");       break;
+      case _DC3_ACCESS_FRT:            return("FRT EVENTS");       break;
+      case _DC3_ACCESS_NONE:                    /* Intentionally fall through */
+      default:                         return("UNKNOWN ACC");      break;
+   }
+}
+
+/******************************************************************************/
+const char* const CON_dbElemToStr( const DC3DBElem_t elem )
+{
+   switch ( elem ) {
+      case _DC3_DB_MAGIC_WORD:          return("DB_MAGIC_WORD");          break;
+      case _DC3_DB_VERSION:             return("DB_VERSION");             break;
+      case _DC3_DB_MAC_ADDR:            return("DB_MAC_ADDR");            break;
+      case _DC3_DB_IP_ADDR:             return("DB_IP_ADDR");             break;
+      case _DC3_DB_SN:                  return("DB_SN");                  break;
+      case _DC3_DB_BOOT_MAJ:            return("DB_BOOT_MAJ");            break;
+      case _DC3_DB_BOOT_MIN:            return("DB_BOOT_MIN");            break;
+      case _DC3_DB_BOOT_BUILD_DATETIME: return("DB_BOOT_BUILD_DATETIME"); break;
+      case _DC3_DB_APPL_MAJ:            return("DB_APPL_MAJ");            break;
+      case _DC3_DB_APPL_MIN:            return("DB_APPL_MIN");            break;
+      case _DC3_DB_APPL_BUILD_DATETIME: return("DB_APPL_BUILD_DATETIME"); break;
+      case _DC3_DB_FPGA_MAJ:            return("DB_FPGA_MAJ");            break;
+      case _DC3_DB_FPGA_MIN:            return("DB_FPGA_MIN");            break;
+      case _DC3_DB_FPGA_BUILD_DATETIME: return("DB_FPGA_BUILD_DATETIME"); break;
+      case _DC3_DB_DBG_MODULES:         return("DB_DBG_MODULES");         break;
+      case _DC3_DB_DBG_DEVICES:         return("DB_DBG_DEVICES");         break;
+      default:                          return("INVALID DB ELEM");        break;
+   }
 }
 
 /**

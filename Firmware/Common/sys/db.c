@@ -21,6 +21,7 @@
 #include "ipAndMac.h"                                  /* for default IP addr */
 #include "flash.h"
 #include <stdio.h>
+#include "I2C1DevMgr.h"    /* For access to the I2C1Dev AO for posting events */
 
 /* Compile-time called macros ------------------------------------------------*/
 Q_DEFINE_THIS_FILE                  /* For QSPY to know the name of this file */
@@ -52,6 +53,8 @@ static const SettingsDB_Desc_t settingsDB[_DC3_DB_MAX_ELEM] = {
       { _DC3_DB_FPGA_MAJ,            DB_EEPROM,  DB_SIZE_OF_ELEM(SettingsDB_t, fpgaMajVer) , DB_LOC_OF_ELEM(SettingsDB_t, fpgaMajVer) },
       { _DC3_DB_FPGA_MIN,            DB_EEPROM,  DB_SIZE_OF_ELEM(SettingsDB_t, fpgaMinVer) , DB_LOC_OF_ELEM(SettingsDB_t, fpgaMinVer) },
       { _DC3_DB_FPGA_BUILD_DATETIME, DB_EEPROM,  DB_SIZE_OF_ELEM(SettingsDB_t, fpgaBuildDT), DB_LOC_OF_ELEM(SettingsDB_t, fpgaBuildDT)},
+      { _DC3_DB_DBG_MODULES,         DB_EEPROM,  DB_SIZE_OF_ELEM(SettingsDB_t, dbgModules) , DB_LOC_OF_ELEM(SettingsDB_t, dbgModules) },
+      { _DC3_DB_DBG_DEVICES,         DB_EEPROM,  DB_SIZE_OF_ELEM(SettingsDB_t, dbgDevices) , DB_LOC_OF_ELEM(SettingsDB_t, dbgDevices) },
 };
 
 /**
@@ -68,33 +71,43 @@ static const DC3I2CDevice_t DB_I2C_devices[] = {
 static const SettingsDB_t DB_defaultEeepromSettings = {
       .dbMagicWord = DB_MAGIC_WORD_DEF,
       .dbVersion   = DB_VERSION_DEF,
-      .ipAddr = {STATIC_IPADDR0, STATIC_IPADDR1, STATIC_IPADDR2, STATIC_IPADDR3}
+      .ipAddr = {STATIC_IPADDR0, STATIC_IPADDR1, STATIC_IPADDR2, STATIC_IPADDR3},
+      .bootMajVer = 0,
+      .bootMinVer = 0,
+      .bootBuildDT = {0},
+      .fpgaMajVer = 0,
+      .fpgaMinVer = 0,
+      .fpgaBuildDT = {0},
+      .dbgModules = DB_DBG_MODULES_DEF,
+      .dbgDevices = DB_DBG_DEVICES_DEF
 };
 
 /* Private function prototypes -----------------------------------------------*/
 /* Private functions ---------------------------------------------------------*/
 
-/******************************************************************************/
-const char* const DB_elemToStr( const DC3DBElem_t elem )
-{
-   switch ( elem ) {
-      case _DC3_DB_MAGIC_WORD:          return("DB_MAGIC_WORD");          break;
-      case _DC3_DB_VERSION:             return("DB_VERSION");             break;
-      case _DC3_DB_MAC_ADDR:            return("DB_MAC_ADDR");            break;
-      case _DC3_DB_IP_ADDR:             return("DB_IP_ADDR");             break;
-      case _DC3_DB_SN:                  return("DB_SN");                  break;
-      case _DC3_DB_BOOT_MAJ:            return("DB_BOOT_MAJ");            break;
-      case _DC3_DB_BOOT_MIN:            return("DB_BOOT_MIN");            break;
-      case _DC3_DB_BOOT_BUILD_DATETIME: return("DB_BOOT_BUILD_DATETIME"); break;
-      case _DC3_DB_APPL_MAJ:            return("DB_APPL_MAJ");            break;
-      case _DC3_DB_APPL_MIN:            return("DB_APPL_MIN");            break;
-      case _DC3_DB_APPL_BUILD_DATETIME: return("DB_APPL_BUILD_DATETIME"); break;
-      case _DC3_DB_FPGA_MAJ:            return("DB_FPGA_MAJ");            break;
-      case _DC3_DB_FPGA_MIN:            return("DB_FPGA_MIN");            break;
-      case _DC3_DB_FPGA_BUILD_DATETIME: return("DB_FPGA_BUILD_DATETIME"); break;
-      default:                          return("");                       break;
-   }
-}
+///******************************************************************************/
+//const char* const DB_elemToStr( const DC3DBElem_t elem )
+//{
+//   switch ( elem ) {
+//      case _DC3_DB_MAGIC_WORD:          return("DB_MAGIC_WORD");          break;
+//      case _DC3_DB_VERSION:             return("DB_VERSION");             break;
+//      case _DC3_DB_MAC_ADDR:            return("DB_MAC_ADDR");            break;
+//      case _DC3_DB_IP_ADDR:             return("DB_IP_ADDR");             break;
+//      case _DC3_DB_SN:                  return("DB_SN");                  break;
+//      case _DC3_DB_BOOT_MAJ:            return("DB_BOOT_MAJ");            break;
+//      case _DC3_DB_BOOT_MIN:            return("DB_BOOT_MIN");            break;
+//      case _DC3_DB_BOOT_BUILD_DATETIME: return("DB_BOOT_BUILD_DATETIME"); break;
+//      case _DC3_DB_APPL_MAJ:            return("DB_APPL_MAJ");            break;
+//      case _DC3_DB_APPL_MIN:            return("DB_APPL_MIN");            break;
+//      case _DC3_DB_APPL_BUILD_DATETIME: return("DB_APPL_BUILD_DATETIME"); break;
+//      case _DC3_DB_FPGA_MAJ:            return("DB_FPGA_MAJ");            break;
+//      case _DC3_DB_FPGA_MIN:            return("DB_FPGA_MIN");            break;
+//      case _DC3_DB_FPGA_BUILD_DATETIME: return("DB_FPGA_BUILD_DATETIME"); break;
+//      case _DC3_DB_DBG_MODULES:         return("DB_DBG_MODULES");         break;
+//      case _DC3_DB_DBG_DEVICES:         return("DB_DBG_DEVICES");         break;
+//      default:                          return("");                       break;
+//   }
+//}
 
 /******************************************************************************/
 const DC3Error_t DB_isValid( const DC3AccessType_t accessType )
@@ -191,13 +204,20 @@ const DC3Error_t DB_initToDefault( const DC3AccessType_t accessType )
             goto DB_initToDefault_ERR_HANDLE;
          }
 
-         break;                              /* end of case _DC3_ACCESS_BARE */
+         break;                               /* end of case _DC3_ACCESS_BARE */
 
-      case _DC3_ACCESS_QPC:
-         status = ERR_UNIMPLEMENTED;
+      case _DC3_ACCESS_QPC:{;
+         /* Create the event and directly post it to the right AO. */
+         I2CWriteReqEvt *i2cWriteReqEvt  = Q_NEW(I2CWriteReqEvt, I2C1_DEV_RAW_MEM_WRITE_SIG);
+         i2cWriteReqEvt->i2cDev          = DB_getI2CDev(_DC3_DB_MAGIC_WORD);
+         i2cWriteReqEvt->addr            = I2C_getMemAddr( _DC3_EEPROM ) + DB_getElemOffset(_DC3_DB_MAGIC_WORD);
+         i2cWriteReqEvt->bytes           = sizeof(DB_defaultEeepromSettings);
+         i2cWriteReqEvt->accessType      = accessType;
+         MEMCPY(i2cWriteReqEvt->dataBuf, &DB_defaultEeepromSettings, sizeof(DB_defaultEeepromSettings));
+         QACTIVE_POST(AO_I2C1DevMgr, (QEvt *)(i2cWriteReqEvt), SysMgr_AO);
          goto DB_initToDefault_ERR_HANDLE; /* Stop and jump to error handling */
          break;                                     /* end of case ACCESS_QPC */
-
+      }
       case  _DC3_ACCESS_FRT:
          status = ERR_UNIMPLEMENTED;
          goto DB_initToDefault_ERR_HANDLE; /* Stop and jump to error handling */
@@ -286,7 +306,7 @@ DB_getElemBLK_ERR_HANDLE:         /* Handle any error that may have occurred. */
          status,
          accessType,
          "Error 0x%08x getting element %s (%d) from DB\n",
-         DB_elemToStr( elem ),
+         CON_dbElemToStr( elem ),
          elem,
          status
    );
@@ -349,7 +369,7 @@ DB_getElemBLK_ERR_HANDLE:         /* Handle any error that may have occurred. */
          status,
          accessType,
          "Error 0x%08x setting element %s (%d) to DB\n",
-         DB_elemToStr( elem ),
+         CON_dbElemToStr( elem ),
          elem,
          status
    );

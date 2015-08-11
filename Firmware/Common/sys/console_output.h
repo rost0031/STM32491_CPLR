@@ -252,6 +252,24 @@ DC3Error_t CON_hexToStr(
 );
 
 /**
+ * @brief   Get a string representation of a system access type.
+ *
+ * @param  [in] elem: DC3AccessType_t that specifies the access to retrieve.
+ * @return str: char* representation of if found,
+ *             "UNKNOWN ACC" if not found.
+ */
+const char* const CON_accessToStr( const DC3AccessType_t acc );
+
+/**
+ * @brief   Get a string representation of a DB element.
+ *
+ * @param  [in] elem: DC3DBElem_t that specifies what element to retrieve.
+ * @return str: char* representation of DB element if found,
+ *             "INVALID DB ELEM" if not found.
+ */
+const char* const CON_dbElemToStr( const DC3DBElem_t elem );
+
+/**
  * @} end group groupConOut
  */
 

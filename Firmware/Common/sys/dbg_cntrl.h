@@ -132,9 +132,23 @@
  * XXX_printf() macros will be compiled in or not.
  */
 #ifndef NDEBUG
-#define DEBUG 1
+ #define DEBUG 1
+ /* If debug build, enable some module debug by default and enable debug output
+  * over all debug devices */
+ #define DBG_MODULES_DEF     (                                                \
+       DC3_DBG_MODL_GEN   | DC3_DBG_MODL_I2C_DEV | DC3_DBG_MODL_FLASH |       \
+       DC3_DBG_MODL_SYS   | DC3_DBG_MODL_DB      | DC3_DBG_MODL_ETH   |       \
+       DC3_DBG_MODL_NOR   | DC3_DBG_MODL_SDRAM   | DC3_DBG_MODL_COMM          \
+  )
+
+ #define DBG_DEVICES_DEF    ( _DC3_DBG_DEV_SER | _DC3_DBG_DEV_ETH )
+
 #else
 #define DEBUG 0
+/* If release build, disable all module debug by default and only enable debug
+ * output over ethernet since it only outputs if someone actually connects to it */
+ #define DBG_MODULES_DEF    ( 0 )
+ #define DBG_DEVICES_DEF    ( _DC3_DBG_DEV_ETH )
 #endif
 
 /**< For debugging weird problems.  Uncomment this to turn all debugging output

@@ -447,12 +447,14 @@ enum DC3DBElem_t
     DC3_DB_FPGA_MAJ            = 11; // Major version of FPGA FW image
     DC3_DB_FPGA_MIN            = 12; // Minor version of FPGA FW image
     DC3_DB_FPGA_BUILD_DATETIME = 13; // Build datetime of the FPGA FW image
-
+    DC3_DB_DBG_MODULES         = 14; // uint32_t bitfield states of debug modules.
+    DC3_DB_DBG_DEVICES         = 15; // uint8_t bitfield states of debug devices.
+    
    // Add more elements here.  If adding elements after code is released, bump
    // the DB_VERSION up and make sure to bump DB_MAX_ELEM to have the highest 
    // number
 
-   DC3_DB_MAX_ELEM             = 14; // Max number of elements that can be stored.  
+   DC3_DB_MAX_ELEM             = 16; // Max number of elements that can be stored.  
                                      // ALWAYS LAST
 }
 

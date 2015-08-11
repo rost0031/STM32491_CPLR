@@ -52,6 +52,10 @@
  * upgrade of the DB. */
 #define DB_VERSION_DEF      0x0001
 
+/* Get the defaults for debugging options from the debugging module */
+#define DB_DBG_MODULES_DEF    DBG_MODULES_DEF
+#define DB_DBG_DEVICES_DEF    DBG_DEVICES_DEF
+
 /* Exported macros -----------------------------------------------------------*/
 /* Exported types ------------------------------------------------------------*/
 
@@ -110,6 +114,8 @@ typedef struct {
    uint8_t fpgaMinVer; /**< Major version byte of the FPGA FW image */
    uint8_t fpgaBuildDT[DC3_DATETIME_LEN]; /**< Build datetime of the FPGA FW
                                               image */
+   uint32_t dbgModules;                           /**< Debug modules bitfield */
+   uint8_t  dbgDevices;                           /**< Debug devices bitfield */
 } SettingsDB_t;
 
 /* Exported constants --------------------------------------------------------*/
@@ -126,7 +132,7 @@ typedef struct {
  * @return str: char* representation of DB element if found,
  *             "" if not found.
  */
-const char* const DB_elemToStr( const DC3DBElem_t elem );
+//const char* const DB_elemToStr( const DC3DBElem_t elem );
 
 /**
  * @brief   Check if Settings DB in EEPROM is valid.
