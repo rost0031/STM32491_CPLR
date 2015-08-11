@@ -165,6 +165,16 @@ static QState CommMgr_Busy(CommMgr * const me, QEvt const * const e);
  */
 static QState CommMgr_ValidateMsg(CommMgr * const me, QEvt const * const e);
 
+/**
+ * @brief    State that waits for a response from I2C1DevMgr AO.
+ *
+ * @param  [in|out] me: Pointer to the state machine
+ * @param  [in|out]  e:  Pointer to the event being processed.
+ * @return status: QState type that specifies where the state
+ * machine is going next.
+ */
+static QState CommMgr_WaitForRespFromI2C(CommMgr * const me, QEvt const * const e);
+
 
 /* Private defines -----------------------------------------------------------*/
 /* Private macros ------------------------------------------------------------*/
@@ -409,17 +419,17 @@ static QState CommMgr_Idle(CommMgr * const me, QEvt const * const e) {
                         me->basicMsgOffset
                     );
                     break;
-                case _DC3FlashMetaPayloadMsg:
-                    DC3FlashMetaPayloadMsg_read_delimited_from(
+                case _DC3I2CDataPayloadMsg:
+                    DC3I2CDataPayloadMsg_read_delimited_from(
                         ((LrgDataEvt *) e)->dataBuf,
-                        &(me->payloadMsgUnion.flashMetaPayload),
+                        &(me->payloadMsgUnion.i2cDataPayload),
                         me->basicMsgOffset
                     );
                     break;
-                case _DC3FlashDataPayloadMsg:
-                    DC3FlashDataPayloadMsg_read_delimited_from(
+                case _DC3DbgPayloadMsg:
+                    DC3DbgPayloadMsg_read_delimited_from(
                         ((LrgDataEvt *) e)->dataBuf,
-                        &(me->payloadMsgUnion.flashDataPayload),
+                        &(me->payloadMsgUnion.dbgPayload),
                         me->basicMsgOffset
                     );
                     break;
@@ -531,24 +541,24 @@ static QState CommMgr_Busy(CommMgr * const me, QEvt const * const e) {
                         evt->dataLen
                     );
                     break;
-                case _DC3FlashMetaPayloadMsg:
-                    DBG_printf("Sending FlashMeta payload\n");
-                    evt->dataLen = DC3FlashMetaPayloadMsg_write_delimited_to(
-                        (void*)&(me->payloadMsgUnion.flashMetaPayload),
-                        evt->dataBuf,
-                        evt->dataLen
-                    );
-                    break;
-                case _DC3FlashDataPayloadMsg:
-                    DBG_printf("Sending FlashData payload\n");
-                    evt->dataLen = DC3FlashDataPayloadMsg_write_delimited_to(
-                        (void*)&(me->payloadMsgUnion.flashDataPayload),
+                case _DC3I2CDataPayloadMsg:
+                    DBG_printf("Sending I2CData payload\n");
+                    evt->dataLen = DC3I2CDataPayloadMsg_write_delimited_to(
+                        (void*)&(me->payloadMsgUnion.i2cDataPayload),
                         evt->dataBuf,
                         evt->dataLen
                     );
                     break;
                 case _DC3NoMsg:
                     WRN_printf("Not sending payload as part of Done msg.\n");
+                    break;
+                case _DC3DbgPayloadMsg:
+                    DBG_printf("Sending DC3DbgPayloadMsg payload\n");
+                    evt->dataLen = DC3DbgPayloadMsg_write_delimited_to(
+                        (void*)&(me->payloadMsgUnion.dbgPayload),
+                        evt->dataBuf,
+                        evt->dataLen
+                    );
                     break;
                 default:
                     WRN_printf("Unknown payload detected %d, this is probably an error\n",
@@ -694,6 +704,236 @@ static QState CommMgr_ValidateMsg(CommMgr * const me, QEvt const * const e) {
                     status_ = Q_TRAN(&CommMgr_Idle);
                 }
             }
+            /* ${AOs::CommMgr::SM::Active::Busy::ValidateMsg::MSG_PROCESS::[I2CRead?]} */
+            else if (_DC3I2CReadMsg == me->basicMsg._msgName) {
+                /* ${AOs::CommMgr::SM::Active::Busy::ValidateMsg::MSG_PROCESS::[I2CRead?]::[ValidPayload?]} */
+                if (_DC3I2CDataPayloadMsg == me->msgPayloadName) {
+                    /* Has to be set after checking for a valid payload */
+                    me->msgPayloadName = _DC3I2CDataPayloadMsg;
+                    me->basicMsg._msgPayload = me->msgPayloadName;
+
+                    /* Create the event and directly post it to the right AO. */
+                    I2CReadReqEvt *i2cReadReqEvt  = Q_NEW(I2CReadReqEvt, I2C1_DEV_RAW_MEM_READ_SIG);
+                    i2cReadReqEvt->i2cDev         = me->payloadMsgUnion.i2cDataPayload._i2cDev;
+                    i2cReadReqEvt->addr           = I2C_getMemAddr( i2cReadReqEvt->i2cDev ) + me->payloadMsgUnion.i2cDataPayload._start;
+                    i2cReadReqEvt->bytes          = me->payloadMsgUnion.i2cDataPayload._nBytes;
+                    i2cReadReqEvt->accessType     = me->payloadMsgUnion.i2cDataPayload._accType;
+                    QACTIVE_POST(AO_I2C1DevMgr, (QEvt *)(i2cReadReqEvt), me);
+                    status_ = Q_TRAN(&CommMgr_WaitForRespFromI2C);
+                }
+                /* ${AOs::CommMgr::SM::Active::Busy::ValidateMsg::MSG_PROCESS::[I2CRead?]::[else]} */
+                else {
+                    me->errorCode = ERR_MSG_UNEXPECTED_PAYLOAD;
+                    WRN_printf("Unexpected payload %d for I2CReadMsg. Error: 0x%08x\n",
+                        me->msgPayloadName, me->errorCode);
+                    status_ = Q_TRAN(&CommMgr_Idle);
+                }
+            }
+            /* ${AOs::CommMgr::SM::Active::Busy::ValidateMsg::MSG_PROCESS::[I2CWrite?]} */
+            else if (_DC3I2CWriteMsg == me->basicMsg._msgName) {
+                /* ${AOs::CommMgr::SM::Active::Busy::ValidateMsg::MSG_PROCESS::[I2CWrite?]::[ValidPayload?]} */
+                if (_DC3I2CDataPayloadMsg == me->msgPayloadName) {
+                    /* Has to be set after checking for a valid payload */
+                    me->msgPayloadName = _DC3StatusPayloadMsg;
+                    me->basicMsg._msgPayload = me->msgPayloadName;
+
+                    /* Create the event and directly post it to the right AO. */
+                    I2CWriteReqEvt *i2cWriteReqEvt  = Q_NEW(I2CWriteReqEvt, I2C1_DEV_RAW_MEM_WRITE_SIG);
+                    i2cWriteReqEvt->i2cDev         = me->payloadMsgUnion.i2cDataPayload._i2cDev;
+                    i2cWriteReqEvt->addr           = I2C_getMemAddr( i2cWriteReqEvt->i2cDev ) + me->payloadMsgUnion.i2cDataPayload._start;
+                    i2cWriteReqEvt->accessType     = me->payloadMsgUnion.i2cDataPayload._accType;
+                    i2cWriteReqEvt->bytes          = me->payloadMsgUnion.i2cDataPayload._nBytes;
+                    MEMCPY(
+                        i2cWriteReqEvt->dataBuf,
+                        me->payloadMsgUnion.i2cDataPayload._dataBuf,
+                        me->payloadMsgUnion.i2cDataPayload._dataBuf_len
+                    );
+
+                    QACTIVE_POST(AO_I2C1DevMgr, (QEvt *)(i2cWriteReqEvt), me);
+
+                    status_ = Q_TRAN(&CommMgr_WaitForRespFromI2C);
+                }
+                /* ${AOs::CommMgr::SM::Active::Busy::ValidateMsg::MSG_PROCESS::[I2CWrite?]::[else]} */
+                else {
+                    /* Has to be set after checking for a valid payload */
+                    me->msgPayloadName = _DC3StatusPayloadMsg;
+                    me->basicMsg._msgPayload = me->msgPayloadName;
+
+                    me->errorCode = ERR_MSG_UNEXPECTED_PAYLOAD;
+                    WRN_printf("Unexpected payload %d for I2CWriteMsg. Error: 0x%08x\n",
+                        me->msgPayloadName, me->errorCode);
+                    status_ = Q_TRAN(&CommMgr_Idle);
+                }
+            }
+            /* ${AOs::CommMgr::SM::Active::Busy::ValidateMsg::MSG_PROCESS::[DbgGetCurrent?]} */
+            else if (_DC3DbgGetCurrentMsg == me->basicMsg._msgName) {
+                me->errorCode = ERR_NONE;
+
+                DBG_printf("_DC3DbgGetCurrentMsg decoded, attempting to decode payload (if exists)\n");
+
+                /* Compose Done response.  We can re-use the current structure and it will be used by
+                 * the exit action of the parent state to send the msg.  Here, we only set up fields
+                 * that are specific to this response. We can also destructively change the payload
+                 * name since we are sending a response right after this. */
+                me->msgPayloadName = _DC3DbgPayloadMsg;
+
+                /* Don't change the basicMsg name since it should be the same in all cases. */
+                me->basicMsg._msgPayload = me->msgPayloadName;
+                me->payloadMsgUnion.dbgPayload._errorCode = me->errorCode;
+                me->payloadMsgUnion.dbgPayload._dbgSettings  = glbDbgConfig;
+                DBG_printf("Setting dbgPayload payload with dbgSettings: 0x%08x\n", me->payloadMsgUnion.dbgPayload._dbgSettings);
+                status_ = Q_TRAN(&CommMgr_Idle);
+            }
+            /* ${AOs::CommMgr::SM::Active::Busy::ValidateMsg::MSG_PROCESS::[DbgSetCurrent?]} */
+            else if (_DC3DbgSetCurrentMsg == me->basicMsg._msgName) {
+                me->errorCode = ERR_NONE;
+
+                DBG_printf("_DC3DbgSetCurrentMsg decoded, attempting to decode payload (if exists)\n");
+
+                /* Compose Done response.  We can re-use the current structure and it will be used by
+                 * the exit action of the parent state to send the msg.  Here, we only set up fields
+                 * that are specific to this response. We can also destructively change the payload
+                 * name since we are sending a response right after this. */
+                me->msgPayloadName = _DC3DbgPayloadMsg;
+
+                /* Set the debugging modules bitfield to what was sent over, overwriting all settings.*/
+                DBG_SET_DEBUG_FOR_ALL_MODULES( me->payloadMsgUnion.dbgPayload._dbgSettings );
+
+                /* Don't change the basicMsg name since it should be the same in all cases. */
+                me->basicMsg._msgPayload = me->msgPayloadName;
+                me->payloadMsgUnion.dbgPayload._errorCode = me->errorCode;
+                me->payloadMsgUnion.dbgPayload._dbgSettings  = glbDbgConfig;
+                DBG_printf("Setting dbgPayload payload with dbgSettings: 0x%08x\n", me->payloadMsgUnion.dbgPayload._dbgSettings);
+                status_ = Q_TRAN(&CommMgr_Idle);
+            }
+            /* ${AOs::CommMgr::SM::Active::Busy::ValidateMsg::MSG_PROCESS::[DC3DbgEnable?]} */
+            else if (_DC3DbgEnableMsg == me->basicMsg._msgName) {
+                me->errorCode = ERR_NONE;
+
+                DBG_printf("_DC3DbgEnableMsg decoded, attempting to decode payload (if exists)\n");
+
+                /* Compose Done response.  We can re-use the current structure and it will be used by
+                 * the exit action of the parent state to send the msg.  Here, we only set up fields
+                 * that are specific to this response. We can also destructively change the payload
+                 * name since we are sending a response right after this. */
+                me->msgPayloadName = _DC3DbgPayloadMsg;
+
+                /* Enable debug module sent over in the message.*/
+                DBG_ENABLE_DEBUG_FOR_MODULE( me->payloadMsgUnion.dbgPayload._dbgSettings );
+
+                /* Don't change the basicMsg name since it should be the same in all cases. */
+                me->basicMsg._msgPayload = me->msgPayloadName;
+                me->payloadMsgUnion.dbgPayload._errorCode = me->errorCode;
+                me->payloadMsgUnion.dbgPayload._dbgSettings  = glbDbgConfig;
+                DBG_printf("Setting dbgPayload payload with dbgSettings: 0x%08x\n", me->payloadMsgUnion.dbgPayload._dbgSettings);
+                status_ = Q_TRAN(&CommMgr_Idle);
+            }
+            /* ${AOs::CommMgr::SM::Active::Busy::ValidateMsg::MSG_PROCESS::[DC3DbgDisable?]} */
+            else if (_DC3DbgDisableMsg == me->basicMsg._msgName) {
+                me->errorCode = ERR_NONE;
+
+                DBG_printf("_DC3DbgDisableMsg decoded, attempting to decode payload (if exists)\n");
+
+                /* Compose Done response.  We can re-use the current structure and it will be used by
+                 * the exit action of the parent state to send the msg.  Here, we only set up fields
+                 * that are specific to this response. We can also destructively change the payload
+                 * name since we are sending a response right after this. */
+                me->msgPayloadName = _DC3DbgPayloadMsg;
+
+                /* Disable debug module sent over in the message.*/
+                DBG_DISABLE_DEBUG_FOR_MODULE( me->payloadMsgUnion.dbgPayload._dbgSettings );
+
+                /* Don't change the basicMsg name since it should be the same in all cases. */
+                me->basicMsg._msgPayload = me->msgPayloadName;
+                me->payloadMsgUnion.dbgPayload._errorCode = me->errorCode;
+                me->payloadMsgUnion.dbgPayload._dbgSettings  = glbDbgConfig;
+                DBG_printf("Setting dbgPayload payload with dbgSettings: 0x%08x\n", me->payloadMsgUnion.dbgPayload._dbgSettings);
+                status_ = Q_TRAN(&CommMgr_Idle);
+            }
+            /* ${AOs::CommMgr::SM::Active::Busy::ValidateMsg::MSG_PROCESS::[DC3DbgEnableEth~} */
+            else if (_DC3DbgEnableEthMsg == me->basicMsg._msgName) {
+                me->errorCode = ERR_NONE;
+
+                DBG_printf("_DC3DbgEnableEthMsg decoded, attempting to decode payload (if exists)\n");
+
+                /* Compose Done response.  We can re-use the current structure and it will be used by
+                 * the exit action of the parent state to send the msg.  Here, we only set up fields
+                 * that are specific to this response. We can also destructively change the payload
+                 * name since we are sending a response right after this. */
+                me->msgPayloadName = _DC3StatusPayloadMsg;
+
+                /* Enable debug output over ethernet */
+                DBG_ENABLE_DEVICE( _DC3_DBG_DEV_ETH );
+
+                /* Don't change the basicMsg name since it should be the same in all cases. */
+                me->basicMsg._msgPayload = me->msgPayloadName;
+                me->payloadMsgUnion.statusPayload._errorCode = me->errorCode;
+
+                status_ = Q_TRAN(&CommMgr_Idle);
+            }
+            /* ${AOs::CommMgr::SM::Active::Busy::ValidateMsg::MSG_PROCESS::[DC3DbgDisableEt~} */
+            else if (_DC3DbgDisableEthMsg == me->basicMsg._msgName) {
+                me->errorCode = ERR_NONE;
+
+                DBG_printf("_DC3DbgDisableEthMsg decoded, attempting to decode payload (if exists)\n");
+
+                /* Compose Done response.  We can re-use the current structure and it will be used by
+                 * the exit action of the parent state to send the msg.  Here, we only set up fields
+                 * that are specific to this response. We can also destructively change the payload
+                 * name since we are sending a response right after this. */
+                me->msgPayloadName = _DC3StatusPayloadMsg;
+
+                /* Disable debug output over ethernet */
+                DBG_DISABLE_DEVICE( _DC3_DBG_DEV_ETH );
+
+                /* Don't change the basicMsg name since it should be the same in all cases. */
+                me->basicMsg._msgPayload = me->msgPayloadName;
+                me->payloadMsgUnion.statusPayload._errorCode = me->errorCode;
+
+                status_ = Q_TRAN(&CommMgr_Idle);
+            }
+            /* ${AOs::CommMgr::SM::Active::Busy::ValidateMsg::MSG_PROCESS::[DC3DbgEnableSer~} */
+            else if (_DC3DbgEnableSerMsg == me->basicMsg._msgName) {
+                me->errorCode = ERR_NONE;
+
+                DBG_printf("_DC3DbgEnableSerMsg decoded, attempting to decode payload (if exists)\n");
+
+                /* Compose Done response.  We can re-use the current structure and it will be used by
+                 * the exit action of the parent state to send the msg.  Here, we only set up fields
+                 * that are specific to this response. We can also destructively change the payload
+                 * name since we are sending a response right after this. */
+                me->msgPayloadName = _DC3StatusPayloadMsg;
+
+                /* Enable debug output over serial */
+                DBG_ENABLE_DEVICE( _DC3_DBG_DEV_SER );
+
+                /* Don't change the basicMsg name since it should be the same in all cases. */
+                me->basicMsg._msgPayload = me->msgPayloadName;
+                me->payloadMsgUnion.statusPayload._errorCode = me->errorCode;
+
+                status_ = Q_TRAN(&CommMgr_Idle);
+            }
+            /* ${AOs::CommMgr::SM::Active::Busy::ValidateMsg::MSG_PROCESS::[DC3DbgDisableSe~} */
+            else if (_DC3DbgDisableSerMsg == me->basicMsg._msgName) {
+                me->errorCode = ERR_NONE;
+
+                DBG_printf("_DC3DbgDisableSerMsg decoded, attempting to decode payload (if exists)\n");
+
+                /* Compose Done response.  We can re-use the current structure and it will be used by
+                 * the exit action of the parent state to send the msg.  Here, we only set up fields
+                 * that are specific to this response. We can also destructively change the payload
+                 * name since we are sending a response right after this. */
+                me->msgPayloadName = _DC3StatusPayloadMsg;
+
+                /* Enable debug output over serial */
+                DBG_DISABLE_DEVICE( _DC3_DBG_DEV_SER );
+
+                /* Don't change the basicMsg name since it should be the same in all cases. */
+                me->basicMsg._msgPayload = me->msgPayloadName;
+                me->payloadMsgUnion.statusPayload._errorCode = me->errorCode;
+
+                status_ = Q_TRAN(&CommMgr_Idle);
+            }
             /* ${AOs::CommMgr::SM::Active::Busy::ValidateMsg::MSG_PROCESS::[else]} */
             else {
                 me->errorCode = ERR_MSG_UNKNOWN_BASIC;
@@ -716,6 +956,82 @@ static QState CommMgr_ValidateMsg(CommMgr * const me, QEvt const * const e) {
 
                 status_ = Q_TRAN(&CommMgr_Idle);
             }
+            break;
+        }
+        default: {
+            status_ = Q_SUPER(&CommMgr_Busy);
+            break;
+        }
+    }
+    return status_;
+}
+
+/**
+ * @brief    State that waits for a response from I2C1DevMgr AO.
+ *
+ * @param  [in|out] me: Pointer to the state machine
+ * @param  [in|out]  e:  Pointer to the event being processed.
+ * @return status: QState type that specifies where the state
+ * machine is going next.
+ */
+/*${AOs::CommMgr::SM::Active::Busy::WaitForRespFromI~} .....................*/
+static QState CommMgr_WaitForRespFromI2C(CommMgr * const me, QEvt const * const e) {
+    QState status_;
+    switch (e->sig) {
+        /* ${AOs::CommMgr::SM::Active::Busy::WaitForRespFromI~} */
+        case Q_ENTRY_SIG: {
+            QTimeEvt_rearm(                                       /* Re-arm timer on entry */
+                &me->commOpTimerEvt,
+                SEC_TO_TICKS( HL_MAX_TOUT_SEC_CLI_WAIT_FOR_SIMPLE_MSG_DONE )
+            );
+
+            me->errorCode = ERR_COMM_I2C_READ_CMD_TIMEOUT; /* Set the error in case we timeout */
+            status_ = Q_HANDLED();
+            break;
+        }
+        /* ${AOs::CommMgr::SM::Active::Busy::WaitForRespFromI~} */
+        case Q_EXIT_SIG: {
+            QTimeEvt_disarm(&me->commOpTimerEvt);                  /* Disarm timer on exit */
+
+            if ( ERR_NONE != me->errorCode ) {
+                ERR_printf("Leaving state with error: 0x%08x\n", me->errorCode);
+            }
+            status_ = Q_HANDLED();
+            break;
+        }
+        /* ${AOs::CommMgr::SM::Active::Busy::WaitForRespFromI~::COMM_OP_TIMEOUT} */
+        case COMM_OP_TIMEOUT_SIG: {
+            ERR_printf("COMM_OP_TIMEOUT trying to process %d basic msg, error: 0x%08x\n",
+                me->basicMsg._msgName, me->errorCode);
+            status_ = Q_TRAN(&CommMgr_Idle);
+            break;
+        }
+        /* ${AOs::CommMgr::SM::Active::Busy::WaitForRespFromI~::I2C1_DEV_READ_DO~} */
+        case I2C1_DEV_READ_DONE_SIG: {
+            me->errorCode = ((I2CReadDoneEvt const *) e)->status;
+            if ( ERR_NONE == me->errorCode ) {
+                DBG_printf("Got I2C1_DEV_READ_DONE with %d bytes\n", ((I2CReadDoneEvt const *) e)->bytes);
+                me->payloadMsgUnion.i2cDataPayload._dataBuf_len = ((I2CReadDoneEvt const *) e)->bytes;
+                MEMCPY(
+                    me->payloadMsgUnion.i2cDataPayload._dataBuf,
+                    ((I2CReadDoneEvt const *) e)->dataBuf,
+                    me->payloadMsgUnion.i2cDataPayload._dataBuf_len
+                );
+            }
+
+            me->payloadMsgUnion.i2cDataPayload._errorCode = me->errorCode;
+            status_ = Q_TRAN(&CommMgr_Idle);
+            break;
+        }
+        /* ${AOs::CommMgr::SM::Active::Busy::WaitForRespFromI~::I2C1_DEV_WRITE_D~} */
+        case I2C1_DEV_WRITE_DONE_SIG: {
+            me->errorCode = ((I2CWriteDoneEvt const *) e)->status;
+            if ( ERR_NONE == me->errorCode ) {
+                DBG_printf("Got I2C1_DEV_WRITE_DONE with %d bytes\n", ((I2CWriteDoneEvt const *) e)->bytes);
+            }
+
+            me->payloadMsgUnion.statusPayload._errorCode = me->errorCode;
+            status_ = Q_TRAN(&CommMgr_Idle);
             break;
         }
         default: {

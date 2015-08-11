@@ -72,7 +72,7 @@ QActive_subscribe((QActive *)me, SER_RECEIVED_SIG);
 QActive_subscribe((QActive *)me, CLI_RECEIVED_SIG);
 QActive_subscribe((QActive *)me, I2C1_DEV_READ_DONE_SIG);
 QActive_subscribe((QActive *)me, I2C1_DEV_WRITE_DONE_SIG);</action>
-     <initial_glyph conn="1,2,4,3,9,5">
+     <initial_glyph conn="1,3,4,3,10,3">
       <action box="0,-2,6,2"/>
      </initial_glyph>
     </initial>
@@ -121,7 +121,7 @@ __set_MSP(*(__IO uint32_t*) FLASH_APPL_START_ADDR);
 
 /* After this call, we are running the Application FW image */
 Jump_To_Application();</action>
-      <tran_glyph conn="3,124,3,-1,16">
+      <tran_glyph conn="1,126,3,-1,16">
        <action box="0,-2,10,2"/>
       </tran_glyph>
      </tran>
@@ -166,7 +166,7 @@ QACTIVE_POST(
     (QEvt *)(cliEvt),
     AO_CommMgr
 );</action>
-       <tran_glyph conn="6,36,3,-1,18">
+       <tran_glyph conn="4,38,3,-1,18">
         <action box="0,-2,10,2"/>
        </tran_glyph>
       </tran>
@@ -246,11 +246,11 @@ switch( me-&gt;msgPayloadName ) {
         );
         break;
 }</action>
-       <tran_glyph conn="6,15,3,3,103">
+       <tran_glyph conn="4,17,3,3,103">
         <action box="0,-2,10,2"/>
        </tran_glyph>
       </tran>
-      <state_glyph node="6,8,28,114">
+      <state_glyph node="4,10,28,114">
        <entry box="1,2,6,2"/>
       </state_glyph>
      </state>
@@ -396,7 +396,7 @@ if ( ERR_NONE != me-&gt;errorCode ) {
       <tran trig="COMM_MGR_TIMEOUT" target="../../1">
        <action>ERR_printf(&quot;COMM_MGR_TIMEOUT trying to process %d basic msg, error: 0x%08x\n&quot;,
     me-&gt;basicMsg._msgName, me-&gt;errorCode);</action>
-       <tran_glyph conn="63,120,3,1,-29">
+       <tran_glyph conn="61,122,3,1,-29">
         <action box="-19,-2,19,2"/>
        </tran_glyph>
       </tran>
@@ -426,7 +426,7 @@ me-&gt;payloadMsgUnion.statusPayload._errorCode = me-&gt;errorCode;
 if ( ERR_NONE != me-&gt;errorCode ) {
     WRN_printf(&quot;Got FLASH_OP_DONE with status: 0x%08x\n&quot;, me-&gt;errorCode);
 }</action>
-        <tran_glyph conn="66,55,3,1,-32">
+        <tran_glyph conn="64,57,3,1,-32">
          <action box="-19,-2,15,2"/>
         </tran_glyph>
        </tran>
@@ -457,14 +457,14 @@ MEMCPY(
 
 DBG_printf(&quot;Setting flash meta payload with error code: %d\n&quot;, me-&gt;payloadMsgUnion.flashMetaPayload._errorCode);
 </action>
-        <tran_glyph conn="66,53,3,1,-32">
+        <tran_glyph conn="64,55,3,1,-32">
          <action box="-19,-2,15,2"/>
         </tran_glyph>
        </tran>
        <tran trig="COMM_OP_TIMEOUT" target="../../../1">
         <action>ERR_printf(&quot;COMM_OP_TIMEOUT trying to process %d basic msg, error: 0x%08x\n&quot;, 
     me-&gt;basicMsg._msgName, me-&gt;errorCode);</action>
-        <tran_glyph conn="66,57,3,1,-32">
+        <tran_glyph conn="64,59,3,1,-32">
          <action box="-19,-2,19,2"/>
         </tran_glyph>
        </tran>
@@ -476,11 +476,11 @@ me-&gt;payloadMsgUnion.ramTestPayload._addr = ((RamStatusEvt const *)e)-&gt;addr
 if ( ERR_NONE != me-&gt;errorCode ) {
     ERR_printf(&quot;Got RAM_TEST_DONE with status: 0x%08x\n&quot;, me-&gt;errorCode);
 }</action>
-        <tran_glyph conn="66,60,3,1,-32">
+        <tran_glyph conn="64,62,3,1,-32">
          <action box="-19,-2,14,2"/>
         </tran_glyph>
        </tran>
-       <state_glyph node="66,51,19,10">
+       <state_glyph node="64,53,19,10">
         <entry box="1,2,6,2"/>
         <exit box="1,4,6,2"/>
        </state_glyph>
@@ -524,7 +524,7 @@ me-&gt;basicMsg._msgPayload = me-&gt;msgPayloadName;
 me-&gt;payloadMsgUnion.bootmodePayload._errorCode = me-&gt;errorCode;
 me-&gt;payloadMsgUnion.bootmodePayload._bootMode  = _DC3_Bootloader; // This is the bootloader
 DBG_printf(&quot;Setting bootMode payload with bootmode: %d\n&quot;, me-&gt;payloadMsgUnion.bootmodePayload._bootMode);</action>
-         <choice_glyph conn="111,23,4,1,3,-77">
+         <choice_glyph conn="109,25,4,1,3,-77">
           <action box="-11,1,10,2"/>
          </choice_glyph>
         </choice>
@@ -548,7 +548,7 @@ me-&gt;payloadMsgUnion.statusPayload._errorCode = me-&gt;errorCode;
 
 
 </action>
-         <choice_glyph conn="111,23,5,1,-77">
+         <choice_glyph conn="109,25,5,1,-77">
           <action box="-8,-2,8,2"/>
          </choice_glyph>
         </choice>
@@ -568,7 +568,7 @@ ERR_printf(
     _DC3BootModePayloadMsg, me-&gt;msgPayloadName, me-&gt;errorCode
 );
 </action>
-          <choice_glyph conn="96,29,5,1,-62">
+          <choice_glyph conn="94,31,5,1,-62">
            <action box="-5,0,5,2"/>
           </choice_glyph>
          </choice>
@@ -592,7 +592,7 @@ DBG_printf(&quot;Stored size: 0x%08x\n&quot;, storedSize);</action>
              <action>me-&gt;errorCode = ERR_COMM_INVALID_APPL_SIZE;
 ERR_printf(&quot;Invalid stored Application FW image size: 0x%08x. Error: 0x%08x\n&quot;,
     storedSize, me-&gt;errorCode);</action>
-             <choice_glyph conn="70,41,5,1,-36">
+             <choice_glyph conn="68,43,5,1,-36">
               <action box="-5,0,5,2"/>
              </choice_glyph>
             </choice>
@@ -611,7 +611,7 @@ LOG_printf(&quot;CRC check passed, booting to Application FW image\n&quot;);
 /* Post to self to boot to application but still have enough time to send a Done */
 QEvt *evt = Q_NEW(QEvt, BOOT_APPL_SIG);
 QACTIVE_POST(AO_CommMgr, (QEvt *)(evt), AO_CommMgr);</action>
-              <choice_glyph conn="70,44,4,1,3,-36">
+              <choice_glyph conn="68,46,4,1,3,-36">
                <action box="1,1,10,2"/>
               </choice_glyph>
              </choice>
@@ -622,15 +622,15 @@ ERR_printf(
     &quot;Stored Application CRC (0x%08x) doesn't match calculated (0x%08x). Reflash the Application FW image. Error: 0x%08x\n&quot;,
     storedCRC, crcCheck, me-&gt;errorCode
 );</action>
-              <choice_glyph conn="70,44,5,1,-36">
+              <choice_glyph conn="68,46,5,1,-36">
                <action box="-5,0,5,2"/>
               </choice_glyph>
              </choice>
-             <choice_glyph conn="70,41,4,-1,3">
+             <choice_glyph conn="68,43,4,-1,3">
               <action box="1,1,10,2"/>
              </choice_glyph>
             </choice>
-            <choice_glyph conn="70,38,4,-1,3">
+            <choice_glyph conn="68,40,4,-1,3">
              <action box="1,1,10,2"/>
             </choice_glyph>
            </choice>
@@ -639,11 +639,11 @@ ERR_printf(
             <action>me-&gt;errorCode = ERR_COMM_INVALID_APPL_CRC;
 me-&gt;payloadMsgUnion.statusPayload._errorCode = me-&gt;errorCode;
 ERR_printf(&quot;Invalid stored Application FW image CRC: 0x%08x. Error: 0x%08x\n&quot;, storedCRC, me-&gt;errorCode);</action>
-            <choice_glyph conn="70,38,5,1,-36">
+            <choice_glyph conn="68,40,5,1,-36">
              <action box="-5,0,5,2"/>
             </choice_glyph>
            </choice>
-           <choice_glyph conn="89,32,4,-1,6,-19">
+           <choice_glyph conn="87,34,4,-1,6,-19">
             <action box="-9,6,10,2"/>
            </choice_glyph>
           </choice>
@@ -651,7 +651,7 @@ ERR_printf(&quot;Invalid stored Application FW image CRC: 0x%08x. Error: 0x%08x\
            <guard brief="Bootloader?">_DC3_Bootloader == me-&gt;payloadMsgUnion.bootmodePayload._bootMode</guard>
            <action>me-&gt;errorCode = ERR_NONE;
 DBG_printf(&quot;Already in bootloader mode\n&quot;);</action>
-           <choice_glyph conn="89,32,4,1,3,-55">
+           <choice_glyph conn="87,34,4,1,3,-55">
             <action box="-9,3,10,2"/>
            </choice_glyph>
           </choice>
@@ -661,15 +661,15 @@ DBG_printf(&quot;Already in bootloader mode\n&quot;);</action>
 ERR_printf(&quot;Unsupported bootmode requested (%d). Error: 0x%08x\n&quot;,
     me-&gt;payloadMsgUnion.bootmodePayload._bootMode, me-&gt;errorCode
 );</action>
-           <choice_glyph conn="89,32,5,1,-55">
+           <choice_glyph conn="87,34,5,1,-55">
             <action box="-6,0,5,2"/>
            </choice_glyph>
           </choice>
-          <choice_glyph conn="96,29,4,-1,3,-7">
+          <choice_glyph conn="94,31,4,-1,3,-7">
            <action box="0,1,11,2"/>
           </choice_glyph>
          </choice>
-         <choice_glyph conn="111,23,4,-1,6,-15">
+         <choice_glyph conn="109,25,4,-1,6,-15">
           <action box="-11,4,10,2"/>
          </choice_glyph>
         </choice>
@@ -708,7 +708,7 @@ me-&gt;msgPayloadName = _DC3StatusPayloadMsg;
 
 /* Don't change the basicMsg name since it should be the same in all cases. */
 me-&gt;basicMsg._msgPayload = me-&gt;msgPayloadName;</action>
-          <choice_glyph conn="101,50,4,1,7,-16">
+          <choice_glyph conn="99,52,4,1,7,-16">
            <action box="-13,5,13,2"/>
           </choice_glyph>
          </choice>
@@ -736,7 +736,7 @@ me-&gt;msgPayloadName = _DC3StatusPayloadMsg;
 
 /* Don't change the basicMsg name since it should be the same in all cases. */
 me-&gt;basicMsg._msgPayload = me-&gt;msgPayloadName;</action>
-          <choice_glyph conn="101,50,4,1,4,-16">
+          <choice_glyph conn="99,52,4,1,4,-16">
            <action box="-13,2,13,2"/>
           </choice_glyph>
          </choice>
@@ -745,11 +745,11 @@ me-&gt;basicMsg._msgPayload = me-&gt;msgPayloadName;</action>
           <action>me-&gt;errorCode = ERR_MSG_UNEXPECTED_PAYLOAD;
 WRN_printf(&quot;Unexpected payload %d for FlashMsg. Error: 0x%08x\n&quot;,
     me-&gt;msgPayloadName, me-&gt;errorCode);</action>
-          <choice_glyph conn="101,50,5,1,-67">
+          <choice_glyph conn="99,52,5,1,-67">
            <action box="-6,-2,6,2"/>
           </choice_glyph>
          </choice>
-         <choice_glyph conn="111,23,4,-1,27,-10">
+         <choice_glyph conn="109,25,4,-1,27,-10">
           <action box="-7,25,7,2"/>
          </choice_glyph>
         </choice>
@@ -760,7 +760,7 @@ WRN_printf(&quot;Unexpected payload %d for FlashMsg. Error: 0x%08x\n&quot;,
           <action>me-&gt;errorCode = ERR_MSG_UNEXPECTED_PAYLOAD;
 WRN_printf(&quot;Unexpected payload %d for I2CReadMsg. Error: 0x%08x\n&quot;,
     me-&gt;msgPayloadName, me-&gt;errorCode);</action>
-          <choice_glyph conn="101,64,5,1,-67">
+          <choice_glyph conn="99,66,5,1,-67">
            <action box="-6,-2,6,2"/>
           </choice_glyph>
          </choice>
@@ -777,11 +777,11 @@ i2cReadReqEvt-&gt;addr           = I2C_getMemAddr( i2cReadReqEvt-&gt;i2cDev ) + 
 i2cReadReqEvt-&gt;bytes          = me-&gt;payloadMsgUnion.i2cDataPayload._nBytes;
 i2cReadReqEvt-&gt;accessType     = me-&gt;payloadMsgUnion.i2cDataPayload._accType;
 QACTIVE_POST(AO_I2C1DevMgr, (QEvt *)(i2cReadReqEvt), me);</action>
-          <choice_glyph conn="101,64,4,1,4,-16">
+          <choice_glyph conn="99,66,4,1,4,-16">
            <action box="-10,2,10,2"/>
           </choice_glyph>
          </choice>
-         <choice_glyph conn="111,23,4,-1,41,-10">
+         <choice_glyph conn="109,25,4,-1,41,-10">
           <action box="-8,39,9,2"/>
          </choice_glyph>
         </choice>
@@ -796,7 +796,7 @@ me-&gt;basicMsg._msgPayload = me-&gt;msgPayloadName;
 me-&gt;errorCode = ERR_MSG_UNEXPECTED_PAYLOAD;
 WRN_printf(&quot;Unexpected payload %d for I2CWriteMsg. Error: 0x%08x\n&quot;,
     me-&gt;msgPayloadName, me-&gt;errorCode);</action>
-          <choice_glyph conn="101,76,5,1,-67">
+          <choice_glyph conn="99,78,5,1,-67">
            <action box="-6,-2,6,2"/>
           </choice_glyph>
          </choice>
@@ -820,11 +820,11 @@ MEMCPY(
 
 QACTIVE_POST(AO_I2C1DevMgr, (QEvt *)(i2cWriteReqEvt), me);
 </action>
-          <choice_glyph conn="101,76,4,1,-4,-16">
+          <choice_glyph conn="99,78,4,1,-4,-16">
            <action box="-11,-6,10,2"/>
           </choice_glyph>
          </choice>
-         <choice_glyph conn="111,23,4,-1,53,-10">
+         <choice_glyph conn="109,25,4,-1,53,-10">
           <action box="-7,50,9,2"/>
          </choice_glyph>
         </choice>
@@ -847,7 +847,7 @@ me-&gt;basicMsg._msgPayload = me-&gt;msgPayloadName;
 QEvt *evt = Q_NEW(QEvt, RAM_TEST_START_SIG);
 QACTIVE_POST(AO_FlashMgr, (QEvt *)(evt), AO_CommMgr);
 </action>
-         <choice_glyph conn="111,23,4,1,37,-26">
+         <choice_glyph conn="109,25,4,1,37,-26">
           <action box="-8,35,10,2"/>
          </choice_glyph>
         </choice>
@@ -868,7 +868,7 @@ me-&gt;basicMsg._msgPayload = me-&gt;msgPayloadName;
 me-&gt;payloadMsgUnion.dbgPayload._errorCode = me-&gt;errorCode;
 me-&gt;payloadMsgUnion.dbgPayload._dbgSettings  = glbDbgConfig;
 DBG_printf(&quot;Setting dbgPayload payload with dbgSettings: 0x%08x\n&quot;, me-&gt;payloadMsgUnion.dbgPayload._dbgSettings);</action>
-         <choice_glyph conn="111,23,4,1,56,-77">
+         <choice_glyph conn="109,25,4,1,56,-77">
           <action box="-12,54,11,2"/>
          </choice_glyph>
         </choice>
@@ -892,7 +892,7 @@ me-&gt;basicMsg._msgPayload = me-&gt;msgPayloadName;
 me-&gt;payloadMsgUnion.dbgPayload._errorCode = me-&gt;errorCode;
 me-&gt;payloadMsgUnion.dbgPayload._dbgSettings  = glbDbgConfig;
 DBG_printf(&quot;Setting dbgPayload payload with dbgSettings: 0x%08x\n&quot;, me-&gt;payloadMsgUnion.dbgPayload._dbgSettings);</action>
-         <choice_glyph conn="111,23,4,1,59,-77">
+         <choice_glyph conn="109,25,4,1,59,-77">
           <action box="-12,57,11,2"/>
          </choice_glyph>
         </choice>
@@ -916,7 +916,7 @@ me-&gt;basicMsg._msgPayload = me-&gt;msgPayloadName;
 me-&gt;payloadMsgUnion.dbgPayload._errorCode = me-&gt;errorCode;
 me-&gt;payloadMsgUnion.dbgPayload._dbgSettings  = glbDbgConfig;
 DBG_printf(&quot;Setting dbgPayload payload with dbgSettings: 0x%08x\n&quot;, me-&gt;payloadMsgUnion.dbgPayload._dbgSettings);</action>
-         <choice_glyph conn="111,23,4,1,62,-77">
+         <choice_glyph conn="109,25,4,1,62,-77">
           <action box="-12,60,11,2"/>
          </choice_glyph>
         </choice>
@@ -940,7 +940,7 @@ me-&gt;basicMsg._msgPayload = me-&gt;msgPayloadName;
 me-&gt;payloadMsgUnion.dbgPayload._errorCode = me-&gt;errorCode;
 me-&gt;payloadMsgUnion.dbgPayload._dbgSettings  = glbDbgConfig;
 DBG_printf(&quot;Setting dbgPayload payload with dbgSettings: 0x%08x\n&quot;, me-&gt;payloadMsgUnion.dbgPayload._dbgSettings);</action>
-         <choice_glyph conn="111,23,4,1,65,-77">
+         <choice_glyph conn="109,25,4,1,65,-77">
           <action box="-12,63,11,2"/>
          </choice_glyph>
         </choice>
@@ -963,7 +963,7 @@ DBG_ENABLE_DEVICE( _DC3_DBG_DEV_ETH );
 me-&gt;basicMsg._msgPayload = me-&gt;msgPayloadName;
 me-&gt;payloadMsgUnion.statusPayload._errorCode = me-&gt;errorCode;
 </action>
-         <choice_glyph conn="111,23,4,1,68,-77">
+         <choice_glyph conn="109,25,4,1,68,-77">
           <action box="-14,66,13,2"/>
          </choice_glyph>
         </choice>
@@ -986,7 +986,7 @@ DBG_DISABLE_DEVICE( _DC3_DBG_DEV_ETH );
 me-&gt;basicMsg._msgPayload = me-&gt;msgPayloadName;
 me-&gt;payloadMsgUnion.statusPayload._errorCode = me-&gt;errorCode;
 </action>
-         <choice_glyph conn="111,23,4,1,71,-77">
+         <choice_glyph conn="109,25,4,1,71,-77">
           <action box="-14,69,13,2"/>
          </choice_glyph>
         </choice>
@@ -1009,7 +1009,7 @@ DBG_ENABLE_DEVICE( _DC3_DBG_DEV_SER );
 me-&gt;basicMsg._msgPayload = me-&gt;msgPayloadName;
 me-&gt;payloadMsgUnion.statusPayload._errorCode = me-&gt;errorCode;
 </action>
-         <choice_glyph conn="111,23,4,1,74,-77">
+         <choice_glyph conn="109,25,4,1,74,-77">
           <action box="-14,72,13,2"/>
          </choice_glyph>
         </choice>
@@ -1032,15 +1032,15 @@ DBG_DISABLE_DEVICE( _DC3_DBG_DEV_SER );
 me-&gt;basicMsg._msgPayload = me-&gt;msgPayloadName;
 me-&gt;payloadMsgUnion.statusPayload._errorCode = me-&gt;errorCode;
 </action>
-         <choice_glyph conn="111,23,4,1,77,-77">
+         <choice_glyph conn="109,25,4,1,77,-77">
           <action box="-14,75,13,2"/>
          </choice_glyph>
         </choice>
-        <tran_glyph conn="111,19,2,-1,4">
+        <tran_glyph conn="109,21,2,-1,4">
          <action box="0,0,12,2"/>
         </tran_glyph>
        </tran>
-       <state_glyph node="109,13,14,6">
+       <state_glyph node="107,15,14,6">
         <entry box="1,2,6,2"/>
         <exit box="1,4,6,2"/>
        </state_glyph>
@@ -1068,7 +1068,7 @@ if ( ERR_NONE != me-&gt;errorCode ) {
        <tran trig="COMM_OP_TIMEOUT" target="../../../1">
         <action>ERR_printf(&quot;COMM_OP_TIMEOUT trying to process %d basic msg, error: 0x%08x\n&quot;, 
     me-&gt;basicMsg._msgName, me-&gt;errorCode);</action>
-        <tran_glyph conn="66,67,3,1,-32">
+        <tran_glyph conn="64,69,3,1,-32">
          <action box="-19,-2,19,2"/>
         </tran_glyph>
        </tran>
@@ -1085,7 +1085,7 @@ if ( ERR_NONE == me-&gt;errorCode ) {
 }
 
 me-&gt;payloadMsgUnion.i2cDataPayload._errorCode = me-&gt;errorCode;</action>
-        <tran_glyph conn="66,70,3,1,-32">
+        <tran_glyph conn="64,72,3,1,-32">
          <action box="-19,-2,15,2"/>
         </tran_glyph>
        </tran>
@@ -1096,25 +1096,25 @@ if ( ERR_NONE == me-&gt;errorCode ) {
 }
 
 me-&gt;payloadMsgUnion.statusPayload._errorCode = me-&gt;errorCode;</action>
-        <tran_glyph conn="66,73,3,1,-32">
+        <tran_glyph conn="64,75,3,1,-32">
          <action box="-19,-2,15,2"/>
         </tran_glyph>
        </tran>
-       <state_glyph node="66,65,19,10">
+       <state_glyph node="64,67,19,10">
         <entry box="1,2,6,2"/>
         <exit box="1,4,6,2"/>
        </state_glyph>
       </state>
-      <state_glyph node="63,8,92,114">
+      <state_glyph node="61,10,62,114">
        <entry box="1,2,6,2"/>
        <exit box="1,4,6,2"/>
       </state_glyph>
      </state>
-     <state_glyph node="3,3,156,123">
+     <state_glyph node="1,5,124,123">
       <entry box="1,2,5,2"/>
      </state_glyph>
     </state>
-    <state_diagram size="221,129"/>
+    <state_diagram size="144,128"/>
    </statechart>
   </class>
   <attribute name="AO_CommMgr" type="QActive * const" visibility="0x00" properties="0x00">

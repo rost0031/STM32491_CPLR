@@ -296,7 +296,10 @@ enum DC3MsgName_t
                                // DC3DbgGetCurrentMsg and DC3DbgSetCurrentMsg to
                                // set and get the entire debug settings group.                      
                               
-                              
+  	DC3DBFullResetMsg    = 25; // DC3BasicMsg  - Used to do a full reset of the 
+	                           // settings in the database to compiled defaults
+                               // Uses no payload for Req and Status payload for
+                               // Done.
 }
 
 //------------------------------------------------------------------------------
@@ -1358,6 +1361,42 @@ message DC3DbgPayloadMsg
 // END DC3DbgPayloadMsg.
 //------------------------------------------------------------------------------ 
 
+
+//------------------------------------------------------------------------------
+// START DC3DBFullResetMsg
+// Msg Tag  - 24
+// Msg Type - DC3BasicMsg.  Uses DC3BasicMsg structure. No definition needed
+// Msg Desc - This message resets the Settings DB in the EEPROM to default, 
+//            compiled settings.
+//
+// No message definition needed.  Uses DC3BasicMsg with DC3StatusPayloadMsg
+// as a payload for DC3_Done.
+// Example:
+// Client                                                             DC3 Board
+//   |                                                                      |
+// *Send*  [[************DC3BasicMsg**********]>>>>>>>>>>>>>>>>>>>>>>>>>>>>*Rec*
+//          < msgName = DC3DBFullResetMsg      
+//          < msgID   = [uint32]                         
+//          < msgType = DC3_Req                  
+//          < msgProgReq = [0|1]
+//          < msgRoute = [DC3MsgRoute_t]
+//          < msgPayload = DC3NoMsg
+// *Rec*  [[**************DC3BasicMsg***********]\n]<<<<<<<<<<<<<<<<<<<<<<<*Send*
+//          < msgName = DC3DBFullResetMsg
+//          < msgID   = [uint32]                   
+//          < msgType = DC3_Ack                        
+//          < msgProgReq = [0|1]
+//          < msgRoute = [DC3MsgRoute_t]
+//          < msgPayload = DC3NoMsg
+// *Rec*  [[************DC3BasicMsg**********][**DC3PayloadMsg**]\n]<<<<<<<<*Send*
+//          < msgName = DC3DBFullResetMsg      < errorCode = ERR_CODE
+//          < msgID   = [uint32]               
+//          < msgType = DC3_Done                 
+//          < msgProgReq = [0|1]                 
+//          < msgRoute = [DC3MsgRoute_t]
+//          < msgPayload = DC3StatusPayloadMsg
+// END DC3DBFullResetMsg
+//------------------------------------------------------------------------------   
 
 //------------------------------------------------------------------------------
 // ----------- END of message definitions used by DC3 API ----------------------
