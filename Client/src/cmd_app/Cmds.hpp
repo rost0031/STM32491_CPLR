@@ -35,11 +35,14 @@
  *
  * @param [in] *client: ClientApi pointer to the api object to provide access to
  * the DC3
+ * @param [out] *statusDC3: DC3Error_t status returned from DC3.
+ *    @arg  ERR_NONE: success.
+ *    other error codes if failure.
  * @return  ApiError_t:
  *    @arg API_ERR_NONE: if no error occurred
  *    @arg API_ERR_XXXX: other error codes indicating the error that occurred.
  */
-APIError_t CMD_runRamTest(  ClientApi* client );
+APIError_t CMD_runRamTest(  ClientApi* client, DC3Error_t* statusDC3 );
 
 /**
  * @brief   Wrapper around the UI for get_mode command
@@ -289,6 +292,25 @@ APIError_t CMD_runSetDbgDevice(
       DC3Error_t* statusDC3,
       DC3MsgRoute_t device,
       bool bEnable
+);
+
+/**
+ * @brief   Wrapper around the UI for reset_db command.
+ *
+ * @param [out] *status: DC3Error_t pointer to the returned status of from
+ * the DC3 board.
+ *    @arg  ERR_NONE: success.
+ *    other error codes if failure.
+ * @note: unless this variable is set to ERR_NONE at the completion, the
+ * results of other returned data should not be trusted.
+ *
+ * @return: APIError_t status of the client executing the command.
+ *    @arg  API_ERR_NONE: success
+ *    other error codes if failure.
+ */
+APIError_t CMD_runResetDB(
+      ClientApi* client,
+      DC3Error_t* statusDC3
 );
 /* Exported classes ----------------------------------------------------------*/
 

@@ -68,31 +68,34 @@ static void CMD_dbgModulesToStream( stringstream& ss, uint32_t dbgModules)
 }
 
 /******************************************************************************/
-APIError_t CMD_runRamTest( ClientApi* client )
+APIError_t CMD_runRamTest( ClientApi* client, DC3Error_t* statusDC3 )
 {
    APIError_t statusAPI = API_ERR_NONE;
-   DC3Error_t statusDC3 = ERR_NONE;
 
    DC3RamTest_t test = _DC3_RAM_TEST_NONE;  // Test which can fail
    uint32_t addr = 0x00000000;            // Address at which a test can fail
 
-   CON_print("*** Starting ram_test cmd to test of external RAM of DC3... ***");
-
+   string cmd = "ram_test"; // This is the name of the command we are running
    stringstream ss;
+   ss << "*** Starting " << cmd << " command to test of external RAM of DC3... ***";
+
+   CON_print(ss.str());
+   ss.str(std::string()); // It's the only way to actually clear the stringstream
+
    ss << "*** "; // Prepend so start and end of command output are easily visible
 
-   if( API_ERR_NONE == (statusAPI = client->DC3_ramTest(&statusDC3, &test, &addr))) {
-      ss << "Finished memory test of external RAM of DC3. Command ";
-      if (ERR_NONE == statusDC3) {
+   if( API_ERR_NONE == (statusAPI = client->DC3_ramTest(statusDC3, &test, &addr))) {
+      ss << "Finished " << cmd << ". Command ";
+      if (ERR_NONE == *statusDC3) {
          ss << "completed with no errors. No RAM errors found.";
       } else {
-         ss << "FAILED with ERROR: 0x" << setw(8) << setfill('0') << hex << statusDC3
+         ss << "FAILED with ERROR: 0x" << setw(8) << setfill('0') << hex << *statusDC3
                << " with test " << enumToString(test) << " failing at addr "
                << "0x" << setw(8) << setfill('0') << hex << addr
                << dec;
       }
    } else {
-      ss << "Unable to complete memory test of external RAM of DC3 due to API error: "
+      ss << "Unable to complete " << cmd << " command due to API error: "
             << "0x" << setw(8) << setfill('0') << std::hex << statusAPI << std::dec;
    }
 
@@ -110,16 +113,20 @@ APIError_t CMD_runGetMode(
 )
 {
    APIError_t statusAPI = API_ERR_NONE;
-
-   CON_print("*** Starting get_mode cmd to get the boot mode of DC3... ***");
+   string cmd = "get_mode"; // This is the name of the command we are running
 
    stringstream ss;
+   ss << "*** Starting " << cmd << " command to get the boot mode of DC3... ***";
+
+   CON_print(ss.str());
+   ss.str(std::string()); // It's the only way to actually clear the stringstream
+
    ss << "*** "; // Prepend so start and end of command output are easily visible
 
    // Execute (and block) on this command
    if( API_ERR_NONE == (statusAPI = client->DC3_getMode(statusDC3, mode))) {
 
-      ss << "Finished get_mode cmd. Command ";
+      ss << "Finished " << cmd << ". Command ";
       if (ERR_NONE == *statusDC3) {
          ss << "completed with no errors. DC3 is currently in " << enumToString(*mode)
                << " boot mode";
@@ -128,7 +135,7 @@ APIError_t CMD_runGetMode(
       }
 
    } else {
-      ss << "Unable to complete get_mode cmd to DC3 due to API error: "
+      ss << "Unable to complete " << cmd << " cmd to DC3 due to API error: "
             << "0x" << setw(8) << setfill('0') << hex << statusAPI << dec;
    }
 
@@ -146,16 +153,19 @@ APIError_t CMD_runSetMode(
 )
 {
    APIError_t statusAPI = API_ERR_NONE;
-
-   CON_print("*** Starting set_mode cmd to set the boot mode of DC3... ***");
+   string cmd = "set_mode"; // This is the name of the command we are running
 
    stringstream ss;
+   ss << "*** Starting " << cmd << " command to to set the boot mode of DC3... ***";
+   CON_print(ss.str());
+   ss.str(std::string()); // It's the only way to actually clear the stringstream
+
    ss << "*** "; // Prepend so start and end of command output are easily visible
 
    // Execute (and block) on this command
    if( API_ERR_NONE == (statusAPI = client->DC3_setMode(statusDC3, mode)) ) {
 
-      ss << "Finished set_mode cmd. Command ";
+      ss << "Finished " << cmd << " cmd. Command ";
       if (ERR_NONE == *statusDC3) {
          ss << "completed with no errors. DC3 should now be in " << enumToString(mode)
                << " boot mode";
@@ -163,7 +173,7 @@ APIError_t CMD_runSetMode(
          ss << "FAILED with ERROR: 0x" << setw(8) << setfill('0') << hex << *statusDC3 << dec;
       }
    } else {
-      ss << "Unable to complete set_mode cmd to DC3 due to API error: "
+      ss << "Unable to complete " << cmd << " cmd to DC3 due to API error: "
             << "0x" << setw(8) << setfill('0') << hex << statusAPI << dec;
    }
 
@@ -189,14 +199,19 @@ APIError_t CMD_runFlash(
       return( API_ERR_UNIMPLEMENTED );
    }
 
-   CON_print("*** Starting flash cmd to flash FW on DC3... ***");
+   string cmd = "flash"; // This is the name of the command we are running
 
    stringstream ss;
+   ss << "*** Starting " << cmd << " command to flash "
+         << enumToString(_DC3_Application) << " FW image to the DC3... ***";
+   CON_print(ss.str());
+   ss.str(std::string()); // It's the only way to actually clear the stringstream
+
    ss << "*** "; // Prepend so start and end of command output are easily visible
 
    // Execute (and block) on this command
    if( API_ERR_NONE == (statusAPI = client->DC3_flashFW(statusDC3, type, file.c_str() )) ) {
-      ss << "Finished flash cmd. Command ";
+      ss << "Finished " << cmd << ". Command ";
       if (ERR_NONE == *statusDC3) {
          ss << "completed with no errors. DC3 " << enumToString(type)
                << " FW image should now be flashed.";
@@ -204,7 +219,7 @@ APIError_t CMD_runFlash(
          ss << "FAILED with ERROR: 0x" << setw(8) << setfill('0') << hex << *statusDC3 << dec;
       }
    } else {
-      ss << "Unable to complete flash cmd to DC3 due to API error: "
+      ss << "Unable to complete " << cmd << " cmd to DC3 due to API error: "
             << "0x" << setw(8) << setfill('0') << hex << statusAPI << dec;
    }
 
@@ -228,16 +243,19 @@ APIError_t CMD_runReadI2C(
 )
 {
    APIError_t statusAPI = API_ERR_NONE;
-
-   CON_print("*** Starting read_i2c cmd to read an I2C device on DC3... ***");
+   string cmd = "read_i2c"; // This is the name of the command we are running
 
    stringstream ss;
+   ss << "*** Starting " << cmd << " command to read an I2C device on DC3... ***";
+   CON_print(ss.str());
+   ss.str(std::string()); // It's the only way to actually clear the stringstream
+
    ss << "*** "; // Prepend so start and end of command output are easily visible
 
    // Execute (and block) on this command
    if( API_ERR_NONE == (statusAPI = client->DC3_readI2C( statusDC3, pBytesRead,
             pBuffer, nMaxBufferSize, nBytesToRead, nStart, dev, acc) )) {
-      ss << "Finished read_i2c cmd. Command ";
+      ss << "Finished " << cmd << ". Command ";
       if (ERR_NONE == *statusDC3) {
          ss << "completed with no errors. ***" << endl << "*** Read " << *pBytesRead << " bytes: [ ";
          for ( unsigned int i = 0; i < *pBytesRead; i++ ) {
@@ -248,7 +266,7 @@ APIError_t CMD_runReadI2C(
          ss << "FAILED with ERROR: 0x" << setw(8) << setfill('0') << hex << *statusDC3 << dec;
       }
    } else {
-      ss << "Unable to complete read_i2c cmd to DC3 due to API error: "
+      ss << "Unable to complete " << cmd << " cmd to DC3 due to API error: "
             << "0x" << setw(8) << setfill('0') << hex << statusAPI << dec;
    }
 
@@ -271,15 +289,20 @@ APIError_t CMD_runWriteI2C(
 {
    APIError_t statusAPI = API_ERR_NONE;
 
-   CON_print("*** Starting write_i2c cmd to write to an I2C device on DC3... ***");
-
+   string cmd = "write_i2c"; // This is the name of the command we are running
    stringstream ss;
+
+   // Conditional printout since this command does so many different things
+   ss << "*** Starting " << cmd << " command to write to an I2C device on DC3... ***";
+   CON_print(ss.str());
+   ss.str(std::string()); // It's the only way to actually clear the stringstream
+
    ss << "*** "; // Prepend so start and end of command output are easily visible
 
    // Execute (and block) on this command
    if( API_ERR_NONE == (statusAPI = client->DC3_writeI2C( statusDC3, pBuffer,
          nBytesToWrite, nStart, dev, acc ))) {
-      ss << "Finished write_i2c cmd. Command ";
+      ss << "Finished " << cmd << " cmd. Command ";
       if (ERR_NONE == *statusDC3) {
          ss << "completed with no errors. ***" << endl << "*** Wrote " << nBytesToWrite << " bytes: [ ";
          for ( unsigned int i = 0; i < nBytesToWrite; i++ ) {
@@ -290,7 +313,7 @@ APIError_t CMD_runWriteI2C(
          ss << "FAILED with ERROR: 0x" << setw(8) << setfill('0') << hex << *statusDC3 << dec;
       }
    } else {
-      ss << "Unable to complete read_i2c cmd to DC3 due to API error: "
+      ss << "Unable to complete " << cmd << " cmd to DC3 due to API error: "
             << "0x" << setw(8) << setfill('0') << hex << statusAPI << dec;
    }
 
@@ -309,9 +332,14 @@ APIError_t CMD_runGetDbgModules(
 {
    APIError_t statusAPI = API_ERR_NONE;
 
-   CON_print("*** Starting get_dbg_modules cmd to get the state of debug modules on DC3... ***");
 
    stringstream ss;
+   string cmd = "get_dbg_modules"; // This is the name of the command we are running
+   // Conditional printout since this command does so many different things
+   ss << "*** Starting " << cmd << " command to get the state of debug modules on DC3... ***";
+   CON_print(ss.str());
+   ss.str(std::string()); // It's the only way to actually clear the stringstream
+
    ss << "*** "; // Prepend so start and end of command output are easily visible
 
    // Execute (and block) on this command
@@ -327,7 +355,7 @@ APIError_t CMD_runGetDbgModules(
       }
 
    } else {
-      ss << "Unable to complete get_dbg_modules cmd to DC3 due to API error: "
+      ss << "Unable to complete " << cmd << " cmd to DC3 due to API error: "
             << "0x" << setw(8) << setfill('0') << hex << statusAPI << dec;
    }
 
@@ -348,9 +376,10 @@ APIError_t CMD_runSetDbgModule(
 {
    APIError_t statusAPI = API_ERR_NONE;
    stringstream ss;
-
+   string cmd = "set_dbg_modules"; // This is the name of the command we are running
    // Conditional printout since this command does so many different things
-   ss << "*** Starting set_dbg_modules cmd to ";
+   ss << "*** Starting " << cmd << " command to ";
+
    if (bOverWrite) {
       ss << "overwrite the dbg modules states bitfield ";
    } else {
@@ -371,7 +400,7 @@ APIError_t CMD_runSetDbgModule(
    // Execute (and block) on this command
    if( API_ERR_NONE == (statusAPI = client->DC3_setDbgModules(statusDC3, dbgModuleSet, bEnable, bOverWrite))) {
 
-      ss << "Finished set_dbg_modules cmd. Command " << endl;
+      ss << "Finished " << cmd << ". Command " << endl;
       if (ERR_NONE == *statusDC3) {
          ss << "completed with no errors. ***" << endl;
          ss << "*** DC3 debug module states are as follows ***" << endl;
@@ -381,7 +410,7 @@ APIError_t CMD_runSetDbgModule(
       }
 
    } else {
-      ss << "Unable to complete set_dbg_modules cmd to DC3 due to API error: "
+      ss << "Unable to complete " << cmd << " cmd to DC3 due to API error: "
             << "0x" << setw(8) << setfill('0') << hex << statusAPI << dec;
    }
 
@@ -402,9 +431,9 @@ APIError_t CMD_runSetDbgDevice(
 {
    APIError_t statusAPI = API_ERR_NONE;
    stringstream ss;
-
+   string cmd = "set_dbg_device"; // This is the name of the command we are running
    // Conditional printout since this command does so many different things
-   ss << "*** Starting set_dbg_device cmd to ";
+   ss << "*** Starting " << cmd << " cmd to ";
    if (bEnable) {
       ss << "enable ";
    } else {
@@ -421,7 +450,7 @@ APIError_t CMD_runSetDbgDevice(
    // Execute (and block) on this command
    if( API_ERR_NONE == (statusAPI = client->DC3_setDbgDevice(statusDC3, device, bEnable))) {
 
-      ss << "Finished set_dbg_modules cmd. Command " << endl;
+      ss << "Finished " << cmd << ". Command " << endl;
       if (ERR_NONE == *statusDC3) {
          ss << "completed with no errors. ***" << endl;
          ss << "*** DC3 debugging output over " << enumToString(device)
@@ -431,7 +460,46 @@ APIError_t CMD_runSetDbgDevice(
       }
 
    } else {
-      ss << "Unable to complete set_dbg_modules cmd to DC3 due to API error: "
+      ss << "Unable to complete " << cmd << " cmd to DC3 due to API error: "
+            << "0x" << setw(8) << setfill('0') << hex << statusAPI << dec;
+
+   }
+
+   ss << " ***"; // Append so start and end of command output are easily visible
+   CON_print(ss.str());                                      // output to screen
+
+   return( statusAPI );
+}
+
+/******************************************************************************/
+APIError_t CMD_runResetDB(
+      ClientApi* client,
+      DC3Error_t* statusDC3
+)
+{
+   APIError_t statusAPI = API_ERR_NONE;
+   stringstream ss;
+   string cmd = "reset_db";    // This is the name of the command we are running
+   ss << "*** Starting "<< cmd << " command to reset settings in DC3 Database to defaults ***";
+   CON_print(ss.str());
+
+   ss.str(std::string()); // It's the only way to actually clear the stringstream
+
+   ss << "*** "; // Prepend so start and end of command output are easily visible
+
+   // Execute (and block) on this command
+   if( API_ERR_NONE == (statusAPI = client->DC3_resetDB(statusDC3))) {
+
+      ss << "Finished " << cmd << ". Command " << endl;
+      if (ERR_NONE == *statusDC3) {
+         ss << "completed with no errors. ***" << endl;
+         ss << "*** DC3 Database is now reset to compiled defaults";
+      } else {
+         ss << "FAILED with ERROR: 0x" << setw(8) << setfill('0') << hex << *statusDC3 << dec;
+      }
+
+   } else {
+      ss << "Unable to complete " << cmd << " cmd to DC3 due to API error: "
             << "0x" << setw(8) << setfill('0') << hex << statusAPI << dec;
 
    }

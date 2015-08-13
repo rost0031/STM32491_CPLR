@@ -300,6 +300,20 @@ enum DC3MsgName_t
 	                           // settings in the database to compiled defaults
                                // Uses no payload for Req and Status payload for
                                // Done.
+                               
+  	DC3DBGetElemMsg      = 26; // DC3BasicMsg  - Used to do get an element from
+	                           // the settings database on the DC3.
+                               // Uses DC3DBDataPayloadMsg for Req and Done.    
+
+	DC3DBSetElemMsg      = 27; // DC3BasicMsg  - Used to do set an element in  
+	                           // the settings database on the DC3.
+                               // Uses DC3DBDataPayloadMsg for Req and Status 
+                               // payload for Done. 
+                               
+    DC3DBDataPayloadMsg  = 28; // DC3PayloadMsg - Used as a data payload by 
+                               // DC3DBGetElemMsg and DC3DBSetElemMsg to specify 
+                               // what to set/get to/from the DC3 database, as 
+                               // well as send data and status back.                               
 }
 
 //------------------------------------------------------------------------------
@@ -1364,7 +1378,7 @@ message DC3DbgPayloadMsg
 
 //------------------------------------------------------------------------------
 // START DC3DBFullResetMsg
-// Msg Tag  - 24
+// Msg Tag  - 25
 // Msg Type - DC3BasicMsg.  Uses DC3BasicMsg structure. No definition needed
 // Msg Desc - This message resets the Settings DB in the EEPROM to default, 
 //            compiled settings.
@@ -1397,6 +1411,105 @@ message DC3DbgPayloadMsg
 //          < msgPayload = DC3StatusPayloadMsg
 // END DC3DBFullResetMsg
 //------------------------------------------------------------------------------   
+
+//------------------------------------------------------------------------------
+// START DC3DBGetElemMsg
+// Msg Tag  - 26
+// Msg Type - DC3BasicMsg.  Uses DC3BasicMsg structure. No definition needed
+// Msg Desc - This message is handles requests to read data from an I2C device
+//            on the board.
+//
+// No message definition needed.  Uses DC3BasicMsg with DC3I2CDataPayloadMsg
+// as a payload for DC3_Ack and DC3_Done.
+// Example:
+// Client                                                               DC3 Board
+//   |                                                                      |
+// *Send* [[**************DC3BasicMsg********][**DC3PayloadMsg**]\n]]>>*Receive*
+//          < msgName = DC3DBGetElemMsg         < elem = [DC3DBElem_t]
+//          < msgID   = [uint32]                < accessType = [DC3AccessType_t]
+//          < msgType = DC3_Req                 < errorCode = Not used      
+//          < msgProgReq = [0|1]                < dataBuf = not used
+//          < msgRoute = [DC3MsgRoute_t]        < dataBuf_len = 0
+//          < msgPayload = DC3DBDataPayloadMsg 
+//                                               
+// *Rec*  [[**************DC3BasicMsg***********]\n]<<<<<<<<<<<<<<<<<<<<<<<*Send*
+//          < msgName = DC3DBSetElemMsg
+//          < msgID   = [uint32]                   
+//          < msgType = DC3_Ack      
+//          < msgProgReq = [0|1]
+//          < msgRoute = [DC3MsgRoute_t]                  
+//          < msgPayload = DC3NoMsg
+// *Rec*  [[************DC3BasicMsg**********][**DC3PayloadMsg**]\n]<<<<<<<<*Send*
+//          < msgName = DC3DBSetElemMsg         < elem = [DC3DBElem_t]
+//          < msgID   = [uint32]                < accessType = [DC3AccessType_t]
+//          < msgType = DC3_Done                < errorCode   = DC3_ERR_CODE  
+//          < msgProgReq = [0|1]                < dataBuf = [bytes of data]
+//          < msgRoute = [DC3MsgRoute_t]        < dataBuf_len (auto) = len(dataBuf)
+//          < msgPayload = DC3DBDataPayloadMsg 
+// 
+// END DC3DBGetElemMsg
+//------------------------------------------------------------------------------
+
+//------------------------------------------------------------------------------
+// START DC3DBSetElemMsg
+// Msg Tag  - 27
+// Msg Type - DC3BasicMsg.  Uses DC3BasicMsg structure. No definition needed
+// Msg Desc - This message is handles requests to write data to an I2C device
+//            on the board.
+//
+// No message definition needed.  Uses DC3BasicMsg with DC3I2CDataPayloadMsg
+// as a payload for DC3_Ack and DC3_Done.
+// Example:
+// Client                                                               DC3 Board
+//   |                                                                      |
+// *Send* [[**************DC3BasicMsg********][**DC3PayloadMsg**]\n]]>>*Receive*
+//          < msgName = DC3DBSetElemMsg         < elem = [DC3DBElem_t]
+//          < msgID   = [uint32]                < accessType = [DC3AccessType_t]
+//          < msgType = DC3_Req                 < errorCode = Not used      
+//          < msgProgReq = [0|1]                < dataBuf = [bytes of data]
+//          < msgRoute = [DC3MsgRoute_t]        < dataBuf_len (auto) = len(dataBuf)
+//          < msgPayload = DC3DBDataPayloadMsg 
+//                                               
+// *Rec*  [[**************DC3BasicMsg***********]\n]<<<<<<<<<<<<<<<<<<<<<<<*Send*
+//          < msgName = DC3DBSetElemMsg
+//          < msgID   = [uint32]                   
+//          < msgType = DC3_Ack      
+//          < msgProgReq = [0|1]
+//          < msgRoute = [DC3MsgRoute_t]                  
+//          < msgPayload = DC3NoMsg
+// *Rec*  [[************DC3BasicMsg**********][**DC3PayloadMsg**]\n]<<<<<<<<*Send*
+//          < msgName = DC3DBSetElemMsg         < elem = [DC3DBElem_t]
+//          < msgID   = [uint32]                < accessType = [DC3AccessType_t]
+//          < msgType = DC3_Done                < errorCode   = DC3_ERR_CODE  
+//          < msgProgReq = [0|1]                < dataBuf = not used
+//          < msgRoute = [DC3MsgRoute_t]        < dataBuf_len = 0
+//          < msgPayload = DC3DBDataPayloadMsg 
+//                                              
+// END DC3DBSetElemMsg
+//------------------------------------------------------------------------------
+
+//------------------------------------------------------------------------------
+// START DC3DBDataPayloadMsg 
+// Msg Tag  - 28
+// Msg Type - DC3PayloadMsg.  
+// Msg Desc - Sent appended to the DC3DBGetElemMsg  and DC3DBSetElemMsg DC3_Req 
+//            and DC3_Done msgs. (See examples in description of DC3DBGetElemMsg
+//            and DC3DBSetElemMsg).
+//
+// Non-standard Field Description: (see below)
+message DC3DBDataPayloadMsg 
+{
+	required DC3DBElem_t     elem    = 1; // Specifies which DB element to access
+    required DC3AccessType_t accType = 2; // how to access the I2C device.
+    required uint32        errorCode = 3; // DC3ErrorCode that specifies status
+                                       // of the requested operation.  Not used
+                                       // when sent along with a DC3_Req
+    required bytes           dataBuf = 4; // buffer with data     
+                                      
+}
+// END DC3DBDataPayloadMsg.
+//------------------------------------------------------------------------------
+
 
 //------------------------------------------------------------------------------
 // ----------- END of message definitions used by DC3 API ----------------------

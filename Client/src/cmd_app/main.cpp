@@ -468,7 +468,7 @@ int main(int argc, char *argv[])
          // No need to extract the value from the arg=value pair for this cmd.
 
          // Execute (and block) on this command
-         status = CMD_runRamTest( client );
+         status = CMD_runRamTest( client, &statusDC3 );
       }
 
       // Now check if the user requested general help.  This has to be done

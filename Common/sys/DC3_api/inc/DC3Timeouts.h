@@ -116,6 +116,7 @@
    #define HL_MAX_TOUT_SEC_SYS_MGR                                           60.0
    #define LL_MAX_TOUT_SEC_DB_ACCESS                                          3.0
    #define LL_MAX_TIME_SEC_BETWEEN_RETRIES                                    0.5
+   #define HL_MAX_TOUT_SEC_DB_FULL_RESET                                      1.0
 
    /*@} SysMgr Timeouts and Times.*/
 

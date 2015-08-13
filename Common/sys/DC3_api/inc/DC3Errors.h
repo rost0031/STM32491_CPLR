@@ -97,6 +97,7 @@ typedef enum DC3Errors
    ERR_COMM_INVALID_APPL_CRC_MISMATCH                          = 0x00040006,
    ERR_COMM_INVALID_BOOTMODE_REQUESTED                         = 0x00040007,
    ERR_COMM_I2C_READ_CMD_TIMEOUT                               = 0x00040008,
+   ERR_COMM_DB_ACCESS_CMD_TIMEOUT                              = 0x00040009,
 
    /* Application CommMgr error category          0x00050000 - 0x0005FFFF */
    ERR_MENU_NODE_STORAGE_ALLOC_NULL                            = 0x00050000,

@@ -85,30 +85,6 @@ static const SettingsDB_t DB_defaultEeepromSettings = {
 /* Private function prototypes -----------------------------------------------*/
 /* Private functions ---------------------------------------------------------*/
 
-///******************************************************************************/
-//const char* const DB_elemToStr( const DC3DBElem_t elem )
-//{
-//   switch ( elem ) {
-//      case _DC3_DB_MAGIC_WORD:          return("DB_MAGIC_WORD");          break;
-//      case _DC3_DB_VERSION:             return("DB_VERSION");             break;
-//      case _DC3_DB_MAC_ADDR:            return("DB_MAC_ADDR");            break;
-//      case _DC3_DB_IP_ADDR:             return("DB_IP_ADDR");             break;
-//      case _DC3_DB_SN:                  return("DB_SN");                  break;
-//      case _DC3_DB_BOOT_MAJ:            return("DB_BOOT_MAJ");            break;
-//      case _DC3_DB_BOOT_MIN:            return("DB_BOOT_MIN");            break;
-//      case _DC3_DB_BOOT_BUILD_DATETIME: return("DB_BOOT_BUILD_DATETIME"); break;
-//      case _DC3_DB_APPL_MAJ:            return("DB_APPL_MAJ");            break;
-//      case _DC3_DB_APPL_MIN:            return("DB_APPL_MIN");            break;
-//      case _DC3_DB_APPL_BUILD_DATETIME: return("DB_APPL_BUILD_DATETIME"); break;
-//      case _DC3_DB_FPGA_MAJ:            return("DB_FPGA_MAJ");            break;
-//      case _DC3_DB_FPGA_MIN:            return("DB_FPGA_MIN");            break;
-//      case _DC3_DB_FPGA_BUILD_DATETIME: return("DB_FPGA_BUILD_DATETIME"); break;
-//      case _DC3_DB_DBG_MODULES:         return("DB_DBG_MODULES");         break;
-//      case _DC3_DB_DBG_DEVICES:         return("DB_DBG_DEVICES");         break;
-//      default:                          return("");                       break;
-//   }
-//}
-
 /******************************************************************************/
 const DC3Error_t DB_isValid( const DC3AccessType_t accessType )
 {
@@ -216,8 +192,8 @@ const DC3Error_t DB_initToDefault( const DC3AccessType_t accessType )
          MEMCPY(i2cWriteReqEvt->dataBuf, &DB_defaultEeepromSettings, sizeof(DB_defaultEeepromSettings));
          QACTIVE_POST(AO_I2C1DevMgr, (QEvt *)(i2cWriteReqEvt), SysMgr_AO);
          goto DB_initToDefault_ERR_HANDLE; /* Stop and jump to error handling */
-         break;                                     /* end of case ACCESS_QPC */
       }
+      break;                                        /* end of case ACCESS_QPC */
       case  _DC3_ACCESS_FRT:
          status = ERR_UNIMPLEMENTED;
          goto DB_initToDefault_ERR_HANDLE; /* Stop and jump to error handling */

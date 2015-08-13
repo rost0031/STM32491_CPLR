@@ -138,6 +138,9 @@ APIError_t MENU_run( ClientApi *client )
    root->findChild("SYS")->findChild("I2C")->findChild("WEE")->addChild( "DEF", "Write EEPROM on I2C with (def)ault start and number of bytes", MENU_I2C_WRITE_TEST_DEF );
    root->findChild("SYS")->findChild("I2C")->findChild("WEE")->addChild( "CUS", "Write EEPROM on I2C with (cus)tom start and number of bytes", MENU_I2C_WRITE_TEST_CUS );
 
+   root->findChild("SYS")->addChild( "DBS", "Database Settings commands" );
+   root->findChild("SYS")->findChild("DBS")->addChild( "RST", "(R)e(s)e(t) DC3 settings Database", MENU_DB_RESET );
+
    // Finalize the menu node numbers.  This has to be called after all the items
    // have been added to the menu.  This function numbers all the nodes to allow
    // direct access to them without going through the entire menu tree.
@@ -322,7 +325,7 @@ APIError_t MENU_parseAndExecAction(
 
    switch( menuAction ) {
       case MENU_RAM_TEST:
-         status = CMD_runRamTest( client );
+         status = CMD_runRamTest( client, &statusDC3 );
          break;
       case MENU_GET_MODE:
          DC3BootMode_t mode;
@@ -556,7 +559,9 @@ APIError_t MENU_parseAndExecAction(
       case MENU_DC3_DIS_SER_DBG:
          status = CMD_runSetDbgDevice( client, &statusDC3, _DC3_Serial, false );
          break;
-
+      case MENU_DB_RESET:
+         status = CMD_runResetDB( client, &statusDC3 );
+         break;
       case MENU_NO_ACTION:;
          WRN_out << enumToString(menuAction) <<  " associated with this menu selection";
          break;

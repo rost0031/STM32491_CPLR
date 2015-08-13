@@ -263,11 +263,22 @@ const char* const CON_accessToStr( const DC3AccessType_t acc );
 /**
  * @brief   Get a string representation of a DB element.
  *
- * @param  [in] elem: DC3DBElem_t that specifies what element to retrieve.
+ * @param  [in] elem: DC3DBElem_t that specifies what element to convert
+ * to string.
  * @return str: char* representation of DB element if found,
  *             "INVALID DB ELEM" if not found.
  */
 const char* const CON_dbElemToStr( const DC3DBElem_t elem );
+
+/**
+ * @brief   Get a string representation of a DC3 API Messages Name
+ *
+ * @param  [in] msg: DC3MsgName_t that specifies what message name to convert
+ * to string.
+ * @return str: char* representation of DC3MsgName_t msg if found,
+ *             "Invalid" if not found.
+ */
+const char* const CON_msgNameToStr( const DC3MsgName_t msg );
 
 /**
  * @} end group groupConOut

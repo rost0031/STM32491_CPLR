@@ -415,6 +415,22 @@ public:
          bool bEnable
    );
 
+   /**
+    * @brief   Blocking cmd to reset the DB settings on the DC3 EEPROM
+    *
+    * @param [out] *status: DC3Error_t pointer to the returned status of from
+    * the DC3 board.
+    *    @arg  ERR_NONE: success.
+    *    other error codes if failure.
+    * @note: unless this variable is set to ERR_NONE at the completion, the
+    * results of other returned data should not be trusted.
+    *
+    * @return: APIError_t status of the client executing the command.
+    *    @arg  API_ERR_NONE: success
+    *    other error codes if failure.
+    */
+   APIError_t DC3_resetDB( DC3Error_t* status );
+
    /****************************************************************************
     *                    Client control functionality
     ***************************************************************************/

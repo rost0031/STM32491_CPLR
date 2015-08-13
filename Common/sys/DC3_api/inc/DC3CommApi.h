@@ -207,6 +207,7 @@ typedef union DC3PayloadMsgs {
    struct DC3I2CDataPayloadMsg   i2cDataPayload;
    struct DC3RamTestPayloadMsg   ramTestPayload;
    struct DC3DbgPayloadMsg       dbgPayload;
+   struct DC3DBDataPayloadMsg    dbDataPayload;
 } DC3PayloadMsgUnion_t;
 
 

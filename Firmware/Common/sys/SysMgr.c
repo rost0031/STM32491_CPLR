@@ -523,7 +523,7 @@ static QState SysMgr_Idle(SysMgr * const me, QEvt const * const e) {
              * matter. */
             me->dbElem = _DC3_DB_MAGIC_WORD;
             me->dbCmd = DB_OP_WRITE;
-            me->accessType = ((DBReadReqEvt const *)e)->accessType;
+            me->accessType = _DC3_ACCESS_QPC;
 
             status_ = Q_TRAN(&SysMgr_DBFullReset);
             break;

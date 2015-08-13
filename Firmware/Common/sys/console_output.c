@@ -389,6 +389,47 @@ const char* const CON_dbElemToStr( const DC3DBElem_t elem )
    }
 }
 
+/******************************************************************************/
+const char* const CON_msgNameToStr( const DC3MsgName_t msg )
+{
+   /* Make sure to take off the "_DC3" prefix and the "Msg" from the returned
+    * strings.  This saves flash space */
+   switch ( msg ) {
+      case _DC3NoMsg:                  return("None");                  break;
+      case _DC3StatusPayloadMsg:       return("StatusPayload");         break;
+      case _DC3GetVersionMsg:          return("GetVersion");            break;
+      case _DC3VersionPayloadMsg:      return("VersionPayload");        break;
+      case _DC3GetBootModeMsg:         return("GetBootMode");           break;
+      case _DC3SetBootModeMsg:         return("SetBootMode");           break;
+      case _DC3BootModePayloadMsg:     return("BootModePayload");       break;
+      case _DC3FlashMsg:               return("Flash");                 break;
+      case _DC3FlashMetaPayloadMsg:    return("FlashMetaPayload");      break;
+      case _DC3FlashDataPayloadMsg:    return("FlashDataPayload");      break;
+      case _DC3I2CReadMsg:             return("I2CRead");               break;
+      case _DC3I2CWriteMsg:            return("I2CWrite");              break;
+      case _DC3I2CDataPayloadMsg:      return("I2CDataPayload");        break;
+      case _DC3RamTestMsg:             return("RamTest");               break;
+      case _DC3RamTestPayloadMsg:      return("RamTestPayload");        break;
+      case _DC3DbgEnableEthMsg:        return("DbgEnableEth");          break;
+      case _DC3DbgDisableEthMsg:       return("DbgDisableEth");         break;
+      case _DC3DbgEnableSerMsg:        return("DbgEnableSer");          break;
+      case _DC3DbgDisableSerMsg:       return("DbgDisableSer");         break;
+      case _DC3DbgRstDefaultMsg:       return("DbgRstDefault");         break;
+      case _DC3DbgEnableMsg:           return("DbgEnable");             break;
+      case _DC3DbgDisableMsg:          return("DbgDisable");            break;
+      case _DC3DbgGetCurrentMsg:       return("DbgGetCurrent");         break;
+      case _DC3DbgSetCurrentMsg:       return("DbgSetCurrent");         break;
+      case _DC3DbgPayloadMsg:          return("DbgPayload");            break;
+      case _DC3DBFullResetMsg:         return("DBFullReset");           break;
+      case _DC3DBGetElemMsg:           return("DBGetElem");             break;
+      case _DC3DBSetElemMsg:           return("DBSetElem");             break;
+      case _DC3DBDataPayloadMsg:       return("DBDataPayload");         break;
+
+      /* Add more message name translations here*/
+      default:                         return("Invalid");               break;
+   }
+}
+
 /**
  * @} end group groupConOut
  */
