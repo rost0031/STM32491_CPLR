@@ -458,7 +458,7 @@ static QState I2C1DevMgr_Busy(I2C1DevMgr * const me, QEvt const * const e) {
         case Q_EXIT_SIG: {
             QTimeEvt_disarm( &me->i2cTimerEvt ); /* Disarm timer on exit */
 
-            LOG_printf( "Finished %s op on dev %s on I2CBus%d to at addr 0x%02x via Acc: %d\n",
+            DBG_printf( "Finished %s op on dev %s on I2CBus%d to at addr 0x%02x via Acc: %d\n",
                 I2C_opToStr( me->i2cDevOp ), I2C_devToStr(me->iDev), me->iDev+1, me->addrStart, me->accessType );
 
             if ( I2C_OP_MEM_READ == me->i2cDevOp || I2C_OP_REG_READ == me->i2cDevOp ) {
@@ -920,7 +920,7 @@ static QState I2C1DevMgr_ReadMem(I2C1DevMgr * const me, QEvt const * const e) {
                 );
 
                 if ( ERR_NONE == err ) {
-                    LOG_printf( "Read %d bytes: %s\n",
+                    DBG_printf( "Read %d bytes: %s\n",
                         ((I2CBusDataEvt const *)e)->dataLen, me->i2cReadDoneEvt->dataBuf );
                 } else {
                     WRN_printf( "Read %d bytes but data too big for printing due to buffer size. Not shown\n",
@@ -1069,7 +1069,7 @@ static QState I2C1DevMgr_PostWriteWait(I2C1DevMgr * const me, QEvt const * const
             }
             /* ${AOs::I2C1DevMgr::SM::Active::Busy::PostWriteWait::I2C1_DEV_POST_WR~::[else]} */
             else {
-                LOG_printf(
+                DBG_printf(
                     "Wrote %d pages to %s. Error: 0x%08x\n",
                     me->writeTotalPages,
                     I2C_devToStr(me->iDev),
@@ -1251,7 +1251,7 @@ static QState I2C1DevMgr_ValidateRequest(I2C1DevMgr * const me, QEvt const * con
                         goto I2CDEV1_VALIDATE_FINISH_TAG;
                     }
 
-                    LOG_printf( "write sizes: 1st page: %d, lst page: %d, tot pages: %d\n",
+                    DBG_printf( "write sizes: 1st page: %d, lst page: %d, tot pages: %d\n",
                         me->writeSizeFirstPage, me->writeSizeLastPage, me->writeTotalPages );
 
                     /* This is the first iteration through the "loop" which writes several pages */
@@ -1348,19 +1348,15 @@ static QState I2C1DevMgr_Idle(I2C1DevMgr * const me, QEvt const * const e) {
         case I2C1_DEV_RAW_MEM_READ_SIG: {
             /* Store all the data from the event and look up a few things */
 
-            /* I2C1Dev AO assumes that the addresses that are passed in are already correct
-             * for the device they are being sent for.  Most of access happen via the DB
-             * which does all the work of figuring out the correct addresses and sizes.  If
-             * direct access of I2C1Dev AO is being performed, it's the role of the user to
-             * know the correct addresses. */
+            /* I2C1Dev AO will figure out the correct mem address */
             me->iDev       = ((I2CReadReqEvt const *)e)->i2cDev;
-            me->addrStart  = ((I2CReadReqEvt const *)e)->addr;
+            me->addrStart  = I2C_getMemAddr( me->iDev  ) + ((I2CReadReqEvt const *)e)->start;
             me->accessType = ((I2CReadReqEvt const *)e)->accessType;
             me->bytesTotal = ((I2CReadReqEvt const *)e)->bytes;
             me->addrSize   = I2C_getMemAddrSize(me->iDev);
             me->i2cDevOp   = I2C_OP_MEM_READ;
 
-            LOG_printf( "Trying %s op to read %d bytes from dev %s on I2CBus%d to at addr 0x%02x via Acc: %d\n",
+            DBG_printf( "Trying %s op to read %d bytes from dev %s on I2CBus%d to at addr 0x%02x via Acc: %d\n",
                 I2C_opToStr( me->i2cDevOp ), me->bytesTotal, I2C_devToStr(me->iDev), me->iDev+1, me->addrStart, me->accessType );
 
             /* Allocate a ReadDone evt that will ALWAYS be sent out upon exit of the Busy state
@@ -1377,13 +1373,9 @@ static QState I2C1DevMgr_Idle(I2C1DevMgr * const me, QEvt const * const e) {
         case I2C1_DEV_RAW_MEM_WRITE_SIG: {
             /* Store all the data from the event and look up a few things */
 
-            /* I2C1Dev AO assumes that the addresses that are passed in are already correct
-             * for the device they are being sent for.  Most of access happen via the DB
-             * which does all the work of figuring out the correct addresses and sizes.  If
-             * direct access of I2C1Dev AO is being performed, it's the role of the user to
-             * know the correct addresses. */
+            /* I2C1Dev AO will figure out the correct mem address */
             me->iDev       = ((I2CWriteReqEvt const *)e)->i2cDev;
-            me->addrStart  = ((I2CWriteReqEvt const *)e)->addr;
+            me->addrStart  = I2C_getMemAddr( me->iDev ) + ((I2CWriteReqEvt const *)e)->start;
             me->accessType = ((I2CWriteReqEvt const *)e)->accessType;
             me->bytesTotal = ((I2CWriteReqEvt const *)e)->bytes;
             me->addrSize   = I2C_getMemAddrSize(me->iDev);
@@ -1403,13 +1395,13 @@ static QState I2C1DevMgr_Idle(I2C1DevMgr * const me, QEvt const * const e) {
                 true                                 // bPrintX
             );
 
-            LOG_printf( "Trying %s op to write to dev %s on I2CBus%d to at addr 0x%02x via Acc: %d\n",
+            DBG_printf( "Trying %s op to write to dev %s on I2CBus%d to at addr 0x%02x via Acc: %d\n",
                 I2C_opToStr( me->i2cDevOp ), I2C_devToStr(me->iDev), me->iDev+1, me->addrStart, me->accessType );
             if ( ERR_NONE == err ) {
-                LOG_printf( "Data to write (%d bytes): %s\n",
+                DBG_printf( "Data to write (%d bytes): %s\n",
                     me->bytesTotal, me->dataBuf );
             } else {
-                WRN_printf( "Data to write (%d bytes) too big to print due to buffer size (%d). Not shown\n",
+                DBG_printf( "Data to write (%d bytes) too big to print due to buffer size (%d). Not shown\n",
                     ((I2CBusDataEvt const *)e)->dataLen,  sizeof(me->dataBuf) );
             }
 

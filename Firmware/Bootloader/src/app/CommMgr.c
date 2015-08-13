@@ -1018,7 +1018,7 @@ static QState CommMgr_ValidateMsg(CommMgr * const me, QEvt const * const e) {
                     /* Create the event and directly post it to the right AO. */
                     I2CReadReqEvt *i2cReadReqEvt  = Q_NEW(I2CReadReqEvt, I2C1_DEV_RAW_MEM_READ_SIG);
                     i2cReadReqEvt->i2cDev         = me->payloadMsgUnion.i2cDataPayload._i2cDev;
-                    i2cReadReqEvt->addr           = I2C_getMemAddr( i2cReadReqEvt->i2cDev ) + me->payloadMsgUnion.i2cDataPayload._start;
+                    i2cReadReqEvt->start          = me->payloadMsgUnion.i2cDataPayload._start;
                     i2cReadReqEvt->bytes          = me->payloadMsgUnion.i2cDataPayload._nBytes;
                     i2cReadReqEvt->accessType     = me->payloadMsgUnion.i2cDataPayload._accType;
                     QACTIVE_POST(AO_I2C1DevMgr, (QEvt *)(i2cReadReqEvt), me);
@@ -1048,7 +1048,7 @@ static QState CommMgr_ValidateMsg(CommMgr * const me, QEvt const * const e) {
                     /* Create the event and directly post it to the right AO. */
                     I2CWriteReqEvt *i2cWriteReqEvt  = Q_NEW(I2CWriteReqEvt, I2C1_DEV_RAW_MEM_WRITE_SIG);
                     i2cWriteReqEvt->i2cDev         = me->payloadMsgUnion.i2cDataPayload._i2cDev;
-                    i2cWriteReqEvt->addr           = I2C_getMemAddr( i2cWriteReqEvt->i2cDev ) + me->payloadMsgUnion.i2cDataPayload._start;
+                    i2cWriteReqEvt->start          = me->payloadMsgUnion.i2cDataPayload._start;
                     i2cWriteReqEvt->accessType     = me->payloadMsgUnion.i2cDataPayload._accType;
                     i2cWriteReqEvt->bytes          = me->payloadMsgUnion.i2cDataPayload._nBytes;
                     MEMCPY(

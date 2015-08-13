@@ -6,8 +6,8 @@
    <documentation>/**
  * @brief Event struct type for specifying a raw memory read request.
  */</documentation>
-   <attribute name="addr" type="uint16_t" visibility="0x01" properties="0x00">
-    <documentation>/**&lt; Internal memory address of the I2C device*/</documentation>
+   <attribute name="start" type="uint16_t" visibility="0x01" properties="0x00">
+    <documentation>/**&lt; Offset from zero on the device where to start accessing the memory of the I2C device*/</documentation>
    </attribute>
    <attribute name="bytes" type="uint16_t" visibility="0x01" properties="0x00">
     <documentation>/**&lt; Specify how many bytes to read */</documentation>
@@ -23,8 +23,8 @@
    <documentation>/**
  * @brief Event struct type for specifying a memory write request.
  */</documentation>
-   <attribute name="addr" type="uint16_t" visibility="0x01" properties="0x00">
-    <documentation>/**&lt; Internal memory address of the I2C device*/</documentation>
+   <attribute name="start" type="uint16_t" visibility="0x01" properties="0x00">
+    <documentation>/**&lt; Offset from zero on the device where to start accessing the memory of the I2C device*/</documentation>
    </attribute>
    <attribute name="bytes" type="uint16_t" visibility="0x01" properties="0x00">
     <documentation>/**&lt; Specify how many bytes to read */</documentation>
@@ -238,7 +238,7 @@ QTimeEvt_rearm(
 );</entry>
       <exit>QTimeEvt_disarm( &amp;me-&gt;i2cTimerEvt ); /* Disarm timer on exit */
 
-LOG_printf( &quot;Finished %s op on dev %s on I2CBus%d to at addr 0x%02x via Acc: %d\n&quot;,
+DBG_printf( &quot;Finished %s op on dev %s on I2CBus%d to at addr 0x%02x via Acc: %d\n&quot;,
     I2C_opToStr( me-&gt;i2cDevOp ), I2C_devToStr(me-&gt;iDev), me-&gt;iDev+1, me-&gt;addrStart, me-&gt;accessType );
 
 if ( I2C_OP_MEM_READ == me-&gt;i2cDevOp || I2C_OP_REG_READ == me-&gt;i2cDevOp ) {
@@ -627,7 +627,7 @@ DC3Error_t err = CON_hexToStr(
 );
 
 if ( ERR_NONE == err ) {
-    LOG_printf( &quot;Read %d bytes: %s\n&quot;,
+    DBG_printf( &quot;Read %d bytes: %s\n&quot;,
         ((I2CBusDataEvt const *)e)-&gt;dataLen, me-&gt;i2cReadDoneEvt-&gt;dataBuf );
 } else {
     WRN_printf( &quot;Read %d bytes but data too big for printing due to buffer size. Not shown\n&quot;,
@@ -736,7 +736,7 @@ me-&gt;writeCurrPage    += 1;
 me-&gt;addrStart         = me-&gt;writeMemAddrCurr;</action>
         <choice target="../../../../1">
          <guard>else</guard>
-         <action>LOG_printf(
+         <action>DBG_printf(
     &quot;Wrote %d pages to %s. Error: 0x%08x\n&quot;,
     me-&gt;writeTotalPages,
     I2C_devToStr(me-&gt;iDev),
@@ -917,7 +917,7 @@ switch( me-&gt;i2cDevOp ) {
             goto I2CDEV1_VALIDATE_FINISH_TAG;
         }
 
-        LOG_printf( &quot;write sizes: 1st page: %d, lst page: %d, tot pages: %d\n&quot;,
+        DBG_printf( &quot;write sizes: 1st page: %d, lst page: %d, tot pages: %d\n&quot;,
             me-&gt;writeSizeFirstPage, me-&gt;writeSizeLastPage, me-&gt;writeTotalPages );
 
         /* This is the first iteration through the &quot;loop&quot; which writes several pages */
@@ -1008,19 +1008,15 @@ DBG_printf(&quot;Back in Idle state.\n&quot;);</entry>
       <tran trig="I2C1_DEV_RAW_MEM_READ" target="../../0/12">
        <action>/* Store all the data from the event and look up a few things */
 
-/* I2C1Dev AO assumes that the addresses that are passed in are already correct
- * for the device they are being sent for.  Most of access happen via the DB
- * which does all the work of figuring out the correct addresses and sizes.  If
- * direct access of I2C1Dev AO is being performed, it's the role of the user to
- * know the correct addresses. */
+/* I2C1Dev AO will figure out the correct mem address */
 me-&gt;iDev       = ((I2CReadReqEvt const *)e)-&gt;i2cDev;
-me-&gt;addrStart  = ((I2CReadReqEvt const *)e)-&gt;addr;
+me-&gt;addrStart  = I2C_getMemAddr( me-&gt;iDev  ) + ((I2CReadReqEvt const *)e)-&gt;start;
 me-&gt;accessType = ((I2CReadReqEvt const *)e)-&gt;accessType;
 me-&gt;bytesTotal = ((I2CReadReqEvt const *)e)-&gt;bytes;
 me-&gt;addrSize   = I2C_getMemAddrSize(me-&gt;iDev);
 me-&gt;i2cDevOp   = I2C_OP_MEM_READ;
 
-LOG_printf( &quot;Trying %s op to read %d bytes from dev %s on I2CBus%d to at addr 0x%02x via Acc: %d\n&quot;,
+DBG_printf( &quot;Trying %s op to read %d bytes from dev %s on I2CBus%d to at addr 0x%02x via Acc: %d\n&quot;,
     I2C_opToStr( me-&gt;i2cDevOp ), me-&gt;bytesTotal, I2C_devToStr(me-&gt;iDev), me-&gt;iDev+1, me-&gt;addrStart, me-&gt;accessType );
 
 /* Allocate a ReadDone evt that will ALWAYS be sent out upon exit of the Busy state
@@ -1037,13 +1033,9 @@ me-&gt;i2cReadDoneEvt-&gt;bytes  = 0;</action>
       <tran trig="I2C1_DEV_RAW_MEM_WRITE" target="../../0/12">
        <action>/* Store all the data from the event and look up a few things */
 
-/* I2C1Dev AO assumes that the addresses that are passed in are already correct
- * for the device they are being sent for.  Most of access happen via the DB
- * which does all the work of figuring out the correct addresses and sizes.  If
- * direct access of I2C1Dev AO is being performed, it's the role of the user to
- * know the correct addresses. */
+/* I2C1Dev AO will figure out the correct mem address */
 me-&gt;iDev       = ((I2CWriteReqEvt const *)e)-&gt;i2cDev;
-me-&gt;addrStart  = ((I2CWriteReqEvt const *)e)-&gt;addr;
+me-&gt;addrStart  = I2C_getMemAddr( me-&gt;iDev ) + ((I2CWriteReqEvt const *)e)-&gt;start;
 me-&gt;accessType = ((I2CWriteReqEvt const *)e)-&gt;accessType;
 me-&gt;bytesTotal = ((I2CWriteReqEvt const *)e)-&gt;bytes;
 me-&gt;addrSize   = I2C_getMemAddrSize(me-&gt;iDev);
@@ -1063,13 +1055,13 @@ DC3Error_t err = CON_hexToStr(
     true                                 // bPrintX
 );
 
-LOG_printf( &quot;Trying %s op to write to dev %s on I2CBus%d to at addr 0x%02x via Acc: %d\n&quot;,
+DBG_printf( &quot;Trying %s op to write to dev %s on I2CBus%d to at addr 0x%02x via Acc: %d\n&quot;,
     I2C_opToStr( me-&gt;i2cDevOp ), I2C_devToStr(me-&gt;iDev), me-&gt;iDev+1, me-&gt;addrStart, me-&gt;accessType );
 if ( ERR_NONE == err ) {
-    LOG_printf( &quot;Data to write (%d bytes): %s\n&quot;,
+    DBG_printf( &quot;Data to write (%d bytes): %s\n&quot;,
         me-&gt;bytesTotal, me-&gt;dataBuf );
 } else {
-    WRN_printf( &quot;Data to write (%d bytes) too big to print due to buffer size (%d). Not shown\n&quot;,
+    DBG_printf( &quot;Data to write (%d bytes) too big to print due to buffer size (%d). Not shown\n&quot;,
         ((I2CBusDataEvt const *)e)-&gt;dataLen,  sizeof(me-&gt;dataBuf) );
 }
 

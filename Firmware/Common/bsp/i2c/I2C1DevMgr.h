@@ -61,8 +61,8 @@ typedef struct {
 /* protected: */
     QEvt super;
 
-    /**< Internal memory address of the I2C device*/
-    uint16_t addr;
+    /**< Offset from zero on the device where to start accessing the memory of the I2C device*/
+    uint16_t start;
 
     /**< Specify how many bytes to read */
     uint16_t bytes;
@@ -82,8 +82,8 @@ typedef struct {
 /* protected: */
     QEvt super;
 
-    /**< Internal memory address of the I2C device*/
-    uint16_t addr;
+    /**< Offset from zero on the device where to start accessing the memory of the I2C device*/
+    uint16_t start;
 
     /**< Specify how many bytes to read */
     uint16_t bytes;

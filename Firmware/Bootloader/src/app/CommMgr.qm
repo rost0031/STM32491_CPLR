@@ -788,7 +788,7 @@ me-&gt;basicMsg._msgPayload = me-&gt;msgPayloadName;
 /* Create the event and directly post it to the right AO. */
 I2CReadReqEvt *i2cReadReqEvt  = Q_NEW(I2CReadReqEvt, I2C1_DEV_RAW_MEM_READ_SIG);
 i2cReadReqEvt-&gt;i2cDev         = me-&gt;payloadMsgUnion.i2cDataPayload._i2cDev;
-i2cReadReqEvt-&gt;addr           = I2C_getMemAddr( i2cReadReqEvt-&gt;i2cDev ) + me-&gt;payloadMsgUnion.i2cDataPayload._start;
+i2cReadReqEvt-&gt;start          = me-&gt;payloadMsgUnion.i2cDataPayload._start;
 i2cReadReqEvt-&gt;bytes          = me-&gt;payloadMsgUnion.i2cDataPayload._nBytes;
 i2cReadReqEvt-&gt;accessType     = me-&gt;payloadMsgUnion.i2cDataPayload._accType;
 QACTIVE_POST(AO_I2C1DevMgr, (QEvt *)(i2cReadReqEvt), me);</action>
@@ -825,7 +825,7 @@ me-&gt;basicMsg._msgPayload = me-&gt;msgPayloadName;
 /* Create the event and directly post it to the right AO. */
 I2CWriteReqEvt *i2cWriteReqEvt  = Q_NEW(I2CWriteReqEvt, I2C1_DEV_RAW_MEM_WRITE_SIG);
 i2cWriteReqEvt-&gt;i2cDev         = me-&gt;payloadMsgUnion.i2cDataPayload._i2cDev;
-i2cWriteReqEvt-&gt;addr           = I2C_getMemAddr( i2cWriteReqEvt-&gt;i2cDev ) + me-&gt;payloadMsgUnion.i2cDataPayload._start;
+i2cWriteReqEvt-&gt;start          = me-&gt;payloadMsgUnion.i2cDataPayload._start;
 i2cWriteReqEvt-&gt;accessType     = me-&gt;payloadMsgUnion.i2cDataPayload._accType;
 i2cWriteReqEvt-&gt;bytes          = me-&gt;payloadMsgUnion.i2cDataPayload._nBytes;
 MEMCPY(

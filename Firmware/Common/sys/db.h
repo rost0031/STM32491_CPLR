@@ -182,24 +182,27 @@ const DC3Error_t DB_initToDefault( const DC3AccessType_t accessType  );
  *    @arg _DC3_DB_IP_ADDR: IP address stored in the RW part of DB.
  *    @arg _DC3_DB_SN: Serial number stored in the RO part of DB.
  *
- * @param  [out] *pBuffer: uint8_t pointer to a buffer where to store the
- *                         retrieved element.
- * @param  [in] bufSize: size of the pBuffer.
- * @param  [in] accessType: DC3AccessType_t that specifies how the function is being
- * accessed.
+ * @param  [in] accessType: DC3AccessType_t that specifies how the function is
+ * being accessed.
  *    @arg _DC3_ACCESS_BARE: blocking access that is slow.  Don't use once the
  *                            RTOS is running.
- *    @arg _DC3_ACCESS_QPC:        non-blocking, event based access.
+ *    @arg _DC3_ACCESS_QPC:   non-blocking, event based access.
  *    @arg _DC3_ACCESS_FRT:   non-blocking, but waits on queue to know the status.
+ * @param  [in] bufSize: size of the pBuffer. @note: this can be set to 0 for
+ * QPC accesses
+ *
+ * @param  [out] *pBuffer: uint8_t pointer to a buffer where to store the
+ * retrieved element. @note: this can be set to NULL for QPC accesses.
+ *
  * @return DC3Error_t: status of the read operation
  *    @arg ERR_NONE: if no errors occurred
  *    other errors if found.
  */
-const DC3Error_t DB_getElemBLK(
+const DC3Error_t DB_getElem(
       const DC3DBElem_t elem,
-      uint8_t* pBuffer,
+      const DC3AccessType_t accessType,
       const size_t bufSize,
-      const DC3AccessType_t accessType
+      uint8_t* pBuffer
 );
 
 /**
@@ -215,24 +218,25 @@ const DC3Error_t DB_getElemBLK(
  *    @arg DB_VERSION: version of the DB.  To be used for future upgrades.
  *    @arg DB_IP_ADDR: IP address stored in the RW part of DB.
  *
- * @param  [in] *pBuffer: uint8_t pointer to a buffer where to element to be set
- *                         is.
- * @param  [in] bufSize: size of the pBuffer.
  * @param  [in] accessType: DC3AccessType_t that specifies how the function is being
  * accessed.
  *    @arg _DC3_ACCESS_BARE: blocking access that is slow.  Don't use once the
  *                            RTOS is running.
  *    @arg _DC3_ACCESS_QPC:        non-blocking, event based access.
  *    @arg _DC3_ACCESS_FRT:   non-blocking, but waits on queue to know the status.
+ *
+ * @param  [in] bufSize: size of the pBuffer.
+ * @param  [in] *pBuffer: uint8_t pointer to a buffer where to element to be set
+ *                         is.
  * @return DC3Error_t: status of the read operation
  *    @arg ERR_NONE: if no errors occurred
  *    other errors if found.
  */
-const DC3Error_t DB_setElemBLK(
+const DC3Error_t DB_setElem(
       const DC3DBElem_t elem,
-      const uint8_t* const pBuffer,
+      const DC3AccessType_t accessType,
       const size_t bufSize,
-      const DC3AccessType_t accessType
+      const uint8_t* const pBuffer
 );
 
 /**

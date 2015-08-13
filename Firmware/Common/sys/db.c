@@ -91,11 +91,11 @@ const DC3Error_t DB_isValid( const DC3AccessType_t accessType )
    DC3Error_t status = ERR_NONE;            /* keep track of success/failure */
 
    uint32_t db_magicWord = 0;
-   status = DB_getElemBLK(
+   status = DB_getElem(
          _DC3_DB_MAGIC_WORD,
-         (uint8_t *)&db_magicWord,
+         _DC3_ACCESS_BARE,
          sizeof(db_magicWord),
-         _DC3_ACCESS_BARE
+         (uint8_t *)&db_magicWord
    );
 
    if ( ERR_NONE != status ) {
@@ -112,11 +112,11 @@ const DC3Error_t DB_isValid( const DC3AccessType_t accessType )
    }
 
    uint16_t db_version = 0;
-   status = DB_getElemBLK(
+   status = DB_getElem(
          _DC3_DB_VERSION,
-         (uint8_t *)&db_version,
+         _DC3_ACCESS_BARE,
          sizeof(db_version),
-         _DC3_ACCESS_BARE
+         (uint8_t *)&db_version
    );
 
    if ( ERR_NONE != status ) {
@@ -150,31 +150,31 @@ const DC3Error_t DB_initToDefault( const DC3AccessType_t accessType )
 
    switch( accessType ) {
       case _DC3_ACCESS_BARE:
-         status = DB_setElemBLK(
+         status = DB_setElem(
                _DC3_DB_MAGIC_WORD,
-               (uint8_t *)&DB_defaultEeepromSettings.dbMagicWord,
+               accessType,
                sizeof(DB_defaultEeepromSettings.dbMagicWord),
-               accessType
+               (uint8_t *)&DB_defaultEeepromSettings.dbMagicWord
          );
          if ( ERR_NONE != status ) {
             goto DB_initToDefault_ERR_HANDLE;
          }
 
-         status = DB_setElemBLK(
+         status = DB_setElem(
                _DC3_DB_VERSION,
-               (uint8_t *)&DB_defaultEeepromSettings.dbVersion,
+               accessType,
                sizeof(DB_defaultEeepromSettings.dbVersion),
-               accessType
+               (uint8_t *)&DB_defaultEeepromSettings.dbVersion
          );
          if ( ERR_NONE != status ) {
             goto DB_initToDefault_ERR_HANDLE;
          }
 
-         status = DB_setElemBLK(
+         status = DB_setElem(
                _DC3_DB_IP_ADDR,
-               (uint8_t *)&DB_defaultEeepromSettings.ipAddr,
+               accessType,
                sizeof(DB_defaultEeepromSettings.ipAddr),
-               accessType
+               (uint8_t *)&DB_defaultEeepromSettings.ipAddr
          );
          if ( ERR_NONE != status ) {
             goto DB_initToDefault_ERR_HANDLE;
@@ -186,7 +186,7 @@ const DC3Error_t DB_initToDefault( const DC3AccessType_t accessType )
          /* Create the event and directly post it to the right AO. */
          I2CWriteReqEvt *i2cWriteReqEvt  = Q_NEW(I2CWriteReqEvt, I2C1_DEV_RAW_MEM_WRITE_SIG);
          i2cWriteReqEvt->i2cDev          = DB_getI2CDev(_DC3_DB_MAGIC_WORD);
-         i2cWriteReqEvt->addr            = I2C_getMemAddr( _DC3_EEPROM ) + DB_getElemOffset(_DC3_DB_MAGIC_WORD);
+         i2cWriteReqEvt->start           = DB_getElemOffset(_DC3_DB_MAGIC_WORD);
          i2cWriteReqEvt->bytes           = sizeof(DB_defaultEeepromSettings);
          i2cWriteReqEvt->accessType      = accessType;
          MEMCPY(i2cWriteReqEvt->dataBuf, &DB_defaultEeepromSettings, sizeof(DB_defaultEeepromSettings));
@@ -217,24 +217,28 @@ DB_initToDefault_ERR_HANDLE:      /* Handle any error that may have occurred. */
 }
 
 /******************************************************************************/
-const DC3Error_t DB_getElemBLK(
+const DC3Error_t DB_getElem(
       const DC3DBElem_t elem,
-      uint8_t* pBuffer,
+      const DC3AccessType_t accessType,
       const size_t bufSize,
-      const DC3AccessType_t accessType
+      uint8_t* pBuffer
 )
 {
    DC3Error_t status = ERR_NONE;            /* keep track of success/failure */
 
-   /* 1. Sanity checks of buffer sizes and memory allocations. */
-   if ( bufSize < settingsDB[elem].size ) {
-      status = ERR_MEM_BUFFER_LEN;
-      goto DB_getElemBLK_ERR_HANDLE;       /* Stop and jump to error handling */
-   }
+   /* 1. Sanity checks of buffer sizes and memory allocations. Only check this
+    * for bare metal access since QPC and FRT accesses will post events with
+    * their own buffers */
+   if ( _DC3_ACCESS_BARE == accessType ) {
+      if ( bufSize < settingsDB[elem].size ) {
+         status = ERR_MEM_BUFFER_LEN;
+         goto DB_getElemBLK_ERR_HANDLE;       /* Stop and jump to error handling */
+      }
 
-   if ( NULL == pBuffer ) {
-      status = ERR_MEM_NULL_VALUE;
-      goto DB_getElemBLK_ERR_HANDLE;       /* Stop and jump to error handling */
+      if ( NULL == pBuffer ) {
+         status = ERR_MEM_NULL_VALUE;
+         goto DB_getElemBLK_ERR_HANDLE;       /* Stop and jump to error handling */
+      }
    }
 
    /* 2. Find where the element lives */
@@ -245,14 +249,24 @@ const DC3Error_t DB_getElemBLK(
       case DB_EEPROM:                           /* Intentionally fall through */
       case DB_SN_ROM:                           /* Intentionally fall through */
       case DB_UI_ROM:
-         status = I2C_readDevMemBLK(
-               DB_I2C_devices[loc],          // DC3I2CDevice_t iDev,
-               settingsDB[elem].offset,      // uint16_t offset,
-               settingsDB[elem].size,        // uint16_t bytesToRead,
-               accessType,                   // DC3AccessType_t accType,
-               pBuffer,                      // uint8_t* pBuffer,
-               bufSize                       // uint8_t  bufSize
-         );
+         if ( _DC3_ACCESS_BARE == accessType ) {
+            status = I2C_readDevMemBLK(
+                  DB_I2C_devices[loc],          // DC3I2CDevice_t iDev,
+                  settingsDB[elem].offset,      // uint16_t offset,
+                  settingsDB[elem].size,        // uint16_t bytesToRead,
+                  accessType,                   // DC3AccessType_t accType,
+                  pBuffer,                      // uint8_t* pBuffer,
+                  bufSize                       // uint8_t  bufSize
+            );
+         } else {
+            /* Create the event and directly post it to the right AO. */
+            I2CReadReqEvt *i2cReadReqEvt  = Q_NEW(I2CReadReqEvt, I2C1_DEV_RAW_MEM_READ_SIG);
+            i2cReadReqEvt->i2cDev         = DB_getI2CDev(loc);
+            i2cReadReqEvt->start          = DB_getElemOffset(elem);
+            i2cReadReqEvt->bytes          = elem;
+            i2cReadReqEvt->accessType     = accessType;
+            QACTIVE_POST(AO_I2C1DevMgr, (QEvt *)(i2cReadReqEvt), me);
+         }
          break;
       case DB_GPIO:
          status = ERR_UNIMPLEMENTED;
@@ -290,11 +304,11 @@ DB_getElemBLK_ERR_HANDLE:         /* Handle any error that may have occurred. */
 }
 
 /******************************************************************************/
-const DC3Error_t DB_setElemBLK(
+const DC3Error_t DB_setElem(
       const DC3DBElem_t elem,
-      const uint8_t* const pBuffer,
+      const DC3AccessType_t accessType,
       const size_t bufSize,
-      const DC3AccessType_t accessType
+      const uint8_t* const pBuffer
 )
 {
    DC3Error_t status = ERR_NONE; /* keep track of success/failure of operations. */
@@ -302,12 +316,12 @@ const DC3Error_t DB_setElemBLK(
    /* 1. Sanity checks of buffer sizes and memory allocations. */
    if ( bufSize > settingsDB[elem].size ) {
       status = ERR_MEM_BUFFER_LEN;
-      goto DB_getElemBLK_ERR_HANDLE;       /* Stop and jump to error handling */
+      goto DB_getElem_ERR_HANDLE;          /* Stop and jump to error handling */
    }
 
    if ( NULL == pBuffer ) {
       status = ERR_MEM_NULL_VALUE;
-      goto DB_getElemBLK_ERR_HANDLE;       /* Stop and jump to error handling */
+      goto DB_getElem_ERR_HANDLE;          /* Stop and jump to error handling */
    }
 
    /* 2. Find where the element lives */
@@ -316,31 +330,42 @@ const DC3Error_t DB_setElemBLK(
    /* 3. Call the location dependent functions to write the data to DB */
    switch( loc ) {
       case DB_EEPROM:
-         status = I2C_writeDevMemBLK(
-               DB_I2C_devices[loc],                // DC3I2CDevice_t iDev,
-               settingsDB[elem].offset,            // uint16_t offset,
-               settingsDB[elem].size,              // uint16_t bytesToWrite,
-               accessType,                         // DC3AccessType_t accType,
-               pBuffer,                            // uint8_t* pBuffer,
-               bufSize                             // uint8_t  bufSize
-         );
+         if ( _DC3_ACCESS_BARE == accessType ) {
+            status = I2C_writeDevMemBLK(
+                  DB_I2C_devices[loc],                // DC3I2CDevice_t iDev,
+                  settingsDB[elem].offset,            // uint16_t offset,
+                  settingsDB[elem].size,              // uint16_t bytesToWrite,
+                  accessType,                         // DC3AccessType_t accType,
+                  pBuffer,                            // uint8_t* pBuffer,
+                  bufSize                             // uint8_t  bufSize
+            );
+         } else {
+            /* Create the event and directly post it to the right AO. */
+            I2CWriteReqEvt *i2cWriteReqEvt = Q_NEW(I2CWriteReqEvt, I2C1_DEV_RAW_MEM_WRITE_SIG);
+            i2cWriteReqEvt->i2cDev         = DB_getI2CDev(loc);
+            i2cWriteReqEvt->start          = DB_getElemOffset(elem);
+            i2cWriteReqEvt->bytes          = DB_getElemSize(elem);
+            i2cWriteReqEvt->accessType     = accessType;
+            MEMCPY(i2cWriteReqEvt->dataBuf, pBuffer, i2cWriteReqEvt->bytes);
+            QACTIVE_POST(AO_I2C1DevMgr, (QEvt *)(i2cWriteReqEvt), me);
+         }
          break;
       case DB_SN_ROM:                           /* Fall through intentionally */
       case DB_UI_ROM:                           /* Fall through intentionally */
       case DB_GPIO:                             /* Fall through intentionally */
       case DB_FLASH:                            /* Fall through intentionally */
          status = ERR_DB_ELEM_IS_READ_ONLY;
-         goto DB_getElemBLK_ERR_HANDLE;
+         goto DB_getElem_ERR_HANDLE;
          break;
          /* Add more locations here. Anything that fails will go to the default
           * case and get logged as an error. */
       default:
          status = ERR_DB_ELEM_NOT_FOUND;
-         goto DB_getElemBLK_ERR_HANDLE;
+         goto DB_getElem_ERR_HANDLE;
          break;
    }
 
-DB_getElemBLK_ERR_HANDLE:         /* Handle any error that may have occurred. */
+DB_getElem_ERR_HANDLE:         /* Handle any error that may have occurred. */
    ERR_COND_OUTPUT(
          status,
          accessType,

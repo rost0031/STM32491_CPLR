@@ -272,7 +272,7 @@ const DC3Error_t I2C_readDevMemEVT(
    /* Create the event and directly post it to the right AO. */
    I2CReadReqEvt *i2cReadReqEvt  = Q_NEW(I2CReadReqEvt, sig);
    i2cReadReqEvt->i2cDev         = iDev;
-   i2cReadReqEvt->addr           = I2C_getMemAddr( iDev ) + offset;
+   i2cReadReqEvt->start          = offset;
    i2cReadReqEvt->bytes          = bytesToRead;
    i2cReadReqEvt->accessType     = accType;
    QACTIVE_POST(aoToPostTo, (QEvt *)(i2cReadReqEvt), callingAO);
@@ -341,7 +341,7 @@ const DC3Error_t I2C_writeDevMemEVT(
    /* Create the event and directly post it to the right AO. */
    I2CWriteReqEvt *i2cWriteReqEvt   = Q_NEW(I2CWriteReqEvt, sig);
    i2cWriteReqEvt->i2cDev           = iDev;
-   i2cWriteReqEvt->addr             = I2C_getMemAddr( iDev ) + offset;
+   i2cWriteReqEvt->start            = offset;
    i2cWriteReqEvt->bytes            = bytesToWrite;
    i2cWriteReqEvt->accessType       = accType;
    MEMCPY(
