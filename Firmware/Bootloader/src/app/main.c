@@ -60,6 +60,7 @@ static union SmallEvents {
    uint8_t e6[sizeof(FlashStatusEvt)];
    uint8_t e7[sizeof(DBWriteDoneEvt)];
    uint8_t e8[sizeof(DBReadReqEvt)];
+   uint8_t e9[sizeof(DBCheckSetElemEvt)];
 } l_smlPoolSto[50];                     /* storage for the small event pool */
 
 /**

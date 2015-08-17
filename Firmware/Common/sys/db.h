@@ -240,6 +240,65 @@ const DC3Error_t DB_setElem(
 );
 
 /**
+ * @brief   Check an element in the settings DB against default or compiled in.
+ *
+ * This function is run to check an element of the database against either a
+ * compiled default or some other default value, depending on the element.
+ *
+ * @param  [in] elem: DC3DBElem_t that specifies what element to set.
+ *    @arg DB_MAGIC_WORD: only used to validate that the DB even exists.
+ *    @arg DB_VERSION: version of the DB.  To be used for future upgrades.
+ *    @arg DB_IP_ADDR: IP address stored in the RW part of DB.
+ *
+ * @param  [in] accessType: DC3AccessType_t that specifies how the function is being
+ * accessed.
+ *    @arg _DC3_ACCESS_BARE: blocking access that is slow.  Don't use once the
+ *                            RTOS is running.
+ *    @arg _DC3_ACCESS_QPC:        non-blocking, event based access.
+ *    @arg _DC3_ACCESS_FRT:   non-blocking, but waits on queue to know the status.
+ *
+ * @param  [in] bufSize: size of data in the pBuffer.
+ * @param  [in] *pBuffer: uint8_t pointer to a buffer where the element is.
+ * @return DC3Error_t: status of the read operation
+ *    @arg ERR_NONE: if no errors occurred (or matches)
+ *    other errors if found.
+ */
+const DC3Error_t DB_chkElem(
+      const DC3DBElem_t elem,
+      const DC3AccessType_t accessType,
+      const size_t bufSize,
+      const uint8_t* const pBuffer
+);
+
+/**
+ * @brief   Get default value of a DB element.
+ *
+ * @param  [in] elem: DC3DBElem_t that specifies what element to set.
+ *    @arg DB_MAGIC_WORD: only used to validate that the DB even exists.
+ *    @arg DB_VERSION: version of the DB.  To be used for future upgrades.
+ *    @arg DB_IP_ADDR: IP address stored in the RW part of DB.
+ *
+ * @param  [in] accessType: DC3AccessType_t that specifies how the function is being
+ * accessed.
+ *    @arg _DC3_ACCESS_BARE: blocking access that is slow.  Don't use once the
+ *                            RTOS is running.
+ *    @arg _DC3_ACCESS_QPC:        non-blocking, event based access.
+ *    @arg _DC3_ACCESS_FRT:   non-blocking, but waits on queue to know the status.
+ *
+ * @param  [in] bufSize: size of data in the pBuffer.
+ * @param  [in] *pBuffer: uint8_t pointer to a buffer where the element is.
+ * @return DC3Error_t: status of the read operation
+ *    @arg ERR_NONE: if no errors occurred (or matches)
+ *    other errors if found.
+ */
+const DC3Error_t DB_getEepromDefaultElem(
+      const DC3DBElem_t elem,
+      const DC3AccessType_t accessType,
+      const size_t bufSize,
+      uint8_t* pBuffer
+);
+
+/**
  * @brief   Get the DB element location in the DB
  *
  * @param [in] elem: DC3DBElem_t that specifies the DB element
@@ -304,7 +363,7 @@ const DC3I2CDevice_t DB_getI2CDev( const DB_ElemLoc_t loc );
  *    @arg ERR_NONE: if no errors occurred
  *    other errors if found.
  */
-const DC3Error_t DB_readEEPROM(
+const DC3Error_t DB_readFlash(
       const DC3DBElem_t elem,
       const uint8_t bufferSize,
       uint8_t* const buffer,

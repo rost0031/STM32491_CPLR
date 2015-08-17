@@ -323,24 +323,14 @@ static QState SysMgr_ResetDBDbgDevices(SysMgr * const me, QEvt const * const e);
 static QState SysMgr_DBFullReset(SysMgr * const me, QEvt const * const e);
 
 /**
- * @brief    Check DB element
+ * @brief    Check DB element and set it if not properly set.
  *
  * @param  [in|out] me: Pointer to the state machine
  * @param  [in|out]  e:  Pointer to the event being processed.
  * @return status: QState type that specifies where the state
  * machine is going next.
  */
-static QState SysMgr_DBCheckElem(SysMgr * const me, QEvt const * const e);
-
-/**
- * @brief   Set the DB element to a specified value.
- *
- * @param  [in|out] me: Pointer to the state machine
- * @param  [in|out]  e:  Pointer to the event being processed.
- * @return status: QState type that specifies where the state
- * machine is going next.
- */
-static QState SysMgr_DBSetElem(SysMgr * const me, QEvt const * const e);
+static QState SysMgr_DBCheckAndSetElem(SysMgr * const me, QEvt const * const e);
 
 
 /* Private defines -----------------------------------------------------------*/
@@ -406,15 +396,49 @@ static QState SysMgr_initial(SysMgr * const me, QEvt const * const e) {
     me->dbMagicWordDef = DB_MAGIC_WORD_DEF;
 
     /* Post to self to validate DB on startup */
+    /*
     QEvt *evt = Q_NEW(QEvt, DB_INTRNL_CHECK_SETTINGS_SIG);
     QACTIVE_POST(AO_SysMgr, (QEvt *)(evt), me);
-
+    */
     #if CPLR_BOOT
     /* If this is the bootloader, also validate the bootloader build datetime
      * and version in the DB. */
+    /*
     QEvt *evt1 = Q_NEW(QEvt, DB_INTRNL_CHECK_BOOTLDR_VER_SIG);
     QACTIVE_POST(AO_SysMgr, (QEvt *)evt1, me);
+    */
     #endif
+
+    #if CPLR_BOOT
+    DBCheckSetElemEvt *evt = Q_NEW(DBCheckSetElemEvt, DB_INTRNL_CHK_ELEM_SIG);
+    evt->dbElem = _DC3_DB_MAGIC_WORD;
+    QACTIVE_POST(AO_SysMgr, (QEvt *)evt, me);
+
+    evt = Q_NEW(DBCheckSetElemEvt, DB_INTRNL_CHK_ELEM_SIG);
+    evt->dbElem = _DC3_DB_VERSION;
+    QACTIVE_POST(AO_SysMgr, (QEvt *)evt, me);
+
+    evt = Q_NEW(DBCheckSetElemEvt, DB_INTRNL_CHK_ELEM_SIG);
+    evt->dbElem = _DC3_DB_BOOT_BUILD_DATETIME;
+    QACTIVE_POST(AO_SysMgr, (QEvt *)evt, me);
+
+    evt = Q_NEW(DBCheckSetElemEvt, DB_INTRNL_CHK_ELEM_SIG);
+    evt->dbElem = _DC3_DB_BOOT_MAJ;
+    QACTIVE_POST(AO_SysMgr, (QEvt *)evt, me);
+
+    evt = Q_NEW(DBCheckSetElemEvt, DB_INTRNL_CHK_ELEM_SIG);
+    evt->dbElem = _DC3_DB_BOOT_MIN;
+    QACTIVE_POST(AO_SysMgr, (QEvt *)evt, me);
+    #endif
+
+    evt = Q_NEW(DBCheckSetElemEvt, DB_INTRNL_CHK_ELEM_SIG);
+    evt->dbElem = _DC3_DB_DBG_MODULES;
+    QACTIVE_POST(AO_SysMgr, (QEvt *)evt, me);
+
+    evt = Q_NEW(DBCheckSetElemEvt, DB_INTRNL_CHK_ELEM_SIG);
+    evt->dbElem = _DC3_DB_DBG_DEVICES;
+    QACTIVE_POST(AO_SysMgr, (QEvt *)evt, me);
+
     return Q_TRAN(&SysMgr_Idle);
 }
 
@@ -482,6 +506,7 @@ static QState SysMgr_Idle(SysMgr * const me, QEvt const * const e) {
             me->dbCmd           = DB_OP_NONE;
             me->dataLen         = 0;
             me->currRetry       = 0;
+            me->dbElem          = _DC3_DB_MAX_ELEM;
             memset(me->dataBuf, 0, sizeof(me->dataBuf));
 
             /* recall the request from the private requestQueue */
@@ -512,9 +537,9 @@ static QState SysMgr_Idle(SysMgr * const me, QEvt const * const e) {
         case DB_SET_ELEM_SIG: {
             DBG_printf("DB_SET_ELEM, posting DB_WRITE\n");
 
-            me->dbElem = ((DBReadReqEvt const *)e)->dbElem;
+            me->dbElem = ((DBWriteReqEvt const *)e)->dbElem;
             me->dbCmd = DB_OP_WRITE;
-            me->accessType = ((DBReadReqEvt const *)e)->accessType;
+            me->accessType = ((DBWriteReqEvt const *)e)->accessType;
 
             /* Change the signal associated with event and re post to self so it gets handled
              * in the AccessingDB state without having to recopy all the data in the event. */
@@ -550,9 +575,22 @@ static QState SysMgr_Idle(SysMgr * const me, QEvt const * const e) {
         }
         /* ${AOs::SysMgr::SM::Active::Idle::DB_INTRNL_FULL_R~} */
         case DB_INTRNL_FULL_RESET_SIG: {
+            /* Need to set some DB element since the reply carries this back.  This is technically
+             * the first and most important field being written so this seems like a safe choice.
+             * Realistically, the reply shouldn't even include this info so it technically doesn't
+             * matter. */
+            me->dbElem = _DC3_DB_MAGIC_WORD;
             me->dbCmd = DB_OP_INTERNAL;
             me->accessType = _DC3_ACCESS_QPC;
             status_ = Q_TRAN(&SysMgr_DBFullReset);
+            break;
+        }
+        /* ${AOs::SysMgr::SM::Active::Idle::DB_INTRNL_CHK_EL~} */
+        case DB_INTRNL_CHK_ELEM_SIG: {
+            me->dbElem = ((DBCheckSetElemEvt const *)e)->dbElem;
+            me->dbCmd = DB_OP_INTERNAL;
+            me->accessType = _DC3_ACCESS_QPC;
+            status_ = Q_TRAN(&SysMgr_DBCheckAndSetElem);
             break;
         }
         default: {
@@ -606,7 +644,8 @@ static QState SysMgr_Busy(SysMgr * const me, QEvt const * const e) {
         case DB_SET_ELEM_SIG: /* intentionally fall through */
         case DB_GET_ELEM_SIG: /* intentionally fall through */
         case DB_INTRNL_CHECK_SETTINGS_SIG: /* intentionally fall through */
-        case DB_INTRNL_CHECK_BOOTLDR_VER_SIG: {
+        case DB_INTRNL_CHECK_BOOTLDR_VER_SIG: /* intentionally fall through */
+        case DB_INTRNL_CHK_ELEM_SIG: {
             if (QEQueue_getNFree(&me->deferredEvtQueue) > 0) {
                /* defer the request - this event will be handled
                 * when the state machine goes back to Idle state */
@@ -775,7 +814,7 @@ static QState SysMgr_AccessingDB(SysMgr * const me, QEvt const * const e) {
                     break;
                 case DB_FLASH:
                     ;
-                    me->errorCode = DB_readEEPROM(
+                    me->errorCode = DB_readFlash(
                         ((DBReadReqEvt const *)e)->dbElem,
                         MAX_DB_ELEM_SIZE,
                         me->dataBuf,
@@ -1915,11 +1954,6 @@ static QState SysMgr_DBFullReset(SysMgr * const me, QEvt const * const e) {
             status_ = Q_HANDLED();
             break;
         }
-        /* ${AOs::SysMgr::SM::Active::Busy::AccessingDB::DBFullReset::DB_OP_DONE} */
-        case DB_OP_DONE_SIG: {
-            status_ = Q_TRAN(&SysMgr_Idle);
-            break;
-        }
         default: {
             status_ = Q_SUPER(&SysMgr_AccessingDB);
             break;
@@ -1929,139 +1963,121 @@ static QState SysMgr_DBFullReset(SysMgr * const me, QEvt const * const e) {
 }
 
 /**
- * @brief    Check DB element
+ * @brief    Check DB element and set it if not properly set.
  *
  * @param  [in|out] me: Pointer to the state machine
  * @param  [in|out]  e:  Pointer to the event being processed.
  * @return status: QState type that specifies where the state
  * machine is going next.
  */
-/*${AOs::SysMgr::SM::Active::Busy::AccessingDB::DBCheckElem} ...............*/
-static QState SysMgr_DBCheckElem(SysMgr * const me, QEvt const * const e) {
+/*${AOs::SysMgr::SM::Active::Busy::AccessingDB::DBCheckAndSetEle~} .........*/
+static QState SysMgr_DBCheckAndSetElem(SysMgr * const me, QEvt const * const e) {
     QState status_;
     switch (e->sig) {
-        /* ${AOs::SysMgr::SM::Active::Busy::AccessingDB::DBCheckElem} */
+        /* ${AOs::SysMgr::SM::Active::Busy::AccessingDB::DBCheckAndSetEle~} */
         case Q_ENTRY_SIG: {
             QTimeEvt_rearm(                                       /* Re-arm timer on entry */
                 &me->dbTimerEvt,
                 SEC_TO_TICKS( HL_MAX_TOUT_SEC_COMM_DB_VALIDATE )
             );
 
-            /* Post to SysMgr to get the build datetime first since it's the one most likely to
-             * be incorrect */
-            DBReadReqEvt *evt = Q_NEW(DBReadReqEvt, DB_READ_SIG);
-            evt->accessType = _DC3_ACCESS_QPC;
-            evt->dbElem = _DC3_DB_MAGIC_WORD;
-            QACTIVE_POST(AO_SysMgr, (QEvt *)(evt), AO_SysMgr);
+            /* This function will post the event to read the element.  Don't need a buffer
+             * since the data will come back via an event with its own buffer. */
+            me->errorCode = DB_getElem( me->dbElem, me->accessType, 0, NULL );
             status_ = Q_HANDLED();
             break;
         }
-        /* ${AOs::SysMgr::SM::Active::Busy::AccessingDB::DBCheckElem} */
+        /* ${AOs::SysMgr::SM::Active::Busy::AccessingDB::DBCheckAndSetEle~} */
         case Q_EXIT_SIG: {
             QTimeEvt_disarm(&me->dbTimerEvt);                  /* Disarm timer on exit */
             status_ = Q_HANDLED();
             break;
         }
-        /* ${AOs::SysMgr::SM::Active::Busy::AccessingDB::DBCheckElem::I2C1_DEV_READ_DO~} */
+        /* ${AOs::SysMgr::SM::Active::Busy::AccessingDB::DBCheckAndSetEle~::I2C1_DEV_READ_DO~} */
         case I2C1_DEV_READ_DONE_SIG: {
+            /* Whie DB reads could certainly involve reading from sources other than EEPROM,
+             * it's only worth checking the RW sources since they are the only ones that could
+             * become corrupted. Hence, only I2c1_DEV_READ_DONE signal is being checked. */
+
             me->errorCode = ((I2CReadDoneEvt const *) e)->status;
 
             if ( ERR_NONE != me->errorCode ) {
                 goto END_ERROR_CHECK;
             }
 
-            if ( ((I2CReadDoneEvt const *) e)->bytes > MAX_DB_ELEM_SIZE ) {
-                /* This should be considered a pretty critical error. */
-                me->errorCode = ERR_DB_ELEM_SIZE_OVERFLOW;
-                goto END_ERROR_CHECK;
-            }
-
-            if( !DB_isArraysMatch(
-                ((I2CReadDoneEvt const *) e)->dataBuf,
-                (uint8_t *)&(me->dbMagicWordDef),
-                ((I2CReadDoneEvt const *) e)->bytes ) ) {
-                /* If the check fails, set the error code */
-                me->errorCode = ERR_DB_NOT_INIT;
-
-                WRN_printf("Invalid DB magic word. Error 0x%08x\n", me->errorCode);
-                WRN_printf("Compiled: bytes: %x\n", me->dbMagicWordDef );
-
-                CON_hexToStr(
-                    ((I2CReadDoneEvt const *) e)->dataBuf, // data to convert
-                    ((I2CReadDoneEvt const *) e)->bytes, // length of data to convert
-                    (char *)me->dataBuf,                 // where to write output
-                    sizeof(me->dataBuf),                 // max size of output buffer
-                    &(me->dataLen),                      // size of the resulting output
-                    0,                                   // no columns
-                    ' ',                                 // separator
-                    false                                // bPrintX
-                );
-
-                WRN_printf("In DB   : bytes: %s\n", me->dataBuf );
-
-                goto END_ERROR_CHECK;
-            }
+            /* This function will compare the passed in value of the element to the compiled
+             * default and report back via error code. */
+            me->errorCode = DB_chkElem(
+                me->dbElem,
+                me->accessType,
+                ((I2CReadDoneEvt const *) e)->bytes,
+                ((I2CReadDoneEvt const *) e)->dataBuf
+            );
 
             /* Local tag to jump to if an error is found or to reach naturally
              * once all the checks are complete */
             END_ERROR_CHECK:
-            ERR_COND_OUTPUT(
+            WRN_COND_OUTPUT(
                 me->errorCode,
                 me->accessType,
-                "Error 0x%08x reading DB elem %s (%d)\n",
+                "Checking DB elem %s (%d): Error 0x%08x \n",
                 me->errorCode,
-                CON_dbElemToStr(_DC3_DB_MAGIC_WORD),
-                _DC3_DB_MAGIC_WORD
+                CON_dbElemToStr( me->dbElem ),
+                me->dbElem
             );
-            /* ${AOs::SysMgr::SM::Active::Busy::AccessingDB::DBCheckElem::I2C1_DEV_READ_DO~::[NoError?]} */
+            /* ${AOs::SysMgr::SM::Active::Busy::AccessingDB::DBCheckAndSetEle~::I2C1_DEV_READ_DO~::[NoError?]} */
             if (ERR_NONE == me->errorCode) {
-                status_ = Q_HANDLED();
+                status_ = Q_TRAN(&SysMgr_Idle);
             }
-            /* ${AOs::SysMgr::SM::Active::Busy::AccessingDB::DBCheckElem::I2C1_DEV_READ_DO~::[else]} */
+            /* ${AOs::SysMgr::SM::Active::Busy::AccessingDB::DBCheckAndSetEle~::I2C1_DEV_READ_DO~::[else]} */
             else {
+                switch( me->errorCode ) {
+
+                    case ERR_DB_VER_MISMATCH:   /* Intentionally fall though */
+                        /* For now, handle DB version mismatch simply.  Later,
+                         * if multiple versions of DB come into existence, this
+                         * case will have to be handled differently. */
+                    case ERR_DB_CHK_ELEM_NEEDS_RESET: {
+                        /* Get the default value that needs to be set */
+                        me->errorCode = DB_getEepromDefaultElem(
+                            me->dbElem, me->accessType, MAX_DB_ELEM_SIZE, me->dataBuf );
+                        if ( ERR_NONE == me->errorCode ) {
+                            /* If no errors, write the default to EEPROM */
+                            DB_setElem( me->dbElem, me->accessType,
+                                DB_getElemSize(me->dbElem), me->dataBuf );
+                        }
+                        break;
+                    }
+                    case ERR_DB_CHK_DBG_MODULES_MISMATCH: {
+                        uint32_t dbgModules = 0;
+                        MEMCPY(
+                            (uint8_t *)&dbgModules,
+                            ((I2CReadDoneEvt const *) e)->dataBuf,
+                            DB_getElemSize(me->dbElem)
+                        );
+                        DBG_SET_DEBUG_FOR_ALL_MODULES( dbgModules );
+
+                        /* Self post to get back to Idle */
+                        QEvt *evt = Q_NEW(QEvt, DB_OP_DONE_SIG);
+                        QACTIVE_POST(AO_SysMgr, evt, me);
+                        break;
+                    }
+                    case ERR_DB_CHK_DBG_DEVICES_MISMATCH: {
+                        DBG_SET_DEBUG_FOR_ALL_DEVICES( ((I2CReadDoneEvt const *) e)->dataBuf[0] );
+                        /* Self post to get back to Idle  */
+                        QEvt *evt = Q_NEW(QEvt, DB_OP_DONE_SIG);
+                        QACTIVE_POST(AO_SysMgr, evt, me);
+                        break;
+                    }
+                    case ERR_DB_NOT_INIT: /* Intentionally fall though */
+                    default:
+                        /* This function will fill out the appropriate data and
+                         * post the event to reset the DB */
+                        me->errorCode = DB_initToDefault( me->accessType );
+                        break;
+                }
                 status_ = Q_HANDLED();
             }
-            break;
-        }
-        default: {
-            status_ = Q_SUPER(&SysMgr_AccessingDB);
-            break;
-        }
-    }
-    return status_;
-}
-
-/**
- * @brief   Set the DB element to a specified value.
- *
- * @param  [in|out] me: Pointer to the state machine
- * @param  [in|out]  e:  Pointer to the event being processed.
- * @return status: QState type that specifies where the state
- * machine is going next.
- */
-/*${AOs::SysMgr::SM::Active::Busy::AccessingDB::DBSetElem} .................*/
-static QState SysMgr_DBSetElem(SysMgr * const me, QEvt const * const e) {
-    QState status_;
-    switch (e->sig) {
-        /* ${AOs::SysMgr::SM::Active::Busy::AccessingDB::DBSetElem} */
-        case Q_ENTRY_SIG: {
-            WRN_printf("Resetting %s to default...\n", CON_dbElemToStr(_DC3_DB_MAGIC_WORD));
-
-            uint32_t dbMagicWord = DB_MAGIC_WORD_DEF;
-
-            /* Post to SysMgr to set the build datetime since it doesn't match the compiled one */
-            DBWriteReqEvt *evt = Q_NEW(DBWriteReqEvt, DB_WRITE_SIG);
-            evt->accessType = _DC3_ACCESS_QPC;
-            evt->dbElem = _DC3_DB_MAGIC_WORD;
-            evt->dataLen =  DB_getElemSize(_DC3_DB_MAGIC_WORD);
-            MEMCPY(evt->dataBuf, (uint8_t *)&dbMagicWord, evt->dataLen);
-            QACTIVE_POST(AO_SysMgr, (QEvt *)(evt), me);
-            status_ = Q_HANDLED();
-            break;
-        }
-        /* ${AOs::SysMgr::SM::Active::Busy::AccessingDB::DBSetElem::DB_OP_DONE} */
-        case DB_OP_DONE_SIG: {
-            status_ = Q_HANDLED();
             break;
         }
         default: {

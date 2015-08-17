@@ -39,7 +39,7 @@ Q_DEFINE_THIS_FILE                  /* For QSPY to know the name of this file */
  * #DBG_ENABLE_DEBUG_FOR_MODULE(), #DBG_DISABLE_DEBUG_FOR_MODULE(),
  * #DBG_TOGGLE_DEBUG_FOR_MODULE(), #DBG_CHECK_DEBUG_FOR_MODULE() macros only!
  */
-uint32_t  glbDbgConfig = 0;
+uint32_t  glbDbgModuleConfig = 0;
 
 /**< This "global" variable is used to keep track of what debug output devices
  * are currently enabled/disabled.

@@ -1106,7 +1106,7 @@ static QState CommMgr_ValidateMsg(CommMgr * const me, QEvt const * const e) {
                 /* Don't change the basicMsg name since it should be the same in all cases. */
                 me->basicMsg._msgPayload = me->msgPayloadName;
                 me->payloadMsgUnion.dbgPayload._errorCode = me->errorCode;
-                me->payloadMsgUnion.dbgPayload._dbgSettings  = glbDbgConfig;
+                me->payloadMsgUnion.dbgPayload._dbgSettings  = glbDbgModuleConfig;
                 DBG_printf("Setting dbgPayload payload with dbgSettings: 0x%08x\n", me->payloadMsgUnion.dbgPayload._dbgSettings);
                 status_ = Q_TRAN(&CommMgr_Idle);
             }
@@ -1126,7 +1126,7 @@ static QState CommMgr_ValidateMsg(CommMgr * const me, QEvt const * const e) {
                 /* Don't change the basicMsg name since it should be the same in all cases. */
                 me->basicMsg._msgPayload = me->msgPayloadName;
                 me->payloadMsgUnion.dbgPayload._errorCode = me->errorCode;
-                me->payloadMsgUnion.dbgPayload._dbgSettings  = glbDbgConfig;
+                me->payloadMsgUnion.dbgPayload._dbgSettings  = glbDbgModuleConfig;
                 DBG_printf("Setting dbgPayload payload with dbgSettings: 0x%08x\n", me->payloadMsgUnion.dbgPayload._dbgSettings);
                 status_ = Q_TRAN(&CommMgr_Idle);
             }
@@ -1146,7 +1146,7 @@ static QState CommMgr_ValidateMsg(CommMgr * const me, QEvt const * const e) {
                 /* Don't change the basicMsg name since it should be the same in all cases. */
                 me->basicMsg._msgPayload = me->msgPayloadName;
                 me->payloadMsgUnion.dbgPayload._errorCode = me->errorCode;
-                me->payloadMsgUnion.dbgPayload._dbgSettings  = glbDbgConfig;
+                me->payloadMsgUnion.dbgPayload._dbgSettings  = glbDbgModuleConfig;
                 DBG_printf("Setting dbgPayload payload with dbgSettings: 0x%08x\n", me->payloadMsgUnion.dbgPayload._dbgSettings);
                 status_ = Q_TRAN(&CommMgr_Idle);
             }
@@ -1166,7 +1166,7 @@ static QState CommMgr_ValidateMsg(CommMgr * const me, QEvt const * const e) {
                 /* Don't change the basicMsg name since it should be the same in all cases. */
                 me->basicMsg._msgPayload = me->msgPayloadName;
                 me->payloadMsgUnion.dbgPayload._errorCode = me->errorCode;
-                me->payloadMsgUnion.dbgPayload._dbgSettings  = glbDbgConfig;
+                me->payloadMsgUnion.dbgPayload._dbgSettings  = glbDbgModuleConfig;
                 DBG_printf("Setting dbgPayload payload with dbgSettings: 0x%08x\n", me->payloadMsgUnion.dbgPayload._dbgSettings);
                 status_ = Q_TRAN(&CommMgr_Idle);
             }

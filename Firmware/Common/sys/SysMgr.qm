@@ -69,12 +69,6 @@
    <attribute name="dbElem" type="DC3DBElem_t" visibility="0x01" properties="0x00">
     <documentation>/**&lt; DB element */</documentation>
    </attribute>
-   <attribute name="dataBuf[MAX_DB_ELEM_SIZE]" type="uint8_t" visibility="0x01" properties="0x00">
-    <documentation>/**&lt; Buffer that holds the data read from DB */</documentation>
-   </attribute>
-   <attribute name="dataLen" type="uint8_t" visibility="0x01" properties="0x00">
-    <documentation>/**&lt; Length of data in dataBuf */</documentation>
-   </attribute>
   </class>
  </package>
  <package name="AOs" stereotype="0x02">
@@ -149,15 +143,49 @@ me-&gt;dbVersionDef = DB_VERSION_DEF;
 me-&gt;dbMagicWordDef = DB_MAGIC_WORD_DEF;
 
 /* Post to self to validate DB on startup */
+/*
 QEvt *evt = Q_NEW(QEvt, DB_INTRNL_CHECK_SETTINGS_SIG);
 QACTIVE_POST(AO_SysMgr, (QEvt *)(evt), me);
-
+*/
 #if CPLR_BOOT
 /* If this is the bootloader, also validate the bootloader build datetime 
  * and version in the DB. */
+/*
 QEvt *evt1 = Q_NEW(QEvt, DB_INTRNL_CHECK_BOOTLDR_VER_SIG);
 QACTIVE_POST(AO_SysMgr, (QEvt *)evt1, me);
-#endif</action>
+*/
+#endif
+
+#if CPLR_BOOT
+DBCheckSetElemEvt *evt = Q_NEW(DBCheckSetElemEvt, DB_INTRNL_CHK_ELEM_SIG);
+evt-&gt;dbElem = _DC3_DB_MAGIC_WORD;
+QACTIVE_POST(AO_SysMgr, (QEvt *)evt, me);
+
+evt = Q_NEW(DBCheckSetElemEvt, DB_INTRNL_CHK_ELEM_SIG);
+evt-&gt;dbElem = _DC3_DB_VERSION;
+QACTIVE_POST(AO_SysMgr, (QEvt *)evt, me);
+
+evt = Q_NEW(DBCheckSetElemEvt, DB_INTRNL_CHK_ELEM_SIG);
+evt-&gt;dbElem = _DC3_DB_BOOT_BUILD_DATETIME;
+QACTIVE_POST(AO_SysMgr, (QEvt *)evt, me);
+
+evt = Q_NEW(DBCheckSetElemEvt, DB_INTRNL_CHK_ELEM_SIG);
+evt-&gt;dbElem = _DC3_DB_BOOT_MAJ;
+QACTIVE_POST(AO_SysMgr, (QEvt *)evt, me);
+
+evt = Q_NEW(DBCheckSetElemEvt, DB_INTRNL_CHK_ELEM_SIG);
+evt-&gt;dbElem = _DC3_DB_BOOT_MIN;
+QACTIVE_POST(AO_SysMgr, (QEvt *)evt, me);
+#endif
+
+evt = Q_NEW(DBCheckSetElemEvt, DB_INTRNL_CHK_ELEM_SIG);
+evt-&gt;dbElem = _DC3_DB_DBG_MODULES;
+QACTIVE_POST(AO_SysMgr, (QEvt *)evt, me);
+
+evt = Q_NEW(DBCheckSetElemEvt, DB_INTRNL_CHK_ELEM_SIG);
+evt-&gt;dbElem = _DC3_DB_DBG_DEVICES;
+QACTIVE_POST(AO_SysMgr, (QEvt *)evt, me);
+</action>
      <initial_glyph conn="1,2,4,3,9,5">
       <action box="0,-2,6,2"/>
      </initial_glyph>
@@ -205,6 +233,7 @@ me-&gt;accessType      = _DC3_ACCESS_NONE;
 me-&gt;dbCmd           = DB_OP_NONE;
 me-&gt;dataLen         = 0;
 me-&gt;currRetry       = 0;
+me-&gt;dbElem          = _DC3_DB_MAX_ELEM;
 memset(me-&gt;dataBuf, 0, sizeof(me-&gt;dataBuf));
 
 /* recall the request from the private requestQueue */
@@ -231,9 +260,9 @@ QACTIVE_POST(AO_SysMgr, (QEvt *)e, me);</action>
       <tran trig="DB_SET_ELEM" target="../../1/2">
        <action>DBG_printf(&quot;DB_SET_ELEM, posting DB_WRITE\n&quot;);
 
-me-&gt;dbElem = ((DBReadReqEvt const *)e)-&gt;dbElem;
+me-&gt;dbElem = ((DBWriteReqEvt const *)e)-&gt;dbElem;
 me-&gt;dbCmd = DB_OP_WRITE;
-me-&gt;accessType = ((DBReadReqEvt const *)e)-&gt;accessType;
+me-&gt;accessType = ((DBWriteReqEvt const *)e)-&gt;accessType;
 
 /* Change the signal associated with event and re post to self so it gets handled
  * in the AccessingDB state without having to recopy all the data in the event. */
@@ -269,10 +298,23 @@ me-&gt;accessType = _DC3_ACCESS_QPC;
        </tran_glyph>
       </tran>
       <tran trig="DB_INTRNL_FULL_RESET" target="../../1/2/22">
-       <action>me-&gt;dbCmd = DB_OP_INTERNAL;
+       <action>/* Need to set some DB element since the reply carries this back.  This is technically
+ * the first and most important field being written so this seems like a safe choice.
+ * Realistically, the reply shouldn't even include this info so it technically doesn't
+ * matter. */
+me-&gt;dbElem = _DC3_DB_MAGIC_WORD;
+me-&gt;dbCmd = DB_OP_INTERNAL;
 me-&gt;accessType = _DC3_ACCESS_QPC;</action>
        <tran_glyph conn="6,93,3,3,38">
         <action box="0,-2,19,2"/>
+       </tran_glyph>
+      </tran>
+      <tran trig="DB_INTRNL_CHK_ELEM" target="../../1/2/23">
+       <action>me-&gt;dbElem = ((DBCheckSetElemEvt const *)e)-&gt;dbElem;
+me-&gt;dbCmd = DB_OP_INTERNAL;
+me-&gt;accessType = _DC3_ACCESS_QPC;</action>
+       <tran_glyph conn="6,90,3,3,79">
+        <action box="0,-2,16,2"/>
        </tran_glyph>
       </tran>
       <state_glyph node="6,8,14,113">
@@ -305,7 +347,7 @@ QTimeEvt_rearm(
         <action box="-15,-2,14,2"/>
        </tran_glyph>
       </tran>
-      <tran trig="DB_SET_ELEM, DB_GET_ELEM, DB_INTRNL_CHECK_SETTINGS, DB_INTRNL_CHECK_BOOTLDR_VER">
+      <tran trig="DB_SET_ELEM, DB_GET_ELEM, DB_INTRNL_CHECK_SETTINGS, DB_INTRNL_CHECK_BOOTLDR_VER, DB_INTRNL_CHK_ELEM">
        <action>if (QEQueue_getNFree(&amp;me-&gt;deferredEvtQueue) &gt; 0) {
    /* defer the request - this event will be handled
     * when the state machine goes back to Idle state */
@@ -315,7 +357,7 @@ QTimeEvt_rearm(
    ERR_printf(&quot;Unable to defer DB request\n&quot;);
 }</action>
        <tran_glyph conn="37,116,3,-1,34">
-        <action box="1,-6,25,6"/>
+        <action box="1,-7,25,7"/>
        </tran_glyph>
       </tran>
       <state name="AccessingDB">
@@ -453,7 +495,7 @@ switch( loc ) {
         break;
     case DB_FLASH:
         ;
-        me-&gt;errorCode = DB_readEEPROM(
+        me-&gt;errorCode = DB_readFlash(
             ((DBReadReqEvt const *)e)-&gt;dbElem,
             MAX_DB_ELEM_SIZE,
             me-&gt;dataBuf,
@@ -1004,7 +1046,7 @@ if( ((I2CReadDoneEvt const *) e)-&gt;dataBuf[0] != FW_VER_MAJOR ) {
 }
 
 
-/* Local tag to jump to if an error is found or to reach naturally 
+/* Local tag to jump to if an error is found or to reach naturally
  * once all the checks are complete */
 END_ERROR_CHECK:
 ERR_COND_OUTPUT(
@@ -1411,19 +1453,14 @@ ERR_printf(&quot;Out of retries when attempting to reset DB to a valid state. Er
 /* This function will fill out the appropriate data and post the event to reset the DB */
 me-&gt;errorCode = DB_initToDefault( me-&gt;accessType );</entry>
         <exit>QTimeEvt_disarm(&amp;me-&gt;dbTimerEvt);                  /* Disarm timer on exit */</exit>
-        <tran trig="DB_OP_DONE" target="../../../../0">
-         <tran_glyph conn="44,100,3,1,-24">
-          <action box="-17,-2,10,2"/>
-         </tran_glyph>
-        </tran>
-        <state_glyph node="44,91,15,12">
+        <state_glyph node="44,91,15,7">
          <entry box="1,2,6,2"/>
          <exit box="1,4,6,2"/>
         </state_glyph>
        </state>
-       <state name="DBCheckElem">
+       <state name="DBCheckAndSetElem">
         <documentation>/**
- * @brief    Check DB element
+ * @brief    Check DB element and set it if not properly set.
  * 
  * @param  [in|out] me: Pointer to the state machine
  * @param  [in|out]  e:  Pointer to the event being processed.
@@ -1435,111 +1472,105 @@ me-&gt;errorCode = DB_initToDefault( me-&gt;accessType );</entry>
     SEC_TO_TICKS( HL_MAX_TOUT_SEC_COMM_DB_VALIDATE )
 );
 
-/* Post to SysMgr to get the build datetime first since it's the one most likely to
- * be incorrect */
-DBReadReqEvt *evt = Q_NEW(DBReadReqEvt, DB_READ_SIG);
-evt-&gt;accessType = _DC3_ACCESS_QPC;
-evt-&gt;dbElem = _DC3_DB_MAGIC_WORD;
-QACTIVE_POST(AO_SysMgr, (QEvt *)(evt), AO_SysMgr);</entry>
+/* This function will post the event to read the element.  Don't need a buffer
+ * since the data will come back via an event with its own buffer. */
+me-&gt;errorCode = DB_getElem( me-&gt;dbElem, me-&gt;accessType, 0, NULL );</entry>
         <exit>QTimeEvt_disarm(&amp;me-&gt;dbTimerEvt);                  /* Disarm timer on exit */</exit>
         <tran trig="I2C1_DEV_READ_DONE">
-         <action>me-&gt;errorCode = ((I2CReadDoneEvt const *) e)-&gt;status;
+         <action>/* Whie DB reads could certainly involve reading from sources other than EEPROM,
+ * it's only worth checking the RW sources since they are the only ones that could
+ * become corrupted. Hence, only I2c1_DEV_READ_DONE signal is being checked. */
+
+me-&gt;errorCode = ((I2CReadDoneEvt const *) e)-&gt;status;
 
 if ( ERR_NONE != me-&gt;errorCode ) {
     goto END_ERROR_CHECK;
 }
 
-if ( ((I2CReadDoneEvt const *) e)-&gt;bytes &gt; MAX_DB_ELEM_SIZE ) {
-    /* This should be considered a pretty critical error. */
-    me-&gt;errorCode = ERR_DB_ELEM_SIZE_OVERFLOW;
-    goto END_ERROR_CHECK;
-}
-
-if( !DB_isArraysMatch(
-    ((I2CReadDoneEvt const *) e)-&gt;dataBuf,
-    (uint8_t *)&amp;(me-&gt;dbMagicWordDef),
-    ((I2CReadDoneEvt const *) e)-&gt;bytes ) ) {
-    /* If the check fails, set the error code */
-    me-&gt;errorCode = ERR_DB_NOT_INIT;
-
-    WRN_printf(&quot;Invalid DB magic word. Error 0x%08x\n&quot;, me-&gt;errorCode);
-    WRN_printf(&quot;Compiled: bytes: %x\n&quot;, me-&gt;dbMagicWordDef );
-
-    CON_hexToStr(
-        ((I2CReadDoneEvt const *) e)-&gt;dataBuf, // data to convert
-        ((I2CReadDoneEvt const *) e)-&gt;bytes, // length of data to convert
-        (char *)me-&gt;dataBuf,                 // where to write output
-        sizeof(me-&gt;dataBuf),                 // max size of output buffer
-        &amp;(me-&gt;dataLen),                      // size of the resulting output
-        0,                                   // no columns
-        ' ',                                 // separator
-        false                                // bPrintX
-    );
-
-    WRN_printf(&quot;In DB   : bytes: %s\n&quot;, me-&gt;dataBuf );
-
-    goto END_ERROR_CHECK;
-}
+/* This function will compare the passed in value of the element to the compiled 
+ * default and report back via error code. */
+me-&gt;errorCode = DB_chkElem(
+    me-&gt;dbElem,
+    me-&gt;accessType,
+    ((I2CReadDoneEvt const *) e)-&gt;bytes,
+    ((I2CReadDoneEvt const *) e)-&gt;dataBuf
+);
 
 /* Local tag to jump to if an error is found or to reach naturally 
  * once all the checks are complete */
 END_ERROR_CHECK:
-ERR_COND_OUTPUT(
+WRN_COND_OUTPUT(
     me-&gt;errorCode,
     me-&gt;accessType,
-    &quot;Error 0x%08x reading DB elem %s (%d)\n&quot;,
+    &quot;Checking DB elem %s (%d): Error 0x%08x \n&quot;,
     me-&gt;errorCode,
-    CON_dbElemToStr(_DC3_DB_MAGIC_WORD),
-    _DC3_DB_MAGIC_WORD
+    CON_dbElemToStr( me-&gt;dbElem ),
+    me-&gt;dbElem
 );</action>
-         <choice>
+         <choice target="../../../../../0">
           <guard brief="NoError?">ERR_NONE == me-&gt;errorCode</guard>
-          <choice_glyph conn="88,92,4,-1,4">
-           <action box="-7,1,7,2"/>
+          <choice_glyph conn="101,99,5,1,-81">
+           <action box="-8,-2,7,2"/>
           </choice_glyph>
          </choice>
          <choice>
           <guard>else</guard>
-          <choice_glyph conn="88,92,5,-1,16,-6,3">
+          <action>switch( me-&gt;errorCode ) {
+
+    case ERR_DB_VER_MISMATCH:   /* Intentionally fall though */
+        /* For now, handle DB version mismatch simply.  Later,
+         * if multiple versions of DB come into existence, this
+         * case will have to be handled differently. */
+    case ERR_DB_CHK_ELEM_NEEDS_RESET: {
+        /* Get the default value that needs to be set */
+        me-&gt;errorCode = DB_getEepromDefaultElem(
+            me-&gt;dbElem, me-&gt;accessType, MAX_DB_ELEM_SIZE, me-&gt;dataBuf );
+        if ( ERR_NONE == me-&gt;errorCode ) {
+            /* If no errors, write the default to EEPROM */
+            DB_setElem( me-&gt;dbElem, me-&gt;accessType,
+                DB_getElemSize(me-&gt;dbElem), me-&gt;dataBuf );
+        }
+        break;
+    }
+    case ERR_DB_CHK_DBG_MODULES_MISMATCH: {
+        uint32_t dbgModules = 0;
+        MEMCPY(
+            (uint8_t *)&amp;dbgModules,
+            ((I2CReadDoneEvt const *) e)-&gt;dataBuf,
+            DB_getElemSize(me-&gt;dbElem)
+        );
+        DBG_SET_DEBUG_FOR_ALL_MODULES( dbgModules );
+
+        /* Self post to get back to Idle */
+        QEvt *evt = Q_NEW(QEvt, DB_OP_DONE_SIG);
+        QACTIVE_POST(AO_SysMgr, evt, me);
+        break;
+    }
+    case ERR_DB_CHK_DBG_DEVICES_MISMATCH: {
+        DBG_SET_DEBUG_FOR_ALL_DEVICES( ((I2CReadDoneEvt const *) e)-&gt;dataBuf[0] );
+        /* Self post to get back to Idle  */
+        QEvt *evt = Q_NEW(QEvt, DB_OP_DONE_SIG);
+        QACTIVE_POST(AO_SysMgr, evt, me);
+        break;
+    }
+    case ERR_DB_NOT_INIT: /* Intentionally fall though */
+    default:
+        /* This function will fill out the appropriate data and
+         * post the event to reset the DB */
+        me-&gt;errorCode = DB_initToDefault( me-&gt;accessType );
+        break;
+}</action>
+          <choice_glyph conn="101,99,5,-1,6">
            <action box="2,0,5,3"/>
           </choice_glyph>
          </choice>
-         <tran_glyph conn="88,89,2,-1,3">
-          <action box="0,0,16,2"/>
+         <tran_glyph conn="85,94,3,-1,16,5">
+          <action box="1,-2,16,2"/>
          </tran_glyph>
         </tran>
-        <state_glyph node="86,82,15,7">
+        <state_glyph node="85,86,26,16">
          <entry box="1,2,6,2"/>
          <exit box="1,4,6,2"/>
-        </state_glyph>
-       </state>
-       <state name="DBSetElem">
-        <documentation>/**
- * @brief   Set the DB element to a specified value.
- * 
- * @param  [in|out] me: Pointer to the state machine
- * @param  [in|out]  e:  Pointer to the event being processed.
- * @return status: QState type that specifies where the state
- * machine is going next.
- */</documentation>
-        <entry>WRN_printf(&quot;Resetting %s to default...\n&quot;, CON_dbElemToStr(_DC3_DB_MAGIC_WORD));
-
-uint32_t dbMagicWord = DB_MAGIC_WORD_DEF;
-
-/* Post to SysMgr to set the build datetime since it doesn't match the compiled one */
-DBWriteReqEvt *evt = Q_NEW(DBWriteReqEvt, DB_WRITE_SIG);
-evt-&gt;accessType = _DC3_ACCESS_QPC;
-evt-&gt;dbElem = _DC3_DB_MAGIC_WORD;
-evt-&gt;dataLen =  DB_getElemSize(_DC3_DB_MAGIC_WORD);
-MEMCPY(evt-&gt;dataBuf, (uint8_t *)&amp;dbMagicWord, evt-&gt;dataLen);
-QACTIVE_POST(AO_SysMgr, (QEvt *)(evt), me);</entry>
-        <tran trig="DB_OP_DONE">
-         <tran_glyph conn="110,89,2,-1,7">
-          <action box="0,0,10,2"/>
-         </tran_glyph>
-        </tran>
-        <state_glyph node="108,82,14,7">
-         <entry box="1,2,6,2"/>
         </state_glyph>
        </state>
        <state_glyph node="39,14,99,94">

@@ -160,7 +160,7 @@
 /* Exported types ------------------------------------------------------------*/
 
 /* Exported variables --------------------------------------------------------*/
-extern uint32_t  glbDbgConfig;         /**< Allow global access to debug info */
+extern uint32_t glbDbgModuleConfig;    /**< Allow global access to debug info */
 extern uint8_t  glbDbgDeviceConfig;    /**< Allow global access to debug info */
 
 /* Exported constants --------------------------------------------------------*/
@@ -192,7 +192,7 @@ extern uint8_t  glbDbgDeviceConfig;    /**< Allow global access to debug info */
  * @return  None
  */
 #define DBG_ENABLE_DEBUG_FOR_MODULE( name_ ) \
-      glbDbgConfig |= name_;
+      glbDbgModuleConfig |= name_;
 
 /**
  * @brief   Disable debugging output for a given module.
@@ -201,7 +201,7 @@ extern uint8_t  glbDbgDeviceConfig;    /**< Allow global access to debug info */
  * @return  None
  */
 #define DBG_DISABLE_DEBUG_FOR_MODULE( name_ ) \
-      glbDbgConfig &= ~name_;
+      glbDbgModuleConfig &= ~name_;
 
 /**
  * @brief   Toggle debugging output for a given module.
@@ -210,7 +210,7 @@ extern uint8_t  glbDbgDeviceConfig;    /**< Allow global access to debug info */
  * @return  None
  */
 #define DBG_TOGGLE_DEBUG_FOR_MODULE( name_ ) \
-      glbDbgConfig ^= name_;
+      glbDbgModuleConfig ^= name_;
 
 /**
  * @brief   Toggle debugging output for a given module.
@@ -219,7 +219,7 @@ extern uint8_t  glbDbgDeviceConfig;    /**< Allow global access to debug info */
  * @return  None
  */
 #define DBG_CHECK_DEBUG_FOR_MODULE( name_ ) \
-      ( glbDbgConfig & name_ )
+      ( glbDbgModuleConfig & name_ )
 
 /**
  * @brief   Disable debugging output for all modules.
@@ -227,15 +227,17 @@ extern uint8_t  glbDbgDeviceConfig;    /**< Allow global access to debug info */
  * @return  None
  */
 #define DBG_DISABLE_DEBUG_FOR_ALL_MODULES( ) \
-      glbDbgConfig = 0x00000000;
+      glbDbgModuleConfig = 0x00000000;
 
 /**
- * @brief   Disable debugging output for all modules.
- * @param   None
+ * @brief   Set debugging output for all modules, overwriting current.
+ * This is used to set the debugging to settings from the DB.
+ * @param   [in] @c dbgSetting_: uint32_t bitfield representing ORring of all
+ * enabled modules.
  * @return  None
  */
 #define DBG_SET_DEBUG_FOR_ALL_MODULES( dbgSetting_ ) \
-      glbDbgConfig = dbgSetting_;
+      glbDbgModuleConfig = dbgSetting_;
 
 /**
  * @brief   Enable debugging output over a given device.
@@ -274,6 +276,16 @@ extern uint8_t  glbDbgDeviceConfig;    /**< Allow global access to debug info */
       glbDbgDeviceConfig = 0;
 
 /**
+ * @brief   Set debugging output for all modules, overwriting current.
+ * This is used to set the debugging to settings from the DB.
+ * @param   [in] @c dbgDevices_: uint8_t bitfield representing ORring of all
+ * enabled devices.
+ * @return  None
+ */
+#define DBG_SET_DEBUG_FOR_ALL_DEVICES( dbgDevices_ ) \
+      glbDbgDeviceConfig = dbgDevices_;
+
+/**
  * @brief   Conditional error output
  *
  * @description
@@ -307,6 +319,45 @@ extern uint8_t  glbDbgDeviceConfig;    /**< Allow global access to debug info */
             case _DC3_ACCESS_BARE:                                            \
             default:                                                          \
                err_slow_printf(fmt, ##__VA_ARGS__);                           \
+               break;                                                         \
+         }                                                                    \
+      }                                                                       \
+   }
+
+/**
+ * @brief   Conditional Warning output
+ *
+ * @description
+ * Macro that can be used to conditionally print an warning.  If the passed in
+ * status is not ERR_NONE (no error), the macro will use the passed in
+ * accessType to figure out how to (slow and blocking or fast and
+ * non-blocking/non-invasively) to output the passed in string.
+ *
+ * @param [in] status: status to parse and print if not ERR_NONE.
+ *    @arg ERR_NONE: nothing will be output if this is passed in
+ *    else: passed in string will be printed.
+ * @param [in] accessType: AccessType_t enum representing how the caller wants
+ *                         to output the error msg if needed.
+ *    @arg ACCESS_BARE_METAL: slow blocking output.
+ *    @arg ACCESS_QPC: fast, non-blocking
+ *    @arg ACCESS_FREERTOS: fast, non-blocking
+ * @param [in] fmt: printf like argument string with any % modifiers that print can handle.
+ * @param [in] ...: printf like variable argument list.
+ *
+ * @note 1: This macro should be treated just like a conditional printf
+ * @note 2: This macro DOES NOT perform a return.  This is left up to the user
+ * since doing a return inside of a macro is bad practice for debugging.
+ */
+#define WRN_COND_OUTPUT(status, accessType, fmt, ...) {                       \
+      if ((status) != ERR_NONE) {                                             \
+         switch( accessType ) {                                               \
+            case _DC3_ACCESS_FRT:                                             \
+            case _DC3_ACCESS_QPC:                                             \
+               WRN_printf(fmt, ##__VA_ARGS__);                                \
+               break;                                                         \
+            case _DC3_ACCESS_BARE:                                            \
+            default:                                                          \
+               wrn_slow_printf(fmt, ##__VA_ARGS__);                           \
                break;                                                         \
          }                                                                    \
       }                                                                       \
@@ -350,7 +401,7 @@ extern uint8_t  glbDbgDeviceConfig;    /**< Allow global access to debug info */
 #define DBG_printf(fmt, ...) \
       do { \
          if (DEBUG) { \
-            if ( glbDbgConfig & DBG_this_module_ ) { \
+            if ( glbDbgModuleConfig & DBG_this_module_ ) { \
                CON_output(_DC3_DBG, _DC3_NoRoute, _DC3_NoRoute, __func__, __LINE__, fmt, \
                   ##__VA_ARGS__); \
             } \
@@ -360,7 +411,7 @@ extern uint8_t  glbDbgDeviceConfig;    /**< Allow global access to debug info */
 #define DBG_printf(fmt, ...) \
       do { \
          if (DEBUG) { \
-            if ( glbDbgConfig & DBG_this_module_ ) { \
+            if ( glbDbgModuleConfig & DBG_this_module_ ) { \
                CON_slow_output(_DC3_DBG, __func__, __LINE__, fmt, \
                   ##__VA_ARGS__); \
             } \
@@ -570,7 +621,7 @@ extern uint8_t  glbDbgDeviceConfig;    /**< Allow global access to debug info */
 #define dbg_slow_printf(fmt, ...) \
       do { \
          if (DEBUG) { \
-            if ( glbDbgConfig & DBG_this_module_ ) { \
+            if ( glbDbgModuleConfig & DBG_this_module_ ) { \
                CON_slow_output(_DC3_DBG, __func__, __LINE__, fmt, \
                      ##__VA_ARGS__); \
             } \

@@ -22,6 +22,8 @@
 #include "flash.h"
 #include <stdio.h>
 #include "I2C1DevMgr.h"    /* For access to the I2C1Dev AO for posting events */
+#include "SysMgr.h"                           /* For access to DB event types */
+#include "version.h"                        /* For access to default versions */
 
 /* Compile-time called macros ------------------------------------------------*/
 Q_DEFINE_THIS_FILE                  /* For QSPY to know the name of this file */
@@ -68,13 +70,19 @@ static const DC3I2CDevice_t DB_I2C_devices[] = {
 };
 
 /**< Default settings that belong in the main memory of the EEPROM */
-static const SettingsDB_t DB_defaultEeepromSettings = {
+static const SettingsDB_t DB_defaultEepromSettings = {
       .dbMagicWord = DB_MAGIC_WORD_DEF,
       .dbVersion   = DB_VERSION_DEF,
       .ipAddr = {STATIC_IPADDR0, STATIC_IPADDR1, STATIC_IPADDR2, STATIC_IPADDR3},
+#if CPLR_BOOT
+      .bootMajVer = FW_VER_MAJOR,
+      .bootMinVer = FW_VER_MINOR,
+      .bootBuildDT = BUILD_DATE,
+#else
       .bootMajVer = 0,
       .bootMinVer = 0,
       .bootBuildDT = {0},
+#endif
       .fpgaMajVer = 0,
       .fpgaMinVer = 0,
       .fpgaBuildDT = {0},
@@ -134,12 +142,9 @@ const DC3Error_t DB_isValid( const DC3AccessType_t accessType )
    }
 
 DB_isValid_ERR_HANDLE:            /* Handle any error that may have occurred. */
-   ERR_COND_OUTPUT(
-         status,
-         accessType,
-         "Error 0x%08x validating the settings DB\n",
-         status
-   );
+   ERR_COND_OUTPUT( status, accessType,
+         "Validating the settings DB: Error 0x%08x\n",
+         status );
    return( status );
 }
 
@@ -153,8 +158,8 @@ const DC3Error_t DB_initToDefault( const DC3AccessType_t accessType )
          status = DB_setElem(
                _DC3_DB_MAGIC_WORD,
                accessType,
-               sizeof(DB_defaultEeepromSettings.dbMagicWord),
-               (uint8_t *)&DB_defaultEeepromSettings.dbMagicWord
+               sizeof(DB_defaultEepromSettings.dbMagicWord),
+               (uint8_t *)&DB_defaultEepromSettings.dbMagicWord
          );
          if ( ERR_NONE != status ) {
             goto DB_initToDefault_ERR_HANDLE;
@@ -163,8 +168,8 @@ const DC3Error_t DB_initToDefault( const DC3AccessType_t accessType )
          status = DB_setElem(
                _DC3_DB_VERSION,
                accessType,
-               sizeof(DB_defaultEeepromSettings.dbVersion),
-               (uint8_t *)&DB_defaultEeepromSettings.dbVersion
+               sizeof(DB_defaultEepromSettings.dbVersion),
+               (uint8_t *)&DB_defaultEepromSettings.dbVersion
          );
          if ( ERR_NONE != status ) {
             goto DB_initToDefault_ERR_HANDLE;
@@ -173,8 +178,8 @@ const DC3Error_t DB_initToDefault( const DC3AccessType_t accessType )
          status = DB_setElem(
                _DC3_DB_IP_ADDR,
                accessType,
-               sizeof(DB_defaultEeepromSettings.ipAddr),
-               (uint8_t *)&DB_defaultEeepromSettings.ipAddr
+               sizeof(DB_defaultEepromSettings.ipAddr),
+               (uint8_t *)&DB_defaultEepromSettings.ipAddr
          );
          if ( ERR_NONE != status ) {
             goto DB_initToDefault_ERR_HANDLE;
@@ -187,9 +192,9 @@ const DC3Error_t DB_initToDefault( const DC3AccessType_t accessType )
          I2CWriteReqEvt *i2cWriteReqEvt  = Q_NEW(I2CWriteReqEvt, I2C1_DEV_RAW_MEM_WRITE_SIG);
          i2cWriteReqEvt->i2cDev          = DB_getI2CDev(_DC3_DB_MAGIC_WORD);
          i2cWriteReqEvt->start           = DB_getElemOffset(_DC3_DB_MAGIC_WORD);
-         i2cWriteReqEvt->bytes           = sizeof(DB_defaultEeepromSettings);
+         i2cWriteReqEvt->bytes           = sizeof(DB_defaultEepromSettings);
          i2cWriteReqEvt->accessType      = accessType;
-         MEMCPY(i2cWriteReqEvt->dataBuf, &DB_defaultEeepromSettings, sizeof(DB_defaultEeepromSettings));
+         MEMCPY(i2cWriteReqEvt->dataBuf, &DB_defaultEepromSettings, sizeof(DB_defaultEepromSettings));
          QACTIVE_POST(AO_I2C1DevMgr, (QEvt *)(i2cWriteReqEvt), SysMgr_AO);
          goto DB_initToDefault_ERR_HANDLE; /* Stop and jump to error handling */
       }
@@ -207,12 +212,9 @@ const DC3Error_t DB_initToDefault( const DC3AccessType_t accessType )
    }                                               /* End of switch statement */
 
 DB_initToDefault_ERR_HANDLE:      /* Handle any error that may have occurred. */
-   ERR_COND_OUTPUT(
-         status,
-         accessType,
-         "Error 0x%08x initializing the DB to default\n",
-         status
-   );
+   ERR_COND_OUTPUT( status, accessType,
+         "Initializing DB to default: Error 0x%08x\n",
+         status );
    return( status );
 }
 
@@ -262,10 +264,10 @@ const DC3Error_t DB_getElem(
             /* Create the event and directly post it to the right AO. */
             I2CReadReqEvt *i2cReadReqEvt  = Q_NEW(I2CReadReqEvt, I2C1_DEV_RAW_MEM_READ_SIG);
             i2cReadReqEvt->i2cDev         = DB_getI2CDev(loc);
-            i2cReadReqEvt->start          = DB_getElemOffset(elem);
-            i2cReadReqEvt->bytes          = elem;
+            i2cReadReqEvt->start          = settingsDB[elem].offset;
+            i2cReadReqEvt->bytes          = settingsDB[elem].size;
             i2cReadReqEvt->accessType     = accessType;
-            QACTIVE_POST(AO_I2C1DevMgr, (QEvt *)(i2cReadReqEvt), me);
+            QACTIVE_POST(AO_I2C1DevMgr, (QEvt *)(i2cReadReqEvt), SysMgr_AO);
          }
          break;
       case DB_GPIO:
@@ -276,7 +278,7 @@ const DC3Error_t DB_getElem(
          ; // need this or we get "a label can only be part of a statement and
            // a declaration is not a statement" compile error
          uint16_t resultLen = 0;
-         status = DB_readEEPROM(
+         status = DB_readFlash(
                elem,
                bufSize,
                pBuffer,
@@ -292,14 +294,9 @@ const DC3Error_t DB_getElem(
    }
 
 DB_getElemBLK_ERR_HANDLE:         /* Handle any error that may have occurred. */
-   ERR_COND_OUTPUT(
-         status,
-         accessType,
-         "Error 0x%08x getting element %s (%d) from DB\n",
-         CON_dbElemToStr( elem ),
-         elem,
-         status
-   );
+   ERR_COND_OUTPUT( status, accessType,
+         "Getting element %s (%d) from DB: Error 0x%08x\n",
+         CON_dbElemToStr( elem ), elem, status );
    return( status );
 }
 
@@ -343,11 +340,11 @@ const DC3Error_t DB_setElem(
             /* Create the event and directly post it to the right AO. */
             I2CWriteReqEvt *i2cWriteReqEvt = Q_NEW(I2CWriteReqEvt, I2C1_DEV_RAW_MEM_WRITE_SIG);
             i2cWriteReqEvt->i2cDev         = DB_getI2CDev(loc);
-            i2cWriteReqEvt->start          = DB_getElemOffset(elem);
-            i2cWriteReqEvt->bytes          = DB_getElemSize(elem);
+            i2cWriteReqEvt->start          = settingsDB[elem].offset;
+            i2cWriteReqEvt->bytes          = settingsDB[elem].size;
             i2cWriteReqEvt->accessType     = accessType;
             MEMCPY(i2cWriteReqEvt->dataBuf, pBuffer, i2cWriteReqEvt->bytes);
-            QACTIVE_POST(AO_I2C1DevMgr, (QEvt *)(i2cWriteReqEvt), me);
+            QACTIVE_POST(AO_I2C1DevMgr, (QEvt *)(i2cWriteReqEvt), SysMgr_AO);
          }
          break;
       case DB_SN_ROM:                           /* Fall through intentionally */
@@ -365,15 +362,207 @@ const DC3Error_t DB_setElem(
          break;
    }
 
-DB_getElem_ERR_HANDLE:         /* Handle any error that may have occurred. */
-   ERR_COND_OUTPUT(
-         status,
-         accessType,
-         "Error 0x%08x setting element %s (%d) to DB\n",
-         CON_dbElemToStr( elem ),
-         elem,
-         status
-   );
+DB_getElem_ERR_HANDLE:            /* Handle any error that may have occurred. */
+   ERR_COND_OUTPUT( status, accessType,
+         "Setting element %s (%d) to DB: Error 0x%08x\n",
+         CON_dbElemToStr( elem ), elem, status );
+   return( status );
+}
+
+/******************************************************************************/
+const DC3Error_t DB_chkElem(
+      const DC3DBElem_t elem,
+      const DC3AccessType_t accessType,
+      const size_t bufSize,
+      const uint8_t* const pBuffer
+)
+{
+   DC3Error_t status = ERR_NONE;
+
+   if ( _DC3_ACCESS_BARE == accessType ) {
+      // TODO: implement this later if needed
+      status = ERR_UNIMPLEMENTED;
+      goto DB_chkElem_ERR_HANDLE;
+   }
+
+   if( bufSize > MAX_DB_ELEM_SIZE ) {                              /* too big */
+      /* This should be considered a pretty critical error. */
+      status = ERR_DB_ELEM_SIZE_OVERFLOW;
+      goto DB_chkElem_ERR_HANDLE;
+   } else if( 0 == bufSize ) {                                   /* too small */
+      /* This should be considered a pretty critical error. */
+      status = ERR_DB_ELEM_SIZE_UNDERFLOW;
+      goto DB_chkElem_ERR_HANDLE;
+   }
+
+   /* Get the DB element's default value */
+
+   /* Using QP's event memory pool as a regular mempool.  This is a little
+    * hacky but should be safe as long as we remember to garbage collect the
+    * event after we finish using it.
+    * DO NOT USE GOTOs from here until the garbage collection happens. */
+
+   // TODO: use QMPool instead as per Miro's suggestion
+   DBWriteReqEvt *evt = Q_NEW(DBWriteReqEvt, DB_GET_ELEM_DONE_SIG);
+
+   if (ERR_NONE != (status = DB_getEepromDefaultElem( elem, accessType,
+         MAX_DB_ELEM_SIZE, evt->dataBuf))) {
+      goto DB_chkElem_ERR_HANDLE;
+   }
+
+   if( !DB_isArraysMatch( pBuffer, evt->dataBuf, DB_getElemSize(elem) ) ) {
+      WRN_printf("DB element %s (%d) value doesn't match default:\n",
+            CON_dbElemToStr(elem), elem);
+
+      /* Allocate another array for converting hex to str so we don't waste
+       * stack space. Once again, don't forget to garbage collect */
+      LrgDataEvt *printBufEvt = Q_NEW(LrgDataEvt, DB_GET_ELEM_DONE_SIG);
+      uint16_t printLen = 0;
+      status = CON_hexToStr(
+            ((DBWriteReqEvt const *) evt)->dataBuf, // data to convert
+            DB_getElemSize(elem),                   // length of data to convert
+            (char *)printBufEvt->dataBuf,        // where to write output
+            DC3_MAX_MSG_LEN,                     // max size of output buffer
+            &printLen,                           // size of the resulting output
+            0,                                   // no columns
+            ' ',                                 // separator
+            true                                 // bPrintX
+        );
+
+      if ( ERR_NONE == status ) {
+         WRN_printf("Default Val: bytes: [%s] :\n",
+               printBufEvt->dataBuf);
+      } else {
+         WRN_printf("Stored in DB: bytes: Buffer too small to print...\n");
+      }
+
+      status = CON_hexToStr(
+            pBuffer,                             // data to convert
+            DB_getElemSize(elem),                // length of data to convert
+            (char *)printBufEvt->dataBuf,        // where to write output
+            DC3_MAX_MSG_LEN,                     // max size of output buffer
+            &printLen,                           // size of the resulting output
+            0,                                   // no columns
+            ' ',                                 // separator
+            true                                 // bPrintX
+      );
+
+      if ( ERR_NONE == status ) {
+         WRN_printf("Stored in DB: bytes: [%s] :\n",
+               printBufEvt->dataBuf);
+      } else {
+         WRN_printf("Stored in DB: bytes: Buffer too small to print...\n");
+      }
+
+      /* Garbage collect the print evt */
+      QF_gc( (QEvt *)printBufEvt );
+
+      /* Have to handle the elements explicitly here since the error assigned
+       * might be used to reset or do other things with the data outside of this
+       * function */
+      switch( elem ) {
+         case _DC3_DB_MAGIC_WORD:   status = ERR_DB_NOT_INIT;              break;
+         case _DC3_DB_VERSION:      status = ERR_DB_VER_MISMATCH;          break;
+         case _DC3_DB_IP_ADDR:      status = ERR_NONE;                     break;
+#if CPLR_BOOT                               /* Only compile in the bootloader */
+         case _DC3_DB_BOOT_MAJ:                 /* Intentionally fall through */
+         case _DC3_DB_BOOT_MIN:                 /* Intentionally fall through */
+         case _DC3_DB_BOOT_BUILD_DATETIME: status = ERR_DB_CHK_ELEM_NEEDS_RESET;  break;
+#endif
+         case _DC3_DB_FPGA_MAJ:                 /* Intentionally fall through */
+         case _DC3_DB_FPGA_MIN:                 /* Intentionally fall through */
+         case _DC3_DB_FPGA_BUILD_DATETIME: status = ERR_UNIMPLEMENTED;     break;
+         case _DC3_DB_DBG_MODULES: status = ERR_DB_CHK_DBG_MODULES_MISMATCH; break;
+         case _DC3_DB_DBG_DEVICES: status = ERR_DB_CHK_DBG_DEVICES_MISMATCH; break;
+         default: status = ERR_DB_ELEM_NOT_FOUND; break;
+      }
+   }
+
+   /* Garbage collect the temp buffer evt */
+   QF_gc( (QEvt *)evt );
+
+   DB_chkElem_ERR_HANDLE:
+   WRN_COND_OUTPUT( status, accessType,
+         "Element mismatch checking element %s (%d) in DB against default: Error 0x%08x\n",
+         CON_dbElemToStr( elem ), elem, status );
+   return( status );
+}
+
+/******************************************************************************/
+const DC3Error_t DB_getEepromDefaultElem(
+      const DC3DBElem_t elem,
+      const DC3AccessType_t accessType,
+      const size_t bufSize,
+      uint8_t* pBuffer
+)
+{
+   DC3Error_t status = ERR_NONE;
+   size_t elemSize = DB_getElemSize(elem);
+
+   if ( bufSize < elemSize ) {
+      status = ERR_MEM_BUFFER_LEN;
+      goto DB_getEepromDefaultElem_ERR_HANDLE;
+   }
+
+   if ( NULL == pBuffer ) {
+      status = ERR_MEM_NULL_VALUE;
+      goto DB_getEepromDefaultElem_ERR_HANDLE;
+   }
+
+   switch( elem ) {
+      case _DC3_DB_MAGIC_WORD:
+         MEMCPY( pBuffer, (uint8_t *)&DB_defaultEepromSettings.dbMagicWord,
+               elemSize );
+         break;
+      case _DC3_DB_VERSION:
+         MEMCPY( pBuffer, (uint8_t *)&DB_defaultEepromSettings.dbVersion,
+               elemSize );
+         break;
+      case _DC3_DB_IP_ADDR:
+         MEMCPY( pBuffer, (uint8_t *)&DB_defaultEepromSettings.ipAddr,
+               elemSize );
+         break;
+      case _DC3_DB_BOOT_MAJ:
+         MEMCPY( pBuffer, (uint8_t *)&DB_defaultEepromSettings.bootMajVer,
+               elemSize );
+         break;
+      case _DC3_DB_BOOT_MIN:
+         MEMCPY( pBuffer, (uint8_t *)&DB_defaultEepromSettings.bootMinVer,
+               elemSize );
+         break;
+      case _DC3_DB_BOOT_BUILD_DATETIME:
+         MEMCPY( pBuffer, (uint8_t *)&DB_defaultEepromSettings.bootBuildDT,
+               elemSize );
+         break;
+      case _DC3_DB_FPGA_MAJ:
+         MEMCPY( pBuffer, (uint8_t *)&DB_defaultEepromSettings.fpgaMajVer,
+               elemSize );
+         break;
+      case _DC3_DB_FPGA_MIN:
+         MEMCPY( pBuffer, (uint8_t *)&DB_defaultEepromSettings.fpgaMinVer,
+               elemSize );
+         break;
+      case _DC3_DB_FPGA_BUILD_DATETIME:
+         MEMCPY( pBuffer, (uint8_t *)&DB_defaultEepromSettings.fpgaBuildDT,
+               elemSize );
+         break;
+      case _DC3_DB_DBG_MODULES:
+         MEMCPY( pBuffer, (uint8_t *)&DB_defaultEepromSettings.dbgModules,
+               elemSize );
+         break;
+      case _DC3_DB_DBG_DEVICES:
+         MEMCPY( pBuffer, (uint8_t *)&DB_defaultEepromSettings.dbgDevices,
+               elemSize );
+         break;
+      default:
+         status = ERR_DB_ELEM_NOT_FOUND;
+         break;
+   }
+
+DB_getEepromDefaultElem_ERR_HANDLE:/* Handle any error that may have occurred */
+   ERR_COND_OUTPUT( status, accessType,
+         "Getting default value for DB element %s (%d): Error 0x%08x \n",
+         CON_dbElemToStr( elem ), elem, status );
    return( status );
 }
 
@@ -402,7 +591,7 @@ const DC3I2CDevice_t DB_getI2CDev( const DB_ElemLoc_t loc )
 }
 
 /******************************************************************************/
-const DC3Error_t DB_readEEPROM(
+const DC3Error_t DB_readFlash(
       const DC3DBElem_t elem,
       const uint8_t bufferSize,
       uint8_t* const buffer,
@@ -433,7 +622,7 @@ const DC3Error_t DB_readEEPROM(
          }
          break;
       default:
-         status = ERR_DB_ELEM_IS_NOT_IN_EEPROM;
+         status = ERR_DB_ELEM_IS_NOT_IN_FLASH;
          *resultLen = 0;
          break;
    }

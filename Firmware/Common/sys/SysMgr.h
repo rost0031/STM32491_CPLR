@@ -123,20 +123,14 @@ typedef struct {
  * @brief Event struct type for specifying a DB read, check, and possibly
  * set new value event
  */
-/*${Events::DBCheckEvt} ....................................................*/
+/*${Events::DBCheckSetElemEv~} .............................................*/
 typedef struct {
 /* protected: */
     QEvt super;
 
     /**< DB element */
     DC3DBElem_t dbElem;
-
-    /**< Buffer that holds the data read from DB */
-    uint8_t dataBuf[MAX_DB_ELEM_SIZE];
-
-    /**< Length of data in dataBuf */
-    uint8_t dataLen;
-} DBCheckEvt;
+} DBCheckSetElemEvt;
 
 
 /* Exported constants --------------------------------------------------------*/
