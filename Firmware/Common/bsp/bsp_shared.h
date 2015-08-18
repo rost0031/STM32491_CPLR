@@ -18,6 +18,36 @@
 
 /* Includes ------------------------------------------------------------------*/
 /* Exported defines ----------------------------------------------------------*/
+/**
+ * \def This define allows functions to be placed into RAM (as opposed
+ * to Flash) by the linker and startup code.
+ */
+#define RAM_FUNC __attribute__((long_call, section (".ramfunctions")))
+
+///**
+// * \def This define allows functions/variables to be placed into external SDRAM
+// * by the linker and startup code.
+// */
+//#define SDRAM_FUNC __attribute__((long_call, section (".sdram")))
+//
+///**
+// * \def This define allows functions to be placed into Closely Coupled RAM
+// * (CCMRAM) by the linker and startup code.
+// */
+//#define CCMRAM_FUNC __attribute__((long_call, section (".ccmram")))
+
+/**
+ * \def This define allows variables to be placed into external SDRAM
+ * by the linker and startup code.
+ */
+#define SDRAM_VAR __attribute__((section(".sdram")))
+
+/**
+ * \def This define allows variables to be placed into Closely Coupled RAM
+ * (CCMRAM) by the linker and startup code.
+ */
+#define CCMRAM_VAR __attribute__((section(".ccmram")))
+
 /* Exported macros -----------------------------------------------------------*/
 /* Exported types ------------------------------------------------------------*/
 

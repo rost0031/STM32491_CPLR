@@ -18,6 +18,7 @@
 /* Includes ------------------------------------------------------------------*/
 #include "sys_shared.h"
 #include "qp_port.h"                                        /* for QP support */
+#include "qmpool.h"                       /* For QF native memory pool access */
 #include "DC3Errors.h"                              /* for system error codes */
 #include "DC3Signals.h"                                 /* for system signals */
 #include "DC3CommApi.h"                                /* for DC3 API support */
@@ -50,6 +51,9 @@ enum AO_Priorities {
 };
 
 /* Exported constants --------------------------------------------------------*/
+
+extern QMPool * const p_glbMemPool;         /**< Global pointer to memory pool */
+
 /* Exported functions --------------------------------------------------------*/
 #endif                                                           /* SHARED_H_ */
 /******** Copyright (C) 2014 Datacard. All rights reserved *****END OF FILE****/

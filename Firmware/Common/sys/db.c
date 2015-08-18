@@ -396,34 +396,42 @@ const DC3Error_t DB_chkElem(
       goto DB_chkElem_ERR_HANDLE;
    }
 
-   /* Get the DB element's default value */
-
-   /* Using QP's event memory pool as a regular mempool.  This is a little
-    * hacky but should be safe as long as we remember to garbage collect the
-    * event after we finish using it.
-    * DO NOT USE GOTOs from here until the garbage collection happens. */
-
-   // TODO: use QMPool instead as per Miro's suggestion
-   DBWriteReqEvt *evt = Q_NEW(DBWriteReqEvt, DB_GET_ELEM_DONE_SIG);
-
-   if (ERR_NONE != (status = DB_getEepromDefaultElem( elem, accessType,
-         MAX_DB_ELEM_SIZE, evt->dataBuf))) {
+   /* Using QP's native memory pool for "dynamic" memory allocation. This is
+    * very fast CCM memory but you can't DMA to/from it.  Be careful using GOTOs
+    * from here until the garbage collection happens. */
+   uint8_t* dataBuf = (uint8_t *)QMPool_get(p_glbMemPool, 1U);
+   if ( NULL == dataBuf ) {
+      status = ERR_MEM_NULL_VALUE;
       goto DB_chkElem_ERR_HANDLE;
    }
 
-   if( !DB_isArraysMatch( pBuffer, evt->dataBuf, DB_getElemSize(elem) ) ) {
+   /* Get the DB element's default value */
+   if (ERR_NONE != (status = DB_getEepromDefaultElem( elem, accessType,
+         MAX_DB_ELEM_SIZE, dataBuf))) {
+      goto DB_chkElem_ERR_HANDLE;
+   }
+
+   /* Compare the data passed in to the default value read */
+   if( !DB_isArraysMatch( pBuffer, dataBuf, DB_getElemSize(elem) ) ) {
       WRN_printf("DB element %s (%d) value doesn't match default:\n",
             CON_dbElemToStr(elem), elem);
 
+      char* printBuf = (char *)QMPool_get(p_glbMemPool, 1U);
+      if ( NULL == printBuf ) {
+         status = ERR_MEM_NULL_VALUE;
+         /* Free the dataBuf block and only then go to error handling. */
+         QMPool_put(p_glbMemPool, dataBuf);
+         goto DB_chkElem_ERR_HANDLE;
+      }
+
       /* Allocate another array for converting hex to str so we don't waste
        * stack space. Once again, don't forget to garbage collect */
-      LrgDataEvt *printBufEvt = Q_NEW(LrgDataEvt, DB_GET_ELEM_DONE_SIG);
       uint16_t printLen = 0;
       status = CON_hexToStr(
-            ((DBWriteReqEvt const *) evt)->dataBuf, // data to convert
-            DB_getElemSize(elem),                   // length of data to convert
-            (char *)printBufEvt->dataBuf,        // where to write output
-            DC3_MAX_MSG_LEN,                     // max size of output buffer
+            dataBuf,                             // data to convert
+            DB_getElemSize(elem),                // length of data to convert
+            printBuf,                            // where to write output
+            DC3_MAX_MEM_BLK_SIZE,                // max size of output buffer
             &printLen,                           // size of the resulting output
             0,                                   // no columns
             ' ',                                 // separator
@@ -431,8 +439,7 @@ const DC3Error_t DB_chkElem(
         );
 
       if ( ERR_NONE == status ) {
-         WRN_printf("Default Val: bytes: [%s] :\n",
-               printBufEvt->dataBuf);
+         WRN_printf("Default Val: bytes: [%s] :\n", printBuf);
       } else {
          WRN_printf("Stored in DB: bytes: Buffer too small to print...\n");
       }
@@ -440,7 +447,7 @@ const DC3Error_t DB_chkElem(
       status = CON_hexToStr(
             pBuffer,                             // data to convert
             DB_getElemSize(elem),                // length of data to convert
-            (char *)printBufEvt->dataBuf,        // where to write output
+            printBuf,                            // where to write output
             DC3_MAX_MSG_LEN,                     // max size of output buffer
             &printLen,                           // size of the resulting output
             0,                                   // no columns
@@ -449,14 +456,13 @@ const DC3Error_t DB_chkElem(
       );
 
       if ( ERR_NONE == status ) {
-         WRN_printf("Stored in DB: bytes: [%s] :\n",
-               printBufEvt->dataBuf);
+         WRN_printf("Stored in DB: bytes: [%s] :\n", printBuf);
       } else {
          WRN_printf("Stored in DB: bytes: Buffer too small to print...\n");
       }
 
-      /* Garbage collect the print evt */
-      QF_gc( (QEvt *)printBufEvt );
+      /* Garbage collect the printBuf assuming everything went ok. */
+      QMPool_put(p_glbMemPool, printBuf);
 
       /* Have to handle the elements explicitly here since the error assigned
        * might be used to reset or do other things with the data outside of this
@@ -479,8 +485,8 @@ const DC3Error_t DB_chkElem(
       }
    }
 
-   /* Garbage collect the temp buffer evt */
-   QF_gc( (QEvt *)evt );
+   /* Garbage collect the temp data buffer */
+   QMPool_put(p_glbMemPool, dataBuf);
 
    DB_chkElem_ERR_HANDLE:
    WRN_COND_OUTPUT( status, accessType,

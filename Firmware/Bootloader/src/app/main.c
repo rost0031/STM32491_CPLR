@@ -36,7 +36,7 @@ DBG_DEFINE_THIS_MODULE( DC3_DBG_MODL_GEN ); /* For debug system to ID this modul
 
 /* Private typedefs ----------------------------------------------------------*/
 /* Private defines -----------------------------------------------------------*/
-#define QM_MEMPOOL_SIZE   512
+#define QM_MEMPOOL_SIZE   32768 /**< Large memory pool since it's going into CCMRAM */
 
 /* Private macros ------------------------------------------------------------*/
 /* Private variables and Local objects ---------------------------------------*/
@@ -49,7 +49,13 @@ static QEvt const    *l_FlashMgrQueueSto[30];         /**< Storage for FlashMgr 
 static QEvt const    *l_SysMgrQueueSto[10];           /**< Storage for SysMgr event Queue */
 static QSubscrList   l_subscrSto[MAX_PUB_SIG];        /**< Storage for subscribe/publish event Queue */
 
-static QMPool l_nativeMemPoolSto[QM_MEMPOOL_SIZE];
+/* Put the memory pool into closely coupled ram (CCMRAM).  It's very fast but
+ * the drawback is that you can't DMA to/from this memory. */
+CCMRAM_VAR QMPool          glbMemPool;                      /**< Global memory pool pointer */
+CCMRAM_VAR static uint8_t  l_memPoolSto[QM_MEMPOOL_SIZE];   /**< memory pool storage */
+
+/* Global-scope objects ----------------------------------------------------*/
+QMPool * const p_glbMemPool = (QMPool *)&glbMemPool;  /**< "opaque" MemPool pointer */
 
 /**
  * \union Small Events.
@@ -115,72 +121,6 @@ int main(void)
    dbg_slow_printf("Initialized BSP\n");
    log_slow_printf("Starting Bootloader version %s built on %s\n", FW_VER, BUILD_DATE);
 
-
-   //
-   //
-   //    log_slow_printf("Checking settings DB validity...\n");
-   //    DC3Error_t status = DB_isValid( ACCESS_BARE_METAL );
-   //    if ( ERR_NONE != status ) {
-   //       wrn_slow_printf("Settings DB validity check returned: 0x%08x\n", status);
-   //       wrn_slow_printf("Attempting to write default DB to EEPROM...\n");
-   //       status = DB_initToDefault( ACCESS_BARE_METAL );
-   //       if ( ERR_NONE != status ) {
-   //          err_slow_printf("Unable to write default DB to EEPROM. Error: 0x%08x\n", status);
-   //       } else {
-   //          log_slow_printf("Wrote default DB to EEPROM. Attempting to validate...\n");
-   //          status = DB_isValid( ACCESS_BARE_METAL );
-   //          if ( ERR_NONE != status ) {
-   //             err_slow_printf("DB validity check returned: 0x%08x\n", status);
-   //             err_slow_printf("Unable to fix DB in EEPROM\n");
-   //          } else {
-   //             log_slow_printf("A default DB has been successfully written to EEPROM\n");
-   //          }
-   //       }
-   //    } else {
-   //       log_slow_printf("Valid settings DB found.\n");
-   //    }
-   //
-   //    dbg_slow_printf("Reading the MAC address from the settings DB...\n");
-   //    uint8_t macAddrBuffer[6];
-   //    memset(macAddrBuffer, 0, sizeof(macAddrBuffer));
-   //
-   //    status = DB_getElemBLK(
-   //          DB_MAC_ADDR,
-   //          macAddrBuffer,
-   //          sizeof(macAddrBuffer),
-   //          ACCESS_BARE_METAL
-   //    );
-   //    if ( ERR_NONE != status ) {
-   //       err_slow_printf("Unable to read stored MAC address, error: 0x%08x\n", status);
-   //    } else {
-   //       log_slow_printf(
-   //             "Read MAC address from settings DB: %02x:%02x:%02x:%02x:%02x:%02x\n",
-   //             macAddrBuffer[0], macAddrBuffer[1], macAddrBuffer[2],
-   //             macAddrBuffer[3], macAddrBuffer[4], macAddrBuffer[5]
-   //       );
-   //    }
-   //
-   //    /* Read the stored IP address from DB */
-   //    dbg_slow_printf("Reading the IP address from the settings DB...\n");
-   //    uint8_t ipAddrBuffer[4];
-   //    memset(ipAddrBuffer, 0, sizeof(ipAddrBuffer));
-   //    status = DB_getElemBLK(
-   //          DB_IP_ADDR,
-   //          ipAddrBuffer,
-   //          sizeof(ipAddrBuffer),
-   //          ACCESS_BARE_METAL
-   //    );
-   //
-   //    if ( ERR_NONE != status ) {
-   //       err_slow_printf("Unable to read stored IP address, error: 0x%08x\n", status);
-   //    } else {
-   //       log_slow_printf(
-   //             "Read IP address from settings DB: %d:%d:%d:%d\n",
-   //             ipAddrBuffer[0], ipAddrBuffer[1], ipAddrBuffer[2], ipAddrBuffer[3]
-   //       );
-   //    }
-   //
-
    /* Instantiate the Active objects by calling their "constructors"         */
    dbg_slow_printf("Initializing AO constructors\n");
 
@@ -218,19 +158,20 @@ int main(void)
    QF_psInit(l_subscrSto, Q_DIM(l_subscrSto));     /* init publish-subscribe */
 
    /* initialize the general memory pool */
+   dbg_slow_printf("Initializing general purpose memory pool in CCMRAM\n");
    QMPool_init(
-         &l_nativeMemPoolSto[QM_MEMPOOL_SIZE],
-         l_nativeMemPoolSto,
-         QM_MEMPOOL_SIZE,
-         sizeof(l_nativeMemPoolSto[0])
+         p_glbMemPool,
+         l_memPoolSto,
+         sizeof(l_memPoolSto),
+         DC3_MAX_MEM_BLK_SIZE
    );
 
    /* initialize event pools... */
-   dbg_slow_printf("Initializing small event storage pools\n");
+   dbg_slow_printf("Initializing small event storage pool\n");
    QF_poolInit(l_smlPoolSto, sizeof(l_smlPoolSto), sizeof(l_smlPoolSto[0]));
-   dbg_slow_printf("Initializing medium event storage pools\n");
+   dbg_slow_printf("Initializing medium event storage pool\n");
    QF_poolInit(l_medPoolSto, sizeof(l_medPoolSto), sizeof(l_medPoolSto[0]));
-   dbg_slow_printf("Initializing large event storage pools\n");
+   dbg_slow_printf("Initializing large event storage pool\n");
    QF_poolInit(l_lrgPoolSto, sizeof(l_lrgPoolSto), sizeof(l_lrgPoolSto[0]));
 
    /* Start Active objects */

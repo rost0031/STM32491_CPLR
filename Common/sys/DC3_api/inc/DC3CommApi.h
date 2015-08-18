@@ -45,6 +45,11 @@ extern "C" {
  */
 #define DC3_DATETIME_LEN 14
 
+/**
+ * @brief   Max size of a memory block that can be gotten from QMPool
+ * This is the MAX length of memory in a block that can be gotten from QMPool. */
+#define DC3_MAX_MEM_BLK_SIZE 256U
+
 /* Exported macros -----------------------------------------------------------*/
 
 /**
