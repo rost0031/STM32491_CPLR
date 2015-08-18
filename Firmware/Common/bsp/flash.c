@@ -90,7 +90,6 @@ static const uint32_t FLASH_getNextSectorAddr( const uint32_t addr );
   */
 static const uint16_t FLASH_sectorAddrToFlashSect( const uint32_t addr );
 
-
 /**
  * @brief   Read a uint8_t from flash
  * @param [in] addr: const uint32_t address where to read from
@@ -482,6 +481,36 @@ const DC3Error_t FLASH_writeApplBuildDatetime(
    );
 
    return( status );
+}
+
+
+/******************************************************************************/
+const DC3Error_t FLASH_readBufferUint8(
+      uint32_t addr,
+      const size_t bytes,
+      const size_t bufferSize,
+      uint8_t *pBuffer,
+      uint16_t *pBytesRead
+)
+{
+   if( NULL == pBuffer ) {
+      return( ERR_MEM_NULL_VALUE );
+   }
+
+   if( bufferSize < bytes ) {
+      return( ERR_MEM_BUFFER_LEN );
+   }
+
+   *pBytesRead = 0;
+   size_t i = 0;
+
+   for( i = 0; i < bytes; i++ ) {
+      pBuffer[i] = *(( __IO uint8_t *)addr++);
+   }
+
+   *pBytesRead = i;
+
+   return( ERR_NONE );
 }
 
 /******************************************************************************/

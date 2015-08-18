@@ -161,165 +161,6 @@ static QState SysMgr_Busy(SysMgr * const me, QEvt const * const e);
  * machine is going next.
  */
 static QState SysMgr_AccessingDB(SysMgr * const me, QEvt const * const e);
-
-/**
- * @brief    Check DB magic number and reset DB to default values if invalid.
- *
- * @param  [in|out] me: Pointer to the state machine
- * @param  [in|out]  e:  Pointer to the event being processed.
- * @return status: QState type that specifies where the state
- * machine is going next.
- */
-static QState SysMgr_DBMagicWordCheck(SysMgr * const me, QEvt const * const e);
-
-/**
- * @brief   Reset the DB magic word to default values.
- *
- * @param  [in|out] me: Pointer to the state machine
- * @param  [in|out]  e:  Pointer to the event being processed.
- * @return status: QState type that specifies where the state
- * machine is going next.
- */
-static QState SysMgr_ResetDBMagicWord(SysMgr * const me, QEvt const * const e);
-
-/**
- * @brief    Check DB version and reset DB to default values if invalid.
- *
- * @param  [in|out] me: Pointer to the state machine
- * @param  [in|out]  e:  Pointer to the event being processed.
- * @return status: QState type that specifies where the state
- * machine is going next.
- */
-static QState SysMgr_DBVersionCheck(SysMgr * const me, QEvt const * const e);
-
-/**
- * @brief    Check bootloader build datetime and fix it if it doesn't match.
- *
- * @param  [in|out] me: Pointer to the state machine
- * @param  [in|out]  e:  Pointer to the event being processed.
- * @return status: QState type that specifies where the state
- * machine is going next.
- */
-static QState SysMgr_BootLdrBuildDTCheck(SysMgr * const me, QEvt const * const e);
-
-/**
- * @brief   Reset the DB version to default value.
- * @param  [in|out] me: Pointer to the state machine
- * @param  [in|out]  e:  Pointer to the event being processed.
- * @return status: QState type that specifies where the state
- * machine is going next.
- */
-static QState SysMgr_ResetDBVersion(SysMgr * const me, QEvt const * const e);
-
-/**
- * @brief   Reset the bootloader build datetime.
- *
- * @param  [in|out] me: Pointer to the state machine
- * @param  [in|out]  e:  Pointer to the event being processed.
- * @return status: QState type that specifies where the state
- * machine is going next.
- */
-static QState SysMgr_SetBootLdrDatetime(SysMgr * const me, QEvt const * const e);
-
-/**
- * @brief   Reset the bootloader major version.
- *
- * @param  [in|out] me: Pointer to the state machine
- * @param  [in|out]  e:  Pointer to the event being processed.
- * @return status: QState type that specifies where the state
- * machine is going next.
- */
-static QState SysMgr_SetBootLdrMajVer(SysMgr * const me, QEvt const * const e);
-
-/**
- * @brief    Check bootloader major version and fix it if it doesn't match.
- *
- * @param  [in|out] me: Pointer to the state machine
- * @param  [in|out]  e:  Pointer to the event being processed.
- * @return status: QState type that specifies where the state
- * machine is going next.
- */
-static QState SysMgr_BootLdrMajVerCheck(SysMgr * const me, QEvt const * const e);
-
-/**
- * @brief    Check bootloader minor version and fix it if it doesn't match.
- *
- * @param  [in|out] me: Pointer to the state machine
- * @param  [in|out]  e:  Pointer to the event being processed.
- * @return status: QState type that specifies where the state
- * machine is going next.
- */
-static QState SysMgr_BootLdrMinVerCheck(SysMgr * const me, QEvt const * const e);
-
-/**
- * @brief   Reset the bootloader minor version.
- *
- * @param  [in|out] me: Pointer to the state machine
- * @param  [in|out]  e:  Pointer to the event being processed.
- * @return status: QState type that specifies where the state
- * machine is going next.
- */
-static QState SysMgr_SetBootLdrMinVer(SysMgr * const me, QEvt const * const e);
-
-/**
- * @brief   Small timeout to make sure that retries don't overwhelm the logging
- * system.
- *
- * @param  [in|out] me: Pointer to the state machine
- * @param  [in|out]  e:  Pointer to the event being processed.
- * @return status: QState type that specifies where the state
- * machine is going next.
- */
-static QState SysMgr_Wait2(SysMgr * const me, QEvt const * const e);
-
-/**
- * @brief   Small timeout to make sure that retries don't overwhelm the logging
- * system.
- *
- * @param  [in|out] me: Pointer to the state machine
- * @param  [in|out]  e:  Pointer to the event being processed.
- * @return status: QState type that specifies where the state
- * machine is going next.
- */
-static QState SysMgr_Wait1(SysMgr * const me, QEvt const * const e);
-
-/**
- * @brief    Check DB debug modules and reset DB to default values if invalid.
- *
- * @param  [in|out] me: Pointer to the state machine
- * @param  [in|out]  e:  Pointer to the event being processed.
- * @return status: QState type that specifies where the state
- * machine is going next.
- */
-static QState SysMgr_DBGetDebugModules(SysMgr * const me, QEvt const * const e);
-
-/**
- * @brief   Reset the DB debug modules to default value.
- * @param  [in|out] me: Pointer to the state machine
- * @param  [in|out]  e:  Pointer to the event being processed.
- * @return status: QState type that specifies where the state
- * machine is going next.
- */
-static QState SysMgr_ResetDBDbgModules(SysMgr * const me, QEvt const * const e);
-
-/**
- * @brief    Check DB debug modules and reset DB to default values if invalid.
- *
- * @param  [in|out] me: Pointer to the state machine
- * @param  [in|out]  e:  Pointer to the event being processed.
- * @return status: QState type that specifies where the state
- * machine is going next.
- */
-static QState SysMgr_DBGetDebugDevices(SysMgr * const me, QEvt const * const e);
-
-/**
- * @brief   Reset the DB debug Devices to default value.
- * @param  [in|out] me: Pointer to the state machine
- * @param  [in|out]  e:  Pointer to the event being processed.
- * @return status: QState type that specifies where the state
- * machine is going next.
- */
-static QState SysMgr_ResetDBDbgDevices(SysMgr * const me, QEvt const * const e);
 static QState SysMgr_DBFullReset(SysMgr * const me, QEvt const * const e);
 
 /**
@@ -396,21 +237,9 @@ static QState SysMgr_initial(SysMgr * const me, QEvt const * const e) {
     me->dbMagicWordDef = DB_MAGIC_WORD_DEF;
 
     /* Post to self to validate DB on startup */
-    /*
-    QEvt *evt = Q_NEW(QEvt, DB_INTRNL_CHECK_SETTINGS_SIG);
-    QACTIVE_POST(AO_SysMgr, (QEvt *)(evt), me);
-    */
+    DBCheckSetElemEvt *evt;
     #if CPLR_BOOT
-    /* If this is the bootloader, also validate the bootloader build datetime
-     * and version in the DB. */
-    /*
-    QEvt *evt1 = Q_NEW(QEvt, DB_INTRNL_CHECK_BOOTLDR_VER_SIG);
-    QACTIVE_POST(AO_SysMgr, (QEvt *)evt1, me);
-    */
-    #endif
-
-    #if CPLR_BOOT
-    DBCheckSetElemEvt *evt = Q_NEW(DBCheckSetElemEvt, DB_INTRNL_CHK_ELEM_SIG);
+    evt = Q_NEW(DBCheckSetElemEvt, DB_INTRNL_CHK_ELEM_SIG);
     evt->dbElem = _DC3_DB_MAGIC_WORD;
     QACTIVE_POST(AO_SysMgr, (QEvt *)evt, me);
 
@@ -548,18 +377,6 @@ static QState SysMgr_Idle(SysMgr * const me, QEvt const * const e) {
             status_ = Q_TRAN(&SysMgr_AccessingDB);
             break;
         }
-        /* ${AOs::SysMgr::SM::Active::Idle::DB_INTRNL_CHECK_~} */
-        case DB_INTRNL_CHECK_SETTINGS_SIG: {
-            me->dbCmd = DB_OP_INTERNAL;
-            status_ = Q_TRAN(&SysMgr_DBMagicWordCheck);
-            break;
-        }
-        /* ${AOs::SysMgr::SM::Active::Idle::DB_INTRNL_CHECK_~} */
-        case DB_INTRNL_CHECK_BOOTLDR_VER_SIG: {
-            me->dbCmd = DB_OP_INTERNAL;
-            status_ = Q_TRAN(&SysMgr_BootLdrBuildDTCheck);
-            break;
-        }
         /* ${AOs::SysMgr::SM::Active::Idle::DB_FULL_RESET} */
         case DB_FULL_RESET_SIG: {
             /* Need to set some DB element since the reply carries this back.  This is technically
@@ -643,8 +460,6 @@ static QState SysMgr_Busy(SysMgr * const me, QEvt const * const e) {
         /* ${AOs::SysMgr::SM::Active::Busy::DB_SET_ELEM, DB_~} */
         case DB_SET_ELEM_SIG: /* intentionally fall through */
         case DB_GET_ELEM_SIG: /* intentionally fall through */
-        case DB_INTRNL_CHECK_SETTINGS_SIG: /* intentionally fall through */
-        case DB_INTRNL_CHECK_BOOTLDR_VER_SIG: /* intentionally fall through */
         case DB_INTRNL_CHK_ELEM_SIG: {
             if (QEQueue_getNFree(&me->deferredEvtQueue) > 0) {
                /* defer the request - this event will be handled
@@ -784,11 +599,30 @@ static QState SysMgr_AccessingDB(SysMgr * const me, QEvt const * const e) {
         }
         /* ${AOs::SysMgr::SM::Active::Busy::AccessingDB::DB_READ} */
         case DB_READ_SIG: {
-            LOG_printf("DB_READ via %s access to read: %s (%d)\n",
+            DBG_printf("DB_READ via %s access to read: %s (%d)\n",
                 CON_accessToStr( ((DBReadReqEvt const *)e)->accessType ),
                 CON_dbElemToStr( ((DBReadReqEvt const *)e)->dbElem ),
                 ((DBReadReqEvt const *)e)->dbElem
             );
+
+            /* This is a common function that will do a proper read based on access type and
+             * element.  Arguments for buffer size and buffer can be 0 and NULL, respectively
+             * since the function will post an event to do the read and it allocates its own
+             * buffer space.  Once the read is complete, an event will be posted that signifies
+             * the competion of the read and the data will be contained within those events.
+             * See I2C1_DEV_READ/WRITE_DONE_SIG and DB_FLASH_READ_DONE_SIG handlers. */
+            me->errorCode = DB_getElem(
+                ((DBReadReqEvt const *)e)->dbElem,        // What element to read
+                ((DBReadReqEvt const *)e)->accessType,    // What access to use
+                0, NULL                                   // buffer size and pointer
+            );
+
+            #if 0
+            /* This function will post the event to read the element.  Don't need a buffer
+             * since the data will come back via an event with its own buffer. */
+            me->errorCode = DB_getElem(
+                ((DBReadReqEvt const *)e)->dbElem,
+                me->accessType, 0, NULL );
 
             /* Find where the element lives */
             DB_ElemLoc_t loc = DB_getElemLoc( ((DBReadReqEvt const *)e)->dbElem );
@@ -831,16 +665,40 @@ static QState SysMgr_AccessingDB(SysMgr * const me, QEvt const * const e) {
                     QACTIVE_POST(AO_SysMgr, evtNotFound, me);
                     break;
             }
+            #endif
+
+            ERR_COND_OUTPUT(
+                me->errorCode,
+                me->accessType,
+                "DB_READ of DB elem %s (%d): Error 0x%08x \n",
+                me->errorCode,
+                CON_dbElemToStr( me->dbElem ),
+                me->dbElem
+            );
             status_ = Q_HANDLED();
+            break;
+        }
+        /* ${AOs::SysMgr::SM::Active::Busy::AccessingDB::DB_OP_DONE} */
+        case DB_OP_DONE_SIG: {
+            status_ = Q_TRAN(&SysMgr_Idle);
             break;
         }
         /* ${AOs::SysMgr::SM::Active::Busy::AccessingDB::DB_WRITE} */
         case DB_WRITE_SIG: {
-            LOG_printf("DB_WRITE via %s access to write: %s (%d)\n",
+            DBG_printf("DB_WRITE via %s access to write: %s (%d)\n",
                 CON_accessToStr( ((DBWriteReqEvt const *)e)->accessType ),
                 CON_dbElemToStr( ((DBWriteReqEvt const *)e)->dbElem ),
                 ((DBWriteReqEvt const *)e)->dbElem
             );
+
+            me->errorCode = DB_setElem(
+                ((DBWriteReqEvt const *)e)->dbElem,         // Element to write
+                ((DBWriteReqEvt const *)e)->accessType,     // Access type to use
+                MAX_DB_ELEM_SIZE,                           // Max size of buffer
+                ((DBWriteReqEvt const *)e)->dataBuf         // Buffer containing data to write
+            );
+
+            #if 0
 
             /* Find where the element lives */
             DB_ElemLoc_t loc = DB_getElemLoc( ((DBWriteReqEvt const *)e)->dbElem );
@@ -875,12 +733,18 @@ static QState SysMgr_AccessingDB(SysMgr * const me, QEvt const * const e) {
                     QACTIVE_POST(AO_SysMgr, evtNotFound, me);
                     break;
             }
+
+            #endif
+
+            ERR_COND_OUTPUT(
+                me->errorCode,
+                me->accessType,
+                "DB_WRITE of DB elem %s (%d): Error 0x%08x \n",
+                me->errorCode,
+                CON_dbElemToStr( me->dbElem ),
+                me->dbElem
+            );
             status_ = Q_HANDLED();
-            break;
-        }
-        /* ${AOs::SysMgr::SM::Active::Busy::AccessingDB::DB_OP_DONE} */
-        case DB_OP_DONE_SIG: {
-            status_ = Q_TRAN(&SysMgr_Idle);
             break;
         }
         /* ${AOs::SysMgr::SM::Active::Busy::AccessingDB::I2C1_DEV_READ_DO~} */
@@ -911,1021 +775,26 @@ static QState SysMgr_AccessingDB(SysMgr * const me, QEvt const * const e) {
             status_ = Q_HANDLED();
             break;
         }
-        default: {
-            status_ = Q_SUPER(&SysMgr_Busy);
-            break;
-        }
-    }
-    return status_;
-}
+        /* ${AOs::SysMgr::SM::Active::Busy::AccessingDB::DB_FLASH_READ_DO~} */
+        case DB_FLASH_READ_DONE_SIG: {
+            me->errorCode = ((DBReadDoneEvt const *) e)->status;
+            if ( ERR_NONE == me->errorCode ) {
+                me->dataLen = ((DBReadDoneEvt const *) e)->dataLen;
+                if ( me->dataLen > MAX_DB_ELEM_SIZE ) {
+                    me->errorCode = ERR_DB_ELEM_SIZE_OVERFLOW;
+                } else {
+                    MEMCPY(me->dataBuf, ((DBReadDoneEvt const *) e)->dataBuf, me->dataLen);
+                }
+            }
 
-/**
- * @brief    Check DB magic number and reset DB to default values if invalid.
- *
- * @param  [in|out] me: Pointer to the state machine
- * @param  [in|out]  e:  Pointer to the event being processed.
- * @return status: QState type that specifies where the state
- * machine is going next.
- */
-/*${AOs::SysMgr::SM::Active::Busy::AccessingDB::DBMagicWordCheck} ..........*/
-static QState SysMgr_DBMagicWordCheck(SysMgr * const me, QEvt const * const e) {
-    QState status_;
-    switch (e->sig) {
-        /* ${AOs::SysMgr::SM::Active::Busy::AccessingDB::DBMagicWordCheck} */
-        case Q_ENTRY_SIG: {
-            QTimeEvt_rearm(                                       /* Re-arm timer on entry */
-                &me->dbTimerEvt,
-                SEC_TO_TICKS( HL_MAX_TOUT_SEC_COMM_DB_VALIDATE )
-            );
-
-            /* Post to SysMgr to get the build datetime first since it's the one most likely to
-             * be incorrect */
-            DBReadReqEvt *evt = Q_NEW(DBReadReqEvt, DB_READ_SIG);
-            evt->accessType = _DC3_ACCESS_QPC;
-            evt->dbElem = _DC3_DB_MAGIC_WORD;
-            QACTIVE_POST(AO_SysMgr, (QEvt *)(evt), AO_SysMgr);
+            /* Self post to let the exit condition handle the sending back to requester */
+            QEvt *evt = Q_NEW(QEvt, DB_OP_DONE_SIG);
+            QACTIVE_POST(AO_SysMgr, evt, me);
             status_ = Q_HANDLED();
-            break;
-        }
-        /* ${AOs::SysMgr::SM::Active::Busy::AccessingDB::DBMagicWordCheck} */
-        case Q_EXIT_SIG: {
-            QTimeEvt_disarm(&me->dbTimerEvt);                  /* Disarm timer on exit */
-            status_ = Q_HANDLED();
-            break;
-        }
-        /* ${AOs::SysMgr::SM::Active::Busy::AccessingDB::DBMagicWordCheck::I2C1_DEV_READ_DO~} */
-        case I2C1_DEV_READ_DONE_SIG: {
-            me->errorCode = ((I2CReadDoneEvt const *) e)->status;
-
-            if ( ERR_NONE != me->errorCode ) {
-                goto END_ERROR_CHECK;
-            }
-
-            if ( ((I2CReadDoneEvt const *) e)->bytes > MAX_DB_ELEM_SIZE ) {
-                /* This should be considered a pretty critical error. */
-                me->errorCode = ERR_DB_ELEM_SIZE_OVERFLOW;
-                goto END_ERROR_CHECK;
-            }
-
-            if( !DB_isArraysMatch(
-                ((I2CReadDoneEvt const *) e)->dataBuf,
-                (uint8_t *)&(me->dbMagicWordDef),
-                ((I2CReadDoneEvt const *) e)->bytes ) ) {
-                /* If the check fails, set the error code */
-                me->errorCode = ERR_DB_NOT_INIT;
-
-                WRN_printf("Invalid DB magic word. Error 0x%08x\n", me->errorCode);
-                WRN_printf("Compiled: bytes: %x\n", me->dbMagicWordDef );
-
-                CON_hexToStr(
-                    ((I2CReadDoneEvt const *) e)->dataBuf, // data to convert
-                    ((I2CReadDoneEvt const *) e)->bytes, // length of data to convert
-                    (char *)me->dataBuf,                 // where to write output
-                    sizeof(me->dataBuf),                 // max size of output buffer
-                    &(me->dataLen),                      // size of the resulting output
-                    0,                                   // no columns
-                    ' ',                                 // separator
-                    false                                // bPrintX
-                );
-
-                WRN_printf("In DB   : bytes: %s\n", me->dataBuf );
-
-                goto END_ERROR_CHECK;
-            }
-
-            /* Local tag to jump to if an error is found or to reach naturally
-             * once all the checks are complete */
-            END_ERROR_CHECK:
-            ERR_COND_OUTPUT(
-                me->errorCode,
-                me->accessType,
-                "Error 0x%08x reading DB elem %s (%d)\n",
-                me->errorCode,
-                CON_dbElemToStr(_DC3_DB_MAGIC_WORD),
-                _DC3_DB_MAGIC_WORD
-            );
-            /* ${AOs::SysMgr::SM::Active::Busy::AccessingDB::DBMagicWordCheck::I2C1_DEV_READ_DO~::[NoError?]} */
-            if (ERR_NONE == me->errorCode) {
-                status_ = Q_TRAN(&SysMgr_DBVersionCheck);
-            }
-            /* ${AOs::SysMgr::SM::Active::Busy::AccessingDB::DBMagicWordCheck::I2C1_DEV_READ_DO~::[else]} */
-            else {
-                status_ = Q_TRAN(&SysMgr_ResetDBMagicWord);
-            }
             break;
         }
         default: {
-            status_ = Q_SUPER(&SysMgr_AccessingDB);
-            break;
-        }
-    }
-    return status_;
-}
-
-/**
- * @brief   Reset the DB magic word to default values.
- *
- * @param  [in|out] me: Pointer to the state machine
- * @param  [in|out]  e:  Pointer to the event being processed.
- * @return status: QState type that specifies where the state
- * machine is going next.
- */
-/*${AOs::SysMgr::SM::Active::Busy::AccessingDB::ResetDBMagicWord} ..........*/
-static QState SysMgr_ResetDBMagicWord(SysMgr * const me, QEvt const * const e) {
-    QState status_;
-    switch (e->sig) {
-        /* ${AOs::SysMgr::SM::Active::Busy::AccessingDB::ResetDBMagicWord} */
-        case Q_ENTRY_SIG: {
-            WRN_printf("Resetting %s to default...\n", CON_dbElemToStr(_DC3_DB_MAGIC_WORD));
-
-            uint32_t dbMagicWord = DB_MAGIC_WORD_DEF;
-
-            /* Post to SysMgr to set the build datetime since it doesn't match the compiled one */
-            DBWriteReqEvt *evt = Q_NEW(DBWriteReqEvt, DB_WRITE_SIG);
-            evt->accessType = _DC3_ACCESS_QPC;
-            evt->dbElem = _DC3_DB_MAGIC_WORD;
-            evt->dataLen =  DB_getElemSize(_DC3_DB_MAGIC_WORD);
-            MEMCPY(evt->dataBuf, (uint8_t *)&dbMagicWord, evt->dataLen);
-            QACTIVE_POST(AO_SysMgr, (QEvt *)(evt), me);
-            status_ = Q_HANDLED();
-            break;
-        }
-        /* ${AOs::SysMgr::SM::Active::Busy::AccessingDB::ResetDBMagicWord::DB_OP_DONE} */
-        case DB_OP_DONE_SIG: {
-            status_ = Q_TRAN(&SysMgr_ResetDBVersion);
-            break;
-        }
-        default: {
-            status_ = Q_SUPER(&SysMgr_AccessingDB);
-            break;
-        }
-    }
-    return status_;
-}
-
-/**
- * @brief    Check DB version and reset DB to default values if invalid.
- *
- * @param  [in|out] me: Pointer to the state machine
- * @param  [in|out]  e:  Pointer to the event being processed.
- * @return status: QState type that specifies where the state
- * machine is going next.
- */
-/*${AOs::SysMgr::SM::Active::Busy::AccessingDB::DBVersionCheck} ............*/
-static QState SysMgr_DBVersionCheck(SysMgr * const me, QEvt const * const e) {
-    QState status_;
-    switch (e->sig) {
-        /* ${AOs::SysMgr::SM::Active::Busy::AccessingDB::DBVersionCheck} */
-        case Q_ENTRY_SIG: {
-            QTimeEvt_rearm(                                       /* Re-arm timer on entry */
-                &me->dbTimerEvt,
-                SEC_TO_TICKS( HL_MAX_TOUT_SEC_COMM_DB_VALIDATE )
-            );
-
-            /* Post to SysMgr to get the build datetime first since it's the one most likely to
-             * be incorrect */
-            DBReadReqEvt *evt = Q_NEW(DBReadReqEvt, DB_READ_SIG);
-            evt->accessType = _DC3_ACCESS_QPC;
-            evt->dbElem = _DC3_DB_VERSION;
-            QACTIVE_POST(AO_SysMgr, (QEvt *)(evt), AO_SysMgr);
-            status_ = Q_HANDLED();
-            break;
-        }
-        /* ${AOs::SysMgr::SM::Active::Busy::AccessingDB::DBVersionCheck} */
-        case Q_EXIT_SIG: {
-            QTimeEvt_disarm(&me->dbTimerEvt);                  /* Disarm timer on exit */
-            status_ = Q_HANDLED();
-            break;
-        }
-        /* ${AOs::SysMgr::SM::Active::Busy::AccessingDB::DBVersionCheck::I2C1_DEV_READ_DO~} */
-        case I2C1_DEV_READ_DONE_SIG: {
-            me->errorCode = ((I2CReadDoneEvt const *) e)->status;
-
-            if ( ERR_NONE != me->errorCode ) {
-                goto END_ERROR_CHECK;
-            }
-
-            if ( ((I2CReadDoneEvt const *) e)->bytes > MAX_DB_ELEM_SIZE ) {
-                /* This should be considered a pretty critical error. */
-                me->errorCode = ERR_DB_ELEM_SIZE_OVERFLOW;
-                goto END_ERROR_CHECK;
-            }
-
-            if( !DB_isArraysMatch(
-                ((I2CReadDoneEvt const *) e)->dataBuf,
-                (uint8_t *)&(me->dbVersionDef),
-                ((I2CReadDoneEvt const *) e)->bytes ) ) {
-                /* If the check fails, set the error code */
-                me->errorCode = ERR_DB_NOT_INIT;
-
-                WRN_printf("Invalid DB version. Error 0x%08x\n", me->errorCode);
-                WRN_printf("Compiled: bytes: %x\n", me->dbVersionDef );
-
-                CON_hexToStr(
-                    ((I2CReadDoneEvt const *) e)->dataBuf, // data to convert
-                    ((I2CReadDoneEvt const *) e)->bytes, // length of data to convert
-                    (char *)me->dataBuf,                 // where to write output
-                    sizeof(me->dataBuf),                 // max size of output buffer
-                    &(me->dataLen),                      // size of the resulting output
-                    0,                                   // no columns
-                    ' ',                                 // separator
-                    false                                // bPrintX
-                );
-
-                WRN_printf("In DB   : bytes: %s\n", me->dataBuf );
-
-                goto END_ERROR_CHECK;
-            }
-
-            /* Local tag to jump to if an error is found or to reach naturally
-             * once all the checks are complete */
-            END_ERROR_CHECK:
-            ERR_COND_OUTPUT(
-                me->errorCode,
-                me->accessType,
-                "Error 0x%08x reading DB elem %s (%d)\n",
-                me->errorCode,
-                CON_dbElemToStr(_DC3_DB_VERSION),
-                _DC3_DB_VERSION
-            );
-            /* ${AOs::SysMgr::SM::Active::Busy::AccessingDB::DBVersionCheck::I2C1_DEV_READ_DO~::[NoError?]} */
-            if (ERR_NONE == me->errorCode) {
-                status_ = Q_TRAN(&SysMgr_DBGetDebugModules);
-            }
-            /* ${AOs::SysMgr::SM::Active::Busy::AccessingDB::DBVersionCheck::I2C1_DEV_READ_DO~::[else]} */
-            else {
-                status_ = Q_TRAN(&SysMgr_ResetDBVersion);
-            }
-            break;
-        }
-        default: {
-            status_ = Q_SUPER(&SysMgr_AccessingDB);
-            break;
-        }
-    }
-    return status_;
-}
-
-/**
- * @brief    Check bootloader build datetime and fix it if it doesn't match.
- *
- * @param  [in|out] me: Pointer to the state machine
- * @param  [in|out]  e:  Pointer to the event being processed.
- * @return status: QState type that specifies where the state
- * machine is going next.
- */
-/*${AOs::SysMgr::SM::Active::Busy::AccessingDB::BootLdrBuildDTCh~} .........*/
-static QState SysMgr_BootLdrBuildDTCheck(SysMgr * const me, QEvt const * const e) {
-    QState status_;
-    switch (e->sig) {
-        /* ${AOs::SysMgr::SM::Active::Busy::AccessingDB::BootLdrBuildDTCh~} */
-        case Q_ENTRY_SIG: {
-            #if CPLR_BOOT                         /* Only compile this if this is the Bootloader */
-            DBG_printf("Validating %s (%d)...\n",
-                CON_dbElemToStr(_DC3_DB_BOOT_BUILD_DATETIME),
-                _DC3_DB_BOOT_BUILD_DATETIME);
-
-            /* Post to SysMgr to get the build datetime first since it's the one most likely to
-             * be incorrect */
-            DBReadReqEvt *evt = Q_NEW(DBReadReqEvt, DB_READ_SIG);
-            evt->accessType = _DC3_ACCESS_QPC;
-            evt->dbElem = _DC3_DB_BOOT_BUILD_DATETIME;
-            QACTIVE_POST(AO_SysMgr, (QEvt *)(evt), me);
-            #else                                /* Only compile this if this is the Application */
-            me->errorCode = ERR_MSG_UNSUPPORTED_IN_APPLICATION;
-            ERR_printf("Attempting to validate/set Bootloader info in Application. Error: 0x%08x\n", me->errorCode);
-
-            #endif
-            status_ = Q_HANDLED();
-            break;
-        }
-        /* ${AOs::SysMgr::SM::Active::Busy::AccessingDB::BootLdrBuildDTCh~::I2C1_DEV_READ_DO~} */
-        case I2C1_DEV_READ_DONE_SIG: {
-            me->errorCode = ((I2CReadDoneEvt const *) e)->status;
-
-            if ( ERR_NONE != me->errorCode ) {
-                goto END_ERROR_CHECK;
-            }
-
-            if ( ((I2CReadDoneEvt const *) e)->bytes > MAX_DB_ELEM_SIZE ) {
-                /* This should be considered a pretty critical error. */
-                me->errorCode = ERR_DB_ELEM_SIZE_OVERFLOW;
-                goto END_ERROR_CHECK;
-            }
-
-            if( !DB_isArraysMatch(
-                ((I2CReadDoneEvt const *) e)->dataBuf,
-                (uint8_t *)BUILD_DATE,
-                ((I2CReadDoneEvt const *) e)->bytes ) ) {
-                /* If the check fails, set the error code */
-                me->errorCode = ERR_DB_DATETIME_MISMATCH;
-
-                WRN_printf("Bootloader datetime mismatch. Error 0x%08x\n", me->errorCode);
-                LOG_printf("Note, this error is expected on first boot after a new bootloader was just flashed\n");
-
-                CON_hexToStr(
-                    ((I2CReadDoneEvt const *) e)->dataBuf, // data to convert
-                    ((I2CReadDoneEvt const *) e)->bytes, // length of data to convert
-                    (char *)me->dataBuf,                 // where to write output
-                    sizeof(me->dataBuf),                 // max size of output buffer
-                    &me->dataLen,                        // size of the resulting output
-                    0,                                   // no columns
-                    ' ',                                 // separator
-                    false                                // bPrintX
-                );
-
-                WRN_printf("In DB:    bytes: %s, string: %s\n",
-                    me->dataBuf, ((I2CReadDoneEvt const *) e)->dataBuf
-                );
-
-                CON_hexToStr(
-                    (uint8_t *)BUILD_DATE,               // data to convert
-                    strlen(BUILD_DATE),                  // length of data to convert
-                    (char *)me->dataBuf,                 // where to write output
-                    sizeof(me->dataBuf),                 // max size of output buffer
-                    &me->dataLen,                        // size of the resulting output
-                    0,                                   // no columns
-                    ' ',                                 // separator
-                    false                                 // bPrintX
-                );
-
-                WRN_printf("Compiled: bytes: %s, string: %s\n",
-                    me->dataBuf, BUILD_DATE
-                );
-
-                goto END_ERROR_CHECK;
-            }
-
-            /* Local tag to jump to if an error is found or to reach naturally
-             * once all the checks are complete */
-            END_ERROR_CHECK:
-            ERR_COND_OUTPUT(
-                me->errorCode,
-                me->accessType,
-                "Error 0x%08x reading DB elem %s (%d)\n",
-                me->errorCode,
-                CON_dbElemToStr(_DC3_DB_BOOT_BUILD_DATETIME),
-                _DC3_DB_BOOT_BUILD_DATETIME
-            );
-            /* ${AOs::SysMgr::SM::Active::Busy::AccessingDB::BootLdrBuildDTCh~::I2C1_DEV_READ_DO~::[NoError?]} */
-            if (me->errorCode == ERR_NONE) {
-                //me->errorCode = DB_checkDTMatch( ((I2CReadDoneEvt const *) e)->dataBuf, (uint8_t *)BUILD_DATE );
-
-                DBG_printf("Bootloader datetime match\n");
-                status_ = Q_TRAN(&SysMgr_BootLdrMajVerCheck);
-            }
-            /* ${AOs::SysMgr::SM::Active::Busy::AccessingDB::BootLdrBuildDTCh~::I2C1_DEV_READ_DO~::[else]} */
-            else {
-                status_ = Q_TRAN(&SysMgr_SetBootLdrDatetime);
-            }
-            break;
-        }
-        default: {
-            status_ = Q_SUPER(&SysMgr_AccessingDB);
-            break;
-        }
-    }
-    return status_;
-}
-
-/**
- * @brief   Reset the DB version to default value.
- * @param  [in|out] me: Pointer to the state machine
- * @param  [in|out]  e:  Pointer to the event being processed.
- * @return status: QState type that specifies where the state
- * machine is going next.
- */
-/*${AOs::SysMgr::SM::Active::Busy::AccessingDB::ResetDBVersion} ............*/
-static QState SysMgr_ResetDBVersion(SysMgr * const me, QEvt const * const e) {
-    QState status_;
-    switch (e->sig) {
-        /* ${AOs::SysMgr::SM::Active::Busy::AccessingDB::ResetDBVersion} */
-        case Q_ENTRY_SIG: {
-            WRN_printf("Resetting %s to default...\n", CON_dbElemToStr(_DC3_DB_VERSION));
-
-            /* Post to SysMgr to set the build datetime since it doesn't match the compiled one */
-            DBWriteReqEvt *evt = Q_NEW(DBWriteReqEvt, DB_WRITE_SIG);
-            evt->accessType = _DC3_ACCESS_QPC;
-            evt->dbElem = _DC3_DB_VERSION;
-            evt->dataLen =  DB_getElemSize(_DC3_DB_VERSION);
-            uint16_t dbVersion = DB_VERSION_DEF;
-            MEMCPY(evt->dataBuf, (uint8_t *)&dbVersion, evt->dataLen);
-            QACTIVE_POST(AO_SysMgr, (QEvt *)(evt), me);
-            status_ = Q_HANDLED();
-            break;
-        }
-        /* ${AOs::SysMgr::SM::Active::Busy::AccessingDB::ResetDBVersion::DB_OP_DONE} */
-        case DB_OP_DONE_SIG: {
-            me->currRetry++;
-            status_ = Q_TRAN(&SysMgr_ResetDBDbgModules);
-            break;
-        }
-        default: {
-            status_ = Q_SUPER(&SysMgr_AccessingDB);
-            break;
-        }
-    }
-    return status_;
-}
-
-/**
- * @brief   Reset the bootloader build datetime.
- *
- * @param  [in|out] me: Pointer to the state machine
- * @param  [in|out]  e:  Pointer to the event being processed.
- * @return status: QState type that specifies where the state
- * machine is going next.
- */
-/*${AOs::SysMgr::SM::Active::Busy::AccessingDB::SetBootLdrDateti~} .........*/
-static QState SysMgr_SetBootLdrDatetime(SysMgr * const me, QEvt const * const e) {
-    QState status_;
-    switch (e->sig) {
-        /* ${AOs::SysMgr::SM::Active::Busy::AccessingDB::SetBootLdrDateti~} */
-        case Q_ENTRY_SIG: {
-            WRN_printf("Setting %s (%d) in DB to %s.\n",
-                CON_dbElemToStr(_DC3_DB_BOOT_BUILD_DATETIME),
-                _DC3_DB_BOOT_BUILD_DATETIME, BUILD_DATE);
-
-            /* Post to SysMgr to set the build datetime since it doesn't match the compiled one */
-            DBWriteReqEvt *evt = Q_NEW(DBWriteReqEvt, DB_WRITE_SIG);
-            evt->accessType = _DC3_ACCESS_QPC;
-            evt->dbElem = _DC3_DB_BOOT_BUILD_DATETIME;
-            evt->dataLen =  DB_getElemSize(_DC3_DB_BOOT_BUILD_DATETIME);
-            MEMCPY(evt->dataBuf, (uint8_t *)BUILD_DATE, evt->dataLen);
-            QACTIVE_POST(AO_SysMgr, (QEvt *)(evt), me);
-            status_ = Q_HANDLED();
-            break;
-        }
-        /* ${AOs::SysMgr::SM::Active::Busy::AccessingDB::SetBootLdrDateti~::DB_OP_DONE} */
-        case DB_OP_DONE_SIG: {
-            status_ = Q_TRAN(&SysMgr_SetBootLdrMajVer);
-            break;
-        }
-        default: {
-            status_ = Q_SUPER(&SysMgr_AccessingDB);
-            break;
-        }
-    }
-    return status_;
-}
-
-/**
- * @brief   Reset the bootloader major version.
- *
- * @param  [in|out] me: Pointer to the state machine
- * @param  [in|out]  e:  Pointer to the event being processed.
- * @return status: QState type that specifies where the state
- * machine is going next.
- */
-/*${AOs::SysMgr::SM::Active::Busy::AccessingDB::SetBootLdrMajVer} ..........*/
-static QState SysMgr_SetBootLdrMajVer(SysMgr * const me, QEvt const * const e) {
-    QState status_;
-    switch (e->sig) {
-        /* ${AOs::SysMgr::SM::Active::Busy::AccessingDB::SetBootLdrMajVer} */
-        case Q_ENTRY_SIG: {
-            WRN_printf("Setting %s (%d) in DB to %s.\n",
-                CON_dbElemToStr(_DC3_DB_BOOT_MAJ),
-                _DC3_DB_BOOT_MAJ, FW_VER_MAJOR);
-
-            /* Post to SysMgr to set the major version since we no longer trust it */
-            DBWriteReqEvt *evt = Q_NEW(DBWriteReqEvt, DB_WRITE_SIG);
-            evt->accessType = _DC3_ACCESS_QPC;
-            evt->dbElem = _DC3_DB_BOOT_MAJ;
-            evt->dataLen =  DB_getElemSize(_DC3_DB_BOOT_MAJ);
-            evt->dataBuf[0] = FW_VER_MAJOR;
-
-            QACTIVE_POST(AO_SysMgr, (QEvt *)(evt), me);
-            status_ = Q_HANDLED();
-            break;
-        }
-        /* ${AOs::SysMgr::SM::Active::Busy::AccessingDB::SetBootLdrMajVer::DB_OP_DONE} */
-        case DB_OP_DONE_SIG: {
-            status_ = Q_TRAN(&SysMgr_SetBootLdrMinVer);
-            break;
-        }
-        default: {
-            status_ = Q_SUPER(&SysMgr_AccessingDB);
-            break;
-        }
-    }
-    return status_;
-}
-
-/**
- * @brief    Check bootloader major version and fix it if it doesn't match.
- *
- * @param  [in|out] me: Pointer to the state machine
- * @param  [in|out]  e:  Pointer to the event being processed.
- * @return status: QState type that specifies where the state
- * machine is going next.
- */
-/*${AOs::SysMgr::SM::Active::Busy::AccessingDB::BootLdrMajVerChe~} .........*/
-static QState SysMgr_BootLdrMajVerCheck(SysMgr * const me, QEvt const * const e) {
-    QState status_;
-    switch (e->sig) {
-        /* ${AOs::SysMgr::SM::Active::Busy::AccessingDB::BootLdrMajVerChe~} */
-        case Q_ENTRY_SIG: {
-            /* Post to SysMgr to get the build datetime first since it's the one most likely to
-             * be incorrect */
-            DBReadReqEvt *evt = Q_NEW(DBReadReqEvt, DB_READ_SIG);
-            evt->accessType = _DC3_ACCESS_QPC;
-            evt->dbElem = _DC3_DB_BOOT_MAJ;
-            QACTIVE_POST(AO_SysMgr, (QEvt *)(evt), me);
-            status_ = Q_HANDLED();
-            break;
-        }
-        /* ${AOs::SysMgr::SM::Active::Busy::AccessingDB::BootLdrMajVerChe~::I2C1_DEV_READ_DO~} */
-        case I2C1_DEV_READ_DONE_SIG: {
-            me->errorCode = ((I2CReadDoneEvt const *) e)->status;
-
-            if ( ERR_NONE != me->errorCode ) {
-                goto END_ERROR_CHECK;
-            }
-
-            if ( ((I2CReadDoneEvt const *) e)->bytes > MAX_DB_ELEM_SIZE ) {
-                /* This should be considered a pretty critical error. */
-                me->errorCode = ERR_DB_ELEM_SIZE_OVERFLOW;
-                goto END_ERROR_CHECK;
-            }
-
-            if( ((I2CReadDoneEvt const *) e)->dataBuf[0] != FW_VER_MAJOR ) {
-                me->errorCode = ERR_DB_INVALID_MAJ_VER_MISMATCH;
-                WRN_printf("Bootloader %s mismatch. DB: %d, Compiled: %d\n",
-                    CON_dbElemToStr(_DC3_DB_BOOT_MAJ),
-                    ((I2CReadDoneEvt const *) e)->dataBuf[0], FW_VER_MAJOR
-                );
-                goto END_ERROR_CHECK;
-            }
-
-
-            /* Local tag to jump to if an error is found or to reach naturally
-             * once all the checks are complete */
-            END_ERROR_CHECK:
-            ERR_COND_OUTPUT(
-                me->errorCode,
-                me->accessType,
-                "Error 0x%08x reading DB elem %s (%d)\n",
-                me->errorCode,
-                CON_dbElemToStr(_DC3_DB_BOOT_MAJ),
-                _DC3_DB_BOOT_MAJ
-            );
-            /* ${AOs::SysMgr::SM::Active::Busy::AccessingDB::BootLdrMajVerChe~::I2C1_DEV_READ_DO~::[NoError?]} */
-            if (me->errorCode == ERR_NONE) {
-                status_ = Q_TRAN(&SysMgr_BootLdrMinVerCheck);
-            }
-            /* ${AOs::SysMgr::SM::Active::Busy::AccessingDB::BootLdrMajVerChe~::I2C1_DEV_READ_DO~::[else]} */
-            else {
-                status_ = Q_TRAN(&SysMgr_SetBootLdrMajVer);
-            }
-            break;
-        }
-        default: {
-            status_ = Q_SUPER(&SysMgr_AccessingDB);
-            break;
-        }
-    }
-    return status_;
-}
-
-/**
- * @brief    Check bootloader minor version and fix it if it doesn't match.
- *
- * @param  [in|out] me: Pointer to the state machine
- * @param  [in|out]  e:  Pointer to the event being processed.
- * @return status: QState type that specifies where the state
- * machine is going next.
- */
-/*${AOs::SysMgr::SM::Active::Busy::AccessingDB::BootLdrMinVerChe~} .........*/
-static QState SysMgr_BootLdrMinVerCheck(SysMgr * const me, QEvt const * const e) {
-    QState status_;
-    switch (e->sig) {
-        /* ${AOs::SysMgr::SM::Active::Busy::AccessingDB::BootLdrMinVerChe~} */
-        case Q_ENTRY_SIG: {
-            /* Post to SysMgr to get the build datetime first since it's the one most likely to
-             * be incorrect */
-            DBReadReqEvt *evt = Q_NEW(DBReadReqEvt, DB_READ_SIG);
-            evt->accessType = _DC3_ACCESS_QPC;
-            evt->dbElem = _DC3_DB_BOOT_MIN;
-            QACTIVE_POST(AO_SysMgr, (QEvt *)(evt), me);
-            status_ = Q_HANDLED();
-            break;
-        }
-        /* ${AOs::SysMgr::SM::Active::Busy::AccessingDB::BootLdrMinVerChe~::I2C1_DEV_READ_DO~} */
-        case I2C1_DEV_READ_DONE_SIG: {
-            me->errorCode = ((I2CReadDoneEvt const *) e)->status;
-
-            if ( ERR_NONE != me->errorCode ) {
-                goto END_ERROR_CHECK;
-            }
-
-            if ( ((I2CReadDoneEvt const *) e)->bytes > MAX_DB_ELEM_SIZE ) {
-                /* This should be considered a pretty critical error. */
-                me->errorCode = ERR_DB_ELEM_SIZE_OVERFLOW;
-                goto END_ERROR_CHECK;
-            }
-
-            if( ((I2CReadDoneEvt const *) e)->dataBuf[0] != FW_VER_MINOR ) {
-                me->errorCode = ERR_DB_INVALID_MIN_VER_MISMATCH;
-                WRN_printf("Bootloader %s mismatch. DB: %d, Compiled: %d\n",
-                    CON_dbElemToStr(_DC3_DB_BOOT_MIN),
-                    ((I2CReadDoneEvt const *) e)->dataBuf[0], FW_VER_MINOR
-                );
-                goto END_ERROR_CHECK;
-            }
-
-
-            /* Local tag to jump to if an error is found or to reach naturally
-             * once all the checks are complete */
-            END_ERROR_CHECK:
-            ERR_COND_OUTPUT(
-                me->errorCode,
-                me->accessType,
-                "Error 0x%08x reading DB elem %s (%d)\n",
-                me->errorCode,
-                CON_dbElemToStr(_DC3_DB_BOOT_MIN),
-                _DC3_DB_BOOT_MIN
-            );
-            /* ${AOs::SysMgr::SM::Active::Busy::AccessingDB::BootLdrMinVerChe~::I2C1_DEV_READ_DO~::[NoError?]} */
-            if (me->errorCode == ERR_NONE) {
-                LOG_printf("Bootloader version and build datetime validation complete\n");
-                status_ = Q_TRAN(&SysMgr_Idle);
-            }
-            /* ${AOs::SysMgr::SM::Active::Busy::AccessingDB::BootLdrMinVerChe~::I2C1_DEV_READ_DO~::[else]} */
-            else {
-                status_ = Q_TRAN(&SysMgr_SetBootLdrMinVer);
-            }
-            break;
-        }
-        default: {
-            status_ = Q_SUPER(&SysMgr_AccessingDB);
-            break;
-        }
-    }
-    return status_;
-}
-
-/**
- * @brief   Reset the bootloader minor version.
- *
- * @param  [in|out] me: Pointer to the state machine
- * @param  [in|out]  e:  Pointer to the event being processed.
- * @return status: QState type that specifies where the state
- * machine is going next.
- */
-/*${AOs::SysMgr::SM::Active::Busy::AccessingDB::SetBootLdrMinVer} ..........*/
-static QState SysMgr_SetBootLdrMinVer(SysMgr * const me, QEvt const * const e) {
-    QState status_;
-    switch (e->sig) {
-        /* ${AOs::SysMgr::SM::Active::Busy::AccessingDB::SetBootLdrMinVer} */
-        case Q_ENTRY_SIG: {
-            WRN_printf("Setting %s (%d) in DB to %s.\n",
-                CON_dbElemToStr(_DC3_DB_BOOT_MIN),
-                _DC3_DB_BOOT_MIN, FW_VER_MINOR);
-
-            /* Post to SysMgr to set the major version since we no longer trust it */
-            DBWriteReqEvt *evt = Q_NEW(DBWriteReqEvt, DB_WRITE_SIG);
-            evt->accessType = _DC3_ACCESS_QPC;
-            evt->dbElem = _DC3_DB_BOOT_MIN;
-            evt->dataLen =  DB_getElemSize(_DC3_DB_BOOT_MIN);
-            evt->dataBuf[0] = FW_VER_MINOR;
-            QACTIVE_POST(AO_SysMgr, (QEvt *)(evt), me);
-            status_ = Q_HANDLED();
-            break;
-        }
-        /* ${AOs::SysMgr::SM::Active::Busy::AccessingDB::SetBootLdrMinVer::DB_OP_DONE} */
-        case DB_OP_DONE_SIG: {
-            me->currRetry++;
-            /* ${AOs::SysMgr::SM::Active::Busy::AccessingDB::SetBootLdrMinVer::DB_OP_DONE::[Retry?]} */
-            if (me->currRetry < MAX_RETRIES) {
-                status_ = Q_TRAN(&SysMgr_Wait2);
-            }
-            /* ${AOs::SysMgr::SM::Active::Busy::AccessingDB::SetBootLdrMinVer::DB_OP_DONE::[else]} */
-            else {
-                me->errorCode = ERR_DB_NOT_INIT;
-                ERR_printf("Out of retries when attempting to reset DB to a valid state. Error: 0x%08x\n", me->errorCode);
-                status_ = Q_TRAN(&SysMgr_Idle);
-            }
-            break;
-        }
-        default: {
-            status_ = Q_SUPER(&SysMgr_AccessingDB);
-            break;
-        }
-    }
-    return status_;
-}
-
-/**
- * @brief   Small timeout to make sure that retries don't overwhelm the logging
- * system.
- *
- * @param  [in|out] me: Pointer to the state machine
- * @param  [in|out]  e:  Pointer to the event being processed.
- * @return status: QState type that specifies where the state
- * machine is going next.
- */
-/*${AOs::SysMgr::SM::Active::Busy::AccessingDB::Wait2} .....................*/
-static QState SysMgr_Wait2(SysMgr * const me, QEvt const * const e) {
-    QState status_;
-    switch (e->sig) {
-        /* ${AOs::SysMgr::SM::Active::Busy::AccessingDB::Wait2} */
-        case Q_ENTRY_SIG: {
-            QTimeEvt_rearm(                                       /* Re-arm timer on entry */
-                &me->dbTimerEvt,
-                SEC_TO_TICKS( LL_MAX_TIME_SEC_BETWEEN_RETRIES )
-            );
-
-            status_ = Q_HANDLED();
-            break;
-        }
-        /* ${AOs::SysMgr::SM::Active::Busy::AccessingDB::Wait2::DB_ACCESS_TIMEOU~} */
-        case DB_ACCESS_TIMEOUT_SIG: {
-            status_ = Q_TRAN(&SysMgr_BootLdrBuildDTCheck);
-            break;
-        }
-        default: {
-            status_ = Q_SUPER(&SysMgr_AccessingDB);
-            break;
-        }
-    }
-    return status_;
-}
-
-/**
- * @brief   Small timeout to make sure that retries don't overwhelm the logging
- * system.
- *
- * @param  [in|out] me: Pointer to the state machine
- * @param  [in|out]  e:  Pointer to the event being processed.
- * @return status: QState type that specifies where the state
- * machine is going next.
- */
-/*${AOs::SysMgr::SM::Active::Busy::AccessingDB::Wait1} .....................*/
-static QState SysMgr_Wait1(SysMgr * const me, QEvt const * const e) {
-    QState status_;
-    switch (e->sig) {
-        /* ${AOs::SysMgr::SM::Active::Busy::AccessingDB::Wait1} */
-        case Q_ENTRY_SIG: {
-            QTimeEvt_rearm(                                       /* Re-arm timer on entry */
-                &me->dbTimerEvt,
-                SEC_TO_TICKS( LL_MAX_TIME_SEC_BETWEEN_RETRIES )
-            );
-
-            status_ = Q_HANDLED();
-            break;
-        }
-        /* ${AOs::SysMgr::SM::Active::Busy::AccessingDB::Wait1::DB_ACCESS_TIMEOU~} */
-        case DB_ACCESS_TIMEOUT_SIG: {
-            status_ = Q_TRAN(&SysMgr_DBMagicWordCheck);
-            break;
-        }
-        default: {
-            status_ = Q_SUPER(&SysMgr_AccessingDB);
-            break;
-        }
-    }
-    return status_;
-}
-
-/**
- * @brief    Check DB debug modules and reset DB to default values if invalid.
- *
- * @param  [in|out] me: Pointer to the state machine
- * @param  [in|out]  e:  Pointer to the event being processed.
- * @return status: QState type that specifies where the state
- * machine is going next.
- */
-/*${AOs::SysMgr::SM::Active::Busy::AccessingDB::DBGetDebugModule~} .........*/
-static QState SysMgr_DBGetDebugModules(SysMgr * const me, QEvt const * const e) {
-    QState status_;
-    switch (e->sig) {
-        /* ${AOs::SysMgr::SM::Active::Busy::AccessingDB::DBGetDebugModule~} */
-        case Q_ENTRY_SIG: {
-            QTimeEvt_rearm(                                       /* Re-arm timer on entry */
-                &me->dbTimerEvt,
-                SEC_TO_TICKS( HL_MAX_TOUT_SEC_COMM_DB_VALIDATE )
-            );
-
-            /* Post to SysMgr to get the build datetime first since it's the one most likely to
-             * be incorrect */
-            DBReadReqEvt *evt = Q_NEW(DBReadReqEvt, DB_READ_SIG);
-            evt->accessType = _DC3_ACCESS_QPC;
-            evt->dbElem = _DC3_DB_DBG_MODULES;
-            QACTIVE_POST(AO_SysMgr, (QEvt *)(evt), AO_SysMgr);
-            status_ = Q_HANDLED();
-            break;
-        }
-        /* ${AOs::SysMgr::SM::Active::Busy::AccessingDB::DBGetDebugModule~} */
-        case Q_EXIT_SIG: {
-            QTimeEvt_disarm(&me->dbTimerEvt);                  /* Disarm timer on exit */
-            status_ = Q_HANDLED();
-            break;
-        }
-        /* ${AOs::SysMgr::SM::Active::Busy::AccessingDB::DBGetDebugModule~::I2C1_DEV_READ_DO~} */
-        case I2C1_DEV_READ_DONE_SIG: {
-            me->errorCode = ((I2CReadDoneEvt const *) e)->status;
-
-            if ( ERR_NONE != me->errorCode ) {
-                goto END_ERROR_CHECK;
-            }
-
-            if ( ((I2CReadDoneEvt const *) e)->bytes > MAX_DB_ELEM_SIZE ) {
-                /* This should be considered a pretty critical error. */
-                me->errorCode = ERR_DB_ELEM_SIZE_OVERFLOW;
-                goto END_ERROR_CHECK;
-            }
-
-            /* Local tag to jump to if an error is found or to reach naturally
-             * once all the checks are complete */
-            END_ERROR_CHECK:
-            ERR_COND_OUTPUT(
-                me->errorCode,
-                me->accessType,
-                "Error 0x%08x reading DB elem %s (%d)\n",
-                me->errorCode,
-                CON_dbElemToStr(_DC3_DB_DBG_MODULES),
-                _DC3_DB_DBG_MODULES
-            );
-            /* ${AOs::SysMgr::SM::Active::Busy::AccessingDB::DBGetDebugModule~::I2C1_DEV_READ_DO~::[NoError?]} */
-            if (ERR_NONE == me->errorCode) {
-                status_ = Q_TRAN(&SysMgr_DBGetDebugDevices);
-            }
-            /* ${AOs::SysMgr::SM::Active::Busy::AccessingDB::DBGetDebugModule~::I2C1_DEV_READ_DO~::[else]} */
-            else {
-                status_ = Q_TRAN(&SysMgr_ResetDBDbgModules);
-            }
-            break;
-        }
-        default: {
-            status_ = Q_SUPER(&SysMgr_AccessingDB);
-            break;
-        }
-    }
-    return status_;
-}
-
-/**
- * @brief   Reset the DB debug modules to default value.
- * @param  [in|out] me: Pointer to the state machine
- * @param  [in|out]  e:  Pointer to the event being processed.
- * @return status: QState type that specifies where the state
- * machine is going next.
- */
-/*${AOs::SysMgr::SM::Active::Busy::AccessingDB::ResetDBDbgModule~} .........*/
-static QState SysMgr_ResetDBDbgModules(SysMgr * const me, QEvt const * const e) {
-    QState status_;
-    switch (e->sig) {
-        /* ${AOs::SysMgr::SM::Active::Busy::AccessingDB::ResetDBDbgModule~} */
-        case Q_ENTRY_SIG: {
-            WRN_printf("Resetting %s to default...\n", CON_dbElemToStr(_DC3_DB_DBG_MODULES));
-
-            /* Post to SysMgr to set the build datetime since it doesn't match the compiled one */
-            DBWriteReqEvt *evt = Q_NEW(DBWriteReqEvt, DB_WRITE_SIG);
-            evt->accessType = _DC3_ACCESS_QPC;
-            evt->dbElem = _DC3_DB_DBG_MODULES;
-            evt->dataLen =  DB_getElemSize(_DC3_DB_DBG_MODULES);
-            uint32_t dbDbgModules = DB_DBG_MODULES_DEF;
-            MEMCPY(evt->dataBuf, (uint8_t *)&dbDbgModules, evt->dataLen);
-            QACTIVE_POST(AO_SysMgr, (QEvt *)(evt), me);
-            status_ = Q_HANDLED();
-            break;
-        }
-        /* ${AOs::SysMgr::SM::Active::Busy::AccessingDB::ResetDBDbgModule~::DB_OP_DONE} */
-        case DB_OP_DONE_SIG: {
-            me->currRetry++;
-            status_ = Q_TRAN(&SysMgr_ResetDBDbgDevices);
-            break;
-        }
-        default: {
-            status_ = Q_SUPER(&SysMgr_AccessingDB);
-            break;
-        }
-    }
-    return status_;
-}
-
-/**
- * @brief    Check DB debug modules and reset DB to default values if invalid.
- *
- * @param  [in|out] me: Pointer to the state machine
- * @param  [in|out]  e:  Pointer to the event being processed.
- * @return status: QState type that specifies where the state
- * machine is going next.
- */
-/*${AOs::SysMgr::SM::Active::Busy::AccessingDB::DBGetDebugDevice~} .........*/
-static QState SysMgr_DBGetDebugDevices(SysMgr * const me, QEvt const * const e) {
-    QState status_;
-    switch (e->sig) {
-        /* ${AOs::SysMgr::SM::Active::Busy::AccessingDB::DBGetDebugDevice~} */
-        case Q_ENTRY_SIG: {
-            QTimeEvt_rearm(                                       /* Re-arm timer on entry */
-                &me->dbTimerEvt,
-                SEC_TO_TICKS( HL_MAX_TOUT_SEC_COMM_DB_VALIDATE )
-            );
-
-            /* Post to SysMgr to get the build datetime first since it's the one most likely to
-             * be incorrect */
-            DBReadReqEvt *evt = Q_NEW(DBReadReqEvt, DB_READ_SIG);
-            evt->accessType = _DC3_ACCESS_QPC;
-            evt->dbElem = _DC3_DB_DBG_DEVICES;
-            QACTIVE_POST(AO_SysMgr, (QEvt *)(evt), AO_SysMgr);
-            status_ = Q_HANDLED();
-            break;
-        }
-        /* ${AOs::SysMgr::SM::Active::Busy::AccessingDB::DBGetDebugDevice~} */
-        case Q_EXIT_SIG: {
-            QTimeEvt_disarm(&me->dbTimerEvt);                  /* Disarm timer on exit */
-            status_ = Q_HANDLED();
-            break;
-        }
-        /* ${AOs::SysMgr::SM::Active::Busy::AccessingDB::DBGetDebugDevice~::I2C1_DEV_READ_DO~} */
-        case I2C1_DEV_READ_DONE_SIG: {
-            me->errorCode = ((I2CReadDoneEvt const *) e)->status;
-
-            if ( ERR_NONE != me->errorCode ) {
-                goto END_ERROR_CHECK;
-            }
-
-            if ( ((I2CReadDoneEvt const *) e)->bytes > MAX_DB_ELEM_SIZE ) {
-                /* This should be considered a pretty critical error. */
-                me->errorCode = ERR_DB_ELEM_SIZE_OVERFLOW;
-                goto END_ERROR_CHECK;
-            }
-
-            /* Local tag to jump to if an error is found or to reach naturally
-             * once all the checks are complete */
-            END_ERROR_CHECK:
-            ERR_COND_OUTPUT(
-                me->errorCode,
-                me->accessType,
-                "Error 0x%08x reading DB elem %s (%d)\n",
-                me->errorCode,
-                CON_dbElemToStr(_DC3_DB_DBG_DEVICES),
-                _DC3_DB_DBG_DEVICES
-            );
-            /* ${AOs::SysMgr::SM::Active::Busy::AccessingDB::DBGetDebugDevice~::I2C1_DEV_READ_DO~::[NoError?]} */
-            if (ERR_NONE == me->errorCode) {
-                LOG_printf("DB integrity and version validation complete.\n");
-                me->isDBValid = true;
-                status_ = Q_TRAN(&SysMgr_Idle);
-            }
-            /* ${AOs::SysMgr::SM::Active::Busy::AccessingDB::DBGetDebugDevice~::I2C1_DEV_READ_DO~::[else]} */
-            else {
-                status_ = Q_TRAN(&SysMgr_ResetDBDbgDevices);
-            }
-            break;
-        }
-        default: {
-            status_ = Q_SUPER(&SysMgr_AccessingDB);
-            break;
-        }
-    }
-    return status_;
-}
-
-/**
- * @brief   Reset the DB debug Devices to default value.
- * @param  [in|out] me: Pointer to the state machine
- * @param  [in|out]  e:  Pointer to the event being processed.
- * @return status: QState type that specifies where the state
- * machine is going next.
- */
-/*${AOs::SysMgr::SM::Active::Busy::AccessingDB::ResetDBDbgDevice~} .........*/
-static QState SysMgr_ResetDBDbgDevices(SysMgr * const me, QEvt const * const e) {
-    QState status_;
-    switch (e->sig) {
-        /* ${AOs::SysMgr::SM::Active::Busy::AccessingDB::ResetDBDbgDevice~} */
-        case Q_ENTRY_SIG: {
-            WRN_printf("Resetting %s to default...\n", CON_dbElemToStr(_DC3_DB_DBG_DEVICES));
-
-            /* Post to SysMgr to set the build datetime since it doesn't match the compiled one */
-            DBWriteReqEvt *evt = Q_NEW(DBWriteReqEvt, DB_WRITE_SIG);
-            evt->accessType = _DC3_ACCESS_QPC;
-            evt->dbElem = _DC3_DB_DBG_DEVICES;
-            evt->dataLen =  DB_getElemSize(_DC3_DB_DBG_DEVICES);
-            uint8_t dbgDevices = DB_DBG_DEVICES_DEF;
-            MEMCPY(evt->dataBuf, (uint8_t *)&dbgDevices, evt->dataLen);
-            QACTIVE_POST(AO_SysMgr, (QEvt *)(evt), me);
-            status_ = Q_HANDLED();
-            break;
-        }
-        /* ${AOs::SysMgr::SM::Active::Busy::AccessingDB::ResetDBDbgDevice~::DB_OP_DONE} */
-        case DB_OP_DONE_SIG: {
-            me->currRetry++;
-            /* ${AOs::SysMgr::SM::Active::Busy::AccessingDB::ResetDBDbgDevice~::DB_OP_DONE::[Retry?]} */
-            if (me->currRetry < MAX_RETRIES) {
-                status_ = Q_TRAN(&SysMgr_Wait1);
-            }
-            /* ${AOs::SysMgr::SM::Active::Busy::AccessingDB::ResetDBDbgDevice~::DB_OP_DONE::[else]} */
-            else {
-                me->errorCode = ERR_DB_NOT_INIT;
-                ERR_printf("Out of retries when attempting to reset DB to a valid state. Error: 0x%08x\n", me->errorCode);
-                status_ = Q_TRAN(&SysMgr_Idle);
-            }
-            break;
-        }
-        default: {
-            status_ = Q_SUPER(&SysMgr_AccessingDB);
+            status_ = Q_SUPER(&SysMgr_Busy);
             break;
         }
     }

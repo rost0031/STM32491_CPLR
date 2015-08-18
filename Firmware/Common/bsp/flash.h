@@ -155,6 +155,31 @@ const DC3Error_t FLASH_writeBuffer(
 );
 
 /**
+ * @brief   Read a uint8_t buffer from flash
+ * @param [in] addr: uint32_t address where to start reading from
+ * @param [in] bytes: const size_t number of bytes to read
+ * @param [in] bufferSize: const size_t size of the storage pointed to by
+ * *pBuffer
+ * @param [in|out] *pBuffer: uint8_t const pointer to the storage where to store
+ * the result of the read.
+ *    @note: this should be provided by the caller, the function does not
+ *    allocate memory.
+ * @param [in|out] *pBytesRead: uint16_t pointer to how many bytes were read.
+ *    @note: this should be provided by the caller, the function does not
+ *    allocate memory.
+ * @return  DC3Error_t status:
+ *    @arg  ERR_NONE: success
+ *    @arg  other error codes if error occurred
+ */
+const DC3Error_t FLASH_readBufferUint8(
+      uint32_t addr,
+      const size_t bytes,
+      const size_t bufferSize,
+      uint8_t *pBuffer,
+      uint16_t *pBytesRead
+);
+
+/**
  * @brief   Read the CRC of the Application FW image stored at the very end of
  * the Application flash section.
  * @param	None

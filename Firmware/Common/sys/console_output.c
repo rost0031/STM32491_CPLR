@@ -22,6 +22,7 @@
 #include "time.h"
 #include "SerialMgr.h"
 #include "LWIPMgr.h"
+#include "qp_port.h"                                             /* QP-port */
 
 /* Compile-time called macros ------------------------------------------------*/
 Q_DEFINE_THIS_FILE                  /* For QSPY to know the name of this file */

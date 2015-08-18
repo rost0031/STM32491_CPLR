@@ -139,7 +139,12 @@ APIError_t MENU_run( ClientApi *client )
    root->findChild("SYS")->findChild("I2C")->findChild("WEE")->addChild( "CUS", "Write EEPROM on I2C with (cus)tom start and number of bytes", MENU_I2C_WRITE_TEST_CUS );
 
    root->findChild("SYS")->addChild( "DBS", "Database Settings commands" );
-   root->findChild("SYS")->findChild("DBS")->addChild( "RST", "(R)e(s)e(t) DC3 settings Database", MENU_DB_RESET );
+   root->findChild("SYS")->findChild("DBS")->addChild( "SDD", "(S)ave DC3 debugging device settings to the DB", MENU_DB_SAVE_DBG_DEV );
+   root->findChild("SYS")->findChild("DBS")->addChild( "RDD", "(R)estore DC3 debugging device settings to defaults in DB", MENU_DB_RESET_DBG_DEV );
+   root->findChild("SYS")->findChild("DBS")->addChild( "SDM", "(S)ave DC3 debug module settings to the DB", MENU_DB_SAVE_DBG_MOD );
+   root->findChild("SYS")->findChild("DBS")->addChild( "RDM", "(R)estore DC3 debug module settings to defaults in DB", MENU_DB_RESET_DBG_MOD );
+
+   root->findChild("SYS")->findChild("DBS")->addChild( "RST", "(R)e(s)e(t) DC3 settings Database (!!!WARNING, this wipes the EEPROM!!!)", MENU_DB_RESET );
 
    // Finalize the menu node numbers.  This has to be called after all the items
    // have been added to the menu.  This function numbers all the nodes to allow

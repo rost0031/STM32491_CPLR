@@ -143,21 +143,9 @@ me-&gt;dbVersionDef = DB_VERSION_DEF;
 me-&gt;dbMagicWordDef = DB_MAGIC_WORD_DEF;
 
 /* Post to self to validate DB on startup */
-/*
-QEvt *evt = Q_NEW(QEvt, DB_INTRNL_CHECK_SETTINGS_SIG);
-QACTIVE_POST(AO_SysMgr, (QEvt *)(evt), me);
-*/
+DBCheckSetElemEvt *evt;
 #if CPLR_BOOT
-/* If this is the bootloader, also validate the bootloader build datetime 
- * and version in the DB. */
-/*
-QEvt *evt1 = Q_NEW(QEvt, DB_INTRNL_CHECK_BOOTLDR_VER_SIG);
-QACTIVE_POST(AO_SysMgr, (QEvt *)evt1, me);
-*/
-#endif
-
-#if CPLR_BOOT
-DBCheckSetElemEvt *evt = Q_NEW(DBCheckSetElemEvt, DB_INTRNL_CHK_ELEM_SIG);
+evt = Q_NEW(DBCheckSetElemEvt, DB_INTRNL_CHK_ELEM_SIG);
 evt-&gt;dbElem = _DC3_DB_MAGIC_WORD;
 QACTIVE_POST(AO_SysMgr, (QEvt *)evt, me);
 
@@ -272,19 +260,7 @@ QACTIVE_POST(AO_SysMgr, (QEvt *)e, me);</action>
         <action box="0,-2,10,2"/>
        </tran_glyph>
       </tran>
-      <tran trig="DB_INTRNL_CHECK_SETTINGS" target="../../1/2/6">
-       <action>me-&gt;dbCmd = DB_OP_INTERNAL;</action>
-       <tran_glyph conn="6,34,3,3,35">
-        <action box="0,-2,21,2"/>
-       </tran_glyph>
-      </tran>
-      <tran trig="DB_INTRNL_CHECK_BOOTLDR_VER" target="../../1/2/9">
-       <action>me-&gt;dbCmd = DB_OP_INTERNAL;</action>
-       <tran_glyph conn="6,104,3,3,76,-76,7">
-        <action box="0,-2,25,2"/>
-       </tran_glyph>
-      </tran>
-      <tran trig="DB_FULL_RESET" target="../../1/2/22">
+      <tran trig="DB_FULL_RESET" target="../../1/2/7">
        <action>/* Need to set some DB element since the reply carries this back.  This is technically
  * the first and most important field being written so this seems like a safe choice.
  * Realistically, the reply shouldn't even include this info so it technically doesn't
@@ -293,11 +269,11 @@ me-&gt;dbElem = _DC3_DB_MAGIC_WORD;
 me-&gt;dbCmd = DB_OP_WRITE;
 me-&gt;accessType = _DC3_ACCESS_QPC;
 </action>
-       <tran_glyph conn="6,96,3,3,38">
+       <tran_glyph conn="6,54,3,3,38">
         <action box="0,-2,12,2"/>
        </tran_glyph>
       </tran>
-      <tran trig="DB_INTRNL_FULL_RESET" target="../../1/2/22">
+      <tran trig="DB_INTRNL_FULL_RESET" target="../../1/2/7">
        <action>/* Need to set some DB element since the reply carries this back.  This is technically
  * the first and most important field being written so this seems like a safe choice.
  * Realistically, the reply shouldn't even include this info so it technically doesn't
@@ -305,15 +281,15 @@ me-&gt;accessType = _DC3_ACCESS_QPC;
 me-&gt;dbElem = _DC3_DB_MAGIC_WORD;
 me-&gt;dbCmd = DB_OP_INTERNAL;
 me-&gt;accessType = _DC3_ACCESS_QPC;</action>
-       <tran_glyph conn="6,93,3,3,38">
+       <tran_glyph conn="6,51,3,3,38">
         <action box="0,-2,19,2"/>
        </tran_glyph>
       </tran>
-      <tran trig="DB_INTRNL_CHK_ELEM" target="../../1/2/23">
+      <tran trig="DB_INTRNL_CHK_ELEM" target="../../1/2/8">
        <action>me-&gt;dbElem = ((DBCheckSetElemEvt const *)e)-&gt;dbElem;
 me-&gt;dbCmd = DB_OP_INTERNAL;
 me-&gt;accessType = _DC3_ACCESS_QPC;</action>
-       <tran_glyph conn="6,90,3,3,79">
+       <tran_glyph conn="6,37,3,3,38">
         <action box="0,-2,16,2"/>
        </tran_glyph>
       </tran>
@@ -347,7 +323,7 @@ QTimeEvt_rearm(
         <action box="-15,-2,14,2"/>
        </tran_glyph>
       </tran>
-      <tran trig="DB_SET_ELEM, DB_GET_ELEM, DB_INTRNL_CHECK_SETTINGS, DB_INTRNL_CHECK_BOOTLDR_VER, DB_INTRNL_CHK_ELEM">
+      <tran trig="DB_SET_ELEM, DB_GET_ELEM, DB_INTRNL_CHK_ELEM">
        <action>if (QEQueue_getNFree(&amp;me-&gt;deferredEvtQueue) &gt; 0) {
    /* defer the request - this event will be handled
     * when the state machine goes back to Idle state */
@@ -357,7 +333,7 @@ QTimeEvt_rearm(
    ERR_printf(&quot;Unable to defer DB request\n&quot;);
 }</action>
        <tran_glyph conn="37,116,3,-1,34">
-        <action box="1,-7,25,7"/>
+        <action box="2,-6,16,6"/>
        </tran_glyph>
       </tran>
       <state name="AccessingDB">
@@ -465,11 +441,30 @@ if ( me-&gt;dbCmd == DB_OP_READ ) {
         </tran_glyph>
        </tran>
        <tran trig="DB_READ">
-        <action>LOG_printf(&quot;DB_READ via %s access to read: %s (%d)\n&quot;,
+        <action>DBG_printf(&quot;DB_READ via %s access to read: %s (%d)\n&quot;,
     CON_accessToStr( ((DBReadReqEvt const *)e)-&gt;accessType ),
     CON_dbElemToStr( ((DBReadReqEvt const *)e)-&gt;dbElem ),
     ((DBReadReqEvt const *)e)-&gt;dbElem
 );
+
+/* This is a common function that will do a proper read based on access type and
+ * element.  Arguments for buffer size and buffer can be 0 and NULL, respectively
+ * since the function will post an event to do the read and it allocates its own
+ * buffer space.  Once the read is complete, an event will be posted that signifies
+ * the competion of the read and the data will be contained within those events.
+ * See I2C1_DEV_READ/WRITE_DONE_SIG and DB_FLASH_READ_DONE_SIG handlers. */
+me-&gt;errorCode = DB_getElem(
+    ((DBReadReqEvt const *)e)-&gt;dbElem,        // What element to read
+    ((DBReadReqEvt const *)e)-&gt;accessType,    // What access to use
+    0, NULL                                   // buffer size and pointer
+);
+
+#if 0
+/* This function will post the event to read the element.  Don't need a buffer
+ * since the data will come back via an event with its own buffer. */
+me-&gt;errorCode = DB_getElem(
+    ((DBReadReqEvt const *)e)-&gt;dbElem,
+    me-&gt;accessType, 0, NULL );
 
 /* Find where the element lives */
 DB_ElemLoc_t loc = DB_getElemLoc( ((DBReadReqEvt const *)e)-&gt;dbElem );
@@ -511,17 +506,41 @@ switch( loc ) {
         QEvt *evtNotFound = Q_NEW(QEvt, DB_OP_DONE_SIG);
         QACTIVE_POST(AO_SysMgr, evtNotFound, me);
         break;
-}</action>
+}
+#endif
+
+ERR_COND_OUTPUT(
+    me-&gt;errorCode,
+    me-&gt;accessType,
+    &quot;DB_READ of DB elem %s (%d): Error 0x%08x \n&quot;,
+    me-&gt;errorCode,
+    CON_dbElemToStr( me-&gt;dbElem ),
+    me-&gt;dbElem
+);</action>
         <tran_glyph conn="39,24,3,-1,12">
          <action box="0,-2,8,2"/>
         </tran_glyph>
        </tran>
+       <tran trig="DB_OP_DONE" target="../../../0">
+        <tran_glyph conn="39,29,3,1,-19">
+         <action box="-13,-2,10,2"/>
+        </tran_glyph>
+       </tran>
        <tran trig="DB_WRITE">
-        <action>LOG_printf(&quot;DB_WRITE via %s access to write: %s (%d)\n&quot;,
+        <action>DBG_printf(&quot;DB_WRITE via %s access to write: %s (%d)\n&quot;,
     CON_accessToStr( ((DBWriteReqEvt const *)e)-&gt;accessType ),
     CON_dbElemToStr( ((DBWriteReqEvt const *)e)-&gt;dbElem ),
     ((DBWriteReqEvt const *)e)-&gt;dbElem
 );
+
+me-&gt;errorCode = DB_setElem(
+    ((DBWriteReqEvt const *)e)-&gt;dbElem,         // Element to write
+    ((DBWriteReqEvt const *)e)-&gt;accessType,     // Access type to use
+    MAX_DB_ELEM_SIZE,                           // Max size of buffer
+    ((DBWriteReqEvt const *)e)-&gt;dataBuf         // Buffer containing data to write
+);
+
+#if 0
 
 /* Find where the element lives */
 DB_ElemLoc_t loc = DB_getElemLoc( ((DBWriteReqEvt const *)e)-&gt;dbElem );
@@ -555,14 +574,20 @@ switch( loc ) {
         QEvt *evtNotFound = Q_NEW(QEvt, DB_OP_DONE_SIG);
         QACTIVE_POST(AO_SysMgr, evtNotFound, me);
         break;
-}</action>
+}
+
+#endif
+
+ERR_COND_OUTPUT(
+    me-&gt;errorCode,
+    me-&gt;accessType,
+    &quot;DB_WRITE of DB elem %s (%d): Error 0x%08x \n&quot;,
+    me-&gt;errorCode,
+    CON_dbElemToStr( me-&gt;dbElem ),
+    me-&gt;dbElem
+);</action>
         <tran_glyph conn="39,27,3,-1,12">
          <action box="0,-2,8,2"/>
-        </tran_glyph>
-       </tran>
-       <tran trig="DB_OP_DONE" target="../../../0">
-        <tran_glyph conn="39,29,3,1,-19">
-         <action box="-13,-2,10,2"/>
         </tran_glyph>
        </tran>
        <tran trig="I2C1_DEV_READ_DONE">
@@ -593,856 +618,24 @@ QACTIVE_POST(AO_SysMgr, evt, me);</action>
          <action box="-20,-2,18,2"/>
         </tran_glyph>
        </tran>
-       <state name="DBMagicWordCheck">
-        <documentation>/**
- * @brief    Check DB magic number and reset DB to default values if invalid.
- * 
- * @param  [in|out] me: Pointer to the state machine
- * @param  [in|out]  e:  Pointer to the event being processed.
- * @return status: QState type that specifies where the state
- * machine is going next.
- */</documentation>
-        <entry>QTimeEvt_rearm(                                       /* Re-arm timer on entry */
-    &amp;me-&gt;dbTimerEvt,
-    SEC_TO_TICKS( HL_MAX_TOUT_SEC_COMM_DB_VALIDATE )
-);
-
-/* Post to SysMgr to get the build datetime first since it's the one most likely to
- * be incorrect */
-DBReadReqEvt *evt = Q_NEW(DBReadReqEvt, DB_READ_SIG);
-evt-&gt;accessType = _DC3_ACCESS_QPC;
-evt-&gt;dbElem = _DC3_DB_MAGIC_WORD;
-QACTIVE_POST(AO_SysMgr, (QEvt *)(evt), AO_SysMgr);</entry>
-        <exit>QTimeEvt_disarm(&amp;me-&gt;dbTimerEvt);                  /* Disarm timer on exit */</exit>
-        <tran trig="I2C1_DEV_READ_DONE">
-         <action>me-&gt;errorCode = ((I2CReadDoneEvt const *) e)-&gt;status;
-
-if ( ERR_NONE != me-&gt;errorCode ) {
-    goto END_ERROR_CHECK;
+       <tran trig="DB_FLASH_READ_DONE">
+        <action>me-&gt;errorCode = ((DBReadDoneEvt const *) e)-&gt;status;
+if ( ERR_NONE == me-&gt;errorCode ) {
+    me-&gt;dataLen = ((DBReadDoneEvt const *) e)-&gt;dataLen;
+    if ( me-&gt;dataLen &gt; MAX_DB_ELEM_SIZE ) {
+        me-&gt;errorCode = ERR_DB_ELEM_SIZE_OVERFLOW;
+    } else {
+        MEMCPY(me-&gt;dataBuf, ((DBReadDoneEvt const *) e)-&gt;dataBuf, me-&gt;dataLen);
+    }
 }
 
-if ( ((I2CReadDoneEvt const *) e)-&gt;bytes &gt; MAX_DB_ELEM_SIZE ) {
-    /* This should be considered a pretty critical error. */
-    me-&gt;errorCode = ERR_DB_ELEM_SIZE_OVERFLOW;
-    goto END_ERROR_CHECK;
-}
-
-if( !DB_isArraysMatch(
-    ((I2CReadDoneEvt const *) e)-&gt;dataBuf,
-    (uint8_t *)&amp;(me-&gt;dbMagicWordDef),
-    ((I2CReadDoneEvt const *) e)-&gt;bytes ) ) {
-    /* If the check fails, set the error code */
-    me-&gt;errorCode = ERR_DB_NOT_INIT;
-
-    WRN_printf(&quot;Invalid DB magic word. Error 0x%08x\n&quot;, me-&gt;errorCode);
-    WRN_printf(&quot;Compiled: bytes: %x\n&quot;, me-&gt;dbMagicWordDef );
-
-    CON_hexToStr(
-        ((I2CReadDoneEvt const *) e)-&gt;dataBuf, // data to convert
-        ((I2CReadDoneEvt const *) e)-&gt;bytes, // length of data to convert
-        (char *)me-&gt;dataBuf,                 // where to write output
-        sizeof(me-&gt;dataBuf),                 // max size of output buffer
-        &amp;(me-&gt;dataLen),                      // size of the resulting output
-        0,                                   // no columns
-        ' ',                                 // separator
-        false                                // bPrintX
-    );
-
-    WRN_printf(&quot;In DB   : bytes: %s\n&quot;, me-&gt;dataBuf );
-
-    goto END_ERROR_CHECK;
-}
-
-/* Local tag to jump to if an error is found or to reach naturally 
- * once all the checks are complete */
-END_ERROR_CHECK:
-ERR_COND_OUTPUT(
-    me-&gt;errorCode,
-    me-&gt;accessType,
-    &quot;Error 0x%08x reading DB elem %s (%d)\n&quot;,
-    me-&gt;errorCode,
-    CON_dbElemToStr(_DC3_DB_MAGIC_WORD),
-    _DC3_DB_MAGIC_WORD
-);</action>
-         <choice target="../../../8">
-          <guard brief="NoError?">ERR_NONE == me-&gt;errorCode</guard>
-          <choice_glyph conn="43,40,4,0,4">
-           <action box="-7,1,7,2"/>
-          </choice_glyph>
-         </choice>
-         <choice target="../../../7">
-          <guard>else</guard>
-          <choice_glyph conn="43,40,5,3,16,-6,3">
-           <action box="2,0,5,3"/>
-          </choice_glyph>
-         </choice>
-         <tran_glyph conn="43,37,2,-1,3">
-          <action box="0,0,16,2"/>
-         </tran_glyph>
-        </tran>
-        <state_glyph node="41,30,15,7">
-         <entry box="1,2,6,2"/>
-         <exit box="1,4,6,2"/>
-        </state_glyph>
-       </state>
-       <state name="ResetDBMagicWord">
-        <documentation>/**
- * @brief   Reset the DB magic word to default values.
- * 
- * @param  [in|out] me: Pointer to the state machine
- * @param  [in|out]  e:  Pointer to the event being processed.
- * @return status: QState type that specifies where the state
- * machine is going next.
- */</documentation>
-        <entry>WRN_printf(&quot;Resetting %s to default...\n&quot;, CON_dbElemToStr(_DC3_DB_MAGIC_WORD));
-
-uint32_t dbMagicWord = DB_MAGIC_WORD_DEF;
-
-/* Post to SysMgr to set the build datetime since it doesn't match the compiled one */
-DBWriteReqEvt *evt = Q_NEW(DBWriteReqEvt, DB_WRITE_SIG);
-evt-&gt;accessType = _DC3_ACCESS_QPC;
-evt-&gt;dbElem = _DC3_DB_MAGIC_WORD;
-evt-&gt;dataLen =  DB_getElemSize(_DC3_DB_MAGIC_WORD);
-MEMCPY(evt-&gt;dataBuf, (uint8_t *)&amp;dbMagicWord, evt-&gt;dataLen);
-QACTIVE_POST(AO_SysMgr, (QEvt *)(evt), me);</entry>
-        <tran trig="DB_OP_DONE" target="../../10">
-         <tran_glyph conn="64,37,2,0,7">
-          <action box="0,0,10,2"/>
-         </tran_glyph>
-        </tran>
-        <state_glyph node="62,30,14,7">
-         <entry box="1,2,6,2"/>
-        </state_glyph>
-       </state>
-       <state name="DBVersionCheck">
-        <documentation>/**
- * @brief    Check DB version and reset DB to default values if invalid.
- * 
- * @param  [in|out] me: Pointer to the state machine
- * @param  [in|out]  e:  Pointer to the event being processed.
- * @return status: QState type that specifies where the state
- * machine is going next.
- */</documentation>
-        <entry>QTimeEvt_rearm(                                       /* Re-arm timer on entry */
-    &amp;me-&gt;dbTimerEvt,
-    SEC_TO_TICKS( HL_MAX_TOUT_SEC_COMM_DB_VALIDATE )
-);
-
-/* Post to SysMgr to get the build datetime first since it's the one most likely to
- * be incorrect */
-DBReadReqEvt *evt = Q_NEW(DBReadReqEvt, DB_READ_SIG);
-evt-&gt;accessType = _DC3_ACCESS_QPC;
-evt-&gt;dbElem = _DC3_DB_VERSION;
-QACTIVE_POST(AO_SysMgr, (QEvt *)(evt), AO_SysMgr);</entry>
-        <exit>QTimeEvt_disarm(&amp;me-&gt;dbTimerEvt);                  /* Disarm timer on exit */</exit>
-        <tran trig="I2C1_DEV_READ_DONE">
-         <action>me-&gt;errorCode = ((I2CReadDoneEvt const *) e)-&gt;status;
-
-if ( ERR_NONE != me-&gt;errorCode ) {
-    goto END_ERROR_CHECK;
-}
-
-if ( ((I2CReadDoneEvt const *) e)-&gt;bytes &gt; MAX_DB_ELEM_SIZE ) {
-    /* This should be considered a pretty critical error. */
-    me-&gt;errorCode = ERR_DB_ELEM_SIZE_OVERFLOW;
-    goto END_ERROR_CHECK;
-}
-
-if( !DB_isArraysMatch(
-    ((I2CReadDoneEvt const *) e)-&gt;dataBuf,
-    (uint8_t *)&amp;(me-&gt;dbVersionDef),
-    ((I2CReadDoneEvt const *) e)-&gt;bytes ) ) {
-    /* If the check fails, set the error code */
-    me-&gt;errorCode = ERR_DB_NOT_INIT;
-
-    WRN_printf(&quot;Invalid DB version. Error 0x%08x\n&quot;, me-&gt;errorCode);
-    WRN_printf(&quot;Compiled: bytes: %x\n&quot;, me-&gt;dbVersionDef );
-
-    CON_hexToStr(
-        ((I2CReadDoneEvt const *) e)-&gt;dataBuf, // data to convert
-        ((I2CReadDoneEvt const *) e)-&gt;bytes, // length of data to convert
-        (char *)me-&gt;dataBuf,                 // where to write output
-        sizeof(me-&gt;dataBuf),                 // max size of output buffer
-        &amp;(me-&gt;dataLen),                      // size of the resulting output
-        0,                                   // no columns
-        ' ',                                 // separator
-        false                                // bPrintX
-    );
-
-    WRN_printf(&quot;In DB   : bytes: %s\n&quot;, me-&gt;dataBuf );
-
-    goto END_ERROR_CHECK;
-}
-
-/* Local tag to jump to if an error is found or to reach naturally 
- * once all the checks are complete */
-END_ERROR_CHECK:
-ERR_COND_OUTPUT(
-    me-&gt;errorCode,
-    me-&gt;accessType,
-    &quot;Error 0x%08x reading DB elem %s (%d)\n&quot;,
-    me-&gt;errorCode,
-    CON_dbElemToStr(_DC3_DB_VERSION),
-    _DC3_DB_VERSION
-);</action>
-         <choice target="../../../18">
-          <guard brief="NoError?">ERR_NONE == me-&gt;errorCode</guard>
-          <choice_glyph conn="43,55,4,0,3">
-           <action box="-7,-2,7,2"/>
-          </choice_glyph>
-         </choice>
-         <choice target="../../../10">
-          <guard>else</guard>
-          <choice_glyph conn="43,55,5,3,17,-8,2">
-           <action box="3,-2,5,2"/>
-          </choice_glyph>
-         </choice>
-         <tran_glyph conn="43,51,2,-1,4">
-          <action box="0,0,18,2"/>
-         </tran_glyph>
-        </tran>
-        <state_glyph node="41,44,15,7">
-         <entry box="1,2,6,2"/>
-         <exit box="1,4,6,2"/>
-        </state_glyph>
-       </state>
-       <state name="BootLdrBuildDTCheck">
-        <documentation>/**
- * @brief    Check bootloader build datetime and fix it if it doesn't match.
- * 
- * @param  [in|out] me: Pointer to the state machine
- * @param  [in|out]  e:  Pointer to the event being processed.
- * @return status: QState type that specifies where the state
- * machine is going next.
- */</documentation>
-        <entry>#if CPLR_BOOT                         /* Only compile this if this is the Bootloader */
-DBG_printf(&quot;Validating %s (%d)...\n&quot;,
-    CON_dbElemToStr(_DC3_DB_BOOT_BUILD_DATETIME),
-    _DC3_DB_BOOT_BUILD_DATETIME);
-
-/* Post to SysMgr to get the build datetime first since it's the one most likely to
- * be incorrect */
-DBReadReqEvt *evt = Q_NEW(DBReadReqEvt, DB_READ_SIG);
-evt-&gt;accessType = _DC3_ACCESS_QPC;
-evt-&gt;dbElem = _DC3_DB_BOOT_BUILD_DATETIME;
-QACTIVE_POST(AO_SysMgr, (QEvt *)(evt), me);
-#else                                /* Only compile this if this is the Application */
-me-&gt;errorCode = ERR_MSG_UNSUPPORTED_IN_APPLICATION;
-ERR_printf(&quot;Attempting to validate/set Bootloader info in Application. Error: 0x%08x\n&quot;, me-&gt;errorCode);
-
-#endif</entry>
-        <tran trig="I2C1_DEV_READ_DONE">
-         <action>me-&gt;errorCode = ((I2CReadDoneEvt const *) e)-&gt;status;
-
-if ( ERR_NONE != me-&gt;errorCode ) {
-    goto END_ERROR_CHECK;
-}
-
-if ( ((I2CReadDoneEvt const *) e)-&gt;bytes &gt; MAX_DB_ELEM_SIZE ) {
-    /* This should be considered a pretty critical error. */
-    me-&gt;errorCode = ERR_DB_ELEM_SIZE_OVERFLOW;
-    goto END_ERROR_CHECK;
-}
-
-if( !DB_isArraysMatch(
-    ((I2CReadDoneEvt const *) e)-&gt;dataBuf,
-    (uint8_t *)BUILD_DATE,
-    ((I2CReadDoneEvt const *) e)-&gt;bytes ) ) {
-    /* If the check fails, set the error code */
-    me-&gt;errorCode = ERR_DB_DATETIME_MISMATCH;
-
-    WRN_printf(&quot;Bootloader datetime mismatch. Error 0x%08x\n&quot;, me-&gt;errorCode);
-    LOG_printf(&quot;Note, this error is expected on first boot after a new bootloader was just flashed\n&quot;);
-
-    CON_hexToStr(
-        ((I2CReadDoneEvt const *) e)-&gt;dataBuf, // data to convert
-        ((I2CReadDoneEvt const *) e)-&gt;bytes, // length of data to convert
-        (char *)me-&gt;dataBuf,                 // where to write output
-        sizeof(me-&gt;dataBuf),                 // max size of output buffer
-        &amp;me-&gt;dataLen,                        // size of the resulting output
-        0,                                   // no columns
-        ' ',                                 // separator
-        false                                // bPrintX
-    );
-
-    WRN_printf(&quot;In DB:    bytes: %s, string: %s\n&quot;,
-        me-&gt;dataBuf, ((I2CReadDoneEvt const *) e)-&gt;dataBuf
-    );
-
-    CON_hexToStr(
-        (uint8_t *)BUILD_DATE,               // data to convert
-        strlen(BUILD_DATE),                  // length of data to convert
-        (char *)me-&gt;dataBuf,                 // where to write output
-        sizeof(me-&gt;dataBuf),                 // max size of output buffer
-        &amp;me-&gt;dataLen,                        // size of the resulting output
-        0,                                   // no columns
-        ' ',                                 // separator
-        false                                 // bPrintX
-    );
-
-    WRN_printf(&quot;Compiled: bytes: %s, string: %s\n&quot;,
-        me-&gt;dataBuf, BUILD_DATE
-    );
-
-    goto END_ERROR_CHECK;
-}
-
-/* Local tag to jump to if an error is found or to reach naturally 
- * once all the checks are complete */
-END_ERROR_CHECK:
-ERR_COND_OUTPUT(
-    me-&gt;errorCode,
-    me-&gt;accessType,
-    &quot;Error 0x%08x reading DB elem %s (%d)\n&quot;,
-    me-&gt;errorCode,
-    CON_dbElemToStr(_DC3_DB_BOOT_BUILD_DATETIME),
-    _DC3_DB_BOOT_BUILD_DATETIME
-);</action>
-         <choice target="../../../13">
-          <guard brief="NoError?">me-&gt;errorCode == ERR_NONE</guard>
-          <action>//me-&gt;errorCode = DB_checkDTMatch( ((I2CReadDoneEvt const *) e)-&gt;dataBuf, (uint8_t *)BUILD_DATE );
-
-DBG_printf(&quot;Bootloader datetime match\n&quot;);</action>
-          <choice_glyph conn="91,34,4,0,3">
-           <action box="-7,0,9,2"/>
-          </choice_glyph>
-         </choice>
-         <choice target="../../../11">
-          <guard>else</guard>
-          <choice_glyph conn="91,34,5,3,16,-6,2">
-           <action box="1,0,10,2"/>
-          </choice_glyph>
-         </choice>
-         <tran_glyph conn="91,31,2,-1,3">
-          <action box="0,0,15,2"/>
-         </tran_glyph>
-        </tran>
-        <state_glyph node="89,25,14,6">
-         <entry box="1,2,6,2"/>
-        </state_glyph>
-       </state>
-       <state name="ResetDBVersion">
-        <documentation>/**
- * @brief   Reset the DB version to default value.
- * @param  [in|out] me: Pointer to the state machine
- * @param  [in|out]  e:  Pointer to the event being processed.
- * @return status: QState type that specifies where the state
- * machine is going next.
- */</documentation>
-        <entry>WRN_printf(&quot;Resetting %s to default...\n&quot;, CON_dbElemToStr(_DC3_DB_VERSION));
-
-/* Post to SysMgr to set the build datetime since it doesn't match the compiled one */
-DBWriteReqEvt *evt = Q_NEW(DBWriteReqEvt, DB_WRITE_SIG);
-evt-&gt;accessType = _DC3_ACCESS_QPC;
-evt-&gt;dbElem = _DC3_DB_VERSION;
-evt-&gt;dataLen =  DB_getElemSize(_DC3_DB_VERSION);
-uint16_t dbVersion = DB_VERSION_DEF;
-MEMCPY(evt-&gt;dataBuf, (uint8_t *)&amp;dbVersion, evt-&gt;dataLen);
-QACTIVE_POST(AO_SysMgr, (QEvt *)(evt), me);</entry>
-        <tran trig="DB_OP_DONE" target="../../19">
-         <action>me-&gt;currRetry++;</action>
-         <tran_glyph conn="64,51,2,0,7">
-          <action box="0,0,10,2"/>
-         </tran_glyph>
-        </tran>
-        <state_glyph node="62,44,14,7">
-         <entry box="1,2,6,2"/>
-        </state_glyph>
-       </state>
-       <state name="SetBootLdrDatetime">
-        <documentation>/**
- * @brief   Reset the bootloader build datetime.
- * 
- * @param  [in|out] me: Pointer to the state machine
- * @param  [in|out]  e:  Pointer to the event being processed.
- * @return status: QState type that specifies where the state
- * machine is going next.
- */</documentation>
-        <entry>WRN_printf(&quot;Setting %s (%d) in DB to %s.\n&quot;,
-    CON_dbElemToStr(_DC3_DB_BOOT_BUILD_DATETIME),
-    _DC3_DB_BOOT_BUILD_DATETIME, BUILD_DATE);
-
-/* Post to SysMgr to set the build datetime since it doesn't match the compiled one */
-DBWriteReqEvt *evt = Q_NEW(DBWriteReqEvt, DB_WRITE_SIG);
-evt-&gt;accessType = _DC3_ACCESS_QPC;
-evt-&gt;dbElem = _DC3_DB_BOOT_BUILD_DATETIME;
-evt-&gt;dataLen =  DB_getElemSize(_DC3_DB_BOOT_BUILD_DATETIME);
-MEMCPY(evt-&gt;dataBuf, (uint8_t *)BUILD_DATE, evt-&gt;dataLen);
-QACTIVE_POST(AO_SysMgr, (QEvt *)(evt), me);</entry>
-        <tran trig="DB_OP_DONE" target="../../12">
-         <tran_glyph conn="112,31,2,0,6">
-          <action box="0,0,10,2"/>
-         </tran_glyph>
-        </tran>
-        <state_glyph node="109,25,14,6">
-         <entry box="1,2,6,2"/>
-        </state_glyph>
-       </state>
-       <state name="SetBootLdrMajVer">
-        <documentation>/**
- * @brief   Reset the bootloader major version.
- * 
- * @param  [in|out] me: Pointer to the state machine
- * @param  [in|out]  e:  Pointer to the event being processed.
- * @return status: QState type that specifies where the state
- * machine is going next.
- */</documentation>
-        <entry>WRN_printf(&quot;Setting %s (%d) in DB to %s.\n&quot;,
-    CON_dbElemToStr(_DC3_DB_BOOT_MAJ),
-    _DC3_DB_BOOT_MAJ, FW_VER_MAJOR);
-
-/* Post to SysMgr to set the major version since we no longer trust it */
-DBWriteReqEvt *evt = Q_NEW(DBWriteReqEvt, DB_WRITE_SIG);
-evt-&gt;accessType = _DC3_ACCESS_QPC;
-evt-&gt;dbElem = _DC3_DB_BOOT_MAJ;
-evt-&gt;dataLen =  DB_getElemSize(_DC3_DB_BOOT_MAJ);
-evt-&gt;dataBuf[0] = FW_VER_MAJOR;
-
-QACTIVE_POST(AO_SysMgr, (QEvt *)(evt), me);</entry>
-        <tran trig="DB_OP_DONE" target="../../15">
-         <tran_glyph conn="112,43,2,0,6">
-          <action box="0,0,10,2"/>
-         </tran_glyph>
-        </tran>
-        <state_glyph node="109,37,14,6">
-         <entry box="1,2,6,2"/>
-        </state_glyph>
-       </state>
-       <state name="BootLdrMajVerCheck">
-        <documentation>/**
- * @brief    Check bootloader major version and fix it if it doesn't match.
- * 
- * @param  [in|out] me: Pointer to the state machine
- * @param  [in|out]  e:  Pointer to the event being processed.
- * @return status: QState type that specifies where the state
- * machine is going next.
- */</documentation>
-        <entry>/* Post to SysMgr to get the build datetime first since it's the one most likely to
- * be incorrect */
-DBReadReqEvt *evt = Q_NEW(DBReadReqEvt, DB_READ_SIG);
-evt-&gt;accessType = _DC3_ACCESS_QPC;
-evt-&gt;dbElem = _DC3_DB_BOOT_MAJ;
-QACTIVE_POST(AO_SysMgr, (QEvt *)(evt), me);</entry>
-        <tran trig="I2C1_DEV_READ_DONE">
-         <action>me-&gt;errorCode = ((I2CReadDoneEvt const *) e)-&gt;status;
-
-if ( ERR_NONE != me-&gt;errorCode ) {
-    goto END_ERROR_CHECK;
-}
-
-if ( ((I2CReadDoneEvt const *) e)-&gt;bytes &gt; MAX_DB_ELEM_SIZE ) {
-    /* This should be considered a pretty critical error. */
-    me-&gt;errorCode = ERR_DB_ELEM_SIZE_OVERFLOW;
-    goto END_ERROR_CHECK;
-}
-
-if( ((I2CReadDoneEvt const *) e)-&gt;dataBuf[0] != FW_VER_MAJOR ) {
-    me-&gt;errorCode = ERR_DB_INVALID_MAJ_VER_MISMATCH;
-    WRN_printf(&quot;Bootloader %s mismatch. DB: %d, Compiled: %d\n&quot;,
-        CON_dbElemToStr(_DC3_DB_BOOT_MAJ),
-        ((I2CReadDoneEvt const *) e)-&gt;dataBuf[0], FW_VER_MAJOR
-    );
-    goto END_ERROR_CHECK;
-}
-
-
-/* Local tag to jump to if an error is found or to reach naturally
- * once all the checks are complete */
-END_ERROR_CHECK:
-ERR_COND_OUTPUT(
-    me-&gt;errorCode,
-    me-&gt;accessType,
-    &quot;Error 0x%08x reading DB elem %s (%d)\n&quot;,
-    me-&gt;errorCode,
-    CON_dbElemToStr(_DC3_DB_BOOT_MAJ),
-    _DC3_DB_BOOT_MAJ
-);</action>
-         <choice target="../../../14">
-          <guard brief="NoError?">me-&gt;errorCode == ERR_NONE</guard>
-          <choice_glyph conn="91,46,4,0,3">
-           <action box="-7,0,9,2"/>
-          </choice_glyph>
-         </choice>
-         <choice target="../../../12">
-          <guard>else</guard>
-          <choice_glyph conn="91,46,5,3,16,-6,2">
-           <action box="2,0,4,2"/>
-          </choice_glyph>
-         </choice>
-         <tran_glyph conn="91,43,2,-1,3">
-          <action box="0,0,15,2"/>
-         </tran_glyph>
-        </tran>
-        <state_glyph node="89,37,14,6">
-         <entry box="1,2,6,2"/>
-        </state_glyph>
-       </state>
-       <state name="BootLdrMinVerCheck">
-        <documentation>/**
- * @brief    Check bootloader minor version and fix it if it doesn't match.
- * 
- * @param  [in|out] me: Pointer to the state machine
- * @param  [in|out]  e:  Pointer to the event being processed.
- * @return status: QState type that specifies where the state
- * machine is going next.
- */</documentation>
-        <entry>/* Post to SysMgr to get the build datetime first since it's the one most likely to
- * be incorrect */
-DBReadReqEvt *evt = Q_NEW(DBReadReqEvt, DB_READ_SIG);
-evt-&gt;accessType = _DC3_ACCESS_QPC;
-evt-&gt;dbElem = _DC3_DB_BOOT_MIN;
-QACTIVE_POST(AO_SysMgr, (QEvt *)(evt), me);</entry>
-        <tran trig="I2C1_DEV_READ_DONE">
-         <action>me-&gt;errorCode = ((I2CReadDoneEvt const *) e)-&gt;status;
-
-if ( ERR_NONE != me-&gt;errorCode ) {
-    goto END_ERROR_CHECK;
-}
-
-if ( ((I2CReadDoneEvt const *) e)-&gt;bytes &gt; MAX_DB_ELEM_SIZE ) {
-    /* This should be considered a pretty critical error. */
-    me-&gt;errorCode = ERR_DB_ELEM_SIZE_OVERFLOW;
-    goto END_ERROR_CHECK;
-}
-
-if( ((I2CReadDoneEvt const *) e)-&gt;dataBuf[0] != FW_VER_MINOR ) {
-    me-&gt;errorCode = ERR_DB_INVALID_MIN_VER_MISMATCH;
-    WRN_printf(&quot;Bootloader %s mismatch. DB: %d, Compiled: %d\n&quot;,
-        CON_dbElemToStr(_DC3_DB_BOOT_MIN),
-        ((I2CReadDoneEvt const *) e)-&gt;dataBuf[0], FW_VER_MINOR
-    );
-    goto END_ERROR_CHECK;
-}
-
-
-/* Local tag to jump to if an error is found or to reach naturally 
- * once all the checks are complete */
-END_ERROR_CHECK:
-ERR_COND_OUTPUT(
-    me-&gt;errorCode,
-    me-&gt;accessType,
-    &quot;Error 0x%08x reading DB elem %s (%d)\n&quot;,
-    me-&gt;errorCode,
-    CON_dbElemToStr(_DC3_DB_BOOT_MIN),
-    _DC3_DB_BOOT_MIN
-);</action>
-         <choice target="../../../../../0">
-          <guard brief="NoError?">me-&gt;errorCode == ERR_NONE</guard>
-          <action>LOG_printf(&quot;Bootloader version and build datetime validation complete\n&quot;);</action>
-          <choice_glyph conn="91,59,4,1,46,-71">
-           <action box="-7,0,9,2"/>
-          </choice_glyph>
-         </choice>
-         <choice target="../../../15">
-          <guard>else</guard>
-          <choice_glyph conn="91,59,5,3,15,-8,3">
-           <action box="2,-2,4,2"/>
-          </choice_glyph>
-         </choice>
-         <tran_glyph conn="91,55,2,-1,4">
-          <action box="0,0,15,2"/>
-         </tran_glyph>
-        </tran>
-        <state_glyph node="89,49,15,6">
-         <entry box="1,2,6,2"/>
-        </state_glyph>
-       </state>
-       <state name="SetBootLdrMinVer">
-        <documentation>/**
- * @brief   Reset the bootloader minor version.
- * 
- * @param  [in|out] me: Pointer to the state machine
- * @param  [in|out]  e:  Pointer to the event being processed.
- * @return status: QState type that specifies where the state
- * machine is going next.
- */</documentation>
-        <entry>WRN_printf(&quot;Setting %s (%d) in DB to %s.\n&quot;,
-    CON_dbElemToStr(_DC3_DB_BOOT_MIN),
-    _DC3_DB_BOOT_MIN, FW_VER_MINOR);
-
-/* Post to SysMgr to set the major version since we no longer trust it */
-DBWriteReqEvt *evt = Q_NEW(DBWriteReqEvt, DB_WRITE_SIG);
-evt-&gt;accessType = _DC3_ACCESS_QPC;
-evt-&gt;dbElem = _DC3_DB_BOOT_MIN;
-evt-&gt;dataLen =  DB_getElemSize(_DC3_DB_BOOT_MIN);
-evt-&gt;dataBuf[0] = FW_VER_MINOR;
-QACTIVE_POST(AO_SysMgr, (QEvt *)(evt), me);</entry>
-        <tran trig="DB_OP_DONE">
-         <action>me-&gt;currRetry++;</action>
-         <choice target="../../../16">
-          <guard brief="Retry?">me-&gt;currRetry &lt; MAX_RETRIES</guard>
-          <choice_glyph conn="112,60,5,2,15,-30">
-           <action box="1,0,10,2"/>
-          </choice_glyph>
-         </choice>
-         <choice target="../../../../../0">
-          <guard>else</guard>
-          <action>me-&gt;errorCode = ERR_DB_NOT_INIT;
-ERR_printf(&quot;Out of retries when attempting to reset DB to a valid state. Error: 0x%08x\n&quot;, me-&gt;errorCode);</action>
-          <choice_glyph conn="112,60,4,1,46,-92">
-           <action box="0,3,10,2"/>
-          </choice_glyph>
-         </choice>
-         <tran_glyph conn="112,55,2,-1,5">
-          <action box="0,0,10,2"/>
-         </tran_glyph>
-        </tran>
-        <state_glyph node="109,49,14,6">
-         <entry box="1,2,6,2"/>
-        </state_glyph>
-       </state>
-       <state name="Wait2">
-        <documentation>/**
- * @brief   Small timeout to make sure that retries don't overwhelm the logging 
- * system.
- * 
- * @param  [in|out] me: Pointer to the state machine
- * @param  [in|out]  e:  Pointer to the event being processed.
- * @return status: QState type that specifies where the state
- * machine is going next.
- */</documentation>
-        <entry>QTimeEvt_rearm(                                       /* Re-arm timer on entry */
-    &amp;me-&gt;dbTimerEvt,
-    SEC_TO_TICKS( LL_MAX_TIME_SEC_BETWEEN_RETRIES )
-);
-</entry>
-        <tran trig="DB_ACCESS_TIMEOUT" target="../../9">
-         <tran_glyph conn="126,25,0,0,-1,-28,1">
-          <action box="-8,-3,15,2"/>
-         </tran_glyph>
-        </tran>
-        <state_glyph node="125,25,10,5">
-         <entry box="1,2,6,2"/>
-        </state_glyph>
-       </state>
-       <state name="Wait1">
-        <documentation>/**
- * @brief   Small timeout to make sure that retries don't overwhelm the logging 
- * system.
- * 
- * @param  [in|out] me: Pointer to the state machine
- * @param  [in|out]  e:  Pointer to the event being processed.
- * @return status: QState type that specifies where the state
- * machine is going next.
- */</documentation>
-        <entry>QTimeEvt_rearm(                                       /* Re-arm timer on entry */
-    &amp;me-&gt;dbTimerEvt,
-    SEC_TO_TICKS( LL_MAX_TIME_SEC_BETWEEN_RETRIES )
-);
-</entry>
-        <tran trig="DB_ACCESS_TIMEOUT" target="../../6">
-         <tran_glyph conn="72,26,3,0,-17,4">
-          <action box="-16,-2,15,2"/>
-         </tran_glyph>
-        </tran>
-        <state_glyph node="72,23,7,5">
-         <entry box="1,2,6,2"/>
-        </state_glyph>
-       </state>
-       <state name="DBGetDebugModules">
-        <documentation>/**
- * @brief    Check DB debug modules and reset DB to default values if invalid.
- * 
- * @param  [in|out] me: Pointer to the state machine
- * @param  [in|out]  e:  Pointer to the event being processed.
- * @return status: QState type that specifies where the state
- * machine is going next.
- */</documentation>
-        <entry>QTimeEvt_rearm(                                       /* Re-arm timer on entry */
-    &amp;me-&gt;dbTimerEvt,
-    SEC_TO_TICKS( HL_MAX_TOUT_SEC_COMM_DB_VALIDATE )
-);
-
-/* Post to SysMgr to get the build datetime first since it's the one most likely to
- * be incorrect */
-DBReadReqEvt *evt = Q_NEW(DBReadReqEvt, DB_READ_SIG);
-evt-&gt;accessType = _DC3_ACCESS_QPC;
-evt-&gt;dbElem = _DC3_DB_DBG_MODULES;
-QACTIVE_POST(AO_SysMgr, (QEvt *)(evt), AO_SysMgr);</entry>
-        <exit>QTimeEvt_disarm(&amp;me-&gt;dbTimerEvt);                  /* Disarm timer on exit */</exit>
-        <tran trig="I2C1_DEV_READ_DONE">
-         <action>me-&gt;errorCode = ((I2CReadDoneEvt const *) e)-&gt;status;
-
-if ( ERR_NONE != me-&gt;errorCode ) {
-    goto END_ERROR_CHECK;
-}
-
-if ( ((I2CReadDoneEvt const *) e)-&gt;bytes &gt; MAX_DB_ELEM_SIZE ) {
-    /* This should be considered a pretty critical error. */
-    me-&gt;errorCode = ERR_DB_ELEM_SIZE_OVERFLOW;
-    goto END_ERROR_CHECK;
-}
-
-/* Local tag to jump to if an error is found or to reach naturally 
- * once all the checks are complete */
-END_ERROR_CHECK:
-ERR_COND_OUTPUT(
-    me-&gt;errorCode,
-    me-&gt;accessType,
-    &quot;Error 0x%08x reading DB elem %s (%d)\n&quot;,
-    me-&gt;errorCode,
-    CON_dbElemToStr(_DC3_DB_DBG_MODULES),
-    _DC3_DB_DBG_MODULES
-);</action>
-         <choice target="../../../20">
-          <guard brief="NoError?">ERR_NONE == me-&gt;errorCode</guard>
-          <choice_glyph conn="43,69,4,0,3">
-           <action box="-7,-2,7,2"/>
-          </choice_glyph>
-         </choice>
-         <choice target="../../../19">
-          <guard>else</guard>
-          <choice_glyph conn="43,69,5,3,17,-8,2">
-           <action box="3,-2,5,2"/>
-          </choice_glyph>
-         </choice>
-         <tran_glyph conn="43,65,2,-1,4">
-          <action box="0,0,18,2"/>
-         </tran_glyph>
-        </tran>
-        <state_glyph node="41,58,15,7">
-         <entry box="1,2,6,2"/>
-         <exit box="1,4,6,2"/>
-        </state_glyph>
-       </state>
-       <state name="ResetDBDbgModules">
-        <documentation>/**
- * @brief   Reset the DB debug modules to default value.
- * @param  [in|out] me: Pointer to the state machine
- * @param  [in|out]  e:  Pointer to the event being processed.
- * @return status: QState type that specifies where the state
- * machine is going next.
- */</documentation>
-        <entry>WRN_printf(&quot;Resetting %s to default...\n&quot;, CON_dbElemToStr(_DC3_DB_DBG_MODULES));
-
-/* Post to SysMgr to set the build datetime since it doesn't match the compiled one */
-DBWriteReqEvt *evt = Q_NEW(DBWriteReqEvt, DB_WRITE_SIG);
-evt-&gt;accessType = _DC3_ACCESS_QPC;
-evt-&gt;dbElem = _DC3_DB_DBG_MODULES;
-evt-&gt;dataLen =  DB_getElemSize(_DC3_DB_DBG_MODULES);
-uint32_t dbDbgModules = DB_DBG_MODULES_DEF;
-MEMCPY(evt-&gt;dataBuf, (uint8_t *)&amp;dbDbgModules, evt-&gt;dataLen);
-QACTIVE_POST(AO_SysMgr, (QEvt *)(evt), me);</entry>
-        <tran trig="DB_OP_DONE" target="../../21">
-         <action>me-&gt;currRetry++;</action>
-         <tran_glyph conn="64,65,2,0,7">
-          <action box="0,0,10,2"/>
-         </tran_glyph>
-        </tran>
-        <state_glyph node="62,58,14,7">
-         <entry box="1,2,6,2"/>
-        </state_glyph>
-       </state>
-       <state name="DBGetDebugDevices">
-        <documentation>/**
- * @brief    Check DB debug modules and reset DB to default values if invalid.
- * 
- * @param  [in|out] me: Pointer to the state machine
- * @param  [in|out]  e:  Pointer to the event being processed.
- * @return status: QState type that specifies where the state
- * machine is going next.
- */</documentation>
-        <entry>QTimeEvt_rearm(                                       /* Re-arm timer on entry */
-    &amp;me-&gt;dbTimerEvt,
-    SEC_TO_TICKS( HL_MAX_TOUT_SEC_COMM_DB_VALIDATE )
-);
-
-/* Post to SysMgr to get the build datetime first since it's the one most likely to
- * be incorrect */
-DBReadReqEvt *evt = Q_NEW(DBReadReqEvt, DB_READ_SIG);
-evt-&gt;accessType = _DC3_ACCESS_QPC;
-evt-&gt;dbElem = _DC3_DB_DBG_DEVICES;
-QACTIVE_POST(AO_SysMgr, (QEvt *)(evt), AO_SysMgr);</entry>
-        <exit>QTimeEvt_disarm(&amp;me-&gt;dbTimerEvt);                  /* Disarm timer on exit */</exit>
-        <tran trig="I2C1_DEV_READ_DONE">
-         <action>me-&gt;errorCode = ((I2CReadDoneEvt const *) e)-&gt;status;
-
-if ( ERR_NONE != me-&gt;errorCode ) {
-    goto END_ERROR_CHECK;
-}
-
-if ( ((I2CReadDoneEvt const *) e)-&gt;bytes &gt; MAX_DB_ELEM_SIZE ) {
-    /* This should be considered a pretty critical error. */
-    me-&gt;errorCode = ERR_DB_ELEM_SIZE_OVERFLOW;
-    goto END_ERROR_CHECK;
-}
-
-/* Local tag to jump to if an error is found or to reach naturally 
- * once all the checks are complete */
-END_ERROR_CHECK:
-ERR_COND_OUTPUT(
-    me-&gt;errorCode,
-    me-&gt;accessType,
-    &quot;Error 0x%08x reading DB elem %s (%d)\n&quot;,
-    me-&gt;errorCode,
-    CON_dbElemToStr(_DC3_DB_DBG_DEVICES),
-    _DC3_DB_DBG_DEVICES
-);</action>
-         <choice target="../../../../../0">
-          <guard brief="NoError?">ERR_NONE == me-&gt;errorCode</guard>
-          <action>LOG_printf(&quot;DB integrity and version validation complete.\n&quot;);
-me-&gt;isDBValid = true;</action>
-          <choice_glyph conn="43,83,5,1,-23">
-           <action box="-7,-2,7,2"/>
-          </choice_glyph>
-         </choice>
-         <choice target="../../../21">
-          <guard>else</guard>
-          <choice_glyph conn="43,83,5,3,17,-8,2">
-           <action box="3,-2,5,2"/>
-          </choice_glyph>
-         </choice>
-         <tran_glyph conn="43,79,2,-1,4">
-          <action box="0,0,18,2"/>
-         </tran_glyph>
-        </tran>
-        <state_glyph node="41,72,15,7">
-         <entry box="1,2,6,2"/>
-         <exit box="1,4,6,2"/>
-        </state_glyph>
-       </state>
-       <state name="ResetDBDbgDevices">
-        <documentation>/**
- * @brief   Reset the DB debug Devices to default value.
- * @param  [in|out] me: Pointer to the state machine
- * @param  [in|out]  e:  Pointer to the event being processed.
- * @return status: QState type that specifies where the state
- * machine is going next.
- */</documentation>
-        <entry>WRN_printf(&quot;Resetting %s to default...\n&quot;, CON_dbElemToStr(_DC3_DB_DBG_DEVICES));
-
-/* Post to SysMgr to set the build datetime since it doesn't match the compiled one */
-DBWriteReqEvt *evt = Q_NEW(DBWriteReqEvt, DB_WRITE_SIG);
-evt-&gt;accessType = _DC3_ACCESS_QPC;
-evt-&gt;dbElem = _DC3_DB_DBG_DEVICES;
-evt-&gt;dataLen =  DB_getElemSize(_DC3_DB_DBG_DEVICES);
-uint8_t dbgDevices = DB_DBG_DEVICES_DEF;
-MEMCPY(evt-&gt;dataBuf, (uint8_t *)&amp;dbgDevices, evt-&gt;dataLen);
-QACTIVE_POST(AO_SysMgr, (QEvt *)(evt), me);</entry>
-        <tran trig="DB_OP_DONE">
-         <action>me-&gt;currRetry++;</action>
-         <choice target="../../../17">
-          <guard brief="Retry?">me-&gt;currRetry &lt; MAX_RETRIES</guard>
-          <choice_glyph conn="64,83,5,2,14,-55">
-           <action box="2,0,10,2"/>
-          </choice_glyph>
-         </choice>
-         <choice target="../../../../../0">
-          <guard>else</guard>
-          <action>me-&gt;errorCode = ERR_DB_NOT_INIT;
-ERR_printf(&quot;Out of retries when attempting to reset DB to a valid state. Error: 0x%08x\n&quot;, me-&gt;errorCode);</action>
-          <choice_glyph conn="64,83,4,1,4,-44">
-           <action box="-4,0,6,2"/>
-          </choice_glyph>
-         </choice>
-         <tran_glyph conn="64,79,2,-1,4">
-          <action box="0,0,10,2"/>
-         </tran_glyph>
-        </tran>
-        <state_glyph node="62,72,14,7">
-         <entry box="1,2,6,2"/>
-        </state_glyph>
-       </state>
+/* Self post to let the exit condition handle the sending back to requester */
+QEvt *evt = Q_NEW(QEvt, DB_OP_DONE_SIG);
+QACTIVE_POST(AO_SysMgr, evt, me);</action>
+        <tran_glyph conn="138,24,1,-1,-23">
+         <action box="-20,-2,17,2"/>
+        </tran_glyph>
+       </tran>
        <state name="DBFullReset">
         <entry>QTimeEvt_rearm(                                       /* Re-arm timer on entry */
     &amp;me-&gt;dbTimerEvt,
@@ -1453,7 +646,7 @@ ERR_printf(&quot;Out of retries when attempting to reset DB to a valid state. Er
 /* This function will fill out the appropriate data and post the event to reset the DB */
 me-&gt;errorCode = DB_initToDefault( me-&gt;accessType );</entry>
         <exit>QTimeEvt_disarm(&amp;me-&gt;dbTimerEvt);                  /* Disarm timer on exit */</exit>
-        <state_glyph node="44,91,15,7">
+        <state_glyph node="44,49,15,7">
          <entry box="1,2,6,2"/>
          <exit box="1,4,6,2"/>
         </state_glyph>
@@ -1509,8 +702,8 @@ WRN_COND_OUTPUT(
 );</action>
          <choice target="../../../../../0">
           <guard brief="NoError?">ERR_NONE == me-&gt;errorCode</guard>
-          <choice_glyph conn="101,99,5,1,-81">
-           <action box="-8,-2,7,2"/>
+          <choice_glyph conn="63,41,4,1,2,-43">
+           <action box="-7,2,7,2"/>
           </choice_glyph>
          </choice>
          <choice>
@@ -1560,15 +753,15 @@ WRN_COND_OUTPUT(
         me-&gt;errorCode = DB_initToDefault( me-&gt;accessType );
         break;
 }</action>
-          <choice_glyph conn="101,99,5,-1,6">
+          <choice_glyph conn="63,41,5,-1,6">
            <action box="2,0,5,3"/>
           </choice_glyph>
          </choice>
-         <tran_glyph conn="85,94,3,-1,16,5">
-          <action box="1,-2,16,2"/>
+         <tran_glyph conn="44,41,3,-1,19">
+          <action box="0,-2,16,2"/>
          </tran_glyph>
         </tran>
-        <state_glyph node="85,86,26,16">
+        <state_glyph node="44,33,29,12">
          <entry box="1,2,6,2"/>
          <exit box="1,4,6,2"/>
         </state_glyph>

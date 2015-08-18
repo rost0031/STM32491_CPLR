@@ -57,6 +57,21 @@
 #define DB_DBG_DEVICES_DEF    DBG_DEVICES_DEF
 
 /* Exported macros -----------------------------------------------------------*/
+ /**
+ * @brief   Macro to determine if a DB element is one of the ones that are stored
+ * in Flash
+ * @param [in] elem_:  _DC3DBElem_t element.
+ * @retval
+ *    1: Element is stored in flash
+ *    0: Element is NOT stored in flash
+ */
+#define DB_IS_ELEM_IN_FLASH( elem_ )                                          \
+(                                                                             \
+   (elem_) == _DC3_DB_APPL_MAJ  ||                                            \
+   (elem_) == _DC3_DB_APPL_MIN  ||                                            \
+   (elem_) == _DC3_DB_APPL_BUILD_DATETIME                                     \
+)
+
 /* Exported types ------------------------------------------------------------*/
 
 /**
@@ -120,19 +135,6 @@ typedef struct {
 
 /* Exported constants --------------------------------------------------------*/
 /* Exported functions --------------------------------------------------------*/
-/**
- * @brief   Get a string representation of a DB element.
- *
- * @param  [in] elem: DC3DBElem_t that specifies what element to retrieve.
- *    @arg _DC3_DB_MAGIC_WORD: only used to validate that the DB even exists.
- *    @arg _DC3_DB_VERSION: version of the DB.  To be used for future upgrades.
- *    @arg _DC3_DB_MAC_ADDR: MAC address stored in the RO part of DB.
- *    @arg _DC3_DB_IP_ADDR: IP address stored in the RW part of DB.
- *    @arg _DC3_DB_SN: Serial number stored in the RO part of DB.
- * @return str: char* representation of DB element if found,
- *             "" if not found.
- */
-//const char* const DB_elemToStr( const DC3DBElem_t elem );
 
 /**
  * @brief   Check if Settings DB in EEPROM is valid.
@@ -354,20 +356,28 @@ const DC3I2CDevice_t DB_getI2CDev( const DB_ElemLoc_t loc );
  *    @arg _DC3_DB_APPL_MIN_VER: Minor version of the Application FW image.
  *    @arg _DC3_DB_APPL_BUILD_DATETIME: Build datetime of the application FW image.
  *
+ * @param  [in] accessType: DC3AccessType_t that specifies how the function is being
+ * accessed.
+ *    @arg _DC3_ACCESS_BARE: blocking access that is slow.  Don't use once the
+ *                            RTOS is running.
+ *    @arg _DC3_ACCESS_QPC:        non-blocking, event based access.
+ *    @arg _DC3_ACCESS_FRT:   non-blocking, but waits on queue to know the status.
+ *
  * @param  [in] bufSize: size of the pBuffer.
  * @param  [out] *pBuffer: uint8_t pointer to a buffer where to store the
- *                         retrieved element.
- * @param  [out] resultLen: uint16_t pointer to the length of data stored in the
- *                         buffer on return.
+ * retrieved element.
+ * @param  [out] *pResultLen: uint16_t pointer to the length of data stored in
+ * the buffer on return.
  * @return DC3Error_t: status of the read operation
  *    @arg ERR_NONE: if no errors occurred
  *    other errors if found.
  */
 const DC3Error_t DB_readFlash(
       const DC3DBElem_t elem,
-      const uint8_t bufferSize,
-      uint8_t* const buffer,
-      uint16_t* resultLen
+      const DC3AccessType_t accessType,
+      const size_t bufSize,
+      uint8_t* pBuffer,
+      uint16_t* pResultLen
 );
 
 /**

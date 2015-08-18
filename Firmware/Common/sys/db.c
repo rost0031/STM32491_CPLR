@@ -280,6 +280,7 @@ const DC3Error_t DB_getElem(
          uint16_t resultLen = 0;
          status = DB_readFlash(
                elem,
+               accessType,
                bufSize,
                pBuffer,
                &resultLen
@@ -311,7 +312,7 @@ const DC3Error_t DB_setElem(
    DC3Error_t status = ERR_NONE; /* keep track of success/failure of operations. */
 
    /* 1. Sanity checks of buffer sizes and memory allocations. */
-   if ( bufSize > settingsDB[elem].size ) {
+   if ( bufSize < settingsDB[elem].size ) {
       status = ERR_MEM_BUFFER_LEN;
       goto DB_getElem_ERR_HANDLE;          /* Stop and jump to error handling */
    }
@@ -593,39 +594,82 @@ const DC3I2CDevice_t DB_getI2CDev( const DB_ElemLoc_t loc )
 /******************************************************************************/
 const DC3Error_t DB_readFlash(
       const DC3DBElem_t elem,
-      const uint8_t bufferSize,
-      uint8_t* const buffer,
-      uint16_t* resultLen
+      const DC3AccessType_t accessType,
+      const size_t bufSize,
+      uint8_t* pBuffer,
+      uint16_t* pResultLen
 )
 {
-   if( NULL == buffer ) {
-      return( ERR_MEM_NULL_VALUE );
-   }
 
    DC3Error_t status = ERR_NONE;
 
-   switch( elem ) {
-      case _DC3_DB_APPL_MAJ:
-         buffer[0] = FLASH_readApplMajVer();
-         *resultLen = 1;
+   /* 1. Sanity checks of buffer sizes and memory allocations. Only check this
+    * for bare metal access since QPC and FRT accesses will post events with
+    * their own buffers */
+   if ( _DC3_ACCESS_BARE == accessType ) {
+      if ( bufSize < settingsDB[elem].size ) {
+         status = ERR_MEM_BUFFER_LEN;
+         goto DB_readFlash_ERR_HANDLE;     /* Stop and jump to error handling */
+      }
+
+      if ( NULL == pBuffer ) {
+         status = ERR_MEM_NULL_VALUE;
+         goto DB_readFlash_ERR_HANDLE;     /* Stop and jump to error handling */
+      }
+   }
+
+   if( !DB_IS_ELEM_IN_FLASH(elem) ) {
+      status = ERR_DB_ELEM_IS_NOT_IN_FLASH;
+      goto DB_readFlash_ERR_HANDLE;        /* Stop and jump to error handling */
+   }
+
+   DBReadDoneEvt *evt;
+   switch ( accessType ) {
+      case _DC3_ACCESS_QPC:               /* Intentionally fall through */
+      case _DC3_ACCESS_FRT: {
+         evt = Q_NEW(DBReadDoneEvt, DB_FLASH_READ_DONE_SIG);
+         evt->dbElem = elem;
+         evt->status = ERR_NONE;
+
+         /* Both evt->status and status should be assigned here */
+         evt->status = status = FLASH_readBufferUint8(
+               settingsDB[elem].offset,
+               settingsDB[elem].size,
+               MAX_DB_ELEM_SIZE,
+               evt->dataBuf,
+               (uint16_t *)&(evt->dataLen)
+         );
+         QACTIVE_POST(AO_SysMgr, (QEvt *)evt, AO_SysMgr);
+
          break;
-      case _DC3_DB_APPL_MIN:
-         buffer[0] = FLASH_readApplMinVer();
-         *resultLen = 1;
-         break;
-      case _DC3_DB_APPL_BUILD_DATETIME:
-         status = FLASH_readApplBuildDatetime( buffer, bufferSize );
-         if ( ERR_NONE == status ) {
-            *resultLen = DC3_DATETIME_LEN;
-         } else {
-            *resultLen = 0;
-         }
-         break;
+      }
+      case _DC3_ACCESS_BARE:              /* Intentionally fall through */
       default:
-         status = ERR_DB_ELEM_IS_NOT_IN_FLASH;
-         *resultLen = 0;
+         if ( bufSize < settingsDB[elem].size ) {
+            status = ERR_MEM_BUFFER_LEN;
+            goto DB_readFlash_ERR_HANDLE;     /* Stop and jump to error handling */
+         }
+
+         if ( NULL == pBuffer ) {
+            status = ERR_MEM_NULL_VALUE;
+            goto DB_readFlash_ERR_HANDLE;     /* Stop and jump to error handling */
+         }
+
+         status = FLASH_readBufferUint8(
+               settingsDB[elem].offset,
+               settingsDB[elem].size,
+               bufSize,
+               pBuffer,
+               pResultLen
+         );
+
          break;
    }
+
+   DB_readFlash_ERR_HANDLE:        /* Handle any error that may have occurred */
+   ERR_COND_OUTPUT( status, accessType,
+         "Reading from Flash DB element %s (%d): Error 0x%08x \n",
+         CON_dbElemToStr( elem ), elem, status );
 
    return( status );
 }

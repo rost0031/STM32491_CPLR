@@ -10,6 +10,7 @@
 
 /* Includes ------------------------------------------------------------------*/
 #include "qp_port.h"                                        /* for QP support */
+#include "qmpool.h"                              /* for native QF memory pool */
 
 #include "LWIPMgr.h"                               /* for starting LWIPMgr AO */
 #include "CommMgr.h"                     /* for starting CommMgr AO */
@@ -35,6 +36,8 @@ DBG_DEFINE_THIS_MODULE( DC3_DBG_MODL_GEN ); /* For debug system to ID this modul
 
 /* Private typedefs ----------------------------------------------------------*/
 /* Private defines -----------------------------------------------------------*/
+#define QM_MEMPOOL_SIZE   512
+
 /* Private macros ------------------------------------------------------------*/
 /* Private variables and Local objects ---------------------------------------*/
 static QEvt const    *l_CommMgrQueueSto[30];          /**< Storage for CommMgr event Queue */
@@ -45,6 +48,8 @@ static QEvt const    *l_I2C1DevMgrQueueSto[30];       /**< Storage for I2C1DevMg
 static QEvt const    *l_FlashMgrQueueSto[30];         /**< Storage for FlashMgr event Queue */
 static QEvt const    *l_SysMgrQueueSto[10];           /**< Storage for SysMgr event Queue */
 static QSubscrList   l_subscrSto[MAX_PUB_SIG];        /**< Storage for subscribe/publish event Queue */
+
+static QMPool l_nativeMemPoolSto[QM_MEMPOOL_SIZE];
 
 /**
  * \union Small Events.
@@ -211,6 +216,14 @@ int main(void)
    QS_OBJ_DICTIONARY(l_SysMgrQueueSto);
 
    QF_psInit(l_subscrSto, Q_DIM(l_subscrSto));     /* init publish-subscribe */
+
+   /* initialize the general memory pool */
+   QMPool_init(
+         &l_nativeMemPoolSto[QM_MEMPOOL_SIZE],
+         l_nativeMemPoolSto,
+         QM_MEMPOOL_SIZE,
+         sizeof(l_nativeMemPoolSto[0])
+   );
 
    /* initialize event pools... */
    dbg_slow_printf("Initializing small event storage pools\n");
