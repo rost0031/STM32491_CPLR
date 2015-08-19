@@ -34,52 +34,6 @@
 /* Exported functions --------------------------------------------------------*/
 
 /**
- * @brief Menu printf function to output menu items to serial or ethernet.
- *
- * This function is used to output menu printing out to either serial or
- * ethernet log port, depending on the origin of the menu request. The output
- * destination is specified with the @a dst variable. This function behaves just
- * like a printf function.  It doesn't prepend anything.
- *
- * Usage Example:
- *
- * @code
- * int i = 0;
- * MENU_printf("Menu print test %d\n", i);
- *
- * will output:
- * Menu print test 0
- * @endcode
- *
- * @note 1: This function is always enabled.
- * @note 2: Use just as a regular printf with all the same flags.
- * @note 3: Don't use this for regular debugging since it will be difficult to
- * track down where this is being called since it prepends no location or
- * temporal data to help you.
- * @note 4: don't manually set dst variable.  Instead, it should be set by the
- * requester of the menu (serial port or ethernet port).
- *
- * @param [in] dst: DC3MsgRoute_t var that determines where the output will go
- *    @arg _DC3_Serial: output to serial port.
- *    @arg _DC3_EthSys: output to the ethernet system port.
- *    @arg _DC3_EthLog: output to the ethernet logging port.
- *    @arg _DC3_EthCli: output to the ethernet client port.
- *
- * @param [in] *fmt: const char pointer to the data to be printed using the
- * va_args type argument list.
- *
- * @param [in] ... : the variable list of arguments from above.  This allows
- * the function to be called like any xprintf() type function.
- *
- * @return None
- */
-void MENU_printf(
-      volatile DC3MsgRoute_t dst,
-      char *fmt,
-      ...
-);
-
-/**
  * @brief Function that gets called by the XXX_printf() macros to output a
  * dbg/log/wrn/err to DMA serial console.
  *
@@ -109,6 +63,89 @@ void MENU_printf(
  * like:
  * DBG_LEVEL-HH:MM:SS:XXX-SomeFunctionName():fileLineNumber: User message here
  *
+ * @note 2: Instead of directly printing to the serial console, it creates a
+ * SerDataEvt and sends the data to be output to serial via DMA.  This prevents
+ * slow downs due to regular printf() to serial.
+ *
+ * @param  [in] dbgLvl: a DC3DbgLevel_t variable that specifies the logging
+ * level to use.
+ *   @arg DBG: Lowest level of debugging.  Everything above this level is
+ *   printed.  Disabled in Release builds.  Prints "DBG" in place of "DBG_LEVEL".
+ *   @arg LOG: Basic logging. Everything above this level is printed.
+ *   Disabled in Release builds. Prints "LOG" in place of "DBG_LEVEL".
+ *   @arg WRN: Warnings.  Everything above this level is printed. Enabled in
+ *   Release builds. Prints "WRN" in place of "DBG_LEVEL".
+ *   @arg ERR: Errors. Enabled in all builds. Prints "ERR" in place of "DBG_LEVEL".
+ *   @arg CON: Regular output to the console without prepending anything.
+ *   Enabled in all builds. Just the "User message here" will be printed.  This
+ *   is meant to output serial menu items.
+ *
+ * @param [in] pFuncName: const char* pointer to the function name where the
+ * macro was called from.
+ *
+ * @param [in] wLineNumber: line number where the macro was called from.
+ *
+ * @param [in] fmt: const char* pointer to the data to be printed using the
+ * va_args type argument list.
+ *
+ * @param [in] ... : the variable list of arguments from above.  This allows
+ * the function to be called like any xprintf() type function.
+ * @return None
+ */
+void CON_output(
+      DC3DbgLevel_t dbgLvl,
+      const char *pFuncName,
+      uint16_t wLineNumber,
+      char *fmt,
+      ...
+);
+
+/**
+ * @brief Function that gets called by the XXX_printfHexStr() macros to output a
+ * dbg/log/wrn/err to DMA serial console, along with a pretty print of a given
+ * hex array.
+ *
+ * Basic console output function which should be called by the various macro
+ * functions to do the actual output to serial.  Takes in parameters that allow
+ * easy logging level specification, file, function name, line number, etc.
+ * These are prepended in front of the data that was actually sent in to be
+ * printed.
+ *
+ * Function performs the following steps:
+ *    -# Gets the timestamp.  This timestamp represents when the call was
+ *    actually made since by the time it's output, time can/will have passed.
+ *    -# Constructs a new msg event pointer and allocates storage in the QP
+ *    event pool.
+ *    -# Decides the output format based on which macro was called DBG_printf(),
+ *    LOG_printf(), WRN_printf(), ERR_printf(), or CON_printf() and writes it to
+ *    the event pointer msg buffer and sets the length in the event pointer.
+ *    -# Pass the va args list to get output to a buffer, making sure to not
+ *    overwrite the prepended data.
+ *    -# Append the actual user supplied data to the buffer and set the length.
+ *    -# Publish the event and return.  The event will be handled (queued or
+ *     executed) by SerialMgr AO when it is able to do.  See @SerialMgr
+ *     documentation for details.
+ *    -# Prints out the hex string 16 bytes at a time along with a "page number"
+ *    to help readability.
+ *
+ * @note 1: Do not call this function directly.  Instead, call on of the
+ * DBG/LOG/WRN/ERR/CON_printfHexStr() macros.  Printout from these looks
+ * something like:
+ * DBG_LEVEL-HH:MM:SS:XXX-SomeFunctionName():fileLineNumber:User message here
+ * DBG_LEVEL-HH:MM:SS:XXX-SomeFunctionName():fileLineNumber:[0000] 16 bytes
+ * DBG_LEVEL-HH:MM:SS:XXX-SomeFunctionName():fileLineNumber:[0010] 16 bytes
+ * ...
+ * etc
+ * ...
+ *
+ * or a real life example:
+ *
+ * DBG-00:06:40:361-I2C1DevMgr_Busy():462:Attempting to write 52 bytes:
+ * DBG-00:06:40:361-I2C1DevMgr_Busy():462:[0000]: 0xdb 0xc8 0xfe 0xde 0x01 0x00 0xac 0x1b 0x00 0x4b 0x00 0x01 0x32 0x30 0x31 0x35
+ * DBG-00:06:40:361-I2C1DevMgr_Busy():462:[0010]: 0x30 0x38 0x31 0x39 0x31 0x37 0x30 0x34 0x33 0x36 0x00 0x00 0x00 0x00 0x00 0x00
+ * DBG-00:06:40:361-I2C1DevMgr_Busy():462:[0020]: 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0xe9 0x3a 0x00 0x00
+ * DBG-00:06:40:361-I2C1DevMgr_Busy():462:[0030]: 0x03 0x00 0x00 0x00
+ *
  * @note 2: when printing to a @CON debug level, no data is prepended to the front
  * of the buffer.  This should be used to do menu output to the console.
  *
@@ -129,20 +166,6 @@ void MENU_printf(
  *   Enabled in all builds. Just the "User message here" will be printed.  This
  *   is meant to output serial menu items.
  *
- * @param [in] src: DC3MsgRoute_t var specifying the source of the data.
- *    @arg _DC3_NoRoute: no source needed
- *    @arg _DC3_Serial: data is from serial port.
- *    @arg _DC3_EthSys: data is from the ethernet system port.
- *    @arg _DC3_EthLog: data is from the ethernet logging port.
- *    @arg _DC3_EthCli: data is from the ethernet client port.
- *
- * @param [in] dst: DC3MsgRoute_t var specifying the destination of the data.
- *    @arg _DC3_NoRoute: no source needed
- *    @arg _DC3_Serial: data is to serial port.
- *    @arg _DC3_EthSys: data is to the ethernet system port.
- *    @arg _DC3_EthLog: data is to the ethernet logging port.
- *    @arg _DC3_EthCli: data is to the ethernet client port.
- *
  * @param [in] pFuncName: const char* pointer to the function name where the
  * macro was called from.
  *
@@ -155,20 +178,8 @@ void MENU_printf(
  * the function to be called like any xprintf() type function.
  * @return None
  */
-void CON_output(
-      DC3DbgLevel_t dbgLvl,
-      volatile DC3MsgRoute_t src,
-      volatile DC3MsgRoute_t dst,
-      const char *pFuncName,
-      uint16_t wLineNumber,
-      char *fmt,
-      ...
-);
-
 void CON_outputWithHexStr(
       const DC3DbgLevel_t dbgLvl,
-      const DC3MsgRoute_t src,
-      const DC3MsgRoute_t dst,
       const char* pFuncName,
       const uint16_t wLineNumber,
       const uint8_t* const pBuffer,

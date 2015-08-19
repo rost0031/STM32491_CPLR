@@ -273,12 +273,6 @@ if ( I2C_OP_MEM_READ == me-&gt;i2cDevOp || I2C_OP_REG_READ == me-&gt;i2cDevOp ) 
         QF_PUBLISH((QEvt *)me-&gt;i2cReadDoneEvt, AO_I2C1DevMgr);
     }
 
-    /* After publishing the event, print out what was read if this debug module is enabled */
-    if( ERR_NONE == me-&gt;errorCode ) {
-        DBG_printfHexStr( me-&gt;i2cReadDoneEvt-&gt;dataBuf, me-&gt;i2cReadDoneEvt-&gt;bytes,
-            &quot;Read %d bytes:\n&quot;, me-&gt;i2cReadDoneEvt-&gt;bytes );
-    }
-
 } else if ( I2C_OP_MEM_WRITE == me-&gt;i2cDevOp || I2C_OP_REG_WRITE == me-&gt;i2cDevOp ) {
     /* Change only the fields that could have changed since */
     me-&gt;i2cWriteDoneEvt-&gt;status = me-&gt;errorCode;
@@ -297,11 +291,6 @@ if ( I2C_OP_MEM_READ == me-&gt;i2cDevOp || I2C_OP_REG_READ == me-&gt;i2cDevOp ) 
     } else {
         /* Publish the event so other AOs can get it if they want */
         QF_PUBLISH((QEvt *)me-&gt;i2cWriteDoneEvt, AO_I2C1DevMgr);
-    }
-
-    if( ERR_NONE == me-&gt;errorCode ) {
-        DBG_printf( &quot;Wrote %d bytes (%d pages)\n&quot;,
-            me-&gt;bytesTotal, me-&gt;writeTotalPages );
     }
 
 } else {
@@ -651,7 +640,11 @@ MEMCPY(
     me-&gt;i2cReadDoneEvt-&gt;bytes
 );
 
-</action>
+/* Before publishing the event, print out what was read if this debug module is enabled */
+if( ERR_NONE == me-&gt;errorCode ) {
+    DBG_printfHexStr( me-&gt;i2cReadDoneEvt-&gt;dataBuf, me-&gt;i2cReadDoneEvt-&gt;bytes,
+        &quot;Read %d bytes:\n&quot;, me-&gt;i2cReadDoneEvt-&gt;bytes );
+}</action>
          <choice_glyph conn="131,44,5,1,9,11,-114">
           <action box="1,-2,10,2"/>
          </choice_glyph>
@@ -749,7 +742,12 @@ me-&gt;addrStart         = me-&gt;writeMemAddrCurr;</action>
          <guard>else</guard>
          <action>/* Publish event for anyone who is listening */
 me-&gt;i2cWriteDoneEvt-&gt;status = me-&gt;errorCode;
-me-&gt;i2cWriteDoneEvt-&gt;bytes  = me-&gt;bytesTotal;</action>
+me-&gt;i2cWriteDoneEvt-&gt;bytes  = me-&gt;bytesTotal;
+
+if( ERR_NONE == me-&gt;errorCode ) {
+    DBG_printf( &quot;Wrote %d bytes (%d pages)\n&quot;,
+        me-&gt;i2cWriteDoneEvt-&gt;bytes, me-&gt;writeTotalPages );
+}</action>
          <choice_glyph conn="66,59,5,1,-40">
           <action box="-10,0,6,2"/>
          </choice_glyph>

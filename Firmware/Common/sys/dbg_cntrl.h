@@ -400,7 +400,7 @@ extern uint8_t  glbDbgDeviceConfig;    /**< Allow global access to debug info */
 #define DBG_printf(fmt, ...) \
       do { \
             if ( glbDbgModuleConfig & DBG_this_module_ ) { \
-               CON_output(_DC3_DBG, _DC3_NoRoute, _DC3_NoRoute, __func__, __LINE__, fmt, \
+               CON_output(_DC3_DBG, __func__, __LINE__, fmt, \
                   ##__VA_ARGS__); \
             } \
          } while (0)
@@ -419,7 +419,7 @@ extern uint8_t  glbDbgDeviceConfig;    /**< Allow global access to debug info */
 #define DBG_printfHexStr(buffer, bufferLen, fmt, ...) \
       do { \
             if ( glbDbgModuleConfig & DBG_this_module_ ) { \
-               CON_outputWithHexStr(_DC3_DBG, _DC3_NoRoute, _DC3_NoRoute, __func__, __LINE__, buffer, bufferLen, fmt, \
+               CON_outputWithHexStr(_DC3_DBG, __func__, __LINE__, buffer, bufferLen, fmt, \
                   ##__VA_ARGS__); \
             } \
          } while (0)
@@ -427,7 +427,7 @@ extern uint8_t  glbDbgDeviceConfig;    /**< Allow global access to debug info */
 #define DBG_printfHexStr(buffer, bufferLen, fmt, ...) \
       do { \
             if ( glbDbgModuleConfig & DBG_this_module_ ) { \
-               CON_outputWithHexStr(_DC3_DBG, _DC3_NoRoute, _DC3_NoRoute, __func__, __LINE__, buffer, bufferLen, fmt, \
+               CON_outputWithHexStr(_DC3_DBG, __func__, __LINE__, buffer, bufferLen, fmt, \
                   ##__VA_ARGS__); \
             } \
          } while (0)
@@ -462,7 +462,7 @@ extern uint8_t  glbDbgDeviceConfig;    /**< Allow global access to debug info */
  */
 #ifndef SLOW_PRINTF
 #define LOG_printf(fmt, ...) \
-      do { CON_output(_DC3_LOG, _DC3_NoRoute, _DC3_NoRoute, __func__, __LINE__, fmt, \
+      do { CON_output(_DC3_LOG, __func__, __LINE__, fmt, \
             ##__VA_ARGS__); \
       } while (0)
 #else
@@ -499,7 +499,7 @@ extern uint8_t  glbDbgDeviceConfig;    /**< Allow global access to debug info */
  */
 #ifndef SLOW_PRINTF
 #define WRN_printf(fmt, ...) \
-      do { CON_output(_DC3_WRN, _DC3_NoRoute, _DC3_NoRoute, __func__, __LINE__, fmt, \
+      do { CON_output(_DC3_WRN, __func__, __LINE__, fmt, \
             ##__VA_ARGS__); \
       } while (0)
 #else
@@ -536,7 +536,7 @@ extern uint8_t  glbDbgDeviceConfig;    /**< Allow global access to debug info */
  */
 #ifndef SLOW_PRINTF
 #define ERR_printf(fmt, ...) \
-      do { CON_output(_DC3_ERR, _DC3_NoRoute, _DC3_NoRoute, __func__, __LINE__, fmt, \
+      do { CON_output(_DC3_ERR, __func__, __LINE__, fmt, \
             ##__VA_ARGS__); \
       } while (0)
 #else
@@ -579,7 +579,7 @@ extern uint8_t  glbDbgDeviceConfig;    /**< Allow global access to debug info */
 /*
 #ifndef SLOW_PRINTF
 #define MENU_printf(dst, fmt, ...) \
-      do {  CON_output(_DC3_CON, dst, dst, __func__, __LINE__, fmt, \
+      do {  CON_output(_DC3_CON, __func__, __LINE__, fmt, \
             ##__VA_ARGS__); \
       } while (0)
 #else

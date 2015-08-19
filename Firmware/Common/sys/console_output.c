@@ -35,48 +35,123 @@ DBG_DEFINE_THIS_MODULE( DC3_DBG_MODL_DBG ); /* For debug system to ID this modul
 const char invalidStr[] = "Invalid";
 
 /* Private function prototypes -----------------------------------------------*/
+/**
+ * @brief Common function that gets called by the CON_output* functions to
+ * output a dbg/log/wrn/err to DMA serial console that takes in a va_list args.
+ *
+ * Basic console output function which should be called by the various macro
+ * functions to do the actual output to serial.  Takes in parameters that allow
+ * easy logging level specification, file, function name, line number, etc.
+ * These are prepended in front of the data that was actually sent in to be
+ * printed.
+ *
+ * Function performs the following steps:
+ *    -# Constructs a new msg event pointer and allocates storage in the QP
+ *    event pool.
+ *    -# Decides the output format based on which macro was called DBG_printf(),
+ *    LOG_printf(), WRN_printf(), ERR_printf(), or CON_printf() and writes it to
+ *    the event pointer msg buffer and sets the length in the event pointer.
+ *    -# Pass the va args list to get output to a buffer, making sure to not
+ *    overwrite the prepended data.
+ *    -# Append the actual user supplied data to the buffer and set the length.
+ *    -# Publish the event and return.  The event will be handled (queued or
+ *     executed) by SerialMgr AO when it is able to do.  See @SerialMgr
+ *     documentation for details.
+ *
+ * @note 1: Do not call this function directly.  Instead, call on of the
+ * DBG/LOG/WRN/ERR/CON_printf() macros.  Printout from these looks something
+ * like:
+ * DBG_LEVEL-HH:MM:SS:XXX-SomeFunctionName():fileLineNumber: User message here
+ *
+ * @note 2: Instead of directly printing to the serial console, it creates a
+ * SerDataEvt and sends the data to be output to serial via DMA.  This prevents
+ * slow downs due to regular printf() to serial.
+ *
+ * @param  [in] dbgLvl: a DC3DbgLevel_t variable that specifies the logging
+ * level to use.
+ *   @arg DBG: Lowest level of debugging.  Everything above this level is
+ *   printed.  Disabled in Release builds.  Prints "DBG" in place of "DBG_LEVEL".
+ *   @arg LOG: Basic logging. Everything above this level is printed.
+ *   Disabled in Release builds. Prints "LOG" in place of "DBG_LEVEL".
+ *   @arg WRN: Warnings.  Everything above this level is printed. Enabled in
+ *   Release builds. Prints "WRN" in place of "DBG_LEVEL".
+ *   @arg ERR: Errors. Enabled in all builds. Prints "ERR" in place of "DBG_LEVEL".
+ *   @arg CON: Regular output to the console without prepending anything.
+ *   Enabled in all builds. Just the "User message here" will be printed.  This
+ *   is meant to output serial menu items.
+ *
+ * @param [in] pFuncName: const char* pointer to the function name where the
+ * macro was called from.
+ *
+ * @param [in] wLineNumber: line number where the macro was called from.
+ *
+ * @param [in] fmt: const char* pointer to the data to be printed using the
+ * va_args type argument list.
+ *
+ * @param [in] ... : the variable list of arguments from above.  This allows
+ * the function to be called like any xprintf() type function.
+ * @return None
+ */
+static void CON_vOutputMsg(
+      const DC3DbgLevel_t dbgLvl,
+      const char *pFuncName,
+      const uint16_t wLineNumber,
+      const char *fmt,
+      va_list argp,
+      const stm32Time_t time
+);
+
 /* Private functions ---------------------------------------------------------*/
 
 /******************************************************************************/
-void MENU_printf(
-      volatile DC3MsgRoute_t dst,
-      char *fmt,
-      ...
+static void CON_vOutputMsg(
+      const DC3DbgLevel_t dbgLvl,
+      const char *pFuncName,
+      const uint16_t wLineNumber,
+      const char *fmt,
+      va_list argp,
+      const stm32Time_t time
 )
 {
-   /* 1. Allocate memory for the event and clear/set the appropriate fields. */
-   LrgDataEvt *lrgDataEvt = Q_NEW(LrgDataEvt, DBG_MENU_SIG);
-   lrgDataEvt->dataLen = 0;
-   lrgDataEvt->src = dst;
-   lrgDataEvt->dst = dst;
 
-   /* 2. Pass the va args list to get output to a buffer */
-   va_list args;
-   va_start(args, fmt);
+   /* 1. Construct a new msg event pointer and allocate storage in the QP event
+    * pool.  Allocate with margin so we can fall back on regular slow printfs if
+    * there's a problem */
+   LrgDataEvt *lrgDataEvt = Q_NEW(LrgDataEvt, DBG_LOG_SIG);
+   lrgDataEvt->dataLen = 0;
+   lrgDataEvt->src = _DC3_NoRoute;
+   lrgDataEvt->dst = _DC3_NoRoute;
+
+   /* 2. Based on the debug level specified by the calling macro, decide what to
+    * prepend (if anything). */
+   lrgDataEvt->dataLen += snprintf(
+         (char *)&lrgDataEvt->dataBuf[lrgDataEvt->dataLen],
+         DC3_MAX_MSG_LEN,
+         "%s-%02d:%02d:%02d:%03d-%s():%d:",
+         CON_dbgLvlToStr(dbgLvl),
+         time.hour_min_sec.RTC_Hours,
+         time.hour_min_sec.RTC_Minutes,
+         time.hour_min_sec.RTC_Seconds,
+         (int)time.sub_sec,
+         pFuncName,
+         wLineNumber
+   );
 
    /* 3. Print the actual user supplied data to the buffer and set the length */
    lrgDataEvt->dataLen += vsnprintf(
          (char *)&lrgDataEvt->dataBuf[lrgDataEvt->dataLen],
          DC3_MAX_MSG_LEN - lrgDataEvt->dataLen, // Account for the part of the buffer that was already written.
          fmt,
-         args
+         argp
    );
-   va_end(args);
 
-   /* 4. Directly post the event to the appropriate AO based on it's intended
-    * destination.  */
-   if ( _DC3_Serial == dst ) {
-      QACTIVE_POST(AO_SerialMgr, (QEvt *)lrgDataEvt, AO_DbgMgr); // directly post the event to the correct AO
-   } else {
-      QACTIVE_POST(AO_LWIPMgr, (QEvt *)lrgDataEvt, AO_DbgMgr); // directly post the event to the correct AO
-   }
+   /* 4. Publish the event*/
+   QF_PUBLISH((QEvent *)lrgDataEvt, 0);
 }
 
 /******************************************************************************/
 void CON_output(
       DC3DbgLevel_t dbgLvl,
-      volatile DC3MsgRoute_t src,
-      volatile DC3MsgRoute_t dst,
       const char *pFuncName,
       uint16_t wLineNumber,
       char *fmt,
@@ -87,90 +162,90 @@ void CON_output(
     * to when it actually occurred */
    stm32Time_t time = TIME_getTime();
 
-   /* 2. Construct a new msg event pointer and allocate storage in the QP event
-    * pool.  Allocate with margin so we can fall back on regular slow printfs if
-    * there's a problem */
-   LrgDataEvt *lrgDataEvt = Q_NEW(LrgDataEvt, DBG_LOG_SIG);
-   lrgDataEvt->dataLen = 0;
-   lrgDataEvt->src = src;
-   lrgDataEvt->dst = dst;
-
-   /* 3. Based on the debug level specified by the calling macro, decide what to
-    * prepend (if anything). */
-   switch (dbgLvl) {
-      case _DC3_DBG:
-         lrgDataEvt->dataLen += snprintf(
-               (char *)&lrgDataEvt->dataBuf[lrgDataEvt->dataLen],
-               DC3_MAX_MSG_LEN,
-               "DBG-%02d:%02d:%02d:%03d-%s():%d:",
-               time.hour_min_sec.RTC_Hours,
-               time.hour_min_sec.RTC_Minutes,
-               time.hour_min_sec.RTC_Seconds,
-               (int)time.sub_sec,
-               pFuncName,
-               wLineNumber
-         );
-         break;
-      case _DC3_LOG:
-         lrgDataEvt->dataLen += snprintf(
-               (char *)&lrgDataEvt->dataBuf[lrgDataEvt->dataLen],
-               DC3_MAX_MSG_LEN,
-               "LOG-%02d:%02d:%02d:%03d-%s():%d:",
-               time.hour_min_sec.RTC_Hours,
-               time.hour_min_sec.RTC_Minutes,
-               time.hour_min_sec.RTC_Seconds,
-               (int)time.sub_sec,
-               pFuncName,
-               wLineNumber
-         );
-         break;
-      case _DC3_WRN:
-         lrgDataEvt->dataLen += snprintf(
-               (char *)&lrgDataEvt->dataBuf[lrgDataEvt->dataLen],
-               DC3_MAX_MSG_LEN,
-               "WRN-%02d:%02d:%02d:%03d-%s():%d:",
-               time.hour_min_sec.RTC_Hours,
-               time.hour_min_sec.RTC_Minutes,
-               time.hour_min_sec.RTC_Seconds,
-               (int)time.sub_sec,
-               pFuncName,
-               wLineNumber
-         );
-         break;
-      case _DC3_ERR:
-         lrgDataEvt->dataLen += snprintf(
-               (char *)&lrgDataEvt->dataBuf[lrgDataEvt->dataLen],
-               DC3_MAX_MSG_LEN,
-               "ERR-%02d:%02d:%02d:%03d-%s():%d:",
-               time.hour_min_sec.RTC_Hours,
-               time.hour_min_sec.RTC_Minutes,
-               time.hour_min_sec.RTC_Seconds,
-               (int)time.sub_sec,
-               pFuncName,
-               wLineNumber
-         );
-         break;
-      case _DC3_CON: // This is not used so it should really never get here
-      default:
-         break;
-   }
-
-   /* 4. Pass the va args list to get output to a buffer */
+   /* 2. Call the variadic function to output the msg */
    va_list args;
    va_start(args, fmt);
+   CON_vOutputMsg( dbgLvl, pFuncName, wLineNumber, fmt, args, time );
+   va_end(args);
+}
 
-   /* 5. Print the actual user supplied data to the buffer and set the length */
-   lrgDataEvt->dataLen += vsnprintf(
-         (char *)&lrgDataEvt->dataBuf[lrgDataEvt->dataLen],
-         DC3_MAX_MSG_LEN - lrgDataEvt->dataLen, // Account for the part of the buffer that was already written.
-         fmt,
-         args
-   );
+/******************************************************************************/
+void CON_outputWithHexStr(
+      const DC3DbgLevel_t dbgLvl,
+      const char* pFuncName,
+      const uint16_t wLineNumber,
+      const uint8_t* const pBuffer,
+      const size_t bufferSize,
+      char *fmt,
+      ...
+)
+{
+   /* 1. Get the time first so the printout of the event is as close as possible
+    * to when it actually occurred */
+   stm32Time_t time = TIME_getTime();
+
+   /* 2. Call the variadic function to output the basic msg */
+   va_list args;
+   va_start(args, fmt);
+   CON_vOutputMsg( dbgLvl, pFuncName, wLineNumber, fmt, args, time );
    va_end(args);
 
-   /* 6. Publish the event*/
-   QF_PUBLISH((QEvent *)lrgDataEvt, 0);
+   /* 3. In separate events, output the hex string 16 bytes at a time */
+   uint8_t numbersPerRow = 16;
+   uint8_t nEventsNeeded = (bufferSize / numbersPerRow) + ( bufferSize % numbersPerRow != 0 ? 1 : 0 );
+   uint8_t currNumber = 0;
+
+   for ( uint8_t i = 0; i < nEventsNeeded; i++ ) {
+      /* Allocate a new event for each line that we are printing and reset its
+       * guts to defaults. */
+      LrgDataEvt *lrgDataEvt = Q_NEW(LrgDataEvt, DBG_LOG_SIG);
+      lrgDataEvt->dataLen = 0;
+      lrgDataEvt->src = _DC3_NoRoute;
+      lrgDataEvt->dst = _DC3_NoRoute;
+
+      /* Print the preamble every line so we don't confuse the client (which
+       * parses the output if connected over serial) or the user who is used
+       * to seeing debug level, time, etc printed on every line. */
+      lrgDataEvt->dataLen += snprintf(
+            (char *)&lrgDataEvt->dataBuf[lrgDataEvt->dataLen],
+            DC3_MAX_MSG_LEN,
+            "%s-%02d:%02d:%02d:%03d-%s():%d:[%04x]: ",
+            CON_dbgLvlToStr(dbgLvl),
+            time.hour_min_sec.RTC_Hours,
+            time.hour_min_sec.RTC_Minutes,
+            time.hour_min_sec.RTC_Seconds,
+            (int)time.sub_sec,
+            pFuncName,
+            wLineNumber,
+            currNumber
+      );
+
+      /* Go from current number until either the end of a "page" or end of the
+       * buffer, whichever happens to be smaller this iteration*/
+      size_t j;
+      for( j = currNumber; j < MIN(bufferSize, currNumber + numbersPerRow); j++ ) {
+         lrgDataEvt->dataLen += snprintf(
+               (char *)&lrgDataEvt->dataBuf[lrgDataEvt->dataLen],
+               DC3_MAX_MSG_LEN - lrgDataEvt->dataLen, // Account for the part of the buffer that was already written.
+               "0x%02x ", pBuffer[j]
+         );
+      }
+
+      /* Append a newline after the line is printed to the output buffer */
+      lrgDataEvt->dataLen += snprintf(
+            (char *)&lrgDataEvt->dataBuf[lrgDataEvt->dataLen],
+            DC3_MAX_MSG_LEN - lrgDataEvt->dataLen, // Account for the part of the buffer that was already written.
+            "\n"
+      );
+
+      /* Update the counter so we know where to resume printing. */
+      currNumber = j;
+
+      /* Publish the event with the finished line */
+      QF_PUBLISH((QEvt *)lrgDataEvt, 0);
+   }
 }
+
 
 /******************************************************************************/
 void CON_slow_output(
@@ -355,119 +430,6 @@ DC3Error_t CON_hexToStr(
    }
    return( status );
 }
-
-
-/******************************************************************************/
-void CON_outputWithHexStr(
-      const DC3DbgLevel_t dbgLvl,
-      const DC3MsgRoute_t src,
-      const DC3MsgRoute_t dst,
-      const char* pFuncName,
-      const uint16_t wLineNumber,
-      const uint8_t* const pBuffer,
-      const size_t bufferSize,
-      char *fmt,
-      ...
-)
-{
-   /* 1. Get the time first so the printout of the event is as close as possible
-    * to when it actually occurred */
-   stm32Time_t time = TIME_getTime();
-
-   /* 2. Construct a new msg event pointer and allocate storage in the QP event
-    * pool.  Allocate with margin so we can fall back on regular slow printfs if
-    * there's a problem */
-   LrgDataEvt *lrgDataEvt = Q_NEW(LrgDataEvt, DBG_LOG_SIG);
-   lrgDataEvt->dataLen = 0;
-   lrgDataEvt->src = src;
-   lrgDataEvt->dst = dst;
-
-   /* 3. Based on the debug level specified by the calling macro, decide what to
-    * prepend (if anything). */
-   lrgDataEvt->dataLen += snprintf(
-         (char *)&lrgDataEvt->dataBuf[lrgDataEvt->dataLen],
-         DC3_MAX_MSG_LEN,
-         "%s-%02d:%02d:%02d:%03d-%s():%d:",
-         CON_dbgLvlToStr(dbgLvl),
-         time.hour_min_sec.RTC_Hours,
-         time.hour_min_sec.RTC_Minutes,
-         time.hour_min_sec.RTC_Seconds,
-         (int)time.sub_sec,
-         pFuncName,
-         wLineNumber
-   );
-
-   /* 4. Pass the va args list to get output to a buffer */
-   va_list args;
-   va_start(args, fmt);
-
-   /* 5. Print the actual user supplied data to the buffer and set the length */
-   lrgDataEvt->dataLen += vsnprintf(
-         (char *)&lrgDataEvt->dataBuf[lrgDataEvt->dataLen],
-         DC3_MAX_MSG_LEN - lrgDataEvt->dataLen, // Account for the part of the buffer that was already written.
-         fmt, args
-   );
-   va_end(args);
-
-   /* 6. Publish the event*/
-   QF_PUBLISH((QEvent *)lrgDataEvt, 0);
-
-   /* 7. In separate events, output the hex string 16 bytes at a time */
-   uint8_t numbersPerRow = 16;
-   uint8_t nEventsNeeded = (bufferSize / numbersPerRow) + ( bufferSize % numbersPerRow != 0 ? 1 : 0 );
-   uint8_t currNumber = 0;
-
-   for ( uint8_t i = 0; i < nEventsNeeded; i++ ) {
-      /* Allocate a new event for each line that we are printing and reset its
-       * guts to defaults. */
-      LrgDataEvt *lrgDataEvt = Q_NEW(LrgDataEvt, DBG_LOG_SIG);
-      lrgDataEvt->dataLen = 0;
-      lrgDataEvt->src = src;
-      lrgDataEvt->dst = dst;
-
-      /* Print the preamble every line so we don't confuse the client (which
-       * parses the output if connected over serial) or the user who is used
-       * to seeing debug level, time, etc printed on every line. */
-      lrgDataEvt->dataLen += snprintf(
-            (char *)&lrgDataEvt->dataBuf[lrgDataEvt->dataLen],
-            DC3_MAX_MSG_LEN,
-            "%s-%02d:%02d:%02d:%03d-%s():%d:[%04x]: ",
-            CON_dbgLvlToStr(dbgLvl),
-            time.hour_min_sec.RTC_Hours,
-            time.hour_min_sec.RTC_Minutes,
-            time.hour_min_sec.RTC_Seconds,
-            (int)time.sub_sec,
-            pFuncName,
-            wLineNumber,
-            currNumber
-      );
-
-      /* Go from current number until either the end of a "page" or end of the
-       * buffer, whichever happens to be smaller this iteration*/
-      size_t j;
-      for( j = currNumber; j < MIN(bufferSize, currNumber + numbersPerRow); j++ ) {
-         lrgDataEvt->dataLen += snprintf(
-               (char *)&lrgDataEvt->dataBuf[lrgDataEvt->dataLen],
-               DC3_MAX_MSG_LEN - lrgDataEvt->dataLen, // Account for the part of the buffer that was already written.
-               "0x%02x ", pBuffer[j]
-         );
-      }
-
-      /* Append a newline after the line is printed to the output buffer */
-      lrgDataEvt->dataLen += snprintf(
-            (char *)&lrgDataEvt->dataBuf[lrgDataEvt->dataLen],
-            DC3_MAX_MSG_LEN - lrgDataEvt->dataLen, // Account for the part of the buffer that was already written.
-            "\n"
-      );
-
-      /* Update the counter so we know where to resume printing. */
-      currNumber = j;
-
-      /* Publish the event with the finished line */
-      QF_PUBLISH((QEvt *)lrgDataEvt, 0);
-   }
-}
-
 
 /******************************************************************************/
 //void CON_slow_outputWithHexStr(

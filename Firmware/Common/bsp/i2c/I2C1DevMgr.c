@@ -493,12 +493,6 @@ static QState I2C1DevMgr_Busy(I2C1DevMgr * const me, QEvt const * const e) {
                     QF_PUBLISH((QEvt *)me->i2cReadDoneEvt, AO_I2C1DevMgr);
                 }
 
-                /* After publishing the event, print out what was read if this debug module is enabled */
-                if( ERR_NONE == me->errorCode ) {
-                    DBG_printfHexStr( me->i2cReadDoneEvt->dataBuf, me->i2cReadDoneEvt->bytes,
-                        "Read %d bytes:\n", me->i2cReadDoneEvt->bytes );
-                }
-
             } else if ( I2C_OP_MEM_WRITE == me->i2cDevOp || I2C_OP_REG_WRITE == me->i2cDevOp ) {
                 /* Change only the fields that could have changed since */
                 me->i2cWriteDoneEvt->status = me->errorCode;
@@ -517,11 +511,6 @@ static QState I2C1DevMgr_Busy(I2C1DevMgr * const me, QEvt const * const e) {
                 } else {
                     /* Publish the event so other AOs can get it if they want */
                     QF_PUBLISH((QEvt *)me->i2cWriteDoneEvt, AO_I2C1DevMgr);
-                }
-
-                if( ERR_NONE == me->errorCode ) {
-                    DBG_printf( "Wrote %d bytes (%d pages)\n",
-                        me->bytesTotal, me->writeTotalPages );
                 }
 
             } else {
@@ -944,7 +933,11 @@ static QState I2C1DevMgr_ReadMem(I2C1DevMgr * const me, QEvt const * const e) {
                     me->i2cReadDoneEvt->bytes
                 );
 
-
+                /* Before publishing the event, print out what was read if this debug module is enabled */
+                if( ERR_NONE == me->errorCode ) {
+                    DBG_printfHexStr( me->i2cReadDoneEvt->dataBuf, me->i2cReadDoneEvt->bytes,
+                        "Read %d bytes:\n", me->i2cReadDoneEvt->bytes );
+                }
                 status_ = Q_TRAN(&I2C1DevMgr_Idle);
             }
             /* ${AOs::I2C1DevMgr::SM::Active::Busy::ReadMem::I2C_BUS_DONE::[else]} */
@@ -1083,6 +1076,11 @@ static QState I2C1DevMgr_PostWriteWait(I2C1DevMgr * const me, QEvt const * const
                 /* Publish event for anyone who is listening */
                 me->i2cWriteDoneEvt->status = me->errorCode;
                 me->i2cWriteDoneEvt->bytes  = me->bytesTotal;
+
+                if( ERR_NONE == me->errorCode ) {
+                    DBG_printf( "Wrote %d bytes (%d pages)\n",
+                        me->i2cWriteDoneEvt->bytes, me->writeTotalPages );
+                }
                 status_ = Q_TRAN(&I2C1DevMgr_Idle);
             }
             break;
