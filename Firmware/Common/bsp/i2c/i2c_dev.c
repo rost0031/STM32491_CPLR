@@ -168,29 +168,6 @@ const I2C_Bus_t I2C_getBus( const DC3I2CDevice_t iDev )
 }
 
 /******************************************************************************/
-const char* const I2C_devToStr( const DC3I2CDevice_t iDev )
-{
-   switch ( iDev ) {
-      case _DC3_EEPROM: return("EEPROM"); break;
-      case _DC3_SNROM: return("SN_ROM"); break;
-      case _DC3_EUIROM: return("EUI_ROM"); break;
-      default: return(""); break;
-   }
-}
-
-/******************************************************************************/
-const char* const I2C_opToStr( const I2C_Operation_t iOp )
-{
-   switch ( iOp ) {
-      case I2C_OP_MEM_READ: return("I2C_MEM_READ"); break;
-      case I2C_OP_MEM_WRITE: return("I2C_MEM_WRITE"); break;
-      case I2C_OP_REG_READ: return("I2C_REG_READ"); break;
-      case I2C_OP_REG_WRITE: return("I2C_REG_WRITE"); break;
-      default: return("Invalid I2C operation"); break;
-   }
-}
-
-/******************************************************************************/
 const DC3Error_t I2C_calcPageWriteSizes(
       uint8_t* const writeSizeFirstPage,
       uint8_t* const writeSizeLastPage,
@@ -279,15 +256,10 @@ const DC3Error_t I2C_readDevMemEVT(
 
 
 I2C_readDevMemEVT_ERR_HANDLER:    /* Handle any error that may have occurred. */
-   ERR_COND_OUTPUT(
-         status,
-         accType,
-         "Error 0x%08x reading I2C device %s on %s at mem addr 0x%02x\n",
-         status,
-         I2C_devToStr(iDev),
-         I2C_busToStr( I2C_getBus(iDev) ),
-         I2C_getMemAddr( iDev ) + offset
-   );
+   ERR_COND_OUTPUT( status, accType,
+         "Reading I2C device %s on %s at mem addr 0x%02x via %s: Error 0x%08x\n",
+         CON_i2cDevToStr(iDev), CON_i2cBusToStr( I2C_getBus(iDev) ),
+         I2C_getMemAddr( iDev ) + offset, CON_accessToStr(accType), status );
    return( status );
 }
 
@@ -353,15 +325,10 @@ const DC3Error_t I2C_writeDevMemEVT(
 
 
 I2C_writeDevMemEVT_ERR_HANDLER:   /* Handle any error that may have occurred. */
-   ERR_COND_OUTPUT(
-         status,
-         accType,
-         "Error 0x%08x writing I2C device %s on %s at mem addr 0x%02x\n",
-         status,
-         I2C_devToStr(iDev),
-         I2C_busToStr( I2C_getBus(iDev) ),
-         I2C_getMemAddr( iDev ) + offset
-   );
+   ERR_COND_OUTPUT( status, accType,
+         "Writing to I2C device %s on %s to mem addr 0x%02x via %s: Error 0x%08x\n",
+         CON_i2cDevToStr(iDev), CON_i2cBusToStr( I2C_getBus(iDev) ),
+         I2C_getMemAddr( iDev ) + offset, CON_accessToStr(accType), status );
    return( status );
 }
 
@@ -419,15 +386,10 @@ const DC3Error_t I2C_readDevMemBLK(
    );
 
 I2C_readDevMemBLK_ERR_HANDLER:    /* Handle any error that may have occurred. */
-   ERR_COND_OUTPUT(
-         status,
-         accType,
-         "Error 0x%08x reading I2C device %s on %s at mem addr 0x%02x\n",
-         status,
-         I2C_devToStr(iDev),
-         I2C_busToStr( I2C_getBus(iDev) ),
-         I2C_getMemAddr( iDev ) + offset
-   );
+   ERR_COND_OUTPUT( status, accType,
+      "Reading I2C device %s on %s at mem addr 0x%02x via %s: Error 0x%08x\n",
+      CON_i2cDevToStr(iDev), CON_i2cBusToStr( I2C_getBus(iDev) ),
+      I2C_getMemAddr( iDev ) + offset, CON_accessToStr(accType), status );
    return( status );
 }
 
@@ -483,16 +445,11 @@ const DC3Error_t I2C_writeDevMemBLK(
          I2C_getPageSize( iDev )                // uint16_t pageSize
    );
 
-I2C_writeDevMemBLK_ERR_HANDLER:    /* Handle any error that may have occurred. */
-   ERR_COND_OUTPUT(
-         status,
-         accType,
-         "Error 0x%08x writing I2C device %s on %s at mem addr 0x%02x\n",
-         status,
-         I2C_devToStr(iDev),
-         I2C_busToStr( I2C_getBus(iDev) ),
-         I2C_getMemAddr( iDev ) + offset
-   );
+I2C_writeDevMemBLK_ERR_HANDLER:   /* Handle any error that may have occurred. */
+   ERR_COND_OUTPUT( status, accType,
+         "Writing to I2C device %s on %s to mem addr 0x%02x via %s: Error 0x%08x\n",
+         CON_i2cDevToStr(iDev), CON_i2cBusToStr( I2C_getBus(iDev) ),
+         I2C_getMemAddr( iDev ) + offset, CON_accessToStr(accType), status );
    return( status );
 }
 

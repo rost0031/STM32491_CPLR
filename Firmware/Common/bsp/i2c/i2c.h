@@ -165,7 +165,7 @@ void I2C_StartDMAWrite( I2C_Bus_t iBus, uint16_t wWriteLen );
  *    @arg I2CBus1: get the string representation of I2CBus1
  * @return: string representation of the I2C bus.
  */
-char* I2C_busToStr( I2C_Bus_t iBus );
+//char* I2C_busToStr( I2C_Bus_t iBus );
 
 /**
  * @brief  Reads a block of data from a memory device on any I2C bus.

@@ -164,6 +164,7 @@ typedef enum DC3Errors
    ERR_DB_CHK_ELEM_NEEDS_RESET                                 = 0x00080010,
    ERR_DB_CHK_DBG_MODULES_MISMATCH                             = 0x00080011,
    ERR_DB_CHK_DBG_DEVICES_MISMATCH                             = 0x00080012,
+   ERR_DB_OPERATION_REQUESTED                                  = 0x00080013,
 
    /* I2C Device general error category          0x00090000 - 0x0009FFFF */
    ERR_I2C_DEV_INVALID_DEVICE                                  = 0x00090000,

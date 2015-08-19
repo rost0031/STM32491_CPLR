@@ -24,6 +24,8 @@
 #include <string.h>
 #include "Shared.h"
 #include "dbg_cntrl.h"                                   /* For debug control */
+#include "i2c_defs.h"
+#include "db.h"
 
 /* Exported defines ----------------------------------------------------------*/
 /* Exported variables --------------------------------------------------------*/
@@ -163,6 +165,18 @@ void CON_output(
       ...
 );
 
+void CON_outputWithHexStr(
+      const DC3DbgLevel_t dbgLvl,
+      const DC3MsgRoute_t src,
+      const DC3MsgRoute_t dst,
+      const char* pFuncName,
+      const uint16_t wLineNumber,
+      const uint8_t* const pBuffer,
+      const size_t bufferSize,
+      char *fmt,
+      ...
+);
+
 /**
  * @brief Function called by the slow_xxx_printf() macros.
  *
@@ -256,7 +270,7 @@ DC3Error_t CON_hexToStr(
  *
  * @param  [in] elem: DC3AccessType_t that specifies the access to retrieve.
  * @return str: char* representation of if found,
- *             "UNKNOWN ACC" if not found.
+ *             "Invalid" if not found.
  */
 const char* const CON_accessToStr( const DC3AccessType_t acc );
 
@@ -266,7 +280,7 @@ const char* const CON_accessToStr( const DC3AccessType_t acc );
  * @param  [in] elem: DC3DBElem_t that specifies what element to convert
  * to string.
  * @return str: char* representation of DB element if found,
- *             "INVALID DB ELEM" if not found.
+ *             "Invalid" if not found.
  */
 const char* const CON_dbElemToStr( const DC3DBElem_t elem );
 
@@ -279,6 +293,56 @@ const char* const CON_dbElemToStr( const DC3DBElem_t elem );
  *             "Invalid" if not found.
  */
 const char* const CON_msgNameToStr( const DC3MsgName_t msg );
+
+/**
+ * @brief   Get a string representation of a DC3 I2C device
+ *
+ * @param  [in] msg: DC3I2CDevice_t that specifies what I2C device to convert
+ * to string.
+ * @return str: char* representation of DC3I2CDevice_t msg if found,
+ *             "Invalid" if not found.
+ */
+const char* const CON_i2cDevToStr( const DC3I2CDevice_t iDev );
+
+/**
+ * @brief   Get a string representation of a DC3 I2C operation
+ *
+ * @param  [in] msg: I2C_Operation_t that specifies what I2C operation to convert
+ * to string.
+ * @return str: char* representation of I2C_Operation_t msg if found,
+ *             "Invalid" if not found.
+ */
+const char* const CON_i2cOpToStr( const I2C_Operation_t iOp );
+
+/**
+ * @brief   Get a string representation of a DC3 I2C Bus
+ *
+ * @param  [in] msg: I2C_Bus_t that specifies what I2C Bus to convert
+ * to string.
+ * @return str: char* representation of I2C_Bus_t msg if found,
+ *             "Invalid" if not found.
+ */
+const char* const CON_i2cBusToStr( const I2C_Bus_t iBus );
+
+/**
+ * @brief   Get a string representation of a DC3 Debug level
+ *
+ * @param  [in] msg: DC3DbgLevel_t that specifies what debug level to convert
+ * to string.
+ * @return str: char* representation of DC3DbgLevel_t msg if found,
+ *             "CON" if not found.
+ */
+const char* const CON_dbgLvlToStr( const DC3DbgLevel_t lvl );
+
+/**
+ * @brief   Get a string representation of a DC3 DB operation
+ *
+ * @param  [in] msg: DB_Operation_t that specifies what DB operation to convert
+ * to string.
+ * @return str: char* representation of DB_Operation_t msg if found,
+ *             "Invalid" if not found.
+ */
+const char* const CON_dbOpToStr( const DB_Operation_t op );
 
 /**
  * @} end group groupConOut

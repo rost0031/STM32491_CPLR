@@ -235,11 +235,23 @@ QTimeEvt_disarm(&amp;me-&gt;i2cWriteTimerEvt);</entry>
 QTimeEvt_rearm(
     &amp;me-&gt;i2cTimerEvt,
     SEC_TO_TICKS( HL_MAX_TOUT_SEC_I2C_DEV_REQ )
-);</entry>
+);
+
+DBG_printf( &quot;Starting %s to %s on %s at mem addr 0x%02x via %s\n&quot;,
+    CON_i2cOpToStr( me-&gt;i2cDevOp ), CON_i2cDevToStr(me-&gt;iDev),
+    CON_i2cBusToStr(me-&gt;iBus), me-&gt;addrStart, CON_accessToStr(me-&gt;accessType) );
+
+if ( I2C_OP_MEM_READ == me-&gt;i2cDevOp || I2C_OP_REG_READ == me-&gt;i2cDevOp ) {
+    DBG_printf(&quot;Attempting to read %d bytes\n&quot;, me-&gt;bytesTotal);
+} else {
+    DBG_printfHexStr(me-&gt;dataBuf, me-&gt;bytesTotal, &quot;Attempting to write %d bytes:\n&quot;, me-&gt;bytesTotal);
+}</entry>
       <exit>QTimeEvt_disarm( &amp;me-&gt;i2cTimerEvt ); /* Disarm timer on exit */
 
-DBG_printf( &quot;Finished %s op on dev %s on I2CBus%d to at addr 0x%02x via Acc: %d\n&quot;,
-    I2C_opToStr( me-&gt;i2cDevOp ), I2C_devToStr(me-&gt;iDev), me-&gt;iDev+1, me-&gt;addrStart, me-&gt;accessType );
+DBG_printf( &quot;Finished %s on %s on %s to at mem addr 0x%02x via %s\n&quot;,
+    CON_i2cOpToStr( me-&gt;i2cDevOp ), CON_i2cDevToStr(me-&gt;iDev),
+    CON_i2cBusToStr(me-&gt;iBus), me-&gt;addrStart,
+    CON_accessToStr(me-&gt;accessType) );
 
 if ( I2C_OP_MEM_READ == me-&gt;i2cDevOp || I2C_OP_REG_READ == me-&gt;i2cDevOp ) {
     /* Change only the fields that could have changed since */
@@ -260,6 +272,13 @@ if ( I2C_OP_MEM_READ == me-&gt;i2cDevOp || I2C_OP_REG_READ == me-&gt;i2cDevOp ) 
         /* Publish the event so other AOs can get it if they want */
         QF_PUBLISH((QEvt *)me-&gt;i2cReadDoneEvt, AO_I2C1DevMgr);
     }
+
+    /* After publishing the event, print out what was read if this debug module is enabled */
+    if( ERR_NONE == me-&gt;errorCode ) {
+        DBG_printfHexStr( me-&gt;i2cReadDoneEvt-&gt;dataBuf, me-&gt;i2cReadDoneEvt-&gt;bytes,
+            &quot;Read %d bytes:\n&quot;, me-&gt;i2cReadDoneEvt-&gt;bytes );
+    }
+
 } else if ( I2C_OP_MEM_WRITE == me-&gt;i2cDevOp || I2C_OP_REG_WRITE == me-&gt;i2cDevOp ) {
     /* Change only the fields that could have changed since */
     me-&gt;i2cWriteDoneEvt-&gt;status = me-&gt;errorCode;
@@ -279,9 +298,21 @@ if ( I2C_OP_MEM_READ == me-&gt;i2cDevOp || I2C_OP_REG_READ == me-&gt;i2cDevOp ) 
         /* Publish the event so other AOs can get it if they want */
         QF_PUBLISH((QEvt *)me-&gt;i2cWriteDoneEvt, AO_I2C1DevMgr);
     }
+
+    if( ERR_NONE == me-&gt;errorCode ) {
+        DBG_printf( &quot;Wrote %d bytes (%d pages)\n&quot;,
+            me-&gt;bytesTotal, me-&gt;writeTotalPages );
+    }
+
 } else {
     WRN_printf(&quot;Invalid I2C operation (%d) was somehow specified. Internal error. Ignoring\n&quot;, me-&gt;i2cDevOp );
-}</exit>
+}
+
+/* This will only print if me-&gt;errorCode is not ERR_NONE */
+ERR_COND_OUTPUT( me-&gt;errorCode, me-&gt;accessType,
+    &quot;FAILED %s on I2C device %s on %s at mem addr 0x%02x via %s: Error 0x%08x\n&quot;,
+    CON_i2cOpToStr( me-&gt;i2cDevOp ), CON_i2cDevToStr(me-&gt;iDev), CON_i2cBusToStr( me-&gt;iBus),
+    me-&gt;addrStart, CON_accessToStr(me-&gt;accessType),  me-&gt;errorCode );</exit>
       <tran trig="I2C1_DEV_TIMEOUT" target="../../1">
        <action>ERR_printf(&quot;I2C1Dev timeout occurred with error: 0x%08x\n&quot;, me-&gt;errorCode);</action>
        <tran_glyph conn="44,11,3,1,-18">
@@ -612,35 +643,15 @@ me-&gt;errorCode = ERR_NONE;
 me-&gt;i2cReadDoneEvt-&gt;status = me-&gt;errorCode;
 me-&gt;i2cReadDoneEvt-&gt;i2cDev = me-&gt;iDev;
 
-/* Use the event buffer to convert buffer and print it before using it to send the
- * response */
-uint16_t tmpLen = 0;
-DC3Error_t err = CON_hexToStr(
-    ((I2CBusDataEvt const *)e)-&gt;dataBuf, // data to convert
-    ((I2CBusDataEvt const *)e)-&gt;dataLen, // length of data to convert
-    (char *)me-&gt;i2cReadDoneEvt-&gt;dataBuf, // where to write output
-    sizeof(me-&gt;i2cReadDoneEvt-&gt;dataBuf), // max size of output buffer
-    &amp;tmpLen,                             // size of the resulting output
-    0,                                   // no columns
-    ' ',                                 // separator
-    true                                 // bPrintX
-);
-
-if ( ERR_NONE == err ) {
-    DBG_printf( &quot;Read %d bytes: %s\n&quot;,
-        ((I2CBusDataEvt const *)e)-&gt;dataLen, me-&gt;i2cReadDoneEvt-&gt;dataBuf );
-} else {
-    WRN_printf( &quot;Read %d bytes but data too big for printing due to buffer size. Not shown\n&quot;,
-        ((I2CBusDataEvt const *)e)-&gt;dataLen );
-}
-
 /* Now copy the data from the I2CBus evt to the I2CReadDone evt */
 me-&gt;i2cReadDoneEvt-&gt;bytes  = ((I2CBusDataEvt const *)e)-&gt;dataLen;
 MEMCPY(
     me-&gt;i2cReadDoneEvt-&gt;dataBuf,
     ((I2CBusDataEvt const *)e)-&gt;dataBuf,
     me-&gt;i2cReadDoneEvt-&gt;bytes
-);</action>
+);
+
+</action>
          <choice_glyph conn="131,44,5,1,9,11,-114">
           <action box="1,-2,10,2"/>
          </choice_glyph>
@@ -736,15 +747,7 @@ me-&gt;writeCurrPage    += 1;
 me-&gt;addrStart         = me-&gt;writeMemAddrCurr;</action>
         <choice target="../../../../1">
          <guard>else</guard>
-         <action>DBG_printf(
-    &quot;Wrote %d pages to %s. Error: 0x%08x\n&quot;,
-    me-&gt;writeTotalPages,
-    I2C_devToStr(me-&gt;iDev),
-    me-&gt;errorCode
-);
-
-/* Publish event for anyone who is listening */
-//I2CWriteDoneEvt *i2cWriteDoneEvt = Q_NEW(I2CWriteDoneEvt, I2C1_DEV_WRITE_DONE_SIG);
+         <action>/* Publish event for anyone who is listening */
 me-&gt;i2cWriteDoneEvt-&gt;status = me-&gt;errorCode;
 me-&gt;i2cWriteDoneEvt-&gt;bytes  = me-&gt;bytesTotal;</action>
          <choice_glyph conn="66,59,5,1,-40">
@@ -845,7 +848,6 @@ me-&gt;errorCode = ERR_NONE;
 /* Make sure the device requested is valid */
 if ( !IS_I2C_DEVICE(me-&gt;iDev) ) {
     me-&gt;errorCode = ERR_I2C1DEV_INVALID_DEVICE;
-    ERR_printf(&quot;Invalid I2C device: %d. Error: 0x%08x\n&quot;, me-&gt;iDev, me-&gt;errorCode);
     goto I2CDEV1_VALIDATE_FINISH_TAG;
 }
 
@@ -853,20 +855,12 @@ if ( !IS_I2C_DEVICE(me-&gt;iDev) ) {
  * or write 0 bytes will cause problems. */
 if( 0 == me-&gt;bytesTotal ) {
     me-&gt;errorCode = ERR_I2C1DEV_0_BYTE_REQUEST;
-    ERR_printf(&quot;%s Request on %s for a 0 byte access. Error: 0x%08x\n&quot;,
-        I2C_opToStr( me-&gt;i2cDevOp ), I2C_devToStr(me-&gt;iDev), me-&gt;errorCode);
     goto I2CDEV1_VALIDATE_FINISH_TAG;
 }
 
 /* Make sure the local buffer is not overflowed by the request */
 if( me-&gt;bytesTotal &gt; MAX_I2C_READ_LEN || me-&gt;bytesTotal &gt; MAX_I2C_WRITE_LEN) {
     me-&gt;errorCode = ERR_I2C1DEV_OVERFLOW_REQUEST;
-    ERR_printf(
-        &quot;%s Request on %s for a %d byte access. Max allowed is %d. Error: 0x%08x\n&quot;,
-        I2C_opToStr( me-&gt;i2cDevOp ), I2C_devToStr(me-&gt;iDev), me-&gt;bytesTotal,
-        ( I2C_OP_MEM_READ == me-&gt;i2cDevOp || I2C_OP_REG_READ == me-&gt;i2cDevOp ) ? MAX_I2C_READ_LEN : MAX_I2C_WRITE_LEN, 
-        me-&gt;errorCode
-    );
     goto I2CDEV1_VALIDATE_FINISH_TAG;
 }
 
@@ -874,10 +868,6 @@ if( me-&gt;bytesTotal &gt; MAX_I2C_READ_LEN || me-&gt;bytesTotal &gt; MAX_I2C_WR
  * can happen, especially with writes. */
 if( ( me-&gt;addrStart + me-&gt;bytesTotal ) &gt; I2C_getMaxMemAddr(me-&gt;iDev) ) {
     me-&gt;errorCode = ERR_I2C1DEV_ACCESS_OVER_END_OF_DEVICE_MEM;
-    ERR_printf(&quot;%s op for %s access will cross over device mem boundary. Error: 0x%08x\n&quot;,
-        I2C_opToStr( me-&gt;i2cDevOp ),  I2C_devToStr(me-&gt;iDev), 	me-&gt;errorCode);
-    ERR_printf(&quot;Dev min addr: 0x%02x, max addr: 0x%02x, requested start addr: 0x%02x for %d bytes.\n&quot;,
-        I2C_getMinMemAddr(me-&gt;iDev), I2C_getMaxMemAddr(me-&gt;iDev), me-&gt;addrStart, me-&gt;bytesTotal );
     goto I2CDEV1_VALIDATE_FINISH_TAG;
 }
 
@@ -885,13 +875,10 @@ switch( me-&gt;i2cDevOp ) {
     case I2C_OP_MEM_READ:  /* Read device memory of I2C device */
         /* Nothing to be done here */
         break;
-
     case I2C_OP_MEM_WRITE:  /* Write device memory of I2C device */
         /* Only allow writes to writable devices */
         if ( !IS_I2C_DEVICE_RW(me-&gt;iDev) ) {
             me-&gt;errorCode = ERR_I2C1DEV_READ_ONLY_DEVICE;
-            ERR_printf(&quot;%s op for %s access attempt to write to RO device. Error: 0x%08x\n&quot;,
-                I2C_opToStr( me-&gt;i2cDevOp ),  I2C_devToStr(me-&gt;iDev), me-&gt;errorCode);
             goto I2CDEV1_VALIDATE_FINISH_TAG;
         }
 
@@ -912,8 +899,6 @@ switch( me-&gt;i2cDevOp ) {
         );
 
         if( ERR_NONE != me-&gt;errorCode ) {
-            ERR_printf(&quot;%s op for %s write: unable to calculate page writes. Aborting write. Error: 0x%08x\n&quot;,
-                I2C_opToStr( me-&gt;i2cDevOp ),  I2C_devToStr(me-&gt;iDev), me-&gt;errorCode);
             goto I2CDEV1_VALIDATE_FINISH_TAG;
         }
 
@@ -936,21 +921,22 @@ switch( me-&gt;i2cDevOp ) {
         /* TODO: these operations may be needed later if any register based devices
          * on I2C bus are ever added.  For now, this is an error. */
         me-&gt;errorCode = ERR_UNIMPLEMENTED;
-        ERR_printf(&quot;%s op for %s access is currently unimplemented. Error: 0x%08x\n&quot;,
-            I2C_opToStr( me-&gt;i2cDevOp ),  I2C_devToStr(me-&gt;iDev), me-&gt;errorCode);
         goto I2CDEV1_VALIDATE_FINISH_TAG;
         break;
     default:                 /* Undefined I2C operation. */
         me-&gt;errorCode = ERR_I2C1DEV_INVALID_OPERATION;
-        ERR_printf(&quot;%d (Unable to translate to string) op for %s is undefined. Error: 0x%08x\n&quot;,
-            me-&gt;i2cDevOp,  I2C_devToStr(me-&gt;iDev), me-&gt;errorCode);
         goto I2CDEV1_VALIDATE_FINISH_TAG;
         break;
 }
 
 /* Tag that can be jumped to if an error is encountered or reached naturally */
-I2CDEV1_VALIDATE_FINISH_TAG:
+I2CDEV1_VALIDATE_FINISH_TAG:        /* Handle any error that may have occurred. */
 ; // workaround for a label can't be a statement due to a comment after the label
+ERR_COND_OUTPUT( me-&gt;errorCode, me-&gt;accessType,
+    &quot;Validating request for %s to I2C device %s on %s to mem addr 0x%02x via %s: Error 0x%08x\n&quot;,
+    CON_i2cOpToStr( me-&gt;i2cDevOp ), CON_i2cDevToStr(me-&gt;iDev),
+    CON_i2cBusToStr( I2C_getBus(me-&gt;iBus) ), me-&gt;addrStart,
+    CON_accessToStr(me-&gt;accessType), me-&gt;errorCode );
 
 /* Post an event to self to proceed to the next state */
 QEvt *evt = Q_NEW( QEvt, I2C1_DEV_PRIVATE_SIG );
@@ -1003,8 +989,7 @@ QActive_recall(
     (QActive *)me,
     &amp;me-&gt;deferredEvtQueue
 );
-
-DBG_printf(&quot;Back in Idle state.\n&quot;);</entry>
+</entry>
       <tran trig="I2C1_DEV_RAW_MEM_READ" target="../../0/12">
        <action>/* Store all the data from the event and look up a few things */
 
@@ -1015,9 +1000,6 @@ me-&gt;accessType = ((I2CReadReqEvt const *)e)-&gt;accessType;
 me-&gt;bytesTotal = ((I2CReadReqEvt const *)e)-&gt;bytes;
 me-&gt;addrSize   = I2C_getMemAddrSize(me-&gt;iDev);
 me-&gt;i2cDevOp   = I2C_OP_MEM_READ;
-
-DBG_printf( &quot;Trying %s op to read %d bytes from dev %s on I2CBus%d to at addr 0x%02x via Acc: %d\n&quot;,
-    I2C_opToStr( me-&gt;i2cDevOp ), me-&gt;bytesTotal, I2C_devToStr(me-&gt;iDev), me-&gt;iDev+1, me-&gt;addrStart, me-&gt;accessType );
 
 /* Allocate a ReadDone evt that will ALWAYS be sent out upon exit of the Busy state
  * for read operations. */
@@ -1040,30 +1022,6 @@ me-&gt;accessType = ((I2CWriteReqEvt const *)e)-&gt;accessType;
 me-&gt;bytesTotal = ((I2CWriteReqEvt const *)e)-&gt;bytes;
 me-&gt;addrSize   = I2C_getMemAddrSize(me-&gt;iDev);
 me-&gt;i2cDevOp   = I2C_OP_MEM_WRITE;
-
-/* If we are to print out the data we, need to do it before we copy it to the local
- * buffer or we'll end up losing it. */
-uint16_t tmpLen = 0;
-DC3Error_t err = CON_hexToStr(
-    ((I2CWriteReqEvt const *)e)-&gt;dataBuf,// data to convert
-    me-&gt;bytesTotal,                      // length of data to convert
-    (char *)me-&gt;dataBuf,                 // where to write output
-    sizeof(me-&gt;dataBuf),                 // max size of output buffer
-    &amp;tmpLen,                             // size of the resulting output
-    0,                                   // no columns
-    ' ',                                 // separator
-    true                                 // bPrintX
-);
-
-DBG_printf( &quot;Trying %s op to write to dev %s on I2CBus%d to at addr 0x%02x via Acc: %d\n&quot;,
-    I2C_opToStr( me-&gt;i2cDevOp ), I2C_devToStr(me-&gt;iDev), me-&gt;iDev+1, me-&gt;addrStart, me-&gt;accessType );
-if ( ERR_NONE == err ) {
-    DBG_printf( &quot;Data to write (%d bytes): %s\n&quot;,
-        me-&gt;bytesTotal, me-&gt;dataBuf );
-} else {
-    DBG_printf( &quot;Data to write (%d bytes) too big to print due to buffer size (%d). Not shown\n&quot;,
-        ((I2CBusDataEvt const *)e)-&gt;dataLen,  sizeof(me-&gt;dataBuf) );
-}
 
 /* This event will disappear after it's handled so the data must be copied to local buffer*/
 MEMCPY( me-&gt;dataBuf, ((I2CWriteReqEvt const *)e)-&gt;dataBuf, me-&gt;bytesTotal );

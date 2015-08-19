@@ -386,8 +386,7 @@ extern uint8_t  glbDbgDeviceConfig;    /**< Allow global access to debug info */
  * DBG-00:04:09:459-function_name():219: Debug print test 0
  * @endcode
  *
- * @note 1: This macro is disabled in Rel builds.
- * @note 2: Use just as a regular printf with all the same flags.
+ * @note: Use just as a regular printf with all the same flags.
  *
  * @param [in] *fmt: const char pointer to the data to be printed using the
  * va_args type argument list.
@@ -400,25 +399,41 @@ extern uint8_t  glbDbgDeviceConfig;    /**< Allow global access to debug info */
 #ifndef SLOW_PRINTF
 #define DBG_printf(fmt, ...) \
       do { \
-         if (DEBUG) { \
             if ( glbDbgModuleConfig & DBG_this_module_ ) { \
                CON_output(_DC3_DBG, _DC3_NoRoute, _DC3_NoRoute, __func__, __LINE__, fmt, \
                   ##__VA_ARGS__); \
             } \
-         } \
-      } while (0)
+         } while (0)
 #else
 #define DBG_printf(fmt, ...) \
       do { \
-         if (DEBUG) { \
             if ( glbDbgModuleConfig & DBG_this_module_ ) { \
                CON_slow_output(_DC3_DBG, __func__, __LINE__, fmt, \
                   ##__VA_ARGS__); \
             } \
-         } \
-      } while (0)
+         } while (0)
 
 #endif
+
+#ifndef SLOW_PRINTF
+#define DBG_printfHexStr(buffer, bufferLen, fmt, ...) \
+      do { \
+            if ( glbDbgModuleConfig & DBG_this_module_ ) { \
+               CON_outputWithHexStr(_DC3_DBG, _DC3_NoRoute, _DC3_NoRoute, __func__, __LINE__, buffer, bufferLen, fmt, \
+                  ##__VA_ARGS__); \
+            } \
+         } while (0)
+#else
+#define DBG_printfHexStr(buffer, bufferLen, fmt, ...) \
+      do { \
+            if ( glbDbgModuleConfig & DBG_this_module_ ) { \
+               CON_outputWithHexStr(_DC3_DBG, _DC3_NoRoute, _DC3_NoRoute, __func__, __LINE__, buffer, bufferLen, fmt, \
+                  ##__VA_ARGS__); \
+            } \
+         } while (0)
+
+#endif
+
 /**
  * @brief Logging print function.
  *
@@ -435,8 +450,7 @@ extern uint8_t  glbDbgDeviceConfig;    /**< Allow global access to debug info */
  * LOG-00:04:09:459-function_name():219: Logging print test 0
  * @endcode
  *
- * @note 1: This macro is disabled in Rel builds.
- * @note 2: Use just as a regular printf with all the same flags.
+ * @note: Use just as a regular printf with all the same flags.
  *
  * @param [in] *fmt: const char pointer to the data to be printed using the
  * va_args type argument list.
@@ -473,8 +487,7 @@ extern uint8_t  glbDbgDeviceConfig;    /**< Allow global access to debug info */
  * WRN-00:04:09:459-function_name():219: Warning print test 0
  * @endcode
  *
- * @note 1: This macro is enabled in Rel builds.
- * @note 2: Use just as a regular printf with all the same flags.
+ * @note: Use just as a regular printf with all the same flags.
  *
  * @param [in] *fmt: const char pointer to the data to be printed using the
  * va_args type argument list.
@@ -511,8 +524,7 @@ extern uint8_t  glbDbgDeviceConfig;    /**< Allow global access to debug info */
  * ERR-00:04:09:459-function_name():219: Error print test 0
  * @endcode
  *
- * @note 1: This macro is enabled in Rel builds.
- * @note 2: Use just as a regular printf with all the same flags.
+ * @note: Use just as a regular printf with all the same flags.
  *
  * @param [in] *fmt: const char pointer to the data to be printed using the
  * va_args type argument list.
@@ -620,12 +632,10 @@ extern uint8_t  glbDbgDeviceConfig;    /**< Allow global access to debug info */
  */
 #define dbg_slow_printf(fmt, ...) \
       do { \
-         if (DEBUG) { \
             if ( glbDbgModuleConfig & DBG_this_module_ ) { \
                CON_slow_output(_DC3_DBG, __func__, __LINE__, fmt, \
                      ##__VA_ARGS__); \
             } \
-         } \
       } while (0)
 
 /**
@@ -647,8 +657,7 @@ extern uint8_t  glbDbgDeviceConfig;    /**< Allow global access to debug info */
  * @note 1. Don't use this after the BSP and RTOS has been initialized since it
  * is a blocking call and will affect the speed of operation.  Use
  * @def LOG_printf() macro instead.
- * @note 2. This macro is disabled in Rel builds.
- * @note 3. Use just as a regular printf with all the same flags.
+ * @note 2: Use just as a regular printf with all the same flags.
  *
  * @param [in] *fmt: const char pointer to the data to be printed using the
  * va_args type argument list.
@@ -682,8 +691,7 @@ extern uint8_t  glbDbgDeviceConfig;    /**< Allow global access to debug info */
  * @note 1. Don't use this after the BSP and RTOS has been initialized since it
  * is a blocking call and will affect the speed of operation.  Use
  * @def WRN_printf() macro instead.
- * @note 2. This macro is enabled in Rel builds.
- * @note 3. Use just as a regular printf with all the same flags.
+ * @note 2: Use just as a regular printf with all the same flags.
  *
  * @param [in] *fmt: const char pointer to the data to be printed using the
  * va_args type argument list.
@@ -717,8 +725,7 @@ extern uint8_t  glbDbgDeviceConfig;    /**< Allow global access to debug info */
  * @note 1. Don't use this after the BSP and RTOS has been initialized since it
  * is a blocking call and will affect the speed of operation.  Use
  * @def ERR_printf() macro instead.
- * @note 2. This macro is enabled in Rel builds.
- * @note 3. Use just as a regular printf with all the same flags.
+ * @note 2: Use just as a regular printf with all the same flags.
  *
  * @param [in] *fmt: const char pointer to the data to be printed using the
  * va_args type argument list.
@@ -752,8 +759,7 @@ extern uint8_t  glbDbgDeviceConfig;    /**< Allow global access to debug info */
  * @note 1. Don't use this after the BSP and RTOS has been initialized since it
  * is a blocking call and will affect the speed of operation.  Use
  * @def DBG_printf() macro instead.
- * @note 2. This macro is disabled in Rel builds.
- * @note 3. Use just as a regular printf with all the same flags.
+ * @note 2: Use just as a regular printf with all the same flags.
  *
  * @param [in] *fmt: const char pointer to the data to be printed using the
  * va_args type argument list.
@@ -764,33 +770,33 @@ extern uint8_t  glbDbgDeviceConfig;    /**< Allow global access to debug info */
  * @return None
  */
 #define isr_dbg_slow_printf(fmt, ...) \
-      do { if (DEBUG) CON_slow_output(_DC3_ISR, __func__, __LINE__, fmt, \
+      do { CON_slow_output(_DC3_ISR, __func__, __LINE__, fmt, \
             ##__VA_ARGS__); \
       } while (0)
 
-#ifdef __cplusplus
+/**
+ * @brief  Sets the default module debug settings and default devices.
+ *
+ * This function sets default settings for which debug modules are enabled
+ * and over which devices the debugging output is enabled over.
+ *
+ * This function is safe to call at any time.
+ *
+ * @note: this function behaves differently depending on whether the build is
+ * debug or release
+ *
+ * @note: this only sets the defaults in memory.  It DOES NOT save the settings
+ * to EEPROM.
+ *
+ * @param  None
+ * @return None
+ */
+void DBG_setDefaults( void );
+
+
+ #ifdef __cplusplus
 }
 #endif
-
- /**
-  * @brief  Sets the default module debug settings and default devices.
-  *
-  * This function sets default settings for which debug modules are enabled
-  * and over which devices the debugging output is enabled over.
-  *
-  * This function is safe to call at any time.
-  *
-  * @note: this function behaves differently depending on whether the build is
-  * debug or release
-  *
-  * @note: this only sets the defaults in memory.  It DOES NOT save the settings
-  * to EEPROM.
-  *
-  * @param  None
-  * @return None
-  */
- void DBG_setDefaults( void );
-
 /**
  * @} end group groupDbgSlow
  */

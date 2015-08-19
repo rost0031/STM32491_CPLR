@@ -319,7 +319,7 @@ QTimeEvt_rearm(
       <exit>QTimeEvt_disarm(&amp;me-&gt;sysTimerEvt);                 /* Disarm timer on exit */
 </exit>
       <tran trig="SYS_MGR_TIMEOUT" target="../../0">
-       <tran_glyph conn="37,118,3,1,-17">
+       <tran_glyph conn="37,13,3,1,-17">
         <action box="-15,-2,14,2"/>
        </tran_glyph>
       </tran>
@@ -356,8 +356,21 @@ QTimeEvt_rearm(
     &amp;me-&gt;dbTimerEvt,
     SEC_TO_TICKS( LL_MAX_TOUT_SEC_DB_ACCESS )
 );
-</entry>
+
+DBG_printf(&quot;Starting %s access DB elem %s (%d) via %s\n&quot;,
+    CON_dbOpToStr(me-&gt;dbCmd),
+    CON_dbElemToStr( me-&gt;dbElem ),
+    me-&gt;dbElem,
+    CON_accessToStr( me-&gt;accessType )
+);</entry>
        <exit>QTimeEvt_disarm(&amp;me-&gt;dbTimerEvt);                 /* Disarm timer on exit */
+
+DBG_printf(&quot;Finished %s access DB elem %s (%d) via %s\n&quot;,
+    CON_dbOpToStr(me-&gt;dbCmd),
+    CON_dbElemToStr( me-&gt;dbElem ),
+    me-&gt;dbElem,
+    CON_accessToStr( me-&gt;accessType )
+);
 
 if ( me-&gt;dbCmd == DB_OP_READ ) {
     DBReadDoneEvt *evt = Q_NEW(DBReadDoneEvt, DB_GET_ELEM_DONE_SIG);
@@ -413,7 +426,7 @@ if ( me-&gt;dbCmd == DB_OP_READ ) {
         ERR_printf(&quot;Internal DB op failed with error code: 0x%08x\n&quot;, me-&gt;errorCode);
     }
 } else {
-    me-&gt;errorCode = ERR_DB_ELEM_SIZE_OVERFLOW;
+    me-&gt;errorCode = ERR_DB_OPERATION_REQUESTED;
     ERR_printf(&quot;Invalid DB operation (%d) specified somehow\n&quot;, me-&gt;dbCmd);
     DBWriteDoneEvt *evt = Q_NEW(DBWriteDoneEvt, DB_ERROR_SIG);
     evt-&gt;status = me-&gt;errorCode;
@@ -434,20 +447,20 @@ if ( me-&gt;dbCmd == DB_OP_READ ) {
         /* Publish the event so other AOs can get it if they want */
         QF_PUBLISH((QEvt *)evt, AO_SysMgr);
     }
-}</exit>
+}
+
+/* This will only print if me-&gt;errorCode is not ERR_NONE */
+ERR_COND_OUTPUT( me-&gt;errorCode, me-&gt;accessType,
+    &quot;FAILED %s (%d) operation on DB elem %s via %s: Error 0x%08x\n&quot;,
+    CON_dbOpToStr(me-&gt;dbCmd), me-&gt;dbCmd, CON_dbElemToStr( me-&gt;dbElem ),
+    CON_accessToStr(me-&gt;accessType),  me-&gt;errorCode );</exit>
        <tran trig="DB_ACCESS_TIMEOUT" target="../../../0">
         <tran_glyph conn="39,31,3,1,-19">
          <action box="-17,-2,15,2"/>
         </tran_glyph>
        </tran>
        <tran trig="DB_READ">
-        <action>DBG_printf(&quot;DB_READ via %s access to read: %s (%d)\n&quot;,
-    CON_accessToStr( ((DBReadReqEvt const *)e)-&gt;accessType ),
-    CON_dbElemToStr( ((DBReadReqEvt const *)e)-&gt;dbElem ),
-    ((DBReadReqEvt const *)e)-&gt;dbElem
-);
-
-/* This is a common function that will do a proper read based on access type and
+        <action>/* This is a common function that will do a proper read based on access type and
  * element.  Arguments for buffer size and buffer can be 0 and NULL, respectively
  * since the function will post an event to do the read and it allocates its own
  * buffer space.  Once the read is complete, an event will be posted that signifies
@@ -459,80 +472,33 @@ me-&gt;errorCode = DB_getElem(
     0, NULL                                   // buffer size and pointer
 );
 
-#if 0
-/* This function will post the event to read the element.  Don't need a buffer
- * since the data will come back via an event with its own buffer. */
-me-&gt;errorCode = DB_getElem(
-    ((DBReadReqEvt const *)e)-&gt;dbElem,
-    me-&gt;accessType, 0, NULL );
-
-/* Find where the element lives */
-DB_ElemLoc_t loc = DB_getElemLoc( ((DBReadReqEvt const *)e)-&gt;dbElem );
-
-   /* 3. Call the location dependent functions to retrieve the data from DB */
-switch( loc ) {
-    case DB_EEPROM:                           /* Intentionally fall through */
-    case DB_SN_ROM:                           /* Intentionally fall through */
-    case DB_UI_ROM:
-        ;
-        /* Create the event and directly post it to the right AO. */
-        I2CReadReqEvt *i2cReadReqEvt  = Q_NEW(I2CReadReqEvt, I2C1_DEV_RAW_MEM_READ_SIG);
-        i2cReadReqEvt-&gt;i2cDev         = DB_getI2CDev(loc);
-        i2cReadReqEvt-&gt;start          = DB_getElemOffset(((DBReadReqEvt const *)e)-&gt;dbElem);
-        i2cReadReqEvt-&gt;bytes          = DB_getElemSize(((DBReadReqEvt const *)e)-&gt;dbElem);
-        i2cReadReqEvt-&gt;accessType     = me-&gt;accessType;
-        QACTIVE_POST(AO_I2C1DevMgr, (QEvt *)(i2cReadReqEvt), me);
-        break;
-    case DB_GPIO:
-        me-&gt;errorCode = ERR_UNIMPLEMENTED;
-        QEvt *evtGPIO = Q_NEW(QEvt, DB_OP_DONE_SIG);
-        QACTIVE_POST(AO_SysMgr, evtGPIO, me);
-        break;
-    case DB_FLASH:
-        ;
-        me-&gt;errorCode = DB_readFlash(
-            ((DBReadReqEvt const *)e)-&gt;dbElem,
-            MAX_DB_ELEM_SIZE,
-            me-&gt;dataBuf,
-            &amp;(me-&gt;dataLen)
-        );
-        QEvt *evtFlash = Q_NEW(QEvt, DB_OP_DONE_SIG);
-        QACTIVE_POST(AO_SysMgr, evtFlash, me);
-        break;
-        /* Add more locations here. Anything that fails will go to the default
-         * case and get logged as an error. */
-    default:
-        me-&gt;errorCode  = ERR_DB_ELEM_NOT_FOUND;
-        QEvt *evtNotFound = Q_NEW(QEvt, DB_OP_DONE_SIG);
-        QACTIVE_POST(AO_SysMgr, evtNotFound, me);
-        break;
-}
-#endif
-
+/* This will only print out if me-&gt;errorCode is not ERR_NONE */
 ERR_COND_OUTPUT(
     me-&gt;errorCode,
     me-&gt;accessType,
-    &quot;DB_READ of DB elem %s (%d): Error 0x%08x \n&quot;,
-    me-&gt;errorCode,
+    &quot;%s access of DB elem %s (%d) via %s: Error 0x%08x\n&quot;,
+    CON_dbOpToStr(me-&gt;dbCmd),
     CON_dbElemToStr( me-&gt;dbElem ),
-    me-&gt;dbElem
+    me-&gt;dbElem,
+    CON_accessToStr( me-&gt;accessType),
+    me-&gt;errorCode
 );</action>
         <tran_glyph conn="39,24,3,-1,12">
          <action box="0,-2,8,2"/>
         </tran_glyph>
        </tran>
        <tran trig="DB_OP_DONE" target="../../../0">
-        <tran_glyph conn="39,29,3,1,-19">
+        <tran_glyph conn="39,28,3,1,-19">
          <action box="-13,-2,10,2"/>
         </tran_glyph>
        </tran>
        <tran trig="DB_WRITE">
-        <action>DBG_printf(&quot;DB_WRITE via %s access to write: %s (%d)\n&quot;,
-    CON_accessToStr( ((DBWriteReqEvt const *)e)-&gt;accessType ),
-    CON_dbElemToStr( ((DBWriteReqEvt const *)e)-&gt;dbElem ),
-    ((DBWriteReqEvt const *)e)-&gt;dbElem
-);
-
+        <action>/* This is a common function that will do a proper read based on access type and
+ * element.  Arguments for buffer size and buffer can be 0 and NULL, respectively
+ * since the function will post an event to do the read and it allocates its own
+ * buffer space.  Once the read is complete, an event will be posted that signifies
+ * the competion of the read and the data will be contained within those events.
+ * See I2C1_DEV_READ/WRITE_DONE_SIG and DB_FLASH_READ_DONE_SIG handlers. */
 me-&gt;errorCode = DB_setElem(
     ((DBWriteReqEvt const *)e)-&gt;dbElem,         // Element to write
     ((DBWriteReqEvt const *)e)-&gt;accessType,     // Access type to use
@@ -540,51 +506,16 @@ me-&gt;errorCode = DB_setElem(
     ((DBWriteReqEvt const *)e)-&gt;dataBuf         // Buffer containing data to write
 );
 
-#if 0
-
-/* Find where the element lives */
-DB_ElemLoc_t loc = DB_getElemLoc( ((DBWriteReqEvt const *)e)-&gt;dbElem );
-
-   /* 3. Call the location dependent functions to retrieve the data from DB */
-switch( loc ) {
-    case DB_EEPROM:
-        ;
-        /* Create the event and directly post it to the right AO. */
-        I2CWriteReqEvt *i2cWriteReqEvt  = Q_NEW(I2CWriteReqEvt, I2C1_DEV_RAW_MEM_WRITE_SIG);
-        i2cWriteReqEvt-&gt;i2cDev         = DB_getI2CDev(loc);
-        i2cWriteReqEvt-&gt;start          = DB_getElemOffset(((DBWriteReqEvt const *)e)-&gt;dbElem);
-        i2cWriteReqEvt-&gt;bytes          = DB_getElemSize(((DBWriteReqEvt const *)e)-&gt;dbElem);
-        i2cWriteReqEvt-&gt;accessType     = me-&gt;accessType;
-        MEMCPY(i2cWriteReqEvt-&gt;dataBuf, ((DBWriteReqEvt const *)e)-&gt;dataBuf, i2cWriteReqEvt-&gt;bytes);
-        QACTIVE_POST(AO_I2C1DevMgr, (QEvt *)(i2cWriteReqEvt), me);
-        DBG_printf(&quot;Posting a write req to I2C1DevMgr\n&quot;);
-        break;
-    case DB_GPIO:                             /* Intentionally fall through */
-    case DB_SN_ROM:                           /* Intentionally fall through */
-    case DB_UI_ROM:                           /* Intentionally fall through */
-    case DB_FLASH:
-        me-&gt;errorCode = ERR_DB_ELEM_IS_READ_ONLY;
-        QEvt *evt = Q_NEW(QEvt, DB_OP_DONE_SIG);
-        QACTIVE_POST(AO_SysMgr, evt, me);
-        break;
-        /* Add more locations here. Anything that fails will go to the default
-         * case and get logged as an error. */
-    default:
-        me-&gt;errorCode  = ERR_DB_ELEM_NOT_FOUND;
-        QEvt *evtNotFound = Q_NEW(QEvt, DB_OP_DONE_SIG);
-        QACTIVE_POST(AO_SysMgr, evtNotFound, me);
-        break;
-}
-
-#endif
-
+/* This will only print out if me-&gt;errorCode is not ERR_NONE */
 ERR_COND_OUTPUT(
     me-&gt;errorCode,
     me-&gt;accessType,
-    &quot;DB_WRITE of DB elem %s (%d): Error 0x%08x \n&quot;,
-    me-&gt;errorCode,
+    &quot;%s access of DB elem %s (%d) via %s: Error 0x%08x\n&quot;,
+    CON_dbOpToStr(me-&gt;dbCmd),
     CON_dbElemToStr( me-&gt;dbElem ),
-    me-&gt;dbElem
+    me-&gt;dbElem,
+    CON_accessToStr( me-&gt;accessType),
+    me-&gt;errorCode
 );</action>
         <tran_glyph conn="39,27,3,-1,12">
          <action box="0,-2,8,2"/>

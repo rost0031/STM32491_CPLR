@@ -416,6 +416,8 @@ const DC3Error_t DB_chkElem(
       WRN_printf("DB element %s (%d) value doesn't match default:\n",
             CON_dbElemToStr(elem), elem);
 
+
+#if 0
       char* printBuf = (char *)QMPool_get(p_glbMemPool, 1U);
       if ( NULL == printBuf ) {
          status = ERR_MEM_NULL_VALUE;
@@ -463,6 +465,12 @@ const DC3Error_t DB_chkElem(
 
       /* Garbage collect the printBuf assuming everything went ok. */
       QMPool_put(p_glbMemPool, printBuf);
+#endif
+
+      DBG_printfHexStr(dataBuf, DB_getElemSize(elem),
+            "Default Value (%d bytes):\n", DB_getElemSize(elem));
+      DBG_printfHexStr(pBuffer, DB_getElemSize(elem),
+            "Stored  Value (%d bytes):\n", DB_getElemSize(elem));
 
       /* Have to handle the elements explicitly here since the error assigned
        * might be used to reset or do other things with the data outside of this

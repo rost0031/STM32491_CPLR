@@ -22,16 +22,18 @@
 #include "time.h"
 #include "SerialMgr.h"
 #include "LWIPMgr.h"
-#include "qp_port.h"                                             /* QP-port */
+#include "qp_port.h"                                               /* QP-port */
 
 /* Compile-time called macros ------------------------------------------------*/
 Q_DEFINE_THIS_FILE                  /* For QSPY to know the name of this file */
-DBG_DEFINE_THIS_MODULE( DC3_DBG_MODL_SER ); /* For debug system to ID this module */
+DBG_DEFINE_THIS_MODULE( DC3_DBG_MODL_DBG ); /* For debug system to ID this module */
 
 /* Private typedefs ----------------------------------------------------------*/
 /* Private defines -----------------------------------------------------------*/
 /* Private macros ------------------------------------------------------------*/
 /* Private variables and Local objects ---------------------------------------*/
+const char invalidStr[] = "Invalid";
+
 /* Private function prototypes -----------------------------------------------*/
 /* Private functions ---------------------------------------------------------*/
 
@@ -354,15 +356,231 @@ DC3Error_t CON_hexToStr(
    return( status );
 }
 
+
+/******************************************************************************/
+void CON_outputWithHexStr(
+      const DC3DbgLevel_t dbgLvl,
+      const DC3MsgRoute_t src,
+      const DC3MsgRoute_t dst,
+      const char* pFuncName,
+      const uint16_t wLineNumber,
+      const uint8_t* const pBuffer,
+      const size_t bufferSize,
+      char *fmt,
+      ...
+)
+{
+   /* 1. Get the time first so the printout of the event is as close as possible
+    * to when it actually occurred */
+   stm32Time_t time = TIME_getTime();
+
+   /* 2. Construct a new msg event pointer and allocate storage in the QP event
+    * pool.  Allocate with margin so we can fall back on regular slow printfs if
+    * there's a problem */
+   LrgDataEvt *lrgDataEvt = Q_NEW(LrgDataEvt, DBG_LOG_SIG);
+   lrgDataEvt->dataLen = 0;
+   lrgDataEvt->src = src;
+   lrgDataEvt->dst = dst;
+
+   /* 3. Based on the debug level specified by the calling macro, decide what to
+    * prepend (if anything). */
+   lrgDataEvt->dataLen += snprintf(
+         (char *)&lrgDataEvt->dataBuf[lrgDataEvt->dataLen],
+         DC3_MAX_MSG_LEN,
+         "%s-%02d:%02d:%02d:%03d-%s():%d:",
+         CON_dbgLvlToStr(dbgLvl),
+         time.hour_min_sec.RTC_Hours,
+         time.hour_min_sec.RTC_Minutes,
+         time.hour_min_sec.RTC_Seconds,
+         (int)time.sub_sec,
+         pFuncName,
+         wLineNumber
+   );
+
+   /* 4. Pass the va args list to get output to a buffer */
+   va_list args;
+   va_start(args, fmt);
+
+   /* 5. Print the actual user supplied data to the buffer and set the length */
+   lrgDataEvt->dataLen += vsnprintf(
+         (char *)&lrgDataEvt->dataBuf[lrgDataEvt->dataLen],
+         DC3_MAX_MSG_LEN - lrgDataEvt->dataLen, // Account for the part of the buffer that was already written.
+         fmt, args
+   );
+   va_end(args);
+
+   /* 6. Publish the event*/
+   QF_PUBLISH((QEvent *)lrgDataEvt, 0);
+
+   /* 7. In separate events, output the hex string 16 bytes at a time */
+   uint8_t numbersPerRow = 16;
+   uint8_t nEventsNeeded = (bufferSize / numbersPerRow) + ( bufferSize % numbersPerRow != 0 ? 1 : 0 );
+   uint8_t currNumber = 0;
+
+   for ( uint8_t i = 0; i < nEventsNeeded; i++ ) {
+      /* Allocate a new event for each line that we are printing and reset its
+       * guts to defaults. */
+      LrgDataEvt *lrgDataEvt = Q_NEW(LrgDataEvt, DBG_LOG_SIG);
+      lrgDataEvt->dataLen = 0;
+      lrgDataEvt->src = src;
+      lrgDataEvt->dst = dst;
+
+      /* Print the preamble every line so we don't confuse the client (which
+       * parses the output if connected over serial) or the user who is used
+       * to seeing debug level, time, etc printed on every line. */
+      lrgDataEvt->dataLen += snprintf(
+            (char *)&lrgDataEvt->dataBuf[lrgDataEvt->dataLen],
+            DC3_MAX_MSG_LEN,
+            "%s-%02d:%02d:%02d:%03d-%s():%d:[%04x]: ",
+            CON_dbgLvlToStr(dbgLvl),
+            time.hour_min_sec.RTC_Hours,
+            time.hour_min_sec.RTC_Minutes,
+            time.hour_min_sec.RTC_Seconds,
+            (int)time.sub_sec,
+            pFuncName,
+            wLineNumber,
+            currNumber
+      );
+
+      /* Go from current number until either the end of a "page" or end of the
+       * buffer, whichever happens to be smaller this iteration*/
+      size_t j;
+      for( j = currNumber; j < MIN(bufferSize, currNumber + numbersPerRow); j++ ) {
+         lrgDataEvt->dataLen += snprintf(
+               (char *)&lrgDataEvt->dataBuf[lrgDataEvt->dataLen],
+               DC3_MAX_MSG_LEN - lrgDataEvt->dataLen, // Account for the part of the buffer that was already written.
+               "0x%02x ", pBuffer[j]
+         );
+      }
+
+      /* Append a newline after the line is printed to the output buffer */
+      lrgDataEvt->dataLen += snprintf(
+            (char *)&lrgDataEvt->dataBuf[lrgDataEvt->dataLen],
+            DC3_MAX_MSG_LEN - lrgDataEvt->dataLen, // Account for the part of the buffer that was already written.
+            "\n"
+      );
+
+      /* Update the counter so we know where to resume printing. */
+      currNumber = j;
+
+      /* Publish the event with the finished line */
+      QF_PUBLISH((QEvt *)lrgDataEvt, 0);
+   }
+}
+
+
+/******************************************************************************/
+//void CON_slow_outputWithHexStr(
+//      DC3DbgLevel_t dbgLvl,
+//      const DC3MsgRoute_t src,
+//      const DC3MsgRoute_t dst,
+//      const char* pFuncName,
+//      uint16_t wLineNumber,
+//      const uint8_t* const pBuffer,
+//      const size_t bufferSize,
+//      char *fmt,
+//      ...
+//)
+//{
+//   /* 1. Get the time first so the printout of the event is as close as possible
+//    * to when it actually occurred */
+//   stm32Time_t time = TIME_getTime();
+//
+//   /* 2. Construct a new msg event pointer and allocate storage in the QP event
+//    * pool.  Allocate with margin so we can fall back on regular slow printfs if
+//    * there's a problem */
+//   LrgDataEvt *lrgDataEvt = Q_NEW(LrgDataEvt, DBG_LOG_SIG);
+//   lrgDataEvt->dataLen = 0;
+//   lrgDataEvt->src = src;
+//   lrgDataEvt->dst = dst;
+//
+//   /* 3. Based on the debug level specified by the calling macro, decide what to
+//    * prepend (if anything). */
+//   lrgDataEvt->dataLen += snprintf(
+//         (char *)&lrgDataEvt->dataBuf[lrgDataEvt->dataLen],
+//         DC3_MAX_MSG_LEN,
+//         "%s-%02d:%02d:%02d:%03d-%s():%d:",
+//         CON_dbgLvlToStr(dbgLvl),
+//         time.hour_min_sec.RTC_Hours,
+//         time.hour_min_sec.RTC_Minutes,
+//         time.hour_min_sec.RTC_Seconds,
+//         (int)time.sub_sec,
+//         pFuncName,
+//         wLineNumber
+//   );
+//
+//   /* 4. Pass the va args list to get output to a buffer */
+//   va_list args;
+//   va_start(args, fmt);
+//
+//   /* 5. Print the actual user supplied data to the buffer and set the length */
+//   lrgDataEvt->dataLen += vsnprintf(
+//         (char *)&lrgDataEvt->dataBuf[lrgDataEvt->dataLen],
+//         DC3_MAX_MSG_LEN - lrgDataEvt->dataLen, // Account for the part of the buffer that was already written.
+//         fmt,
+//         args
+//   );
+//   va_end(args);
+//
+//   /* 6. Publish the event*/
+//   QF_PUBLISH((QEvent *)lrgDataEvt, 0);
+//
+//   /* 7. In separate events, output the hex string 16 bytes at a time */
+//   uint8_t numbersPerRow = 16;
+//   uint8_t nEventsNeeded = (bufferSize / numbersPerRow) + ( bufferSize % numbersPerRow != 0 ? 1 : 0 );
+//   uint8_t currNumber = 0;
+//
+//   for ( uint8_t i = 0; i < nEventsNeeded; i++ ) {
+//      /* Allocate a new event for each line that we are printing and reset its
+//       * guts to defaults. */
+//      lrgDataEvt = Q_NEW(LrgDataEvt, DBG_LOG_SIG);
+//      lrgDataEvt->dataLen = 0;
+//      lrgDataEvt->src = src;
+//      lrgDataEvt->dst = dst;
+//
+//      /* Print the preamble every line so we don't confuse the client (which
+//       * parses the output if connected over serial) or the user who is used
+//       * to seeing debug level, time, etc printed on every line. */
+//      lrgDataEvt->dataLen += snprintf(
+//            (char *)&lrgDataEvt->dataBuf[lrgDataEvt->dataLen],
+//            DC3_MAX_MSG_LEN,
+//            "%s-%02d:%02d:%02d:%03d-%s():%d: Page %04x: ",
+//            CON_dbgLvlToStr(dbgLvl),
+//            time.hour_min_sec.RTC_Hours,
+//            time.hour_min_sec.RTC_Minutes,
+//            time.hour_min_sec.RTC_Seconds,
+//            (int)time.sub_sec,
+//            pFuncName,
+//            wLineNumber,
+//            currNumber
+//      );
+//
+//      /* Go from current number until either the end of a "page" or end of the
+//       * buffer, whichever happens to be smaller this iteration*/
+//      size_t j;
+//      for( j = currNumber; j < MIN(bufferSize, currNumber + numbersPerRow); j++ ) {
+//         lrgDataEvt->dataLen += snprintf(
+//               (char *)&lrgDataEvt->dataBuf[lrgDataEvt->dataLen],
+//               DC3_MAX_MSG_LEN - lrgDataEvt->dataLen, // Account for the part of the buffer that was already written.
+//               "0x%02x ", pBuffer[j]
+//         );
+//      }
+//
+//      currNumber += j;
+//
+//      QF_PUBLISH((QEvt *)lrgDataEvt, 0);
+//   }
+//}
+
 /******************************************************************************/
 const char* const CON_accessToStr( const DC3AccessType_t acc )
 {
    switch ( acc ) {
-      case _DC3_ACCESS_BARE:           return("BARE METAL");       break;
-      case _DC3_ACCESS_QPC:            return("QPC EVENTS");       break;
-      case _DC3_ACCESS_FRT:            return("FRT EVENTS");       break;
+      case _DC3_ACCESS_BARE:           return("BARE");      break;
+      case _DC3_ACCESS_QPC:            return("QPC");       break;
+      case _DC3_ACCESS_FRT:            return("FRT");       break;
       case _DC3_ACCESS_NONE:                    /* Intentionally fall through */
-      default:                         return("UNKNOWN ACC");      break;
+      default:                         return(invalidStr);  break;
    }
 }
 
@@ -386,7 +604,7 @@ const char* const CON_dbElemToStr( const DC3DBElem_t elem )
       case _DC3_DB_FPGA_BUILD_DATETIME: return("DB_FPGA_BUILD_DATETIME"); break;
       case _DC3_DB_DBG_MODULES:         return("DB_DBG_MODULES");         break;
       case _DC3_DB_DBG_DEVICES:         return("DB_DBG_DEVICES");         break;
-      default:                          return("INVALID DB ELEM");        break;
+      default:                          return(invalidStr);               break;
    }
 }
 
@@ -427,7 +645,67 @@ const char* const CON_msgNameToStr( const DC3MsgName_t msg )
       case _DC3DBDataPayloadMsg:       return("DBDataPayload");         break;
 
       /* Add more message name translations here*/
-      default:                         return("Invalid");               break;
+      default:                         return(invalidStr);              break;
+   }
+}
+
+/******************************************************************************/
+const char* const CON_i2cDevToStr( const DC3I2CDevice_t iDev )
+{
+   switch ( iDev ) {
+      case _DC3_EEPROM: return("EEPROM");    break;
+      case _DC3_SNROM:  return("SN_ROM");    break;
+      case _DC3_EUIROM: return("EUI_ROM");   break;
+      default:          return(invalidStr);  break;
+   }
+}
+
+/******************************************************************************/
+const char* const CON_i2cOpToStr( const I2C_Operation_t iOp )
+{
+   switch ( iOp ) {
+      case I2C_OP_MEM_READ:   return("I2C_MEM_READ");    break;
+      case I2C_OP_MEM_WRITE:  return("I2C_MEM_WRITE");   break;
+      case I2C_OP_REG_READ:   return("I2C_REG_READ");    break;
+      case I2C_OP_REG_WRITE:  return("I2C_REG_WRITE");   break;
+      default:                return(invalidStr);        break;
+   }
+}
+
+/******************************************************************************/
+const char* const CON_i2cBusToStr( const I2C_Bus_t iBus )
+{
+   switch ( iBus ) {
+      case I2CBus1:  return("I2CBus1");   break;
+      default:       return(invalidStr);  break;
+   }
+}
+
+/******************************************************************************/
+const char* const CON_dbgLvlToStr( const DC3DbgLevel_t lvl )
+{
+   switch ( lvl ) {
+      case _DC3_DBG: return("DBG"); break;
+      case _DC3_LOG: return("LOG"); break;
+      case _DC3_WRN: return("WRN"); break;
+      case _DC3_ERR: return("ERR"); break;
+      case _DC3_ISR: return("ISR"); break;
+      case _DC3_CON:                            /* Intentionally fall through */
+      default:       return("CON");  break;
+   }
+}
+
+/******************************************************************************/
+const char* const CON_dbOpToStr( const DB_Operation_t op )
+{
+   switch ( op ) {
+
+      case DB_OP_READ:     return("DB_OP_READ");      break;
+      case DB_OP_WRITE:    return("DB_OP_WRITE");     break;
+      case DB_OP_INTERNAL: return("DB_OP_INTERNAL");  break;
+      case DB_OP_MAX:                           /* Intentionally fall through */
+      case DB_OP_NONE:                          /* Intentionally fall through */
+      default:             return("Invalid");         break;
    }
 }
 

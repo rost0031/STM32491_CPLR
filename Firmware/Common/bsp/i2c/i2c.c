@@ -512,17 +512,17 @@ void I2C_StartDMAWrite( I2C_Bus_t iBus, uint16_t wWriteLen )
    DMA_Cmd( s_I2C_Bus[iBus].i2c_dma_tx_stream, ENABLE );
 }
 
-/******************************************************************************/
-char* I2C_busToStr( I2C_Bus_t iBus )
-{
-   /* Check inputs */
-   assert_param( IS_I2C_BUS( iBus ) );
-
-   switch ( iBus ) {
-      case I2CBus1: return("I2CBus1"); break;
-      default: return(""); break;
-   }
-}
+///******************************************************************************/
+//char* I2C_busToStr( I2C_Bus_t iBus )
+//{
+//   /* Check inputs */
+//   assert_param( IS_I2C_BUS( iBus ) );
+//
+//   switch ( iBus ) {
+//      case I2CBus1: return("I2CBus1"); break;
+//      default: return(""); break;
+//   }
+//}
 
 /******************************************************************************/
 /***                      Blocking functions for I2C                        ***/

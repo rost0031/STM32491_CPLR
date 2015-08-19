@@ -159,29 +159,6 @@ const uint8_t I2C_getPageSize( const DC3I2CDevice_t iDev );
 const I2C_Bus_t I2C_getBus( const DC3I2CDevice_t iDev );
 
 /**
- * @brief   Get the string representation of the I2C device.
- *
- * @param [in]  iDev: DC3I2CDevice_t identifier to choose device
- *    @arg EEPROM
- *    @arg SN_ROM
- *    @arg UIE_ROM
- * @return: string representation of the I2C device.
- */
-const char* const I2C_devToStr( const DC3I2CDevice_t iDev );
-
-/**
- * @brief   Get the string representation of the I2C operation
- *
- * @param [in]  iOp: I2C_Operation_t identifier to choose device
- *    @arg I2C_OP_MEM_READ
- *    @arg I2C_OP_MEM_WRITE
- *    @arg I2C_OP_REG_READ
- *    @arg I2C_OP_REG_WRITE
- * @return: string representation of the I2C operation.
- */
-const char* const I2C_opToStr( const I2C_Operation_t iOp );
-
-/**
  * @brief   Calculate how to properly write large data over page boundaries in EEPROM.
  *
  * @param [out] *writeSizeFirstPage: uint8_t pointer to how many bytes to write
