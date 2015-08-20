@@ -229,38 +229,33 @@ const DC3Error_t DB_read(
 {
    DC3Error_t status = ERR_NONE;            /* keep track of success/failure */
 
-   /* 1. Sanity checks of buffer sizes and memory allocations. Only check this
-    * for bare metal access since QPC and FRT accesses will post events with
-    * their own buffers */
-   if ( _DC3_ACCESS_BARE == accessType ) {
-      if ( bufSize < settingsDB[elem].size ) {
-         status = ERR_MEM_BUFFER_LEN;
-         goto DB_read_ERR_HANDLE;          /* Stop and jump to error handling */
-      }
-
-      if ( NULL == pBuffer ) {
-         status = ERR_MEM_NULL_VALUE;
-         goto DB_read_ERR_HANDLE;          /* Stop and jump to error handling */
-      }
-   }
-
-   /* 2. Find where the element lives */
+   /* 1. Find where the element lives */
    DB_ElemLoc_t loc = settingsDB[elem].loc;
 
-   /* 3. Call the location dependent functions to retrieve the data from DB */
+   /* 2. Call the location dependent functions to retrieve the data from DB */
    switch( loc ) {
       case DB_EEPROM:                           /* Intentionally fall through */
       case DB_SN_ROM:                           /* Intentionally fall through */
       case DB_UI_ROM:
          if ( _DC3_ACCESS_BARE == accessType ) {
-            status = I2C_readDevMemBLK(
-                  DB_I2C_devices[loc],          // DC3I2CDevice_t iDev,
-                  settingsDB[elem].offset,      // uint16_t offset,
-                  settingsDB[elem].size,        // uint16_t bytesToRead,
-                  accessType,                   // DC3AccessType_t accType,
-                  pBuffer,                      // uint8_t* pBuffer,
-                  bufSize                       // uint8_t  bufSize
+            uint16_t bytesRead = 0;
+            status = I2C_readDevMem(
+                  accessType,                   // const DC3AccessType_t accType,
+                  DB_I2C_devices[loc],          // const DC3I2CDevice_t iDev,
+                  settingsDB[elem].offset,      // const uint16_t offset,
+                  settingsDB[elem].size,        // const uint16_t bytesToRead,
+                  bufSize,                      // const uint8_t  bufSize
+                  pBuffer,                      // uint8_t* const pBuffer,
+                  &bytesRead                    // uint16_t* pBytesRead
             );
+
+            if ( ERR_NONE == status ) {      /* Only check length if no error */
+               if ( bytesRead != settingsDB[elem].size ) {
+                  status = ERR_DB_ELEM_LENGTH_READ_MISMATCH;
+                  goto DB_read_ERR_HANDLE; /* Stop and jump to error handling */
+               }
+            }
+
          } else {
             /* Create the event and directly post it to the right AO. */
             I2CReadReqEvt *i2cReadReqEvt  = Q_NEW(I2CReadReqEvt, I2C1_DEV_RAW_MEM_READ_SIG);
@@ -297,7 +292,7 @@ const DC3Error_t DB_read(
 
 DB_read_ERR_HANDLE:               /* Handle any error that may have occurred. */
    ERR_COND_OUTPUT( status, accessType,
-         "Getting element %s (%d) from DB: Error 0x%08x\n",
+         "DB read of element %s (%d) from DB: Error 0x%08x\n",
          CON_dbElemToStr( elem ), elem, status );
    return( status );
 }
@@ -312,32 +307,31 @@ const DC3Error_t DB_write(
 {
    DC3Error_t status = ERR_NONE; /* keep track of success/failure of operations. */
 
-   /* 1. Sanity checks of buffer sizes and memory allocations. */
-   if ( bufSize < settingsDB[elem].size ) {
-      status = ERR_MEM_BUFFER_LEN;
-      goto DB_write_ERR_HANDLE;          /* Stop and jump to error handling */
-   }
-
-   if ( NULL == pBuffer ) {
-      status = ERR_MEM_NULL_VALUE;
-      goto DB_write_ERR_HANDLE;          /* Stop and jump to error handling */
-   }
-
-   /* 2. Find where the element lives */
+   /* 1. Find where the element lives */
    DB_ElemLoc_t loc = settingsDB[elem].loc;
 
-   /* 3. Call the location dependent functions to write the data to DB */
+   /* 2. Call the location dependent functions to write the data to DB */
    switch( loc ) {
       case DB_EEPROM:
          if ( _DC3_ACCESS_BARE == accessType ) {
-            status = I2C_writeDevMemBLK(
-                  DB_I2C_devices[loc],                // DC3I2CDevice_t iDev,
-                  settingsDB[elem].offset,            // uint16_t offset,
-                  settingsDB[elem].size,              // uint16_t bytesToWrite,
-                  accessType,                         // DC3AccessType_t accType,
-                  pBuffer,                            // uint8_t* pBuffer,
-                  bufSize                             // uint8_t  bufSize
+            uint16_t bytesWritten = 0;
+            status = I2C_writeDevMem(
+                  accessType,                         // const DC3AccessType_t accessType,
+                  DB_I2C_devices[loc],                // const DC3I2CDevice_t iDev,
+                  settingsDB[elem].offset,            // const uint16_t offset,
+                  settingsDB[elem].size,              // const uint16_t bytesToWrite,
+                  bufSize,                            // const uint16_t  bufSize
+                  pBuffer,                            // const uint8_t* const pBuffer
+                  &bytesWritten                       // uint16_t* pBytesWritten
             );
+
+            if ( ERR_NONE == status ) {      /* Only check length if no error */
+               if ( bytesWritten != settingsDB[elem].size ) {
+                  status = ERR_DB_ELEM_LENGTH_WRITE_MISMATCH;
+                  goto DB_write_ERR_HANDLE; /* Stop and jump to error handling */
+               }
+            }
+
          } else {
             /* Create the event and directly post it to the right AO. */
             I2CWriteReqEvt *i2cWriteReqEvt = Q_NEW(I2CWriteReqEvt, I2C1_DEV_RAW_MEM_WRITE_SIG);
@@ -366,7 +360,7 @@ const DC3Error_t DB_write(
 
 DB_write_ERR_HANDLE:              /* Handle any error that may have occurred. */
    ERR_COND_OUTPUT( status, accessType,
-         "Writing element %s (%d) to DB: Error 0x%08x\n",
+         "DB write of element %s (%d) to DB: Error 0x%08x\n",
          CON_dbElemToStr( elem ), elem, status );
    return( status );
 }
@@ -569,31 +563,16 @@ const DC3Error_t DB_readFlash(
 
    DC3Error_t status = ERR_NONE;
 
-   /* 1. Sanity checks of buffer sizes and memory allocations. Only check this
-    * for bare metal access since QPC and FRT accesses will post events with
-    * their own buffers */
-   if ( _DC3_ACCESS_BARE == accessType ) {
-      if ( bufSize < settingsDB[elem].size ) {
-         status = ERR_MEM_BUFFER_LEN;
-         goto DB_readFlash_ERR_HANDLE;     /* Stop and jump to error handling */
-      }
-
-      if ( NULL == pBuffer ) {
-         status = ERR_MEM_NULL_VALUE;
-         goto DB_readFlash_ERR_HANDLE;     /* Stop and jump to error handling */
-      }
-   }
-
+   /* Make sure the element is in flash */
    if( !DB_IS_ELEM_IN_FLASH(elem) ) {
       status = ERR_DB_ELEM_IS_NOT_IN_FLASH;
       goto DB_readFlash_ERR_HANDLE;        /* Stop and jump to error handling */
    }
 
-   DBReadDoneEvt *evt;
    switch ( accessType ) {
       case _DC3_ACCESS_QPC:               /* Intentionally fall through */
       case _DC3_ACCESS_FRT: {
-         evt = Q_NEW(DBReadDoneEvt, DB_FLASH_READ_DONE_SIG);
+         DBReadDoneEvt *evt = Q_NEW(DBReadDoneEvt, DB_FLASH_READ_DONE_SIG);
          evt->dbElem = elem;
          evt->status = ERR_NONE;
 
@@ -609,16 +588,15 @@ const DC3Error_t DB_readFlash(
 
          break;
       }
-      case _DC3_ACCESS_BARE:              /* Intentionally fall through */
-      default:
+      case _DC3_ACCESS_BARE:
          if ( bufSize < settingsDB[elem].size ) {
             status = ERR_MEM_BUFFER_LEN;
-            goto DB_readFlash_ERR_HANDLE;     /* Stop and jump to error handling */
+            goto DB_readFlash_ERR_HANDLE;  /* Stop and jump to error handling */
          }
 
          if ( NULL == pBuffer ) {
             status = ERR_MEM_NULL_VALUE;
-            goto DB_readFlash_ERR_HANDLE;     /* Stop and jump to error handling */
+            goto DB_readFlash_ERR_HANDLE;  /* Stop and jump to error handling */
          }
 
          status = FLASH_readBufferUint8(
@@ -630,9 +608,13 @@ const DC3Error_t DB_readFlash(
          );
 
          break;
+      default:
+         status = ERR_INVALID_ACCESS_TYPE;
+         goto DB_readFlash_ERR_HANDLE;     /* Stop and jump to error handling */
+         break;
    }
 
-   DB_readFlash_ERR_HANDLE:        /* Handle any error that may have occurred */
+DB_readFlash_ERR_HANDLE:           /* Handle any error that may have occurred */
    ERR_COND_OUTPUT( status, accessType,
          "Reading from Flash DB element %s (%d): Error 0x%08x \n",
          CON_dbElemToStr( elem ), elem, status );

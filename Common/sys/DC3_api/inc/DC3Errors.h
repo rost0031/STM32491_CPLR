@@ -55,6 +55,7 @@ typedef enum DC3Errors
    ERR_SDRAM_DATA_BUS                                          = 0x0000000C,
    ERR_SDRAM_ADDR_BUS                                          = 0x0000000D,
    ERR_SDRAM_DEVICE_INTEGRITY                                  = 0x0000000E,
+   ERR_INVALID_ACCESS_TYPE                                     = 0x0000000F,
 
    /* Flash error category                       0x00010000 - 0x0001FFFF */
    ERR_FLASH_IMAGE_SIZE_INVALID                                = 0x00010000,
@@ -154,17 +155,12 @@ typedef enum DC3Errors
    ERR_DB_ACCESS_TIMEOUT                                       = 0x00080006,
    ERR_DB_ELEM_SIZE_OVERFLOW                                   = 0x00080007,
    ERR_DB_ELEM_SIZE_UNDERFLOW                                  = 0x00080008,
-   ERR_DB_INVALID_DATETIME_LENGTH                              = 0x00080009,
-   ERR_DB_INVALID_MAGIC_WORD_LENGTH                            = 0x0008000A,
-   ERR_DB_DATETIME_MISMATCH                                    = 0x0008000B,
-   ERR_DB_INVALID_MAJ_VER_LENGTH                               = 0x0008000C,
-   ERR_DB_INVALID_MIN_VER_LENGTH                               = 0x0008000D,
-   ERR_DB_INVALID_MAJ_VER_MISMATCH                             = 0x0008000E,
-   ERR_DB_INVALID_MIN_VER_MISMATCH                             = 0x0008000F,
-   ERR_DB_CHK_ELEM_NEEDS_RESET                                 = 0x00080010,
-   ERR_DB_CHK_DBG_MODULES_MISMATCH                             = 0x00080011,
-   ERR_DB_CHK_DBG_DEVICES_MISMATCH                             = 0x00080012,
-   ERR_DB_OPERATION_REQUESTED                                  = 0x00080013,
+   ERR_DB_ELEM_LENGTH_READ_MISMATCH                            = 0x00000009,
+   ERR_DB_ELEM_LENGTH_WRITE_MISMATCH                           = 0x0000000A,
+   ERR_DB_CHK_ELEM_NEEDS_RESET                                 = 0x0008000B,
+   ERR_DB_CHK_DBG_MODULES_MISMATCH                             = 0x0008000C,
+   ERR_DB_CHK_DBG_DEVICES_MISMATCH                             = 0x0008000D,
+   ERR_DB_INVALID_OP_REQUESTED                                 = 0x0008000E,
 
    /* I2C Device general error category          0x00090000 - 0x0009FFFF */
    ERR_I2C_DEV_INVALID_DEVICE                                  = 0x00090000,

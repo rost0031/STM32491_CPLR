@@ -426,7 +426,7 @@ if ( me-&gt;dbCmd == DB_OP_READ ) {
         ERR_printf(&quot;Internal DB op failed with error code: 0x%08x\n&quot;, me-&gt;errorCode);
     }
 } else {
-    me-&gt;errorCode = ERR_DB_OPERATION_REQUESTED;
+    me-&gt;errorCode = ERR_DB_INVALID_OP_REQUESTED;
     ERR_printf(&quot;Invalid DB operation (%d) specified somehow\n&quot;, me-&gt;dbCmd);
     DBWriteDoneEvt *evt = Q_NEW(DBWriteDoneEvt, DB_ERROR_SIG);
     evt-&gt;status = me-&gt;errorCode;

@@ -187,141 +187,103 @@ const DC3Error_t I2C_calcPageWriteSizes(
 );
 
 /**
- * @brief  Posts an event read a block of data from a memory device on any I2C bus.
+ * @brief  Common function to do a read of an I2C device using any access.
  *
- * @note:  This function should only be called from RTOS controlled thread/AO.
- * It is non-blocking and instantly returns.
+ * This function is the common entry point to perform a read of an I2C device
+ * using any accessType (BARE, QPC, or FRT).
+ *
+ * @note:  This function needs to be wrapped in FRT function to listen for the
+ * appropriate event that the read is finished.
+ *
+ * @param  [in] accessType: const DC3AccessType_t that specifies how the
+ * function is being accessed.
+ *    @arg _DC3_ACCESS_BARE: blocking access that is slow.  Don't use once the
+ *                           RTOS is running.
+ *    @arg _DC3_ACCESS_QPC:  non-blocking, event based access.
+ *    @arg _DC3_ACCESS_FRT:  non-blocking, but waits on queue to know the status.
  *
  * @param [in] iDev: DC3I2CDevice_t type specifying the I2C Device.
  *    @arg EEPROM: 256 bytes of main EEPROM memory
  *    @arg SN_ROM: SN RO EEPROM memory that contains 128 bit unique id
  *    @arg EUI_ROM: EUI RO EEPROM memory that contains 64 bit MAC address.
- * @param [in] addr: internal memory address of the device on the I2C bus.
- * @param [in] bytesToRead : uint8_t variable specifying how many bytes to read.
- * @param  [in] accessType: DC3AccessType_t that specifies how the function is being
- * accessed.
- *    @arg _DC3_ACCESS_BARE: blocking access that is slow.  Don't use once the
- *                            RTOS is running.
- *    @arg _DC3_ACCESS_QPC:        non-blocking, event based access.
- *    @arg _DC3_ACCESS_FRT:   non-blocking, but waits on queue to know the status.
- * @param [in] *callingAO: QActive pointer to the AO that called this function.
- *                         If called by a FreeRTOS thread, this should be NULL.
- * @return DC3Error_t: status of the read operation
+ *
+ * @param [in] offset: offset from the beginning of the device where the read
+ * should start.  The actual address is figured out internally so the device
+ * memory map doesn't need to be exposed to the caller.
+ *
+ * @param [in] bytesToRead : const uint16_t variable specifying how many bytes
+ * to read from the device.
+ *
+ * @param [in] bufferSize: uint16_t maximum size of storage pointed to by
+ * *pBuffer pointer.
+ *
+ * @param [in|out] *pBuffer: uint8_t pointer to the buffer to store read data.
+ * This should only be accessed if the returned status is ERR_NONE.
+ *
+ * @param [out] *pBytesRead: uint16_t pointer specifying how many bytes were
+ * actually read. This should only be accessed if the returned status is
+ * ERR_NONE.
+
+ * @return DC3Error_t: status of the read request operation
  *    @arg ERR_NONE: if no errors occurred
  */
-const DC3Error_t I2C_readDevMemEVT(
+const DC3Error_t I2C_readDevMem(
+      const DC3AccessType_t accessType,
       const DC3I2CDevice_t iDev,
       const uint16_t offset,
       const uint16_t bytesToRead,
-      const DC3AccessType_t accType,
-      const QActive* const callingAO
-);
-
-/**
- * @brief  Posts an event write a block of data to a memory device on any I2C bus.
- *
- * @note:  This function should only be called from RTOS controlled thread/AO.
- * It is non-blocking and instantly returns.
- *
- * @param [in] iDev: DC3I2CDevice_t type specifying the I2C Device.
- *    @arg EEPROM: 256 bytes of main EEPROM memory
- * @param [in] offset: uint16_t offset from beginning of device memory to write
- * to.
- * @param [in] bytesToWrite : uint16_t variable specifying how many bytes to write.
- * @param  [in] accessType: DC3AccessType_t that specifies how the function is being
- * accessed.
- *    @arg _DC3_ACCESS_BARE: blocking access that is slow.  Don't use once the
- *                            RTOS is running.
- *    @arg _DC3_ACCESS_QPC:        non-blocking, event based access.
- *    @arg _DC3_ACCESS_FRT:   non-blocking, but waits on queue to know the status.
- * @param [in] *callingAO: QActive pointer to the AO that called this function.
- *                         If called by a FreeRTOS thread, this should be NULL.
- * @param [in] *pBuffer: uint8_t pointer to the buffer to store read data.
- * @return DC3Error_t: status of the read operation
- *    @arg ERR_NONE: if no errors occurred
- */
-const DC3Error_t I2C_writeDevMemEVT(
-      const DC3I2CDevice_t iDev,
-      const uint16_t offset,
-      const uint16_t bytesToWrite,
-      const DC3AccessType_t accType,
-      const QActive* const callingAO,
-      const uint8_t* const pBuffer
-);
-
-/******************************************************************************/
-/* Blocking Functions - Don't call unless before threads/AOs started or after */
-/* they crashed                                                               */
-/******************************************************************************/
-
-/**
- * @brief  Blocking function to read a block of data from a memory device on
- * any I2C bus.
- *
- * @note:  This is a slow function that should not be called by any threads or
- * objects. It's for use in case of crashes and before the entire system has
- * come up.
- *
- * @param [in] iDev: DC3I2CDevice_t type specifying the I2C Device.
- *    @arg EEPROM: 256 bytes of main EEPROM memory
- *    @arg SN_ROM: SN RO EEPROM memory that contains 128 bit unique id
- *    @arg EUI_ROM: EUI RO EEPROM memory that contains 64 bit MAC address.
- * @param [in] offset: uint16_t offset from beginning of device memory to read
- * from.
- * @param [in] bytesToRead : uint16_t variable specifying how many bytes to read.
- * @param  [in] accessType: DC3AccessType_t that specifies how the function is being
- * accessed.
- *    @arg _DC3_ACCESS_BARE: blocking access that is slow.  Don't use once the
- *                            RTOS is running.
- *    @arg _DC3_ACCESS_QPC:        non-blocking, event based access.
- *    @arg _DC3_ACCESS_FRT:   non-blocking, but waits on queue to know the status.
- * @param [out] *pBuffer: uint8_t pointer to the buffer to store read data.
- * @param [in] bufSize: uint8_t maximum size of storage pointed to by *pBuffer
- * @return DC3Error_t: status of the read operation
- *    @arg ERR_NONE: if no errors occurred
- */
-const DC3Error_t I2C_readDevMemBLK(
-      const DC3I2CDevice_t iDev,
-      const uint16_t offset,
-      const uint16_t bytesToRead,
-      const DC3AccessType_t accType,
+      const uint16_t bufferSize,
       uint8_t* const pBuffer,
-      const uint8_t  bufSize
+      uint16_t* pBytesRead
 );
 
 /**
- * @brief  Blocking function to write a block of data to a memory device on
- * any I2C bus.
+ * @brief  Common function to do a write of an I2C device using any access.
  *
- * @note:  This is a slow function that should not be called by any threads or
- * objects. It's for use in case of crashes and before the entire system has
- * come up.
+ * This function is the common entry point to perform a write of an I2C device
+ * using any accessType (BARE, QPC, or FRT).
+ *
+ * @note:  This function needs to be wrapped in FRT function to listen for the
+ * appropriate event that the read is finished.
+ *
+ * @param  [in] accessType: const DC3AccessType_t that specifies how the
+ * function is being accessed.
+ *    @arg _DC3_ACCESS_BARE: blocking access that is slow.  Don't use once the
+ *                           RTOS is running.
+ *    @arg _DC3_ACCESS_QPC:  non-blocking, event based access.
+ *    @arg _DC3_ACCESS_FRT:  non-blocking, but waits on queue to know the status.
  *
  * @param [in] iDev: DC3I2CDevice_t type specifying the I2C Device.
  *    @arg EEPROM: 256 bytes of main EEPROM memory
- *    @arg SN_ROM: SN RO EEPROM memory that contains 128 bit unique id
- *    @arg EUI_ROM: EUI RO EEPROM memory that contains 64 bit MAC address.
- * @param [in] offset: uint16_t offset from beginning of device memory to write
- * to.
- * @param [in] bytesToWrite : uint16_t variable specifying how many bytes to write.
- * @param  [in] accessType: DC3AccessType_t that specifies how the function is being
- * accessed.
- *    @arg _DC3_ACCESS_BARE: blocking access that is slow.  Don't use once the
- *                            RTOS is running.
- *    @arg _DC3_ACCESS_QPC:        non-blocking, event based access.
- *    @arg _DC3_ACCESS_FRT:   non-blocking, but waits on queue to know the status.
- * @param [out] *pBuffer: uint8_t pointer to the buffer to write.
- * @param [in] bufSize: uint8_t maximum size of storage pointed to by *pBuffer
- * @return DC3Error_t: status of the read operation
+ *
+ * @param [in] offset: offset from the beginning of the device where the write
+ * should start.  The actual address is figured out internally so the device
+ * memory map doesn't need to be exposed to the caller.
+ *
+ * @param [in] bytesToWrite : const uint16_t variable specifying how many bytes
+ * to write to the device.
+ *
+ * @param [in] bufferSize: uint16_t maximum size of storage pointed to by
+ * *pBuffer pointer.
+ *
+ * @param [in|out] *pBuffer: uint8_t pointer to the buffer containing data to be
+ * written.
+ *
+ * @param [out] *pBytesWritten: uint16_t pointer specifying how many bytes were
+ * actually written. This should only be accessed if the returned status is
+ * ERR_NONE.
+ *
+ * @return DC3Error_t: status of the write request operation
  *    @arg ERR_NONE: if no errors occurred
  */
-const DC3Error_t I2C_writeDevMemBLK(
+const DC3Error_t I2C_writeDevMem(
+      const DC3AccessType_t accessType,
       const DC3I2CDevice_t iDev,
       const uint16_t offset,
       const uint16_t bytesToWrite,
-      const DC3AccessType_t accType,
-      const uint8_t* pBuffer,
-      const uint8_t  bufSize
+      const uint16_t bufferSize,
+      const uint8_t* const pBuffer,
+      uint16_t* pBytesWritten
 );
 
 /**

@@ -582,7 +582,7 @@ static QState SysMgr_AccessingDB(SysMgr * const me, QEvt const * const e) {
                     ERR_printf("Internal DB op failed with error code: 0x%08x\n", me->errorCode);
                 }
             } else {
-                me->errorCode = ERR_DB_OPERATION_REQUESTED;
+                me->errorCode = ERR_DB_INVALID_OP_REQUESTED;
                 ERR_printf("Invalid DB operation (%d) specified somehow\n", me->dbCmd);
                 DBWriteDoneEvt *evt = Q_NEW(DBWriteDoneEvt, DB_ERROR_SIG);
                 evt->status = me->errorCode;

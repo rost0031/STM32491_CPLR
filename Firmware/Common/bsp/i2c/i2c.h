@@ -193,8 +193,10 @@ DC3Error_t I2C_readBufferBLK(
       const uint8_t i2cDevAddr,
       const uint16_t i2cMemAddr,
       const uint8_t i2cMemAddrSize,
-      uint8_t* pBuffer,
-      uint16_t bytesToRead
+      const uint16_t bytesToRead,
+      const uint16_t bufferSize,
+      uint8_t* const pBuffer,
+      uint16_t* pBytesRead
 );
 
 /**
@@ -228,9 +230,11 @@ DC3Error_t I2C_writeBufferBLK( /* TODO: does this belong in i2c_dev? */
       const uint8_t i2cDevAddr,
       const uint16_t i2cMemAddr,
       const uint8_t i2cMemAddrSize,
-      const uint8_t* const pBuffer,
+      const uint16_t pageSize,
       const uint16_t bytesToWrite,
-      const uint16_t pageSize
+      const uint16_t bufferSize,
+      const uint8_t* const pBuffer,
+      uint16_t* pBytesWritten
 );
 
 /******************************************************************************/

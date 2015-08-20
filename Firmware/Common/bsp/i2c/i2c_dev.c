@@ -205,251 +205,176 @@ const DC3Error_t I2C_calcPageWriteSizes(
 }
 
 /******************************************************************************/
-const DC3Error_t I2C_readDevMemEVT(
+const DC3Error_t I2C_readDevMem(
+      const DC3AccessType_t accessType,
       const DC3I2CDevice_t iDev,
       const uint16_t offset,
       const uint16_t bytesToRead,
-      const DC3AccessType_t accType,
-      const QActive* const callingAO
-)
-{
-   DC3Error_t status = ERR_NONE; /* Keep track of the errors that may occur.
-                                     This gets returned at the end of the
-                                     function */
-   QSignal sig = 0;               /* Signal which will be used in the event to
-                                     be posted. This may change based on which
-                                     AO will be posted to depending on which I2C
-                                     device was passed in */
-   QActive* aoToPostTo = 0;       /* AO to which to directly post the even. This
-                                     will change depending on which I2C device
-                                     was passed in */
-
-   /* Check inputs, requested read boundaries, and figure out which signals will
-    * be used to post the event to which AO. */
-   switch( iDev ) {
-      case _DC3_EEPROM:                              /* Intentionally fall through */
-      case _DC3_SNROM:                              /* Intentionally fall through */
-      case _DC3_EUIROM:
-         /* These 3 devices are actually part of the same EEPROM chip (and thus
-          * on the same I2C bus) but have different bus addresses.  They can all
-          * be handled by this case. */
-         if ( offset + bytesToRead > I2C_getMaxMemAddr( iDev ) ) {
-            status = ERR_I2C_DEV_EEPROM_MEM_ADDR_BOUNDARY;
-            goto I2C_readDevMemEVT_ERR_HANDLER;  /* Stop and jump to error handling */
-         }
-         sig = I2C1_DEV_RAW_MEM_READ_SIG;
-         aoToPostTo = AO_I2C1DevMgr;
-         break;
-      default:
-         status = ERR_I2C_DEV_INVALID_DEVICE;
-         goto I2C_readDevMemEVT_ERR_HANDLER;  /* Stop and jump to error handling */
-         break;
-   }
-
-   /* Create the event and directly post it to the right AO. */
-   I2CReadReqEvt *i2cReadReqEvt  = Q_NEW(I2CReadReqEvt, sig);
-   i2cReadReqEvt->i2cDev         = iDev;
-   i2cReadReqEvt->start          = offset;
-   i2cReadReqEvt->bytes          = bytesToRead;
-   i2cReadReqEvt->accessType     = accType;
-   QACTIVE_POST(aoToPostTo, (QEvt *)(i2cReadReqEvt), callingAO);
-
-
-I2C_readDevMemEVT_ERR_HANDLER:    /* Handle any error that may have occurred. */
-   ERR_COND_OUTPUT( status, accType,
-         "Reading I2C device %s on %s at mem addr 0x%02x via %s: Error 0x%08x\n",
-         CON_i2cDevToStr(iDev), CON_i2cBusToStr( I2C_getBus(iDev) ),
-         I2C_getMemAddr( iDev ) + offset, CON_accessToStr(accType), status );
-   return( status );
-}
-
-/******************************************************************************/
-const DC3Error_t I2C_writeDevMemEVT(
-      const DC3I2CDevice_t iDev,
-      const uint16_t offset,
-      const uint16_t bytesToWrite,
-      const DC3AccessType_t accType,
-      const QActive* const callingAO,
-      const uint8_t* const pBuffer
-)
-{
-   DC3Error_t status = ERR_NONE; /* Keep track of the errors that may occur.
-                                     This gets returned at the end of the
-                                     function */
-   QSignal sig = 0;               /* Signal which will be used in the event to
-                                     be posted. This may change based on which
-                                     AO will be posted to depending on which I2C
-                                     device was passed in */
-   QActive* aoToPostTo = 0;       /* AO to which to directly post the even. This
-                                     will change depending on which I2C device
-                                     was passed in */
-
-   /* Check inputs, requested read boundaries, and figure out which signals will
-    * be used to post the event to which AO. */
-   switch( iDev ) {
-      case _DC3_EEPROM:
-         /* These 3 devices are actually part of the same EEPROM chip (and thus
-          * on the same I2C bus) but have different bus addresses.  They can all
-          * be handled by this case. */
-         if ( offset + bytesToWrite > I2C_getMaxMemAddr( iDev ) ) {
-            status = ERR_I2C_DEV_EEPROM_MEM_ADDR_BOUNDARY;
-            goto I2C_writeDevMemEVT_ERR_HANDLER;  /* Stop and jump to error handling */
-         }
-         sig = I2C1_DEV_RAW_MEM_WRITE_SIG;
-         aoToPostTo = AO_I2C1DevMgr;
-         break;
-
-      case _DC3_SNROM:                              /* Intentionally fall through */
-      case _DC3_EUIROM:
-         status = ERR_I2C_DEV_IS_READ_ONLY;
-         goto I2C_writeDevMemEVT_ERR_HANDLER;  /* Stop and jump to error handling */
-         break;
-      default:
-         status = ERR_I2C_DEV_INVALID_DEVICE;
-         goto I2C_writeDevMemEVT_ERR_HANDLER;  /* Stop and jump to error handling */
-         break;
-   }
-
-   /* Create the event and directly post it to the right AO. */
-   I2CWriteReqEvt *i2cWriteReqEvt   = Q_NEW(I2CWriteReqEvt, sig);
-   i2cWriteReqEvt->i2cDev           = iDev;
-   i2cWriteReqEvt->start            = offset;
-   i2cWriteReqEvt->bytes            = bytesToWrite;
-   i2cWriteReqEvt->accessType       = accType;
-   MEMCPY(
-         i2cWriteReqEvt->dataBuf,
-         pBuffer,
-         i2cWriteReqEvt->bytes
-   );
-   QACTIVE_POST(aoToPostTo, (QEvt *)(i2cWriteReqEvt), callingAO);
-
-
-I2C_writeDevMemEVT_ERR_HANDLER:   /* Handle any error that may have occurred. */
-   ERR_COND_OUTPUT( status, accType,
-         "Writing to I2C device %s on %s to mem addr 0x%02x via %s: Error 0x%08x\n",
-         CON_i2cDevToStr(iDev), CON_i2cBusToStr( I2C_getBus(iDev) ),
-         I2C_getMemAddr( iDev ) + offset, CON_accessToStr(accType), status );
-   return( status );
-}
-
-/******************************************************************************/
-/* Blocking Functions - Don't call unless before threads/AOs started or after */
-/* they crashed                                                               */
-/******************************************************************************/
-
-/******************************************************************************/
-const DC3Error_t I2C_readDevMemBLK(
-      const DC3I2CDevice_t iDev,
-      const uint16_t offset,
-      const uint16_t bytesToRead,
-      const DC3AccessType_t accType,
+      const uint16_t bufferSize,
       uint8_t* const pBuffer,
-      const uint8_t  bufSize
+      uint16_t* pBytesRead
 )
 {
    DC3Error_t status = ERR_NONE; /* Keep track of the errors that may occur.
                                      This gets returned at the end of the
                                      function */
 
-   /* Check inputs, requested read boundaries, and figure out which signals will
-    * be used to post the event to which AO. */
-   if ( bufSize < bytesToRead ) {
-      status = ERR_MEM_BUFFER_LEN;
-      goto I2C_readDevMemBLK_ERR_HANDLER;  /* Stop and jump to error handling */
-   }
-
+   /* Check I2C device memory boundaries against request */
    switch( iDev ) {
-      case _DC3_EEPROM:                              /* Intentionally fall through */
-      case _DC3_SNROM:                              /* Intentionally fall through */
-      case _DC3_EUIROM:
+      case _DC3_EUIROM:                         /* Intentionally fall through */
+      case _DC3_SNROM:                          /* Intentionally fall through */
+      case _DC3_EEPROM:
          /* These 3 devices are actually part of the same EEPROM chip (and thus
           * on the same I2C bus) but have different bus addresses.  They can all
           * be handled by this case. */
          if ( offset + bytesToRead > I2C_getMaxMemAddr( iDev ) ) {
             status = ERR_I2C_DEV_EEPROM_MEM_ADDR_BOUNDARY;
-            goto I2C_readDevMemBLK_ERR_HANDLER;  /* Stop and jump to error handling */
+            goto I2C_readDevMem_ERR_HANDLER; /* Stop and jump to error handling */
          }
          break;
       default:
          status = ERR_I2C_DEV_INVALID_DEVICE;
-         goto I2C_readDevMemBLK_ERR_HANDLER;  /* Stop and jump to error handling */
+         goto I2C_readDevMem_ERR_HANDLER;    /* Stop and jump to error handling */
          break;
    }
 
-   status = I2C_readBufferBLK(
-         I2C_getBus( iDev),                 // I2C_Bus_t iBus,
-         I2C_getDevAddr( iDev ),            // uint8_t i2cDevAddr,
-         I2C_getMemAddr( iDev ) + offset,   // uint16_t i2cMemAddr,
-         I2C_getMemAddrSize( iDev ),        // uint8_t i2cMemAddrSize,
-         pBuffer,                           // uint8_t* pBuffer,
-         bytesToRead                        // uint16_t bytesToRead
-   );
+   /* Perform the actual request to read the device. Note that the BLK functions
+    * take an actual address while the QPC/FRT accesses take offset and the AO
+    * will figure out the correct addresses */
+   switch( accessType ) {
+      case _DC3_ACCESS_BARE:
+         /* Perform a blocking read. Buffer and buffer size will be checked in
+          * the only function that requires them (the BLK type functions ) */
+         status = I2C_readBufferBLK(
+               I2C_getBus( iDev),                 // const I2C_Bus_t iBus,
+               I2C_getDevAddr( iDev ),            // const uint8_t i2cDevAddr,
+               I2C_getMemAddr( iDev ) + offset,   // const uint16_t i2cMemAddr,
+               I2C_getMemAddrSize( iDev ),        // const uint8_t i2cMemAddrSize,
+               bytesToRead,                       // const uint16_t bytesToRead,
+               bufferSize,                        // const uint16_t bufferSize,
+               pBuffer,                           // uint8_t* const pBuffer,
+               pBytesRead                         // uint16_t* pBytesRead
+         );
 
-I2C_readDevMemBLK_ERR_HANDLER:    /* Handle any error that may have occurred. */
-   ERR_COND_OUTPUT( status, accType,
-      "Reading I2C device %s on %s at mem addr 0x%02x via %s: Error 0x%08x\n",
+         break;
+      case _DC3_ACCESS_QPC:                     /* Intentionally fall through */
+      case _DC3_ACCESS_FRT:
+         ; /* Fix for comments immediately following a case label */
+         /* It is the responsibility of the caller of this function with
+          * accessType QPC to know what event to listen for in response to this
+          * request.  See I2C1DevMgr AO for details. */
+
+         /* Create the event and directly post it to the right AO. */
+         I2CReadReqEvt *i2cReadReqEvt  = Q_NEW(I2CReadReqEvt, I2C1_DEV_RAW_MEM_READ_SIG);
+         i2cReadReqEvt->i2cDev         = iDev;
+         i2cReadReqEvt->start          = offset;
+         i2cReadReqEvt->bytes          = bytesToRead;
+         i2cReadReqEvt->accessType     = accessType;
+         QACTIVE_POST(AO_I2C1DevMgr, (QEvt *)(i2cReadReqEvt), AO_I2C1DevMgr);
+         break;
+      case _DC3_ACCESS_NONE:                    /* Intentionally fall through */
+      default:
+         status = ERR_INVALID_ACCESS_TYPE;
+         goto I2C_readDevMem_ERR_HANDLER;  /* Stop and jump to error handling */
+         break;
+   }
+
+I2C_readDevMem_ERR_HANDLER:       /* Handle any error that may have occurred. */
+   ERR_COND_OUTPUT( status, accessType,
+      "Requesting a read of I2C device %s on %s at mem addr 0x%02x via %s: Error 0x%08x\n",
       CON_i2cDevToStr(iDev), CON_i2cBusToStr( I2C_getBus(iDev) ),
-      I2C_getMemAddr( iDev ) + offset, CON_accessToStr(accType), status );
+      I2C_getMemAddr( iDev ) + offset, CON_accessToStr(accessType), status );
    return( status );
 }
 
 /******************************************************************************/
-const DC3Error_t I2C_writeDevMemBLK(
+const DC3Error_t I2C_writeDevMem(
+      const DC3AccessType_t accessType,
       const DC3I2CDevice_t iDev,
       const uint16_t offset,
       const uint16_t bytesToWrite,
-      const DC3AccessType_t accType,
+      const uint16_t bufferSize,
       const uint8_t* const pBuffer,
-      const uint8_t  bufSize
+      uint16_t* pBytesWritten
 )
 {
    DC3Error_t status = ERR_NONE; /* Keep track of the errors that may occur.
-                                     This gets returned at the end of the
-                                     function */
+                                    This gets returned at the end of the
+                                    function */
 
-   /* Check inputs, requested read boundaries, and figure out which signals will
-    * be used to post the event to which AO. */
-   if ( bufSize < bytesToWrite ) {
-      status = ERR_MEM_BUFFER_LEN;
-      goto I2C_writeDevMemBLK_ERR_HANDLER; /* Stop and jump to error handling */
-   }
-
+   /* Check I2C device memory boundaries against request */
    switch( iDev ) {
-      case _DC3_EEPROM:
-         /* These 3 devices are actually part of the same _DC3_EEPROM chip (and thus
-          * on the same I2C bus) but have different bus addresses.  They can all
-          * be handled by this case. */
-         if ( offset + bytesToWrite > I2C_getMaxMemAddr( iDev ) ) {
-            status = ERR_I2C_DEV_EEPROM_MEM_ADDR_BOUNDARY;
-            goto I2C_writeDevMemBLK_ERR_HANDLER;  /* Stop and jump to error handling */
-         }
-         break;
-      case _DC3_EUIROM:                             /* Intentionally fall through */
+      case _DC3_EUIROM:                         /* Intentionally fall through */
       case _DC3_SNROM:
          status = ERR_I2C_DEV_IS_READ_ONLY;
-         goto I2C_writeDevMemBLK_ERR_HANDLER;  /* Stop and jump to error handling */
+         goto I2C_writeDevMem_ERR_HANDLER; /* Stop and jump to error handling */
+         break;
+      case _DC3_EEPROM:
+         /* These 3 devices are actually part of the same EEPROM chip (and thus
+          * on the same I2C bus) but have different bus addresses.  They can all
+          * be handled by this case. */
+         if ( offset + bytesToWrite > I2C_getMaxMemAddr( iDev ) ) {
+            status = ERR_I2C_DEV_EEPROM_MEM_ADDR_BOUNDARY;
+            goto I2C_writeDevMem_ERR_HANDLER; /* Stop and jump to error handling */
+         }
          break;
       default:
          status = ERR_I2C_DEV_INVALID_DEVICE;
-         goto I2C_writeDevMemBLK_ERR_HANDLER;  /* Stop and jump to error handling */
+         goto I2C_writeDevMem_ERR_HANDLER;    /* Stop and jump to error handling */
          break;
    }
 
-   status = I2C_writeBufferBLK(
-         I2C_getBus( iDev),                     // I2C_Bus_t iBus,
-         I2C_getDevAddr( iDev ),                // uint8_t i2cDevAddr,
-         I2C_getMemAddr( iDev ) + offset,       // uint16_t i2cMemAddr,
-         I2C_getMemAddrSize( iDev ),            // uint8_t i2cMemAddrSize,
-         pBuffer,                               // uint8_t* pBuffer,
-         bytesToWrite,                          // uint16_t bytesToWrite
-         I2C_getPageSize( iDev )                // uint16_t pageSize
-   );
+   /* Perform the actual request to read the device */
+   switch( accessType ) {
+      case _DC3_ACCESS_BARE:
 
-I2C_writeDevMemBLK_ERR_HANDLER:   /* Handle any error that may have occurred. */
-   ERR_COND_OUTPUT( status, accType,
-         "Writing to I2C device %s on %s to mem addr 0x%02x via %s: Error 0x%08x\n",
-         CON_i2cDevToStr(iDev), CON_i2cBusToStr( I2C_getBus(iDev) ),
-         I2C_getMemAddr( iDev ) + offset, CON_accessToStr(accType), status );
+
+         /* Perform a blocking write */
+         status = I2C_writeBufferBLK(
+               I2C_getBus( iDev),                 // const I2C_Bus_t iBus,
+               I2C_getDevAddr( iDev ),            // const uint8_t i2cDevAddr,
+               I2C_getMemAddr( iDev ) + offset,   // const uint16_t i2cMemAddr,
+               I2C_getMemAddrSize( iDev ),        // const uint8_t i2cMemAddrSize,
+               I2C_getPageSize( iDev ),           // const uint16_t pageSize,
+               bytesToWrite,                      // const uint16_t bytesToWrite,
+               bufferSize,                        // const uint16_t bufferSize,
+               pBuffer,                           // const uint8_t* const pBuffer,
+               pBytesWritten
+         );
+
+         break;
+      case _DC3_ACCESS_QPC:                     /* Intentionally fall through */
+      case _DC3_ACCESS_FRT:
+         ; /* Fix for comments immediately following a case label */
+         /* It is the responsibility of the caller of this function with
+          * accessType QPC to know what event to listen for in response to this
+          * request.  See I2C1DevMgr AO for details. */
+
+         /* Create the event and directly post it to the right AO. */
+         I2CWriteReqEvt *i2cWriteReqEvt   = Q_NEW(I2CWriteReqEvt, I2C1_DEV_RAW_MEM_WRITE_SIG);
+         i2cWriteReqEvt->i2cDev           = iDev;
+         i2cWriteReqEvt->start            = offset;
+         i2cWriteReqEvt->bytes            = bytesToWrite;
+         i2cWriteReqEvt->accessType       = accessType;
+         MEMCPY(
+               i2cWriteReqEvt->dataBuf,
+               pBuffer,
+               i2cWriteReqEvt->bytes
+         );
+         QACTIVE_POST(AO_I2C1DevMgr, (QEvt *)(i2cWriteReqEvt), AO_I2C1DevMgr);
+         break;
+      case _DC3_ACCESS_NONE:                    /* Intentionally fall through */
+      default:
+         status = ERR_INVALID_ACCESS_TYPE;
+         goto I2C_writeDevMem_ERR_HANDLER;  /* Stop and jump to error handling */
+         break;
+   }
+
+I2C_writeDevMem_ERR_HANDLER:       /* Handle any error that may have occurred. */
+   ERR_COND_OUTPUT( status, accessType,
+      "Requesting a write of I2C device %s on %s at mem addr 0x%02x via %s: Error 0x%08x\n",
+      CON_i2cDevToStr(iDev), CON_i2cBusToStr( I2C_getBus(iDev) ),
+      I2C_getMemAddr( iDev ) + offset, CON_accessToStr(accessType), status );
    return( status );
 }
 

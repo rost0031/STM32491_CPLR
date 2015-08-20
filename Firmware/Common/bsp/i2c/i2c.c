@@ -512,18 +512,6 @@ void I2C_StartDMAWrite( I2C_Bus_t iBus, uint16_t wWriteLen )
    DMA_Cmd( s_I2C_Bus[iBus].i2c_dma_tx_stream, ENABLE );
 }
 
-///******************************************************************************/
-//char* I2C_busToStr( I2C_Bus_t iBus )
-//{
-//   /* Check inputs */
-//   assert_param( IS_I2C_BUS( iBus ) );
-//
-//   switch ( iBus ) {
-//      case I2CBus1: return("I2CBus1"); break;
-//      default: return(""); break;
-//   }
-//}
-
 /******************************************************************************/
 /***                      Blocking functions for I2C                        ***/
 /* These functions block when called and should only be called before any AOs */
@@ -536,22 +524,36 @@ DC3Error_t I2C_readBufferBLK(
       const uint8_t i2cDevAddr,
       const uint16_t i2cMemAddr,
       const uint8_t i2cMemAddrSize,
-      uint8_t* pBuffer,
-      uint16_t bytesToRead
+      const uint16_t bytesToRead,
+      const uint16_t bufferSize,
+      uint8_t* const pBuffer,
+      uint16_t* pBytesRead
 )
 {
-   /* Call the common setup for reads and writes for memory devices on I2C */
-   DC3Error_t status = I2C_setupMemRW(
-         iBus,
-         i2cDevAddr,
-         i2cMemAddr,
-         i2cMemAddrSize
-   );
-   if ( ERR_NONE != status ) {
+   DC3Error_t status = ERR_NONE;
+
+   /* Check buffer size and whether it's actually valid */
+   if ( bufferSize < bytesToRead ) {
+      status = ERR_MEM_BUFFER_LEN;
       return I2C_TIMEOUT_UserCallback(iBus, status);
    }
 
-   /*!< Send STRAT condition a second time */
+   if ( NULL == pBuffer ) {
+      status = ERR_MEM_NULL_VALUE;
+      return I2C_TIMEOUT_UserCallback(iBus, status);
+   }
+
+   /* Use internal counter for how many bytes were read and update to pointer to
+    * let the user know how many bytes were actually read. */
+   uint16_t bytesToReadDownCounter = bytesToRead;
+   *pBytesRead = 0;
+
+   /* Call the common setup for reads and writes for memory devices on I2C */
+   if ( ERR_NONE != ( status = I2C_setupMemRW( iBus, i2cDevAddr, i2cMemAddr, i2cMemAddrSize ) ) ) {
+      return I2C_TIMEOUT_UserCallback(iBus, status);
+   }
+
+   /*!< Send START condition a second time */
    I2C_GenerateSTART(s_I2C_Bus[iBus].i2c_bus, ENABLE);
 
    /*!< Test on EV5 and clear it (cleared by reading SR1 then writing to DR) */
@@ -571,7 +573,7 @@ DC3Error_t I2C_readBufferBLK(
       if((nI2CBusTimeout--) == 0) return I2C_TIMEOUT_UserCallback(iBus, status);
    }
 
-   while ( bytesToRead > 1 ) {
+   while ( bytesToReadDownCounter > 1 ) {
       nI2CBusTimeout = I2C_LONG_TIMEOUT;
       status = ERR_I2CBUS_RXNE_FLAG_TIMEOUT;
       while(I2C_GetFlagStatus(s_I2C_Bus[iBus].i2c_bus, I2C_FLAG_RXNE) == RESET) {
@@ -579,11 +581,12 @@ DC3Error_t I2C_readBufferBLK(
       }
 
       /* Read the byte received from the EEPROM */
-      *pBuffer = I2C_ReceiveData(s_I2C_Bus[iBus].i2c_bus);
-      pBuffer++;
+      pBuffer[*pBytesRead++] = I2C_ReceiveData(s_I2C_Bus[iBus].i2c_bus);
+//      pBuffer++;
 
-      /* Decrement the read bytes counter */
-      bytesToRead--;
+      /* Decrement the read bytes counter and increment the bytes read counter */
+      --bytesToReadDownCounter;
+//      ++(*pBytesRead);
    }
 
    /*!< Disable Acknowledgement */
@@ -603,10 +606,12 @@ DC3Error_t I2C_readBufferBLK(
    }
 
    /*!< Read the byte received from the EEPROM */
-   *pBuffer = I2C_ReceiveData(s_I2C_Bus[iBus].i2c_bus);
+//   *pBuffer = I2C_ReceiveData(s_I2C_Bus[iBus].i2c_bus);
+   pBuffer[*pBytesRead++] = I2C_ReceiveData(s_I2C_Bus[iBus].i2c_bus);
 
-   /*!< Decrement the read bytes counter */
-   bytesToRead--;
+   /* Decrement the read bytes counter and increment the bytes read counter */
+   --bytesToReadDownCounter;
+//   ++(*pBytesRead);
 
    /* Wait to make sure that STOP control bit has been cleared */
    nI2CBusTimeout = I2C_LONG_TIMEOUT;
@@ -628,16 +633,31 @@ DC3Error_t I2C_writeBufferBLK(
       const uint8_t i2cDevAddr,
       const uint16_t i2cMemAddr,
       const uint8_t i2cMemAddrSize,
-      const uint8_t* const pBuffer,
+      const uint16_t pageSize,
       const uint16_t bytesToWrite,
-      const uint16_t pageSize
+      const uint16_t bufferSize,
+      const uint8_t* const pBuffer,
+      uint16_t* pBytesWritten
 )
 {
+   DC3Error_t status = ERR_NONE;
+
+   /* Check buffer size and whether it's actually valid */
+   if ( bufferSize < bytesToWrite ) {
+      status = ERR_MEM_BUFFER_LEN;
+      return I2C_TIMEOUT_UserCallback(iBus, status);
+   }
+
+   if ( NULL == pBuffer ) {
+      status = ERR_MEM_NULL_VALUE;
+      return I2C_TIMEOUT_UserCallback(iBus, status);
+   }
+
    /* Figure out how to lay out the data over the page boundaries */
    uint8_t writeSizeFirstPage = 0;
    uint8_t writeSizeLastPage = 0;
    uint8_t writeTotalPages = 0;
-   DC3Error_t status = I2C_calcPageWriteSizes(
+   status = I2C_calcPageWriteSizes(
          &writeSizeFirstPage,
          &writeSizeLastPage,
          &writeTotalPages,
@@ -652,11 +672,15 @@ DC3Error_t I2C_writeBufferBLK(
 
    uint16_t writeSizeCurr = 0;            /* To keep track of how many bytes to
                                              write each iteration */
+
    uint16_t i2cMemAddrCurr = i2cMemAddr;  /* For updating the write address for
                                              each iteration */
 
-   uint8_t bufferIndex = 0;               /* To keep track of where in the
-                                             buffer we are for each iteration */
+   *pBytesWritten = 0;                    /* Use the passed in pointer to keep
+                                             track of where in the buffer we are
+                                             for each iteration and to let the
+                                             caller know how many bytes were
+                                             actually written */
 
    for ( uint8_t page = 0; page < writeTotalPages; page++ ) {
       /* Figure out if we are writing first, last, or any of the middle pages
@@ -675,7 +699,7 @@ DC3Error_t I2C_writeBufferBLK(
             i2cDevAddr,
             i2cMemAddrCurr,
             i2cMemAddrSize,
-            &pBuffer[bufferIndex],
+            &pBuffer[*pBytesWritten],
             writeSizeCurr
       );
 
@@ -685,7 +709,7 @@ DC3Error_t I2C_writeBufferBLK(
 
       /* Update the address and the pointer in the buffer for next iteration */
       i2cMemAddrCurr += writeSizeCurr;
-      bufferIndex += writeSizeCurr;
+      *pBytesWritten += writeSizeCurr;
    }
 
    return( status );
