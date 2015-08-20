@@ -36,18 +36,18 @@ DBG_DEFINE_THIS_MODULE( DC3_DBG_MODL_GEN ); /* For debug system to ID this modul
 
 /* Private typedefs ----------------------------------------------------------*/
 /* Private defines -----------------------------------------------------------*/
-#define QM_MEMPOOL_SIZE   32768 /**< Large memory pool since it's going into CCMRAM */
+#define QM_MEMPOOL_SIZE   16384 /**< Large memory pool since it's going into CCMRAM */
 
 /* Private macros ------------------------------------------------------------*/
 /* Private variables and Local objects ---------------------------------------*/
-static QEvt const    *l_CommMgrQueueSto[30];          /**< Storage for CommMgr event Queue */
-static QEvt const    *l_LWIPMgrQueueSto[200];         /**< Storage for LWIPMgr event Queue */
-static QEvt const    *l_SerialMgrQueueSto[200];       /**< Storage for SerialMgr event Queue */
-static QEvt const    *l_I2CBusMgrQueueSto[30][MAX_I2C_BUS];    /**< Storage for I2CBusMgr event Queue */
-static QEvt const    *l_I2C1DevMgrQueueSto[30];       /**< Storage for I2C1DevMgr event Queue */
-static QEvt const    *l_FlashMgrQueueSto[30];         /**< Storage for FlashMgr event Queue */
-static QEvt const    *l_SysMgrQueueSto[10];           /**< Storage for SysMgr event Queue */
-static QSubscrList   l_subscrSto[MAX_PUB_SIG];        /**< Storage for subscribe/publish event Queue */
+CCMRAM_VAR static QEvt const    *l_CommMgrQueueSto[30];          /**< Storage for CommMgr event Queue */
+CCMRAM_VAR static QEvt const    *l_LWIPMgrQueueSto[200];         /**< Storage for LWIPMgr event Queue */
+CCMRAM_VAR static QEvt const    *l_SerialMgrQueueSto[200];       /**< Storage for SerialMgr event Queue */
+CCMRAM_VAR static QEvt const    *l_I2CBusMgrQueueSto[30][MAX_I2C_BUS];    /**< Storage for I2CBusMgr event Queue */
+CCMRAM_VAR static QEvt const    *l_I2C1DevMgrQueueSto[30];       /**< Storage for I2C1DevMgr event Queue */
+CCMRAM_VAR static QEvt const    *l_FlashMgrQueueSto[30];         /**< Storage for FlashMgr event Queue */
+CCMRAM_VAR static QEvt const    *l_SysMgrQueueSto[10];           /**< Storage for SysMgr event Queue */
+CCMRAM_VAR static QSubscrList   l_subscrSto[MAX_PUB_SIG];        /**< Storage for subscribe/publish event Queue */
 
 /* Put the memory pool into closely coupled ram (CCMRAM).  It's very fast but
  * the drawback is that you can't DMA to/from this memory. */
@@ -61,7 +61,7 @@ QMPool * const p_glbMemPool = (QMPool *)&glbMemPool;  /**< "opaque" MemPool poin
  * \union Small Events.
  * This union is a storage for small sized events.
  */
-static union SmallEvents {
+CCMRAM_VAR static union SmallEvents {
    void   *e0;                                       /* minimum event size */
    uint8_t e1[sizeof(QEvt)];
    uint8_t e2[sizeof(I2CStatusEvt)];
@@ -78,7 +78,7 @@ static union SmallEvents {
  * \union Medium Events.
  * This union is a storage for medium sized events.
  */
-static union MediumEvents {
+CCMRAM_VAR static union MediumEvents {
    void   *e0;                                       /* minimum event size */
    uint8_t e1[sizeof(I2CWriteReqEvt)];
    uint8_t e2[sizeof(FWMetaEvt)];
@@ -90,7 +90,7 @@ static union MediumEvents {
  * \union Large Events.
  * This union is a storage for large sized events.
  */
-static union LargeEvents {
+CCMRAM_VAR static union LargeEvents {
    void   *e0;                                       /* minimum event size */
    uint8_t e1[sizeof(EthEvt)];
    uint8_t e2[sizeof(LrgDataEvt)];
