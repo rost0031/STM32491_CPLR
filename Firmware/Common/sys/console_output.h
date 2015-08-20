@@ -93,10 +93,10 @@
  * @return None
  */
 void CON_output(
-      DC3DbgLevel_t dbgLvl,
-      const char *pFuncName,
-      uint16_t wLineNumber,
-      char *fmt,
+      const DC3DbgLevel_t dbgLvl,
+      const char* pFuncName,
+      const uint16_t wLineNumber,
+      const char* fmt,
       ...
 );
 
@@ -184,7 +184,7 @@ void CON_outputWithHexStr(
       const uint16_t wLineNumber,
       const uint8_t* const pBuffer,
       const size_t bufferSize,
-      char *fmt,
+      const char* fmt,
       ...
 );
 
@@ -206,9 +206,7 @@ void CON_outputWithHexStr(
  * 4. Performs a blocking write of the buffer to the serial port without using
  * DMA and returns.
  *
- * @note 1: when printing to a @CON debug level, nothing is output.
- *
- * @note 2: This function prints directly printing to the serial console and is
+ * @note 1: This function prints directly printing to the serial console and is
  * fairly slow.  Use the xxx_slow_printf macros instead.  This function is only
  * called by the slow macros which have to be called in the initializations
  * before the QPC RTOS is running and should not be used after.
@@ -236,10 +234,89 @@ void CON_outputWithHexStr(
  * @return None
  */
 void CON_slow_output(
-      DC3DbgLevel_t dbgLvl,
-      const char *pFuncName,
-      uint16_t wLineNumber,
-      char *fmt,
+      const DC3DbgLevel_t dbgLvl,
+      const char* pFuncName,
+      const uint16_t wLineNumber,
+      const char* fmt,
+      ...
+);
+
+
+/**
+ * @brief Function that gets called by the XXX_slow_printfHexStr() macros to
+ * output a dbg/log/wrn/err directly to serial console, along with a pretty
+ * print of a given hex array.
+ *
+ * Basic console output function which should be called by the various macro
+ * functions to do the actual output to serial.  Takes in parameters that allow
+ * easy logging level specification, file, function name, line number, etc.
+ * These are prepended in front of the data that was actually sent in to be
+ * printed.
+ * 1. Gets the timestamp.  This timestamp represents when the call was actually
+ * made since by the time it's output, time can/will have passed.
+ * 2. Decides the output format based on which macro was called
+ * slow_dbg_printf(), slow_log_printf(), slow_wrn_printf(), slow_err_printf(),
+ * or isr_slow_debug_printf() and writes it to a temporary buffer.
+ * 3. Pass the va args list to get output to a buffer, making sure to not
+ * overwrite the prepended data.
+ * 4. Performs a blocking write of the buffer to the serial port without using
+ * DMA and returns.
+ *
+ * @note 1: This function prints directly printing to the serial console and is
+ * fairly slow.  Use the xxx_slow_printf macros instead.  This function is only
+ * called by the slow macros which have to be called in the initializations
+ * before the QPC RTOS is running and should not be used after.
+ *
+ * @note 2: Do not call this function directly.  Instead, call on of the
+ * DBG/LOG/WRN/ERR/CON_printfHexStr() macros.  Printout from these looks
+ * something like:
+ * DBG_LEVEL-HH:MM:SS:XXX-SomeFunctionName():fileLineNumber:User message here
+ * DBG_LEVEL-HH:MM:SS:XXX-SomeFunctionName():fileLineNumber:[0000] 16 bytes
+ * DBG_LEVEL-HH:MM:SS:XXX-SomeFunctionName():fileLineNumber:[0010] 16 bytes
+ * ...
+ * etc
+ * ...
+ *
+ * or a real life example:
+ *
+ * DBG-SLOW-00:06:40:361-I2C1DevMgr_Busy():462:Attempting to write 52 bytes:
+ * DBG-SLOW-00:06:40:361-I2C1DevMgr_Busy():462:[0000]: 0xdb 0xc8 0xfe 0xde 0x01 0x00 0xac 0x1b 0x00 0x4b 0x00 0x01 0x32 0x30 0x31 0x35
+ * DBG-SLOW-00:06:40:361-I2C1DevMgr_Busy():462:[0010]: 0x30 0x38 0x31 0x39 0x31 0x37 0x30 0x34 0x33 0x36 0x00 0x00 0x00 0x00 0x00 0x00
+ * DBG-SLOW-00:06:40:361-I2C1DevMgr_Busy():462:[0020]: 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0xe9 0x3a 0x00 0x00
+ * DBG-SLOW-00:06:40:361-I2C1DevMgr_Busy():462:[0030]: 0x03 0x00 0x00 0x00
+ *
+ * @param  [in] dbgLvl: a DC3DbgLevel_t variable that specifies the logging
+ * level to use.
+ *   @arg DBG: Lowest level of debugging.  Everything above this level is
+ *   printed.  Disabled in Release builds.  Prints "DBG" in place of "DBG_LEVEL".
+ *   @arg LOG: Basic logging. Everything above this level is printed.
+ *   Disabled in Release builds. Prints "LOG" in place of "DBG_LEVEL".
+ *   @arg WRN: Warnings.  Everything above this level is printed. Enabled in
+ *   Release builds. Prints "WRN" in place of "DBG_LEVEL".
+ *   @arg ERR: Errors. Enabled in all builds. Prints "ERR" in place of "DBG_LEVEL".
+ *   @arg CON: Regular output to the console without prepending anything.
+ *   Enabled in all builds. Just the "User message here" will be printed.  This
+ *   is meant to output serial menu items.
+ *
+ * @param [in] pFuncName: const char* pointer to the function name where the
+ * macro was called from.
+ *
+ * @param [in] wLineNumber: line number where the macro was called from.
+ *
+ * @param [in] fmt: const char* pointer to the data to be printed using the
+ * va_args type argument list.
+ *
+ * @param [in] ... : the variable list of arguments from above.  This allows
+ * the function to be called like any xprintf() type function.
+ * @return None
+ */
+void CON_slow_outputWithHexStr(
+      const DC3DbgLevel_t dbgLvl,
+      const char* pFuncName,
+      const uint16_t wLineNumber,
+      const uint8_t* const pBuffer,
+      const size_t bufferSize,
+      const char* fmt,
       ...
 );
 
