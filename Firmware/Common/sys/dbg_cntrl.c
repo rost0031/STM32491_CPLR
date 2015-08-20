@@ -39,13 +39,13 @@ Q_DEFINE_THIS_FILE                  /* For QSPY to know the name of this file */
  * #DBG_ENABLE_DEBUG_FOR_MODULE(), #DBG_DISABLE_DEBUG_FOR_MODULE(),
  * #DBG_TOGGLE_DEBUG_FOR_MODULE(), #DBG_CHECK_DEBUG_FOR_MODULE() macros only!
  */
-uint32_t  glbDbgModuleConfig = 0;
+CCMRAM_VAR uint32_t  glbDbgModuleConfig = 0;
 
 /**< This "global" variable is used to keep track of what debug output devices
  * are currently enabled/disabled.
  * @note 1: this var should not be accessed directly by the developer.
  */
-uint8_t   glbDbgDeviceConfig = 0;
+CCMRAM_VAR uint8_t   glbDbgDeviceConfig = 0;
 
 /* Private function prototypes -----------------------------------------------*/
 /* Private functions ---------------------------------------------------------*/

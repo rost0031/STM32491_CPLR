@@ -123,6 +123,7 @@
 #include <stdio.h>
 #include <string.h>
 #include "DC3CommApi.h"                          /* For the shared dbg levels */
+#include "bsp_shared.h"
 
 /* Exported defines ----------------------------------------------------------*/
 /**
@@ -160,8 +161,8 @@
 /* Exported types ------------------------------------------------------------*/
 
 /* Exported variables --------------------------------------------------------*/
-extern uint32_t glbDbgModuleConfig;    /**< Allow global access to debug info */
-extern uint8_t  glbDbgDeviceConfig;    /**< Allow global access to debug info */
+CCMRAM_VAR extern uint32_t glbDbgModuleConfig;    /**< Allow global access to debug info */
+CCMRAM_VAR extern uint8_t  glbDbgDeviceConfig;    /**< Allow global access to debug info */
 
 /* Exported constants --------------------------------------------------------*/
 /* Exported functions --------------------------------------------------------*/
