@@ -184,6 +184,8 @@ static SysMgr l_SysMgr;          /* the single instance of the Active object */
 QActive * const AO_SysMgr = (QActive *)&l_SysMgr;      /* "opaque" AO pointer */
 
 /* Private function prototypes -----------------------------------------------*/
+
+extern const DC3Error_t DB_initToDefault( const DC3AccessType_t accessType  );
 /* Private functions ---------------------------------------------------------*/
 
 /**
@@ -624,7 +626,7 @@ static QState SysMgr_AccessingDB(SysMgr * const me, QEvt const * const e) {
              * buffer space.  Once the read is complete, an event will be posted that signifies
              * the competion of the read and the data will be contained within those events.
              * See I2C1_DEV_READ/WRITE_DONE_SIG and DB_FLASH_READ_DONE_SIG handlers. */
-            me->errorCode = DB_getElem(
+            me->errorCode = DB_read(
                 ((DBReadReqEvt const *)e)->dbElem,        // What element to read
                 ((DBReadReqEvt const *)e)->accessType,    // What access to use
                 0, NULL                                   // buffer size and pointer
@@ -657,7 +659,7 @@ static QState SysMgr_AccessingDB(SysMgr * const me, QEvt const * const e) {
              * buffer space.  Once the read is complete, an event will be posted that signifies
              * the competion of the read and the data will be contained within those events.
              * See I2C1_DEV_READ/WRITE_DONE_SIG and DB_FLASH_READ_DONE_SIG handlers. */
-            me->errorCode = DB_setElem(
+            me->errorCode = DB_write(
                 ((DBWriteReqEvt const *)e)->dbElem,         // Element to write
                 ((DBWriteReqEvt const *)e)->accessType,     // Access type to use
                 MAX_DB_ELEM_SIZE,                           // Max size of buffer
@@ -783,7 +785,7 @@ static QState SysMgr_DBCheckAndSetElem(SysMgr * const me, QEvt const * const e) 
 
             /* This function will post the event to read the element.  Don't need a buffer
              * since the data will come back via an event with its own buffer. */
-            me->errorCode = DB_getElem( me->dbElem, me->accessType, 0, NULL );
+            me->errorCode = DB_read( me->dbElem, me->accessType, 0, NULL );
             status_ = Q_HANDLED();
             break;
         }
@@ -843,7 +845,7 @@ static QState SysMgr_DBCheckAndSetElem(SysMgr * const me, QEvt const * const e) 
                             me->dbElem, me->accessType, MAX_DB_ELEM_SIZE, me->dataBuf );
                         if ( ERR_NONE == me->errorCode ) {
                             /* If no errors, write the default to EEPROM */
-                            DB_setElem( me->dbElem, me->accessType,
+                            DB_write( me->dbElem, me->accessType,
                                 DB_getElemSize(me->dbElem), me->dataBuf );
                         }
                         break;

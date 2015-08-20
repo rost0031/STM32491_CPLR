@@ -91,6 +91,7 @@ static const SettingsDB_t DB_defaultEepromSettings = {
 };
 
 /* Private function prototypes -----------------------------------------------*/
+const DC3Error_t DB_initToDefault( const DC3AccessType_t accessType );
 /* Private functions ---------------------------------------------------------*/
 
 /******************************************************************************/
@@ -99,7 +100,7 @@ const DC3Error_t DB_isValid( const DC3AccessType_t accessType )
    DC3Error_t status = ERR_NONE;            /* keep track of success/failure */
 
    uint32_t db_magicWord = 0;
-   status = DB_getElem(
+   status = DB_read(
          _DC3_DB_MAGIC_WORD,
          _DC3_ACCESS_BARE,
          sizeof(db_magicWord),
@@ -120,7 +121,7 @@ const DC3Error_t DB_isValid( const DC3AccessType_t accessType )
    }
 
    uint16_t db_version = 0;
-   status = DB_getElem(
+   status = DB_read(
          _DC3_DB_VERSION,
          _DC3_ACCESS_BARE,
          sizeof(db_version),
@@ -155,7 +156,7 @@ const DC3Error_t DB_initToDefault( const DC3AccessType_t accessType )
 
    switch( accessType ) {
       case _DC3_ACCESS_BARE:
-         status = DB_setElem(
+         status = DB_write(
                _DC3_DB_MAGIC_WORD,
                accessType,
                sizeof(DB_defaultEepromSettings.dbMagicWord),
@@ -165,7 +166,7 @@ const DC3Error_t DB_initToDefault( const DC3AccessType_t accessType )
             goto DB_initToDefault_ERR_HANDLE;
          }
 
-         status = DB_setElem(
+         status = DB_write(
                _DC3_DB_VERSION,
                accessType,
                sizeof(DB_defaultEepromSettings.dbVersion),
@@ -175,7 +176,7 @@ const DC3Error_t DB_initToDefault( const DC3AccessType_t accessType )
             goto DB_initToDefault_ERR_HANDLE;
          }
 
-         status = DB_setElem(
+         status = DB_write(
                _DC3_DB_IP_ADDR,
                accessType,
                sizeof(DB_defaultEepromSettings.ipAddr),
@@ -219,7 +220,7 @@ DB_initToDefault_ERR_HANDLE:      /* Handle any error that may have occurred. */
 }
 
 /******************************************************************************/
-const DC3Error_t DB_getElem(
+const DC3Error_t DB_read(
       const DC3DBElem_t elem,
       const DC3AccessType_t accessType,
       const size_t bufSize,
@@ -234,12 +235,12 @@ const DC3Error_t DB_getElem(
    if ( _DC3_ACCESS_BARE == accessType ) {
       if ( bufSize < settingsDB[elem].size ) {
          status = ERR_MEM_BUFFER_LEN;
-         goto DB_getElemBLK_ERR_HANDLE;       /* Stop and jump to error handling */
+         goto DB_read_ERR_HANDLE;          /* Stop and jump to error handling */
       }
 
       if ( NULL == pBuffer ) {
          status = ERR_MEM_NULL_VALUE;
-         goto DB_getElemBLK_ERR_HANDLE;       /* Stop and jump to error handling */
+         goto DB_read_ERR_HANDLE;          /* Stop and jump to error handling */
       }
    }
 
@@ -272,7 +273,7 @@ const DC3Error_t DB_getElem(
          break;
       case DB_GPIO:
          status = ERR_UNIMPLEMENTED;
-         goto DB_getElemBLK_ERR_HANDLE;    /* Stop and jump to error handling */
+         goto DB_read_ERR_HANDLE;          /* Stop and jump to error handling */
          break;
       case DB_FLASH:
          ; // need this or we get "a label can only be part of a statement and
@@ -290,11 +291,11 @@ const DC3Error_t DB_getElem(
           * case and get logged as an error. */
       default:
          status = ERR_DB_ELEM_NOT_FOUND;
-         goto DB_getElemBLK_ERR_HANDLE;    /* Stop and jump to error handling */
+         goto DB_read_ERR_HANDLE;          /* Stop and jump to error handling */
          break;
    }
 
-DB_getElemBLK_ERR_HANDLE:         /* Handle any error that may have occurred. */
+DB_read_ERR_HANDLE:               /* Handle any error that may have occurred. */
    ERR_COND_OUTPUT( status, accessType,
          "Getting element %s (%d) from DB: Error 0x%08x\n",
          CON_dbElemToStr( elem ), elem, status );
@@ -302,7 +303,7 @@ DB_getElemBLK_ERR_HANDLE:         /* Handle any error that may have occurred. */
 }
 
 /******************************************************************************/
-const DC3Error_t DB_setElem(
+const DC3Error_t DB_write(
       const DC3DBElem_t elem,
       const DC3AccessType_t accessType,
       const size_t bufSize,
@@ -314,12 +315,12 @@ const DC3Error_t DB_setElem(
    /* 1. Sanity checks of buffer sizes and memory allocations. */
    if ( bufSize < settingsDB[elem].size ) {
       status = ERR_MEM_BUFFER_LEN;
-      goto DB_getElem_ERR_HANDLE;          /* Stop and jump to error handling */
+      goto DB_write_ERR_HANDLE;          /* Stop and jump to error handling */
    }
 
    if ( NULL == pBuffer ) {
       status = ERR_MEM_NULL_VALUE;
-      goto DB_getElem_ERR_HANDLE;          /* Stop and jump to error handling */
+      goto DB_write_ERR_HANDLE;          /* Stop and jump to error handling */
    }
 
    /* 2. Find where the element lives */
@@ -353,19 +354,19 @@ const DC3Error_t DB_setElem(
       case DB_GPIO:                             /* Fall through intentionally */
       case DB_FLASH:                            /* Fall through intentionally */
          status = ERR_DB_ELEM_IS_READ_ONLY;
-         goto DB_getElem_ERR_HANDLE;
+         goto DB_write_ERR_HANDLE;
          break;
          /* Add more locations here. Anything that fails will go to the default
           * case and get logged as an error. */
       default:
          status = ERR_DB_ELEM_NOT_FOUND;
-         goto DB_getElem_ERR_HANDLE;
+         goto DB_write_ERR_HANDLE;
          break;
    }
 
-DB_getElem_ERR_HANDLE:            /* Handle any error that may have occurred. */
+DB_write_ERR_HANDLE:              /* Handle any error that may have occurred. */
    ERR_COND_OUTPUT( status, accessType,
-         "Setting element %s (%d) to DB: Error 0x%08x\n",
+         "Writing element %s (%d) to DB: Error 0x%08x\n",
          CON_dbElemToStr( elem ), elem, status );
    return( status );
 }
@@ -408,65 +409,15 @@ const DC3Error_t DB_chkElem(
    /* Get the DB element's default value */
    if (ERR_NONE != (status = DB_getEepromDefaultElem( elem, accessType,
          MAX_DB_ELEM_SIZE, dataBuf))) {
-      goto DB_chkElem_ERR_HANDLE;
+      /* Make sure to jump to the ERR_HANDLE that performs GC since we now have
+       * an allocated buffer */
+      goto DB_chkElemWithGC_ERR_HANDLE;
    }
 
    /* Compare the data passed in to the default value read */
    if( !DB_isArraysMatch( pBuffer, dataBuf, DB_getElemSize(elem) ) ) {
       WRN_printf("DB element %s (%d) value doesn't match default:\n",
             CON_dbElemToStr(elem), elem);
-
-
-#if 0
-      char* printBuf = (char *)QMPool_get(p_glbMemPool, 1U);
-      if ( NULL == printBuf ) {
-         status = ERR_MEM_NULL_VALUE;
-         /* Free the dataBuf block and only then go to error handling. */
-         QMPool_put(p_glbMemPool, dataBuf);
-         goto DB_chkElem_ERR_HANDLE;
-      }
-
-      /* Allocate another array for converting hex to str so we don't waste
-       * stack space. Once again, don't forget to garbage collect */
-      uint16_t printLen = 0;
-      status = CON_hexToStr(
-            dataBuf,                             // data to convert
-            DB_getElemSize(elem),                // length of data to convert
-            printBuf,                            // where to write output
-            DC3_MAX_MEM_BLK_SIZE,                // max size of output buffer
-            &printLen,                           // size of the resulting output
-            0,                                   // no columns
-            ' ',                                 // separator
-            true                                 // bPrintX
-        );
-
-      if ( ERR_NONE == status ) {
-         WRN_printf("Default Val: bytes: [%s] :\n", printBuf);
-      } else {
-         WRN_printf("Stored in DB: bytes: Buffer too small to print...\n");
-      }
-
-      status = CON_hexToStr(
-            pBuffer,                             // data to convert
-            DB_getElemSize(elem),                // length of data to convert
-            printBuf,                            // where to write output
-            DC3_MAX_MSG_LEN,                     // max size of output buffer
-            &printLen,                           // size of the resulting output
-            0,                                   // no columns
-            ' ',                                 // separator
-            true                                 // bPrintX
-      );
-
-      if ( ERR_NONE == status ) {
-         WRN_printf("Stored in DB: bytes: [%s] :\n", printBuf);
-      } else {
-         WRN_printf("Stored in DB: bytes: Buffer too small to print...\n");
-      }
-
-      /* Garbage collect the printBuf assuming everything went ok. */
-      QMPool_put(p_glbMemPool, printBuf);
-#endif
-
       DBG_printfHexStr(dataBuf, DB_getElemSize(elem),
             "Default Value (%d bytes):\n", DB_getElemSize(elem));
       DBG_printfHexStr(pBuffer, DB_getElemSize(elem),
@@ -493,10 +444,11 @@ const DC3Error_t DB_chkElem(
       }
    }
 
+DB_chkElemWithGC_ERR_HANDLE:      /* Error handle tag with garbage collection */
    /* Garbage collect the temp data buffer */
    QMPool_put(p_glbMemPool, dataBuf);
 
-   DB_chkElem_ERR_HANDLE:
+DB_chkElem_ERR_HANDLE:            /* Handle any error that may have occurred. */
    WRN_COND_OUTPUT( status, accessType,
          "Element mismatch checking element %s (%d) in DB against default: Error 0x%08x\n",
          CON_dbElemToStr( elem ), elem, status );

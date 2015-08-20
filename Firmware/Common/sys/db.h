@@ -170,12 +170,14 @@ const DC3Error_t DB_isValid( const DC3AccessType_t accessType );
  *    @arg ERR_NONE: if no errors occurred
  *    other errors if found.
  */
-const DC3Error_t DB_initToDefault( const DC3AccessType_t accessType  );
+//const DC3Error_t DB_initToDefault( const DC3AccessType_t accessType  );
 
 /**
- * @brief   Get an element from the settings DB.
+ * @brief   Read an element from DB settings.
  *
- * This function retrieves an element from the database of settings.
+ * This function retrieves an element from the database of settings. This should
+ * only be used internally by the SysMgr AO and other functions.  Use
+ * DB_getElem() to get easier access to DB elements.
  *
  * @param  [in] elem: DC3DBElem_t that specifies what element to retrieve.
  *    @arg _DC3_DB_MAGIC_WORD: only used to validate that the DB even exists.
@@ -200,7 +202,7 @@ const DC3Error_t DB_initToDefault( const DC3AccessType_t accessType  );
  *    @arg ERR_NONE: if no errors occurred
  *    other errors if found.
  */
-const DC3Error_t DB_getElem(
+const DC3Error_t DB_read(
       const DC3DBElem_t elem,
       const DC3AccessType_t accessType,
       const size_t bufSize,
@@ -208,9 +210,11 @@ const DC3Error_t DB_getElem(
 );
 
 /**
- * @brief   Set an element in the settings DB.
+ * @brief   Write an element to DB settings.
  *
- * This function sets an element to the database of settings.
+ * This function writes an element to the database of settings. This should
+ * only be used internally by the SysMgr AO and other functions.  Use
+ * DB_setElem() to get easier access to DB elements.
  *
  * @note: Some elements in the DB cannot be set since they are in RO part of the
  * DB (RO EEPROM, GPIO, Flash, etc).
@@ -234,7 +238,7 @@ const DC3Error_t DB_getElem(
  *    @arg ERR_NONE: if no errors occurred
  *    other errors if found.
  */
-const DC3Error_t DB_setElem(
+const DC3Error_t DB_write(
       const DC3DBElem_t elem,
       const DC3AccessType_t accessType,
       const size_t bufSize,

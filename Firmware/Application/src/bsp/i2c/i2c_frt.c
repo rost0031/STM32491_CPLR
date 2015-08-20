@@ -107,8 +107,8 @@ I2C_readDevMemFRT_ERR_HANDLER:    /* Handle any error that may have occurred. */
          _DC3_ACCESS_FRT,
          "Error 0x%08x reading I2C device %s on %s at mem addr 0x%02x\n",
          status,
-         I2C_devToStr(iDev),
-         I2C_busToStr( I2C_getBus(iDev) ),
+         CON_i2cDevToStr(iDev),
+         CON_i2cBusToStr( I2C_getBus(iDev) ),
          I2C_getMemAddr( iDev ) + offset
    );
    return( status );
@@ -184,8 +184,8 @@ I2C_writeDevMemFRT_ERR_HANDLER:   /* Handle any error that may have occurred. */
          _DC3_ACCESS_FRT,
          "Error 0x%08x writing I2C device %s on %s at mem addr 0x%02x\n",
          status,
-         I2C_devToStr(iDev),
-         I2C_busToStr( I2C_getBus(iDev) ),
+         CON_i2cDevToStr(iDev),
+         CON_i2cBusToStr( I2C_getBus(iDev) ),
          I2C_getMemAddr( iDev ) + offset
    );
    return( status );
