@@ -84,7 +84,7 @@ CCMRAM_VAR static union MediumEvents {
    uint8_t e2[sizeof(FWMetaEvt)];
    uint8_t e3[sizeof(DBWriteReqEvt)];
    uint8_t e4[sizeof(DBReadDoneEvt)];
-} l_medPoolSto[10];                    /* storage for the medium event pool */
+} l_medPoolSto[20];                    /* storage for the medium event pool */
 
 /**
  * \union Large Events.
@@ -95,7 +95,7 @@ CCMRAM_VAR static union LargeEvents {
    uint8_t e1[sizeof(EthEvt)];
    uint8_t e2[sizeof(LrgDataEvt)];
    uint8_t e3[sizeof(FWDataEvt)];
-} l_lrgPoolSto[100];                    /* storage for the large event pool */
+} l_lrgPoolSto[138];                    /* storage for the large event pool */
 
 /* Private function prototypes -----------------------------------------------*/
 /* Private functions ---------------------------------------------------------*/
