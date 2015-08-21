@@ -581,12 +581,10 @@ DC3Error_t I2C_readBufferBLK(
       }
 
       /* Read the byte received from the EEPROM */
-      pBuffer[*pBytesRead++] = I2C_ReceiveData(s_I2C_Bus[iBus].i2c_bus);
-//      pBuffer++;
+      pBuffer[(*pBytesRead)++] = I2C_ReceiveData(s_I2C_Bus[iBus].i2c_bus);
 
       /* Decrement the read bytes counter and increment the bytes read counter */
       --bytesToReadDownCounter;
-//      ++(*pBytesRead);
    }
 
    /*!< Disable Acknowledgement */
@@ -606,12 +604,10 @@ DC3Error_t I2C_readBufferBLK(
    }
 
    /*!< Read the byte received from the EEPROM */
-//   *pBuffer = I2C_ReceiveData(s_I2C_Bus[iBus].i2c_bus);
-   pBuffer[*pBytesRead++] = I2C_ReceiveData(s_I2C_Bus[iBus].i2c_bus);
+   pBuffer[(*pBytesRead)++] = I2C_ReceiveData(s_I2C_Bus[iBus].i2c_bus);
 
    /* Decrement the read bytes counter and increment the bytes read counter */
    --bytesToReadDownCounter;
-//   ++(*pBytesRead);
 
    /* Wait to make sure that STOP control bit has been cleared */
    nI2CBusTimeout = I2C_LONG_TIMEOUT;
@@ -682,17 +678,26 @@ DC3Error_t I2C_writeBufferBLK(
                                              caller know how many bytes were
                                              actually written */
 
+   dbg_slow_printf("1st page: %d, Last page: %d, total: %d\n",
+         writeSizeFirstPage, writeSizeLastPage, writeTotalPages);
+
    for ( uint8_t page = 0; page < writeTotalPages; page++ ) {
       /* Figure out if we are writing first, last, or any of the middle pages
        * and set the current write size accordingly. */
       if ( page == 0 ) {                                        /* First page */
          writeSizeCurr = writeSizeFirstPage;
       } else if (page == (writeTotalPages-1)) {                  /* Last page */
-         writeSizeCurr = writeSizeLastPage;
+         if ( 0 == writeSizeLastPage ) {
+            writeSizeCurr = pageSize;
+         } else {
+            writeSizeCurr = writeSizeLastPage;
+         }
       } else {                                            /* Some middle page */
          writeSizeCurr = pageSize;
       }
 
+      dbg_slow_printf("Writing %d bytes to page %d to index %d\n",
+            writeSizeCurr, page, *pBytesWritten);
       /* Do the write for this loop iteration */
       status = I2C_writePageBLK(
             iBus,
@@ -709,7 +714,7 @@ DC3Error_t I2C_writeBufferBLK(
 
       /* Update the address and the pointer in the buffer for next iteration */
       i2cMemAddrCurr += writeSizeCurr;
-      *pBytesWritten += writeSizeCurr;
+      (*pBytesWritten) += writeSizeCurr;
    }
 
    return( status );
@@ -737,7 +742,6 @@ static DC3Error_t I2C_writePageBLK(
    }
 
    while( bytesToWrite ) {
-
       /* Write a byte */
       I2C_SendData(s_I2C_Bus[iBus].i2c_bus, *pBuffer);
 

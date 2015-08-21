@@ -279,6 +279,43 @@ bool ARG_userInputArr(
    return true;
 }
 
+/******************************************************************************/
+bool ARG_userAccessType(
+      DC3AccessType_t* pAccessType,
+      const string& msg
+)
+{
+   stringstream ss;
+   ss << msg << endl; // print the explanation msg and ask for the actual value
+   ss << "Type the number next the access type you would like to use: " << endl
+      << "Type 'cancel' to abort or 'default' to use the default access type (QPC)" << endl
+      << "1 - QPC: access using QPC events (default)" << endl
+      << "2 - FRT: access using FreeRTOS queues (only available in Application)" << endl
+      << "3 - Bare metal: access using bare metal access.  This is risky if other things are running." << endl;
+   CON_print( ss.str() );
+
+   string input;
+   cin >> input;                             // Read input from user as a string
+
+   if ( boost::iequals(input, "cancel") ) {
+      return false;
+   } else if ( boost::iequals(input, "default") ) {
+      *pAccessType = _DC3_ACCESS_QPC;
+   } else if ( boost::iequals(input, "1") ) {
+      *pAccessType = _DC3_ACCESS_QPC;
+   } else if ( boost::iequals(input, "2") ) {
+      *pAccessType = _DC3_ACCESS_FRT;
+   } else if ( boost::iequals(input, "3") ) {
+      *pAccessType = _DC3_ACCESS_BARE;
+   } else {
+      WRN_out << "Unknown input: '" << input << "'  Ignoring...";
+      return false;
+   }
+
+   // If we got here, everything parsed ok.
+   return true;
+}
+
 /* Private class prototypes --------------------------------------------------*/
 /* Private classes -----------------------------------------------------------*/
 

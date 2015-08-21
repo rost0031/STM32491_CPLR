@@ -159,7 +159,7 @@ void ARG_parseHexStr(
 );
 
 /**
- * @brief   A template function that interactively requests user input an array
+ * @brief   A function that interactively requests user input an array
  * of numbers.
  *
  * @throw <std::exception> if user passes in invalid values or format
@@ -175,6 +175,20 @@ bool ARG_userInputArr(
       uint8_t* pDataArr,
       size_t* pDataArrLen,
       const size_t nDataArrMaxSize,
+      const string& msg
+);
+
+/**
+ * @brief   A function that interactively requests user input the access type to
+ * use.
+ *
+ * @param [out] *pAccessType: DC3AccessType_t pointer to array where to store the output
+ * @param [in] msg: const string ref of the message to prompt the user with
+ *
+ * @return  None
+ */
+bool ARG_userAccessType(
+      DC3AccessType_t* pAccessType,
       const string& msg
 );
 

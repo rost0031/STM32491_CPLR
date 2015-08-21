@@ -1015,14 +1015,31 @@ static QState CommMgr_ValidateMsg(CommMgr * const me, QEvt const * const e) {
                     me->msgPayloadName = _DC3I2CDataPayloadMsg;
                     me->basicMsg._msgPayload = me->msgPayloadName;
 
-                    /* Create the event and directly post it to the right AO. */
-                    I2CReadReqEvt *i2cReadReqEvt  = Q_NEW(I2CReadReqEvt, I2C1_DEV_RAW_MEM_READ_SIG);
-                    i2cReadReqEvt->i2cDev         = me->payloadMsgUnion.i2cDataPayload._i2cDev;
-                    i2cReadReqEvt->start          = me->payloadMsgUnion.i2cDataPayload._start;
-                    i2cReadReqEvt->bytes          = me->payloadMsgUnion.i2cDataPayload._nBytes;
-                    i2cReadReqEvt->accessType     = me->payloadMsgUnion.i2cDataPayload._accType;
-                    QACTIVE_POST(AO_I2C1DevMgr, (QEvt *)(i2cReadReqEvt), me);
-                    status_ = Q_TRAN(&CommMgr_WaitForRespFromI2C);
+
+                    /* ${AOs::CommMgr::SM::Active::Busy::ValidateMsg::MSG_PROCESS::[I2CRead?]::[ValidPayload?]::[BareMetal?]} */
+                    if (_DC3_ACCESS_BARE == me->payloadMsgUnion.i2cDataPayload._accType) {
+                        me->payloadMsgUnion.i2cDataPayload._errorCode = I2C_readDevMem(
+                              me->payloadMsgUnion.i2cDataPayload._accType,
+                              me->payloadMsgUnion.i2cDataPayload._i2cDev,
+                              me->payloadMsgUnion.i2cDataPayload._start,
+                              me->payloadMsgUnion.i2cDataPayload._nBytes,
+                              MAX_I2C_READ_LEN,
+                              (uint8_t *)me->payloadMsgUnion.i2cDataPayload._dataBuf,
+                              (uint16_t *)&(me->payloadMsgUnion.i2cDataPayload._dataBuf_len)
+                        );
+                        status_ = Q_TRAN(&CommMgr_Idle);
+                    }
+                    /* ${AOs::CommMgr::SM::Active::Busy::ValidateMsg::MSG_PROCESS::[I2CRead?]::[ValidPayload?]::[else]} */
+                    else {
+                        /* Create the event and directly post it to the right AO. */
+                        I2CReadReqEvt *i2cReadReqEvt  = Q_NEW(I2CReadReqEvt, I2C1_DEV_RAW_MEM_READ_SIG);
+                        i2cReadReqEvt->i2cDev         = me->payloadMsgUnion.i2cDataPayload._i2cDev;
+                        i2cReadReqEvt->start          = me->payloadMsgUnion.i2cDataPayload._start;
+                        i2cReadReqEvt->bytes          = me->payloadMsgUnion.i2cDataPayload._nBytes;
+                        i2cReadReqEvt->accessType     = me->payloadMsgUnion.i2cDataPayload._accType;
+                        QACTIVE_POST(AO_I2C1DevMgr, (QEvt *)(i2cReadReqEvt), me);
+                        status_ = Q_TRAN(&CommMgr_WaitForRespFromI2C);
+                    }
                 }
                 /* ${AOs::CommMgr::SM::Active::Busy::ValidateMsg::MSG_PROCESS::[I2CRead?]::[else]} */
                 else {
@@ -1045,21 +1062,38 @@ static QState CommMgr_ValidateMsg(CommMgr * const me, QEvt const * const e) {
                     me->msgPayloadName = _DC3StatusPayloadMsg;
                     me->basicMsg._msgPayload = me->msgPayloadName;
 
-                    /* Create the event and directly post it to the right AO. */
-                    I2CWriteReqEvt *i2cWriteReqEvt  = Q_NEW(I2CWriteReqEvt, I2C1_DEV_RAW_MEM_WRITE_SIG);
-                    i2cWriteReqEvt->i2cDev         = me->payloadMsgUnion.i2cDataPayload._i2cDev;
-                    i2cWriteReqEvt->start          = me->payloadMsgUnion.i2cDataPayload._start;
-                    i2cWriteReqEvt->accessType     = me->payloadMsgUnion.i2cDataPayload._accType;
-                    i2cWriteReqEvt->bytes          = me->payloadMsgUnion.i2cDataPayload._nBytes;
-                    MEMCPY(
-                        i2cWriteReqEvt->dataBuf,
-                        me->payloadMsgUnion.i2cDataPayload._dataBuf,
-                        me->payloadMsgUnion.i2cDataPayload._dataBuf_len
-                    );
 
-                    QACTIVE_POST(AO_I2C1DevMgr, (QEvt *)(i2cWriteReqEvt), me);
+                    /* ${AOs::CommMgr::SM::Active::Busy::ValidateMsg::MSG_PROCESS::[I2CWrite?]::[ValidPayload?]::[BareMetal?]} */
+                    if (_DC3_ACCESS_BARE == me->payloadMsgUnion.i2cDataPayload._accType) {
+                        me->payloadMsgUnion.i2cDataPayload._errorCode = I2C_writeDevMem(
+                              me->payloadMsgUnion.i2cDataPayload._accType,
+                              me->payloadMsgUnion.i2cDataPayload._i2cDev,
+                              me->payloadMsgUnion.i2cDataPayload._start,
+                              me->payloadMsgUnion.i2cDataPayload._nBytes,
+                              me->payloadMsgUnion.i2cDataPayload._dataBuf_len,
+                              (uint8_t *)me->payloadMsgUnion.i2cDataPayload._dataBuf,
+                              (uint16_t *)&(me->payloadMsgUnion.i2cDataPayload._dataBuf_len)
+                        );
+                        status_ = Q_TRAN(&CommMgr_Idle);
+                    }
+                    /* ${AOs::CommMgr::SM::Active::Busy::ValidateMsg::MSG_PROCESS::[I2CWrite?]::[ValidPayload?]::[else]} */
+                    else {
+                        /* Create the event and directly post it to the right AO. */
+                        I2CWriteReqEvt *i2cWriteReqEvt  = Q_NEW(I2CWriteReqEvt, I2C1_DEV_RAW_MEM_WRITE_SIG);
+                        i2cWriteReqEvt->i2cDev         = me->payloadMsgUnion.i2cDataPayload._i2cDev;
+                        i2cWriteReqEvt->start          = me->payloadMsgUnion.i2cDataPayload._start;
+                        i2cWriteReqEvt->accessType     = me->payloadMsgUnion.i2cDataPayload._accType;
+                        i2cWriteReqEvt->bytes          = me->payloadMsgUnion.i2cDataPayload._nBytes;
+                        MEMCPY(
+                            i2cWriteReqEvt->dataBuf,
+                            me->payloadMsgUnion.i2cDataPayload._dataBuf,
+                            me->payloadMsgUnion.i2cDataPayload._dataBuf_len
+                        );
 
-                    status_ = Q_TRAN(&CommMgr_WaitForRespFromI2C);
+                        QACTIVE_POST(AO_I2C1DevMgr, (QEvt *)(i2cWriteReqEvt), me);
+
+                        status_ = Q_TRAN(&CommMgr_WaitForRespFromI2C);
+                    }
                 }
                 /* ${AOs::CommMgr::SM::Active::Busy::ValidateMsg::MSG_PROCESS::[I2CWrite?]::[else]} */
                 else {

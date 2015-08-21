@@ -411,6 +411,15 @@ APIError_t MENU_parseAndExecAction(
             break;
          }
 
+         // Ask user what access method to use
+         if ( !ARG_userAccessType( &acc, "Choose the access type to access I2C devices with") ) {
+            stringstream ss;
+            ss << "*** Not performing operation '" << enumToString(menuAction)
+                  << "'. ***";
+            CON_print(ss.str());
+            break;
+         }
+
          // Don't allocate array here since invalid inputs might cause it to not
          // be used.
          uint8_t *buffer;
