@@ -78,6 +78,7 @@ private:
    struct DC3FlashDataPayloadMsg m_flashDataPayloadMsg;
    struct DC3I2CDataPayloadMsg   m_i2cDataPayloadMsg;
    struct DC3DbgPayloadMsg       m_dbgPayloadMsg;
+   struct DC3DBDataPayloadMsg    m_dbPayloadMsg;
 
    uint8_t dataBuf[1000];
    int dataLen;
@@ -430,6 +431,38 @@ public:
     *    other error codes if failure.
     */
    APIError_t DC3_resetDB( DC3Error_t* status );
+
+   /**
+    * @brief   Blocking cmd to get an element from DB settings on the DC3
+    *
+    * @param [out] *status: DC3Error_t pointer to the returned status of from
+    * the DC3 board.
+    *    @arg  ERR_NONE: success.
+    *    other error codes if failure.
+    * @note: unless this variable is set to ERR_NONE at the completion, the
+    * results of other returned data should not be trusted.
+    *
+    * @param [in] elem: const DC3DBElem_t specifying the element to get.
+    * @param [in] acc: const DC3AccessType_t specifying the access type to use.
+    * @param [in] bufferSize: const size_t specifying the max size of the buffer
+    * where to write the data to.
+    * @param [in|out] *pBuffer: uint8_t const pointer to the storage where to store
+    * retrieved DB element data.
+    * @param [in|out] *pBytesInBuffer: size_t pointer to how many bytes are in
+    * the buffer upon successful DB element read.
+    *
+    * @return: APIError_t status of the client executing the command.
+    *    @arg  API_ERR_NONE: success
+    *    other error codes if failure.
+    */
+   APIError_t DC3_getDbElem(
+         DC3Error_t* status,
+         const DC3DBElem_t elem,
+         const DC3AccessType_t  acc,
+         const size_t bufferSize,
+         uint8_t* const pBuffer,
+         size_t* pBytesInBuffer
+   );
 
    /****************************************************************************
     *                    Client control functionality

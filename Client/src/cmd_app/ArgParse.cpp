@@ -316,6 +316,158 @@ bool ARG_userAccessType(
    return true;
 }
 
+/******************************************************************************/
+bool ARG_userDbElem(
+      DC3DBElem_t* pDbElem,
+      const bool write,
+      const string& msg
+)
+{
+   stringstream ss;
+   ss << msg << endl; // print the explanation msg and ask for the actual value
+   ss << "Type the number of the  DB element you would like to access: " << endl
+      << "Type 'cancel' to abort" << endl;
+   if( write ) {
+      ss << " 1 - " << setw(22) << setfill(' ') << enumToString(_DC3_DB_MAGIC_WORD)
+         << ": the database magic word that allows self checks to see if DB is valid" << endl
+         << " 2 - " << setw(22) << setfill(' ') << enumToString(_DC3_DB_VERSION)
+         << ": version of DB settings" << endl
+         << " 4 - " << setw(22) << setfill(' ') << enumToString(_DC3_DB_IP_ADDR)
+         << ": IP address stored in the DB" << endl
+         << " 6 - " << setw(22) << setfill(' ') << enumToString(_DC3_DB_BOOT_MAJ)
+         << ": Major version of the Bootloader stored in DB" << endl
+         << " 7 - " << setw(22) << setfill(' ') << enumToString(_DC3_DB_BOOT_MIN)
+         << ": Minor version of the Bootloader stored in DB" << endl
+         << " 8 - " << setw(22) << setfill(' ') << enumToString(_DC3_DB_BOOT_BUILD_DATETIME)
+         << ": Build datetime of the Bootloader stored in DB" << endl
+         << "12 - " << setw(22) << setfill(' ') << enumToString(_DC3_DB_FPGA_MAJ)
+         << ": Major version of the FPGA stored in the DB" << endl
+         << "13 - " << setw(22) << setfill(' ') << enumToString(_DC3_DB_FPGA_MIN)
+         << ": Minor version of the FPGA stored in the DB" << endl
+         << "14 - " << setw(22) << setfill(' ') << enumToString(_DC3_DB_FPGA_BUILD_DATETIME)
+         << ": Build datetime of the FPGA stored in the DB" << endl
+         << "15 - " << setw(22) << setfill(' ') << enumToString(_DC3_DB_DBG_MODULES)
+         << ": Debug module enable/disable settings stored in the DB" << endl
+         << "16 - " << setw(22) << setfill(' ') << enumToString(_DC3_DB_DBG_DEVICES)
+         << ": Debug device enable/disable settings stored in the DB" << endl;
+   } else {
+      ss << " 1 - " << setw(22) << setfill(' ') << enumToString(_DC3_DB_MAGIC_WORD)
+         << ": the database magic word that allows self checks to see if DB is valid" << endl
+         << " 2 - " << setw(22) << setfill(' ') << enumToString(_DC3_DB_VERSION)
+         << ": version of DB settings" << endl
+         << " 3 - " << setw(22) << setfill(' ') << enumToString(_DC3_DB_MAC_ADDR)
+         << ": MAC address stored in the RO section of the DB" << endl
+         << " 4 - " << setw(22) << setfill(' ') << enumToString(_DC3_DB_IP_ADDR)
+         << ": IP address stored in the DB" << endl
+         << " 5 - " << setw(22) << setfill(' ') << enumToString(_DC3_DB_SN)
+         << ": Serial number stored in the RO section of the DB" << endl
+         << " 6 - " << setw(22) << setfill(' ') << enumToString(_DC3_DB_BOOT_MAJ)
+         << ": Major version of the Bootloader stored in DB" << endl
+         << " 7 - " << setw(22) << setfill(' ') << enumToString(_DC3_DB_BOOT_MIN)
+         << ": Minor version of the Bootloader stored in DB" << endl
+         << " 8 - " << setw(22) << setfill(' ') << enumToString(_DC3_DB_BOOT_BUILD_DATETIME)
+         << ": Build datetime of the Bootloader stored in DB" << endl
+         << " 9 - " << setw(22) << setfill(' ') << enumToString(_DC3_DB_APPL_MAJ)
+         << ": Major version of the Application stored in RO section of the DB" << endl
+         << "10 - " << setw(22) << setfill(' ') << enumToString(_DC3_DB_APPL_MIN)
+         << ": Minor version of the Application stored in RO section of the DB" << endl
+         << "11 - " << setw(22) << setfill(' ') << enumToString(_DC3_DB_APPL_BUILD_DATETIME)
+         << ": Build datetime of the Application stored in RO section of the DB" << endl
+         << "12 - " << setw(22) << setfill(' ') << enumToString(_DC3_DB_FPGA_MAJ)
+         << ": Major version of the FPGA stored in the DB" << endl
+         << "13 - " << setw(22) << setfill(' ') << enumToString(_DC3_DB_FPGA_MIN)
+         << ": Minor version of the FPGA stored in the DB" << endl
+         << "14 - " << setw(22) << setfill(' ') << enumToString(_DC3_DB_FPGA_BUILD_DATETIME)
+         << ": Build datetime of the FPGA stored in the DB" << endl
+         << "15 - " << setw(22) << setfill(' ') << enumToString(_DC3_DB_DBG_MODULES)
+         << ": Debug module enable/disable settings stored in the DB" << endl
+         << "16 - " << setw(22) << setfill(' ') << enumToString(_DC3_DB_DBG_DEVICES)
+         << ": Debug device enable/disable settings stored in the DB" << endl;
+   }
+
+   CON_print( ss.str() );
+
+   string input;
+   cin >> input;                             // Read input from user as a string
+
+   if ( boost::iequals(input, "cancel") ) {
+      return false;
+   } else if ( boost::iequals(input, "1") ) {
+      *pDbElem = _DC3_DB_MAGIC_WORD;
+      return true;
+   } else if ( boost::iequals(input, "2") ) {
+      *pDbElem = _DC3_DB_VERSION;
+      return true;
+   } else if ( boost::iequals(input, "3") ) {
+      *pDbElem = _DC3_DB_MAC_ADDR;
+      if(write) {
+         ERR_out << enumToString(*pDbElem) << " DB element is Read Only. Aborting. ";
+      } else {
+         return true;
+      }
+   } else if ( boost::iequals(input, "4") ) {
+      *pDbElem = _DC3_DB_IP_ADDR;
+      return true;
+   } else if ( boost::iequals(input, "5") ) {
+      *pDbElem = _DC3_DB_SN;
+      if(write) {
+         ERR_out << enumToString(*pDbElem) << " DB element is Read Only. Aborting. ";
+      } else {
+         return true;
+      }
+   } else if ( boost::iequals(input, "6") ) {
+      *pDbElem = _DC3_DB_BOOT_MAJ;
+      return true;
+   } else if ( boost::iequals(input, "7") ) {
+      *pDbElem = _DC3_DB_BOOT_MIN;
+      return true;
+   } else if ( boost::iequals(input, "8") ) {
+      *pDbElem = _DC3_DB_BOOT_BUILD_DATETIME;
+      return true;
+   } else if ( boost::iequals(input, "9") ) {
+      *pDbElem = _DC3_DB_APPL_MAJ;
+      if(write) {
+         ERR_out << enumToString(*pDbElem) << " DB element is Read Only. Aborting. ";
+      } else {
+         return true;
+      }
+   } else if ( boost::iequals(input, "10") ) {
+      *pDbElem = _DC3_DB_APPL_MIN;
+      if(write) {
+         ERR_out << enumToString(*pDbElem) << " DB element is Read Only. Aborting. ";
+      } else {
+         return true;
+      }
+   } else if ( boost::iequals(input, "11") ) {
+      *pDbElem = _DC3_DB_APPL_BUILD_DATETIME;
+      if(write) {
+         ERR_out << enumToString(*pDbElem) << " DB element is Read Only. Aborting. ";
+      } else {
+         return true;
+      }
+   } else if ( boost::iequals(input, "12") ) {
+      *pDbElem = _DC3_DB_FPGA_MAJ;
+      return true;
+   } else if ( boost::iequals(input, "13") ) {
+      *pDbElem = _DC3_DB_FPGA_MIN;
+      return true;
+   } else if ( boost::iequals(input, "14") ) {
+      *pDbElem = _DC3_DB_FPGA_BUILD_DATETIME;
+      return true;
+   } else if ( boost::iequals(input, "15") ) {
+      *pDbElem = _DC3_DB_DBG_MODULES;
+      return true;
+   } else if ( boost::iequals(input, "16") ) {
+      *pDbElem = _DC3_DB_DBG_DEVICES;
+      return true;
+   } else {
+      WRN_out << "Unknown input: '" << input << "'  Ignoring...";
+      return false;
+   }
+
+   // If we got here, everything parsed ok.
+   return true;
+}
 /* Private class prototypes --------------------------------------------------*/
 /* Private classes -----------------------------------------------------------*/
 

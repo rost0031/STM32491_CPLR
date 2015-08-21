@@ -509,6 +509,80 @@ APIError_t CMD_runResetDB(
 
    return( statusAPI );
 }
+
+/******************************************************************************/
+APIError_t CMD_runGetDbElem(
+      ClientApi* client,
+      DC3Error_t* statusDC3,
+      const DC3DBElem_t elem,
+      const DC3AccessType_t  acc,
+      const size_t bufferSize,
+      uint8_t* const pBuffer,
+      size_t* pBytesInBuffer
+)
+{
+   APIError_t statusAPI = API_ERR_NONE;
+   stringstream ss;
+   string cmd = "get_db_elem";    // This is the name of the command we are running
+   ss << "*** Starting "<< cmd << " command to get a DC3 Database element ***";
+   CON_print(ss.str());
+
+   ss.str(std::string()); // It's the only way to actually clear the stringstream
+
+   ss << "*** "; // Prepend so start and end of command output are easily visible
+
+   // Execute (and block) on this command
+   if( API_ERR_NONE == (statusAPI = client->DC3_getDbElem(statusDC3, elem, acc, bufferSize, pBuffer, pBytesInBuffer ))) {
+
+      ss << "Finished " << cmd << ". Command " << endl;
+      if (ERR_NONE == *statusDC3) {
+         ss << "completed with no errors. ***" << endl;
+         ss << "*** DB element " << enumToString(elem) << " value = ***" << endl;
+
+         ss << "*** Raw bytes: [ ";
+         for ( unsigned int i = 0; i < *pBytesInBuffer; i++ ) {
+            ss << "0x" << hex << setfill('0') << setw(2) << unsigned(pBuffer[i]) << " ";
+         }
+         ss << " ]" << dec;
+
+         // Some elements can be printed as strings
+         if( elem == _DC3_DB_BOOT_BUILD_DATETIME ||
+             elem == _DC3_DB_APPL_BUILD_DATETIME ||
+             elem == _DC3_DB_FPGA_BUILD_DATETIME ) {
+            ss << " ***" << endl << "*** As string: " << pBuffer;
+         } else if ( elem == _DC3_DB_IP_ADDR ) {
+            ss << " ***" << endl << "*** As IP address: ";
+            for ( unsigned int i = 0; i < *pBytesInBuffer; i++ ) {
+               ss << unsigned(pBuffer[i]);
+               if ( i < ((*pBytesInBuffer) - 1) ) {
+                  ss << ".";
+               }
+            }
+         } else if ( elem == _DC3_DB_MAC_ADDR ) {
+            ss << " ***" << endl << "*** As MAC Address: [ ";
+            for ( unsigned int i = 0; i < *pBytesInBuffer; i++ ) {
+               ss << hex << setfill('0') << setw(2) << unsigned(pBuffer[i]);
+               if ( i < ((*pBytesInBuffer) - 1) ) {
+                  ss << ":";
+               }
+            }
+         }
+
+      } else {
+         ss << "FAILED with ERROR: 0x" << setw(8) << setfill('0') << hex << *statusDC3 << dec;
+      }
+
+   } else {
+      ss << "Unable to complete " << cmd << " cmd to DC3 due to API error: "
+            << "0x" << setw(8) << setfill('0') << hex << statusAPI << dec;
+
+   }
+
+   ss << " ***"; // Append so start and end of command output are easily visible
+   CON_print(ss.str());                                      // output to screen
+
+   return( statusAPI );
+}
 /* Private class prototypes --------------------------------------------------*/
 /* Private classes -----------------------------------------------------------*/
 

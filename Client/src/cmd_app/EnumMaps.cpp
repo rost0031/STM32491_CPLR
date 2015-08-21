@@ -183,6 +183,27 @@ template<> std::map<ApiDbgModuleSrc_t, std::string> enumStrings<ApiDbgModuleSrc_
       { CLI_SRC_DC3    , "DC3"   },
 };
 
+/**
+ * @brief String values for DC3DBElem_t enums
+ */
+template<> std::map<DC3DBElem_t, std::string> enumStrings<DC3DBElem_t>::data = {
+      { _DC3_DB_MAGIC_WORD          , "DBMagicWord"         },
+      { _DC3_DB_VERSION             , "DBVersion"           },
+      { _DC3_DB_MAC_ADDR            , "DBMacAddress"        },
+      { _DC3_DB_IP_ADDR             , "DBIPAddress"         },
+      { _DC3_DB_SN                  , "DBSerialNumber"      },
+      { _DC3_DB_BOOT_MAJ            , "DBBootMajorVersion"  },
+      { _DC3_DB_BOOT_MIN            , "DBBootMinorVersion"  },
+      { _DC3_DB_BOOT_BUILD_DATETIME , "DBBootBuildDatetime" },
+      { _DC3_DB_APPL_MAJ            , "DBApplMajorVersion"  },
+      { _DC3_DB_APPL_MIN            , "DBApplMinorVersion"  },
+      { _DC3_DB_APPL_BUILD_DATETIME , "DBApplBuildDatetime" },
+      { _DC3_DB_FPGA_MAJ            , "DBFPGAMajorVersion"  },
+      { _DC3_DB_FPGA_MIN            , "DBFPGAMinorVersion"  },
+      { _DC3_DB_FPGA_BUILD_DATETIME , "DBFPGABuildDatetime" },
+      { _DC3_DB_DBG_MODULES         , "DBDbgModuleSettings" },
+      { _DC3_DB_DBG_DEVICES         , "DBDbgDeviceSettings" },
+};
 
 /**
  * @brief String values for MenuAction_t enums

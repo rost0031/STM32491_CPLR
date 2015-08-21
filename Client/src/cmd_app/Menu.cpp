@@ -143,8 +143,10 @@ APIError_t MENU_run( ClientApi *client )
    root->findChild("SYS")->findChild("DBS")->addChild( "RDD", "(R)estore DC3 debugging device settings to defaults in DB", MENU_DB_RESET_DBG_DEV );
    root->findChild("SYS")->findChild("DBS")->addChild( "SDM", "(S)ave DC3 debug module settings to the DB", MENU_DB_SAVE_DBG_MOD );
    root->findChild("SYS")->findChild("DBS")->addChild( "RDM", "(R)estore DC3 debug module settings to defaults in DB", MENU_DB_RESET_DBG_MOD );
-
+   root->findChild("SYS")->findChild("DBS")->addChild( "GET", "(Get) an element in the DC3 DB", MENU_DB_GET_ELEM );
+   root->findChild("SYS")->findChild("DBS")->addChild( "SET", "(Set) an element in the DC3 DB", MENU_DB_SET_ELEM );
    root->findChild("SYS")->findChild("DBS")->addChild( "RST", "(R)e(s)e(t) DC3 settings Database (!!!WARNING, this wipes the EEPROM!!!)", MENU_DB_RESET );
+
 
    // Finalize the menu node numbers.  This has to be called after all the items
    // have been added to the menu.  This function numbers all the nodes to allow
@@ -573,6 +575,42 @@ APIError_t MENU_parseAndExecAction(
       case MENU_DC3_DIS_SER_DBG:
          status = CMD_runSetDbgDevice( client, &statusDC3, _DC3_Serial, false );
          break;
+      case MENU_DB_GET_ELEM: {
+         DC3DBElem_t elem;
+         // Ask user what DB element to access
+         if ( !ARG_userDbElem( &elem, false, "Choose which DB element to get") ) {
+            stringstream ss;
+            ss << "*** Not performing operation '" << enumToString(menuAction)
+                        << "'. ***";
+            CON_print(ss.str());
+            break;
+         }
+
+         DC3AccessType_t acc = _DC3_ACCESS_QPC;   // set to a default arg of QPC
+
+         size_t nMaxBufferSize = 64;
+         uint8_t *buffer = new uint8_t[nMaxBufferSize];
+         size_t bytesInBuffer = 0;
+
+         status = CMD_runGetDbElem( client, &statusDC3, elem, acc,
+               nMaxBufferSize, buffer, &bytesInBuffer );
+
+         delete[] buffer;
+
+         break;
+      }
+      case MENU_DB_SET_ELEM: {
+         DC3DBElem_t elem;
+         // Ask user what DB element to access
+         if ( !ARG_userDbElem( &elem, true, "Choose which DB element to set") ) {
+            stringstream ss;
+            ss << "*** Not performing operation '" << enumToString(menuAction)
+                        << "'. ***";
+            CON_print(ss.str());
+            break;
+         }
+         break;
+      }
       case MENU_DB_RESET:
          status = CMD_runResetDB( client, &statusDC3 );
          break;

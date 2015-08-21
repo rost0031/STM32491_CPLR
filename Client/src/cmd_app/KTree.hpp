@@ -177,6 +177,8 @@ typedef enum MenuActions {
    MENU_DB_RESET_DBG_DEV,
    MENU_DB_SAVE_DBG_MOD,
    MENU_DB_RESET_DBG_MOD,
+   MENU_DB_GET_ELEM,
+   MENU_DB_SET_ELEM,
    MENU_DB_RESET,
 } MenuAction_t;
 

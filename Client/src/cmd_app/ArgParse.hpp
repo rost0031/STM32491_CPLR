@@ -182,13 +182,27 @@ bool ARG_userInputArr(
  * @brief   A function that interactively requests user input the access type to
  * use.
  *
- * @param [out] *pAccessType: DC3AccessType_t pointer to array where to store the output
+ * @param [out] *pAccessType: DC3AccessType_t pointer to where to store the output
  * @param [in] msg: const string ref of the message to prompt the user with
  *
  * @return  None
  */
 bool ARG_userAccessType(
       DC3AccessType_t* pAccessType,
+      const string& msg
+);
+
+/**
+ * @brief   A function that interactively requests user input a DB element
+ *
+ * @param [out] *pDbElem: DC3DBElem_t pointer to where to store the output
+ * @param [in] msg: const string ref of the message to prompt the user with
+ *
+ * @return  None
+ */
+bool ARG_userDbElem(
+      DC3DBElem_t* pDbElem,
+      const bool write,
       const string& msg
 );
 

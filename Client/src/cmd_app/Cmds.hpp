@@ -226,8 +226,9 @@ APIError_t CMD_runGetDbgModules(
  * @note: the bEnable flag is ignored if bOverWrite is set to true since this
  * option just sets the bitfield to whatever is passed in.
  *
- * @param [out] *status: DC3Error_t pointer to the returned status of from
- * the DC3 board.
+ * @param [in] *client: ClientApi pointer to the API object to provide access
+ * to the DC3
+ * @param [out] *statusDC3: DC3Error_t status returned from DC3.
  *    @arg  ERR_NONE: success.
  *    other error codes if failure.
  * @note: unless this variable is set to ERR_NONE at the completion, the
@@ -268,8 +269,9 @@ APIError_t CMD_runSetDbgModule(
  *    @arg true:  enable
  *    @arg false: disable
  *
- * @param [out] *status: DC3Error_t pointer to the returned status of from
- * the DC3 board.
+ * @param [in] *client: ClientApi pointer to the API object to provide access
+ * to the DC3
+ * @param [out] *statusDC3: DC3Error_t status returned from DC3.
  *    @arg  ERR_NONE: success.
  *    other error codes if failure.
  * @note: unless this variable is set to ERR_NONE at the completion, the
@@ -297,8 +299,9 @@ APIError_t CMD_runSetDbgDevice(
 /**
  * @brief   Wrapper around the UI for reset_db command.
  *
- * @param [out] *status: DC3Error_t pointer to the returned status of from
- * the DC3 board.
+ * @param [in] *client: ClientApi pointer to the API object to provide access
+ * to the DC3
+ * @param [out] *statusDC3: DC3Error_t status returned from DC3.
  *    @arg  ERR_NONE: success.
  *    other error codes if failure.
  * @note: unless this variable is set to ERR_NONE at the completion, the
@@ -311,6 +314,39 @@ APIError_t CMD_runSetDbgDevice(
 APIError_t CMD_runResetDB(
       ClientApi* client,
       DC3Error_t* statusDC3
+);
+
+/**
+ * @brief   Wrapper around the UI for reset_db command.
+ *
+ * @param [in] *client: ClientApi pointer to the API object to provide access
+ * to the DC3
+ * @param [out] *statusDC3: DC3Error_t status returned from DC3.
+ *    @arg  ERR_NONE: success.
+ *    other error codes if failure.
+ * @note: unless this variable is set to ERR_NONE at the completion, the
+ * results of other returned data should not be trusted.
+ *
+ * @param [in] elem: const DC3DBElem_t specifying the element to get.
+ * @param [in] acc: const DC3AccessType_t specifying the access type to use.
+ * @param [in] bufferSize: const size_t specifying the max size of the buffer
+ * where to write the data to.
+ * @param [in|out] *pBuffer: uint8_t const pointer to the storage where to store
+ * retrieved DB element data.
+ * @param [in|out] *pBytesInBuffer: size_t pointer to how many bytes are in
+ * the buffer upon successful DB element read.
+ * @return: APIError_t status of the client executing the command.
+ *    @arg  API_ERR_NONE: success
+ *    other error codes if failure.
+ */
+APIError_t CMD_runGetDbElem(
+      ClientApi* client,
+      DC3Error_t* statusDC3,
+      const DC3DBElem_t elem,
+      const DC3AccessType_t  acc,
+      const size_t bufferSize,
+      uint8_t* const pBuffer,
+      size_t* pBytesInBuffer
 );
 /* Exported classes ----------------------------------------------------------*/
 
