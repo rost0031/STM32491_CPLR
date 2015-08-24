@@ -551,13 +551,14 @@ APIError_t CMD_runGetDbElem(
              elem == _DC3_DB_FPGA_BUILD_DATETIME ) {
             ss << " ***" << endl << "*** As string: " << pBuffer;
          } else if ( elem == _DC3_DB_IP_ADDR ) {
-            ss << " ***" << endl << "*** As IP address: ";
+            ss << " ***" << endl << "*** As IP address: [ ";
             for ( unsigned int i = 0; i < *pBytesInBuffer; i++ ) {
                ss << unsigned(pBuffer[i]);
                if ( i < ((*pBytesInBuffer) - 1) ) {
                   ss << ".";
                }
             }
+            ss << " ]" << dec;
          } else if ( elem == _DC3_DB_MAC_ADDR ) {
             ss << " ***" << endl << "*** As MAC Address: [ ";
             for ( unsigned int i = 0; i < *pBytesInBuffer; i++ ) {
@@ -566,6 +567,7 @@ APIError_t CMD_runGetDbElem(
                   ss << ":";
                }
             }
+            ss << " ]" << dec;
          }
 
       } else {

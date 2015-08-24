@@ -79,7 +79,7 @@ typedef struct {
     QEQueue deferredEvtQueue;
 
     /**< Storage for deferred event queue. */
-    QTimeEvt const * deferredEvtQSto[100];
+    QEvt const * deferredEvtQSto[100];
 
     /**< Specifies which I2CBus1 device is currently being handled by this AO.
      * This should be set when a new I2C_READ_START or I2C_WRITE_START events come
@@ -1198,7 +1198,7 @@ static QState I2C1DevMgr_ValidateRequest(I2C1DevMgr * const me, QEvt const * con
 
             /* Don't allow reads or writes over the end of the device memory since bad things
              * can happen, especially with writes. */
-            if( ( me->addrStart + me->bytesTotal ) > I2C_getMaxMemAddr(me->iDev) ) {
+            if( ( me->addrStart + (me->bytesTotal - 1) ) > I2C_getMaxMemAddr(me->iDev) ) {
                 me->errorCode = ERR_I2C1DEV_ACCESS_OVER_END_OF_DEVICE_MEM;
                 goto I2CDEV1_VALIDATE_FINISH_TAG;
             }

@@ -85,7 +85,7 @@
    <attribute name="deferredEvtQueue" type="QEQueue" visibility="0x01" properties="0x00">
     <documentation>/**&lt; Native QF queue for deferred request events. */</documentation>
    </attribute>
-   <attribute name="deferredEvtQSto[100]" type="QTimeEvt const *" visibility="0x01" properties="0x00">
+   <attribute name="deferredEvtQSto[100]" type="QEvt const *" visibility="0x01" properties="0x00">
     <documentation>/**&lt; Storage for deferred event queue. */</documentation>
    </attribute>
    <attribute name="iDev" type="DC3I2CDevice_t" visibility="0x01" properties="0x00">
@@ -864,7 +864,7 @@ if( me-&gt;bytesTotal &gt; MAX_I2C_READ_LEN || me-&gt;bytesTotal &gt; MAX_I2C_WR
 
 /* Don't allow reads or writes over the end of the device memory since bad things
  * can happen, especially with writes. */
-if( ( me-&gt;addrStart + me-&gt;bytesTotal ) &gt; I2C_getMaxMemAddr(me-&gt;iDev) ) {
+if( ( me-&gt;addrStart + (me-&gt;bytesTotal - 1) ) &gt; I2C_getMaxMemAddr(me-&gt;iDev) ) {
     me-&gt;errorCode = ERR_I2C1DEV_ACCESS_OVER_END_OF_DEVICE_MEM;
     goto I2CDEV1_VALIDATE_FINISH_TAG;
 }
