@@ -65,7 +65,7 @@ typedef struct {
     QEQueue deferredEvtQueue;
 
     /**< Storage for deferred event queue. */
-    QTimeEvt const * deferredEvtQSto[200];
+    QEvt const * deferredEvtQSto[200];
 } SerialMgr;
 
 /* protected: */
