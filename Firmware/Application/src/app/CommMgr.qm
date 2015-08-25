@@ -153,7 +153,7 @@ QACTIVE_POST(
         <action box="0,-2,10,2"/>
        </tran_glyph>
       </tran>
-      <tran trig="CLI_RECEIVED" target="../../2/1">
+      <tran trig="CLI_RECEIVED" target="../../2/2">
        <action>/* Extract the basicMsg first */
 memset(&amp;(me-&gt;basicMsg), 0, sizeof(me-&gt;basicMsg));
 me-&gt;basicMsgOffset = DC3BasicMsg_read_delimited_from(
@@ -178,16 +178,8 @@ me-&gt;msgPayloadName = me-&gt;basicMsg._msgPayload; // save this since Ack will
  * into a state.  We'll figure out later if it's valid, right before we send an Ack */
 switch( me-&gt;msgPayloadName ) {
     case _DC3NoMsg:
-        DBG_printf(&quot;No payload detected\n&quot;);
-        break;
-    case _DC3StatusPayloadMsg:
-        WRN_printf(&quot;Status payload detected, this is probably an error\n&quot;);
-        break;
-    case _DC3VersionPayloadMsg:
-        WRN_printf(&quot;Version payload detected, this is probably an error\n&quot;);
         break;
     case _DC3BootModePayloadMsg:
-        DBG_printf(&quot;BootMode payload detected\n&quot;);
         DC3BootModePayloadMsg_read_delimited_from(
             ((LrgDataEvt *) e)-&gt;dataBuf,
             &amp;(me-&gt;payloadMsgUnion.bootmodePayload),
@@ -208,14 +200,21 @@ switch( me-&gt;msgPayloadName ) {
             me-&gt;basicMsgOffset
         );
         break;
-    default:
-        WRN_printf(
-            &quot;Unknown payload detected: %d, this is probably an error\n&quot;,
-            me-&gt;msgPayloadName
+    case _DC3DBDataPayloadMsg:
+        DC3DBDataPayloadMsg_read_delimited_from(
+            ((LrgDataEvt *) e)-&gt;dataBuf,
+            &amp;(me-&gt;payloadMsgUnion.dbDataPayload),
+            me-&gt;basicMsgOffset
         );
         break;
+    case _DC3StatusPayloadMsg:             /* Intentionally fall through */
+    case _DC3VersionPayloadMsg:            /* Intentionally fall through */
+    default:
+        WRN_printf(&quot;%s (%d) payload in Req msg, this is probably an error. Ignoring...\n&quot;,
+        CON_msgNameToStr( me-&gt;msgPayloadName),  me-&gt;msgPayloadName );
+        break;
 }</action>
-       <tran_glyph conn="6,15,3,3,103">
+       <tran_glyph conn="6,15,3,3,102">
         <action box="0,-2,10,2"/>
        </tran_glyph>
       </tran>
@@ -257,9 +256,14 @@ evt-&gt;dst = me-&gt;cliEvtSrc;
 evt-&gt;src = me-&gt;cliEvtDst;
 evt-&gt;dataLen = DC3BasicMsg_write_delimited_to(&amp;(me-&gt;basicMsg), evt-&gt;dataBuf, 0);
 me-&gt;errorCode = Comm_sendToClient( evt );
-if ( ERR_NONE != me-&gt;errorCode ) {
-    WRN_printf(&quot;Possible error sending Ack, attempting to continue. Error: 0x%08x\n&quot;, me-&gt;errorCode);
-}</entry>
+
+/* Only print error if something went wrong */
+ERR_COND_OUTPUT(
+    me-&gt;errorCode,
+    _DC3_ACCESS_QPC,
+    &quot;Error sending Ack, attempting to continue. Error 0x%08x\n&quot;,
+    me-&gt;errorCode
+);</entry>
       <exit>QTimeEvt_disarm(&amp;me-&gt;commMgrTimerEvt);                 /* Disarm timer on exit */
 
 /* Set the fields of the msg common for all Done msgs regardless of status or msg */
@@ -331,17 +335,27 @@ switch( me-&gt;msgPayloadName ) {
 
 /* Send the Done msg buffer to the client */
 me-&gt;errorCode = Comm_sendToClient( evt );
-if ( ERR_NONE != me-&gt;errorCode ) {
-    WRN_printf(&quot;Possible error sending Done, attempting to continue. Error: 0x%08x\n&quot;, me-&gt;errorCode);
-}
 
-if ( ERR_NONE != me-&gt;errorCode ) {
-    WRN_printf(&quot;Send Done msg with status: 0x%08x\n&quot;, me-&gt;errorCode);
-}</exit>
+/* Only print error if something went wrong */
+ERR_COND_OUTPUT(
+    me-&gt;errorCode,
+    _DC3_ACCESS_QPC,
+    &quot;Error sending Done, attempting to continue. Error 0x%08x\n&quot;,
+    me-&gt;errorCode
+);</exit>
       <tran trig="COMM_MGR_TIMEOUT" target="../../1">
-       <action>ERR_printf(&quot;COMM_MGR_TIMEOUT trying to process %d basic msg, error: 0x%08x\n&quot;,
-    me-&gt;basicMsg._msgName, me-&gt;errorCode);</action>
-       <tran_glyph conn="62,132,3,1,-28">
+       <action>ERR_printf( &quot;COMM_MGR_TIMEOUT running BasicMsg: %s (%d) with PayloadMsg %s (%d): Error: 0x%08x\n&quot;,
+    CON_msgNameToStr(me-&gt;basicMsg._msgName), me-&gt;basicMsg._msgName,
+    CON_msgNameToStr( me-&gt;msgPayloadName),  me-&gt;msgPayloadName, me-&gt;errorCode );</action>
+       <tran_glyph conn="61,18,3,1,-27">
+        <action box="-19,-2,19,2"/>
+       </tran_glyph>
+      </tran>
+      <tran trig="COMM_OP_TIMEOUT" target="../../1">
+       <action>ERR_printf( &quot;COMM_OP_TIMEOUT running BasicMsg: %s (%d) with PayloadMsg %s (%d): Error: 0x%08x\n&quot;,
+    CON_msgNameToStr(me-&gt;basicMsg._msgName), me-&gt;basicMsg._msgName,
+    CON_msgNameToStr( me-&gt;msgPayloadName),  me-&gt;msgPayloadName, me-&gt;errorCode );</action>
+       <tran_glyph conn="61,21,3,1,-27">
         <action box="-19,-2,19,2"/>
        </tran_glyph>
       </tran>
@@ -384,7 +398,7 @@ me-&gt;basicMsg._msgPayload = me-&gt;msgPayloadName;
 me-&gt;payloadMsgUnion.bootmodePayload._errorCode = me-&gt;errorCode;
 me-&gt;payloadMsgUnion.bootmodePayload._bootMode  = _DC3_Application; // This is the bootloader
 DBG_printf(&quot;Setting bootMode payload with bootmode: %d\n&quot;, me-&gt;payloadMsgUnion.bootmodePayload._bootMode);</action>
-         <choice_glyph conn="111,25,4,1,3,-77">
+         <choice_glyph conn="110,25,4,1,3,-76">
           <action box="-11,1,10,2"/>
          </choice_glyph>
         </choice>
@@ -408,15 +422,15 @@ me-&gt;payloadMsgUnion.statusPayload._errorCode = me-&gt;errorCode;
 
 
 </action>
-         <choice_glyph conn="111,25,5,1,-77">
+         <choice_glyph conn="110,25,5,1,-76">
           <action box="-8,-2,8,2"/>
          </choice_glyph>
         </choice>
         <choice target="../../../../1">
-         <guard brief="Unsupported?">_DC3FlashMsg == me-&gt;basicMsg._msgName</guard>
+         <guard brief="Flash?">_DC3FlashMsg == me-&gt;basicMsg._msgName</guard>
          <action>me-&gt;errorCode = ERR_MSG_UNSUPPORTED_IN_APPLICATION;
 </action>
-         <choice_glyph conn="111,25,4,1,104,-77">
+         <choice_glyph conn="110,25,4,1,104,-76">
           <action box="-10,102,10,2"/>
          </choice_glyph>
         </choice>
@@ -436,7 +450,7 @@ ERR_printf(
     _DC3BootModePayloadMsg, me-&gt;msgPayloadName, me-&gt;errorCode
 );
 </action>
-          <choice_glyph conn="96,31,5,1,-62">
+          <choice_glyph conn="95,31,5,1,-61">
            <action box="-5,0,5,2"/>
           </choice_glyph>
          </choice>
@@ -449,7 +463,7 @@ me-&gt;basicMsg._msgPayload = me-&gt;msgPayloadName;</action>
            <guard brief="Application?">_DC3_Application == me-&gt;payloadMsgUnion.bootmodePayload._bootMode</guard>
            <action>me-&gt;errorCode = ERR_NONE;
 DBG_printf(&quot;Already in Application mode\n&quot;);</action>
-           <choice_glyph conn="89,34,4,1,6,-55">
+           <choice_glyph conn="88,34,4,1,6,-54">
             <action box="-9,6,10,2"/>
            </choice_glyph>
           </choice>
@@ -461,7 +475,7 @@ DBG_printf(&quot;Resetting system to get back to bootloader mode\n&quot;);
 /* Post to self to boot to application but still have enough time to send a Done */
 QEvt *evt = Q_NEW(QEvt, BOOT_RESET_SIG);
 QACTIVE_POST(AO_CommMgr, (QEvt *)(evt), AO_CommMgr);</action>
-           <choice_glyph conn="89,34,4,1,3,-55">
+           <choice_glyph conn="88,34,4,1,3,-54">
             <action box="-9,3,10,2"/>
            </choice_glyph>
           </choice>
@@ -471,15 +485,15 @@ QACTIVE_POST(AO_CommMgr, (QEvt *)(evt), AO_CommMgr);</action>
 ERR_printf(&quot;Unsupported bootmode requested (%d). Error: 0x%08x\n&quot;,
     me-&gt;payloadMsgUnion.bootmodePayload._bootMode, me-&gt;errorCode
 );</action>
-           <choice_glyph conn="89,34,5,1,-55">
+           <choice_glyph conn="88,34,5,1,-54">
             <action box="-6,0,5,2"/>
            </choice_glyph>
           </choice>
-          <choice_glyph conn="96,31,4,-1,3,-7">
+          <choice_glyph conn="95,31,4,-1,3,-7">
            <action box="0,1,11,2"/>
           </choice_glyph>
          </choice>
-         <choice_glyph conn="111,25,4,-1,6,-15">
+         <choice_glyph conn="110,25,4,-1,6,-15">
           <action box="-11,4,10,2"/>
          </choice_glyph>
         </choice>
@@ -488,58 +502,104 @@ ERR_printf(&quot;Unsupported bootmode requested (%d). Error: 0x%08x\n&quot;,
          <choice target="../../../../../1">
           <guard>else</guard>
           <action>me-&gt;errorCode = ERR_MSG_UNEXPECTED_PAYLOAD;
-WRN_printf(&quot;Unexpected payload %d for I2CReadMsg. Error: 0x%08x\n&quot;,
-    me-&gt;msgPayloadName, me-&gt;errorCode);</action>
-          <choice_glyph conn="101,45,5,1,-67">
-           <action box="-6,-2,6,2"/>
+ERR_printf(&quot;Unexpected payload %s (%d) msg for basic msg: %s (%d). Error: 0x%08x\n&quot;,
+    CON_msgNameToStr(me-&gt;msgPayloadName), me-&gt;msgPayloadName,
+    CON_msgNameToStr(me-&gt;basicMsg._msgName), me-&gt;basicMsg._msgName, me-&gt;errorCode);
+
+/* Has to be set after checking for a valid payload */
+me-&gt;msgPayloadName = _DC3StatusPayloadMsg;
+me-&gt;basicMsg._msgPayload = me-&gt;msgPayloadName;</action>
+          <choice_glyph conn="99,43,5,1,-65">
+           <action box="-6,0,6,2"/>
           </choice_glyph>
          </choice>
-         <choice target="../../../../2">
+         <choice>
           <guard brief="ValidPayload?">_DC3I2CDataPayloadMsg == me-&gt;msgPayloadName</guard>
           <action>/* Has to be set after checking for a valid payload */
 me-&gt;msgPayloadName = _DC3I2CDataPayloadMsg;
 me-&gt;basicMsg._msgPayload = me-&gt;msgPayloadName;
 
-/* Create the event and directly post it to the right AO. */
+</action>
+          <choice target="../../../../../3">
+           <guard>else</guard>
+           <action>/* Create the event and directly post it to the right AO. */
 I2CReadReqEvt *i2cReadReqEvt  = Q_NEW(I2CReadReqEvt, I2C1_DEV_RAW_MEM_READ_SIG);
 i2cReadReqEvt-&gt;i2cDev         = me-&gt;payloadMsgUnion.i2cDataPayload._i2cDev;
-i2cReadReqEvt-&gt;addr           = I2C_getMemAddr( i2cReadReqEvt-&gt;i2cDev ) + me-&gt;payloadMsgUnion.i2cDataPayload._start;
+i2cReadReqEvt-&gt;start          = me-&gt;payloadMsgUnion.i2cDataPayload._start;
 i2cReadReqEvt-&gt;bytes          = me-&gt;payloadMsgUnion.i2cDataPayload._nBytes;
 i2cReadReqEvt-&gt;accessType     = me-&gt;payloadMsgUnion.i2cDataPayload._accType;
 QACTIVE_POST(AO_I2C1DevMgr, (QEvt *)(i2cReadReqEvt), me);</action>
-          <choice_glyph conn="101,45,4,1,4,-16">
-           <action box="-10,2,10,2"/>
+           <choice_glyph conn="87,50,5,1,-9">
+            <action box="-5,-2,5,2"/>
+           </choice_glyph>
+          </choice>
+          <choice target="../../../../../../1">
+           <guard brief="BareMetal?">_DC3_ACCESS_BARE == me-&gt;payloadMsgUnion.i2cDataPayload._accType</guard>
+           <action>me-&gt;payloadMsgUnion.i2cDataPayload._errorCode = I2C_readDevMem(
+      me-&gt;payloadMsgUnion.i2cDataPayload._accType,
+      me-&gt;payloadMsgUnion.i2cDataPayload._i2cDev,
+      me-&gt;payloadMsgUnion.i2cDataPayload._start,
+      me-&gt;payloadMsgUnion.i2cDataPayload._nBytes,
+      MAX_I2C_READ_LEN,
+      (uint8_t *)me-&gt;payloadMsgUnion.i2cDataPayload._dataBuf,
+      (uint16_t *)&amp;(me-&gt;payloadMsgUnion.i2cDataPayload._dataBuf_len)
+);</action>
+           <choice_glyph conn="87,50,4,1,-4,-53">
+            <action box="-8,-6,10,2"/>
+           </choice_glyph>
+          </choice>
+          <choice_glyph conn="99,43,4,-1,7,-12">
+           <action box="-10,4,10,2"/>
           </choice_glyph>
          </choice>
-         <choice_glyph conn="111,25,4,-1,20,-10">
-          <action box="-8,18,9,2"/>
+         <choice_glyph conn="110,25,4,-1,18,-11">
+          <action box="-9,16,9,2"/>
          </choice_glyph>
         </choice>
         <choice>
          <guard brief="I2CWrite?">_DC3I2CWriteMsg == me-&gt;basicMsg._msgName</guard>
          <choice target="../../../../../1">
           <guard>else</guard>
-          <action>/* Has to be set after checking for a valid payload */
-me-&gt;msgPayloadName = _DC3StatusPayloadMsg;
-me-&gt;basicMsg._msgPayload = me-&gt;msgPayloadName;
+          <action>me-&gt;errorCode = ERR_MSG_UNEXPECTED_PAYLOAD;
+ERR_printf(&quot;Unexpected payload %s (%d) msg for basic msg: %s (%d). Error: 0x%08x\n&quot;,
+    CON_msgNameToStr(me-&gt;msgPayloadName), me-&gt;msgPayloadName,
+    CON_msgNameToStr(me-&gt;basicMsg._msgName), me-&gt;basicMsg._msgName, me-&gt;errorCode);
 
-me-&gt;errorCode = ERR_MSG_UNEXPECTED_PAYLOAD;
-WRN_printf(&quot;Unexpected payload %d for I2CWriteMsg. Error: 0x%08x\n&quot;,
-    me-&gt;msgPayloadName, me-&gt;errorCode);</action>
-          <choice_glyph conn="101,57,5,1,-67">
+/* Has to be set after checking for a valid payload */
+me-&gt;msgPayloadName = _DC3StatusPayloadMsg;
+me-&gt;basicMsg._msgPayload = me-&gt;msgPayloadName;</action>
+          <choice_glyph conn="100,59,5,1,-66">
            <action box="-6,-2,6,2"/>
           </choice_glyph>
          </choice>
-         <choice target="../../../../2">
+         <choice>
           <guard brief="ValidPayload?">_DC3I2CDataPayloadMsg == me-&gt;msgPayloadName</guard>
           <action>/* Has to be set after checking for a valid payload */
 me-&gt;msgPayloadName = _DC3StatusPayloadMsg;
 me-&gt;basicMsg._msgPayload = me-&gt;msgPayloadName;
 
-/* Create the event and directly post it to the right AO. */
+</action>
+          <choice target="../../../../../../1">
+           <guard brief="BareMetal?">_DC3_ACCESS_BARE == me-&gt;payloadMsgUnion.i2cDataPayload._accType</guard>
+           <action>me-&gt;payloadMsgUnion.i2cDataPayload._errorCode = I2C_writeDevMem(
+      me-&gt;payloadMsgUnion.i2cDataPayload._accType,
+      me-&gt;payloadMsgUnion.i2cDataPayload._i2cDev,
+      me-&gt;payloadMsgUnion.i2cDataPayload._start,
+      me-&gt;payloadMsgUnion.i2cDataPayload._nBytes,
+      me-&gt;payloadMsgUnion.i2cDataPayload._dataBuf_len,
+      (uint8_t *)me-&gt;payloadMsgUnion.i2cDataPayload._dataBuf,
+      (uint16_t *)&amp;(me-&gt;payloadMsgUnion.i2cDataPayload._dataBuf_len)
+);</action>
+           <choice_glyph conn="87,53,4,1,3,-53">
+            <action box="-8,1,10,2"/>
+           </choice_glyph>
+          </choice>
+          <choice target="../../../../../3">
+           <guard>else</guard>
+           <action>/* Create the event and directly post it to the right AO. */
 I2CWriteReqEvt *i2cWriteReqEvt  = Q_NEW(I2CWriteReqEvt, I2C1_DEV_RAW_MEM_WRITE_SIG);
 i2cWriteReqEvt-&gt;i2cDev         = me-&gt;payloadMsgUnion.i2cDataPayload._i2cDev;
-i2cWriteReqEvt-&gt;addr           = I2C_getMemAddr( i2cWriteReqEvt-&gt;i2cDev ) + me-&gt;payloadMsgUnion.i2cDataPayload._start;
+i2cWriteReqEvt-&gt;start          = me-&gt;payloadMsgUnion.i2cDataPayload._start;
 i2cWriteReqEvt-&gt;accessType     = me-&gt;payloadMsgUnion.i2cDataPayload._accType;
 i2cWriteReqEvt-&gt;bytes          = me-&gt;payloadMsgUnion.i2cDataPayload._nBytes;
 MEMCPY(
@@ -550,19 +610,21 @@ MEMCPY(
 
 QACTIVE_POST(AO_I2C1DevMgr, (QEvt *)(i2cWriteReqEvt), me);
 </action>
-          <choice_glyph conn="101,57,4,1,-4,-16">
-           <action box="-11,-6,10,2"/>
+           <choice_glyph conn="87,53,5,1,-9">
+            <action box="-5,-2,5,2"/>
+           </choice_glyph>
+          </choice>
+          <choice_glyph conn="100,59,4,-1,-6,-13">
+           <action box="-10,-5,10,2"/>
           </choice_glyph>
          </choice>
-         <choice_glyph conn="111,25,4,-1,32,-10">
-          <action box="-8,29,9,2"/>
+         <choice_glyph conn="110,25,4,-1,34,-10">
+          <action box="-8,30,9,2"/>
          </choice_glyph>
         </choice>
         <choice target="../../../../1">
          <guard brief="DbgGetCurrent?">_DC3DbgGetCurrentMsg == me-&gt;basicMsg._msgName</guard>
          <action>me-&gt;errorCode = ERR_NONE;
-
-DBG_printf(&quot;_DC3DbgGetCurrentMsg decoded, attempting to decode payload (if exists)\n&quot;);
 
 /* Compose Done response.  We can re-use the current structure and it will be used by
  * the exit action of the parent state to send the msg.  Here, we only set up fields
@@ -573,17 +635,15 @@ me-&gt;msgPayloadName = _DC3DbgPayloadMsg;
 /* Don't change the basicMsg name since it should be the same in all cases. */
 me-&gt;basicMsg._msgPayload = me-&gt;msgPayloadName;
 me-&gt;payloadMsgUnion.dbgPayload._errorCode = me-&gt;errorCode;
-me-&gt;payloadMsgUnion.dbgPayload._dbgSettings  = glbDbgConfig;
+me-&gt;payloadMsgUnion.dbgPayload._dbgSettings  = glbDbgModuleConfig;
 DBG_printf(&quot;Setting dbgPayload payload with dbgSettings: 0x%08x\n&quot;, me-&gt;payloadMsgUnion.dbgPayload._dbgSettings);</action>
-         <choice_glyph conn="111,25,4,1,35,-77">
-          <action box="-12,33,11,2"/>
+         <choice_glyph conn="110,25,4,1,37,-76">
+          <action box="-11,35,11,2"/>
          </choice_glyph>
         </choice>
         <choice target="../../../../1">
          <guard brief="DbgSetCurrent?">_DC3DbgSetCurrentMsg == me-&gt;basicMsg._msgName</guard>
          <action>me-&gt;errorCode = ERR_NONE;
-
-DBG_printf(&quot;_DC3DbgSetCurrentMsg decoded, attempting to decode payload (if exists)\n&quot;);
 
 /* Compose Done response.  We can re-use the current structure and it will be used by
  * the exit action of the parent state to send the msg.  Here, we only set up fields
@@ -597,17 +657,15 @@ DBG_SET_DEBUG_FOR_ALL_MODULES( me-&gt;payloadMsgUnion.dbgPayload._dbgSettings );
 /* Don't change the basicMsg name since it should be the same in all cases. */
 me-&gt;basicMsg._msgPayload = me-&gt;msgPayloadName;
 me-&gt;payloadMsgUnion.dbgPayload._errorCode = me-&gt;errorCode;
-me-&gt;payloadMsgUnion.dbgPayload._dbgSettings  = glbDbgConfig;
+me-&gt;payloadMsgUnion.dbgPayload._dbgSettings  = glbDbgModuleConfig;
 DBG_printf(&quot;Setting dbgPayload payload with dbgSettings: 0x%08x\n&quot;, me-&gt;payloadMsgUnion.dbgPayload._dbgSettings);</action>
-         <choice_glyph conn="111,25,4,1,38,-77">
-          <action box="-12,36,11,2"/>
+         <choice_glyph conn="110,25,4,1,40,-76">
+          <action box="-11,38,11,2"/>
          </choice_glyph>
         </choice>
         <choice target="../../../../1">
-         <guard brief="DC3DbgEnable?">_DC3DbgEnableMsg == me-&gt;basicMsg._msgName</guard>
+         <guard brief="DbgEnable?">_DC3DbgEnableMsg == me-&gt;basicMsg._msgName</guard>
          <action>me-&gt;errorCode = ERR_NONE;
-
-DBG_printf(&quot;_DC3DbgEnableMsg decoded, attempting to decode payload (if exists)\n&quot;);
 
 /* Compose Done response.  We can re-use the current structure and it will be used by
  * the exit action of the parent state to send the msg.  Here, we only set up fields
@@ -621,17 +679,15 @@ DBG_ENABLE_DEBUG_FOR_MODULE( me-&gt;payloadMsgUnion.dbgPayload._dbgSettings );
 /* Don't change the basicMsg name since it should be the same in all cases. */
 me-&gt;basicMsg._msgPayload = me-&gt;msgPayloadName;
 me-&gt;payloadMsgUnion.dbgPayload._errorCode = me-&gt;errorCode;
-me-&gt;payloadMsgUnion.dbgPayload._dbgSettings  = glbDbgConfig;
+me-&gt;payloadMsgUnion.dbgPayload._dbgSettings  = glbDbgModuleConfig;
 DBG_printf(&quot;Setting dbgPayload payload with dbgSettings: 0x%08x\n&quot;, me-&gt;payloadMsgUnion.dbgPayload._dbgSettings);</action>
-         <choice_glyph conn="111,25,4,1,41,-77">
-          <action box="-12,39,11,2"/>
+         <choice_glyph conn="110,25,4,1,43,-76">
+          <action box="-9,41,11,2"/>
          </choice_glyph>
         </choice>
         <choice target="../../../../1">
-         <guard brief="DC3DbgDisable?">_DC3DbgDisableMsg == me-&gt;basicMsg._msgName</guard>
+         <guard brief="DbgDisable?">_DC3DbgDisableMsg == me-&gt;basicMsg._msgName</guard>
          <action>me-&gt;errorCode = ERR_NONE;
-
-DBG_printf(&quot;_DC3DbgDisableMsg decoded, attempting to decode payload (if exists)\n&quot;);
 
 /* Compose Done response.  We can re-use the current structure and it will be used by
  * the exit action of the parent state to send the msg.  Here, we only set up fields
@@ -645,17 +701,15 @@ DBG_DISABLE_DEBUG_FOR_MODULE( me-&gt;payloadMsgUnion.dbgPayload._dbgSettings );
 /* Don't change the basicMsg name since it should be the same in all cases. */
 me-&gt;basicMsg._msgPayload = me-&gt;msgPayloadName;
 me-&gt;payloadMsgUnion.dbgPayload._errorCode = me-&gt;errorCode;
-me-&gt;payloadMsgUnion.dbgPayload._dbgSettings  = glbDbgConfig;
+me-&gt;payloadMsgUnion.dbgPayload._dbgSettings  = glbDbgModuleConfig;
 DBG_printf(&quot;Setting dbgPayload payload with dbgSettings: 0x%08x\n&quot;, me-&gt;payloadMsgUnion.dbgPayload._dbgSettings);</action>
-         <choice_glyph conn="111,25,4,1,44,-77">
-          <action box="-12,42,11,2"/>
+         <choice_glyph conn="110,25,4,1,46,-76">
+          <action box="-9,44,11,2"/>
          </choice_glyph>
         </choice>
         <choice target="../../../../1">
-         <guard brief="DC3DbgEnableEth?">_DC3DbgEnableEthMsg == me-&gt;basicMsg._msgName</guard>
+         <guard brief="DbgEnableEth?">_DC3DbgEnableEthMsg == me-&gt;basicMsg._msgName</guard>
          <action>me-&gt;errorCode = ERR_NONE;
-
-DBG_printf(&quot;_DC3DbgEnableEthMsg decoded, attempting to decode payload (if exists)\n&quot;);
 
 /* Compose Done response.  We can re-use the current structure and it will be used by
  * the exit action of the parent state to send the msg.  Here, we only set up fields
@@ -670,15 +724,13 @@ DBG_ENABLE_DEVICE( _DC3_DBG_DEV_ETH );
 me-&gt;basicMsg._msgPayload = me-&gt;msgPayloadName;
 me-&gt;payloadMsgUnion.statusPayload._errorCode = me-&gt;errorCode;
 </action>
-         <choice_glyph conn="111,25,4,1,47,-77">
-          <action box="-13,45,13,2"/>
+         <choice_glyph conn="110,25,4,1,49,-76">
+          <action box="-11,47,13,2"/>
          </choice_glyph>
         </choice>
         <choice target="../../../../1">
-         <guard brief="DC3DbgDisableEth?">_DC3DbgDisableEthMsg == me-&gt;basicMsg._msgName</guard>
+         <guard brief="DbgDisableEth?">_DC3DbgDisableEthMsg == me-&gt;basicMsg._msgName</guard>
          <action>me-&gt;errorCode = ERR_NONE;
-
-DBG_printf(&quot;_DC3DbgDisableEthMsg decoded, attempting to decode payload (if exists)\n&quot;);
 
 /* Compose Done response.  We can re-use the current structure and it will be used by
  * the exit action of the parent state to send the msg.  Here, we only set up fields
@@ -693,15 +745,13 @@ DBG_DISABLE_DEVICE( _DC3_DBG_DEV_ETH );
 me-&gt;basicMsg._msgPayload = me-&gt;msgPayloadName;
 me-&gt;payloadMsgUnion.statusPayload._errorCode = me-&gt;errorCode;
 </action>
-         <choice_glyph conn="111,25,4,1,50,-77">
-          <action box="-13,48,13,2"/>
+         <choice_glyph conn="110,25,4,1,52,-76">
+          <action box="-11,50,13,2"/>
          </choice_glyph>
         </choice>
         <choice target="../../../../1">
-         <guard brief="DC3DbgEnableSer?">_DC3DbgEnableSerMsg == me-&gt;basicMsg._msgName</guard>
+         <guard brief="DbgEnableSer?">_DC3DbgEnableSerMsg == me-&gt;basicMsg._msgName</guard>
          <action>me-&gt;errorCode = ERR_NONE;
-
-DBG_printf(&quot;_DC3DbgEnableSerMsg decoded, attempting to decode payload (if exists)\n&quot;);
 
 /* Compose Done response.  We can re-use the current structure and it will be used by
  * the exit action of the parent state to send the msg.  Here, we only set up fields
@@ -716,15 +766,13 @@ DBG_ENABLE_DEVICE( _DC3_DBG_DEV_SER );
 me-&gt;basicMsg._msgPayload = me-&gt;msgPayloadName;
 me-&gt;payloadMsgUnion.statusPayload._errorCode = me-&gt;errorCode;
 </action>
-         <choice_glyph conn="111,25,4,1,53,-77">
-          <action box="-14,51,13,2"/>
+         <choice_glyph conn="110,25,4,1,55,-76">
+          <action box="-11,53,13,2"/>
          </choice_glyph>
         </choice>
         <choice target="../../../../1">
-         <guard brief="DC3DbgDisableSer?">_DC3DbgDisableSerMsg == me-&gt;basicMsg._msgName</guard>
+         <guard brief="DbgDisableSer?">_DC3DbgDisableSerMsg == me-&gt;basicMsg._msgName</guard>
          <action>me-&gt;errorCode = ERR_NONE;
-
-DBG_printf(&quot;_DC3DbgDisableSerMsg decoded, attempting to decode payload (if exists)\n&quot;);
 
 /* Compose Done response.  We can re-use the current structure and it will be used by
  * the exit action of the parent state to send the msg.  Here, we only set up fields
@@ -739,15 +787,94 @@ DBG_DISABLE_DEVICE( _DC3_DBG_DEV_SER );
 me-&gt;basicMsg._msgPayload = me-&gt;msgPayloadName;
 me-&gt;payloadMsgUnion.statusPayload._errorCode = me-&gt;errorCode;
 </action>
-         <choice_glyph conn="111,25,4,1,56,-77">
-          <action box="-14,54,13,2"/>
+         <choice_glyph conn="110,25,4,1,58,-76">
+          <action box="-11,56,13,2"/>
          </choice_glyph>
         </choice>
-        <tran_glyph conn="111,19,2,-1,6">
+        <choice>
+         <guard brief="DBGetElem?">_DC3DBGetElemMsg == me-&gt;basicMsg._msgName</guard>
+         <choice target="../../../../../1">
+          <guard>else</guard>
+          <action>me-&gt;errorCode = ERR_MSG_UNEXPECTED_PAYLOAD;
+ERR_printf(&quot;Unexpected payload %s (%d) msg for basic msg: %s (%d). Error: 0x%08x\n&quot;,
+    CON_msgNameToStr(me-&gt;msgPayloadName), me-&gt;msgPayloadName,
+    CON_msgNameToStr(me-&gt;basicMsg._msgName), me-&gt;basicMsg._msgName, me-&gt;errorCode);
+
+/* Has to be set after checking for a valid payload */
+me-&gt;msgPayloadName = _DC3StatusPayloadMsg;
+me-&gt;basicMsg._msgPayload = me-&gt;msgPayloadName;</action>
+          <choice_glyph conn="97,86,5,1,-63">
+           <action box="-6,-2,6,2"/>
+          </choice_glyph>
+         </choice>
+         <choice target="../../../../4">
+          <guard brief="ValidPayload?">_DC3DBDataPayloadMsg == me-&gt;msgPayloadName</guard>
+          <action>/* Has to be set after checking for a valid payload */
+me-&gt;msgPayloadName = _DC3DBDataPayloadMsg;
+me-&gt;basicMsg._msgPayload = me-&gt;msgPayloadName;
+
+/* Create the event and directly post it to the right AO. */
+DBReadReqEvt *dbReadReqEvt  = Q_NEW(DBReadReqEvt, DB_GET_ELEM_SIG);
+dbReadReqEvt-&gt;dbElem        = me-&gt;payloadMsgUnion.dbDataPayload._elem;
+dbReadReqEvt-&gt;accessType    = me-&gt;payloadMsgUnion.dbDataPayload._accType;
+/* Ignore the _dataBuf and _dataBuf_len parts of the msg since they are not needed
+ * for a read */
+QACTIVE_POST(AO_SysMgr, (QEvt *)(dbReadReqEvt), me);</action>
+          <choice_glyph conn="97,86,4,1,4,-16">
+           <action box="-10,2,10,2"/>
+          </choice_glyph>
+         </choice>
+         <choice_glyph conn="110,25,4,-1,61,-13">
+          <action box="-9,59,9,2"/>
+         </choice_glyph>
+        </choice>
+        <choice>
+         <guard brief="DBSetElem?">_DC3DBSetElemMsg == me-&gt;basicMsg._msgName</guard>
+         <choice target="../../../../../1">
+          <guard>else</guard>
+          <action>me-&gt;errorCode = ERR_MSG_UNEXPECTED_PAYLOAD;
+ERR_printf(&quot;Unexpected payload %s (%d) msg for basic msg: %s (%d). Error: 0x%08x\n&quot;,
+    CON_msgNameToStr(me-&gt;msgPayloadName), me-&gt;msgPayloadName,
+    CON_msgNameToStr(me-&gt;basicMsg._msgName), me-&gt;basicMsg._msgName, me-&gt;errorCode);
+
+/* Has to be set after checking for a valid payload */
+me-&gt;msgPayloadName = _DC3StatusPayloadMsg;
+me-&gt;basicMsg._msgPayload = me-&gt;msgPayloadName;</action>
+          <choice_glyph conn="97,95,5,1,-63">
+           <action box="-6,-2,6,2"/>
+          </choice_glyph>
+         </choice>
+         <choice target="../../../../4">
+          <guard brief="ValidPayload?">_DC3I2CDataPayloadMsg == me-&gt;msgPayloadName</guard>
+          <action>/* Has to be set after checking for a valid payload */
+me-&gt;msgPayloadName = _DC3DBDataPayloadMsg;
+me-&gt;basicMsg._msgPayload = me-&gt;msgPayloadName;
+
+/* Create the event and directly post it to the right AO. */
+DBWriteReqEvt *dbWriteReqEvt  = Q_NEW(DBWriteReqEvt, DB_GET_ELEM_SIG);
+dbWriteReqEvt-&gt;dbElem         = me-&gt;payloadMsgUnion.dbDataPayload._elem;
+dbWriteReqEvt-&gt;accessType     = me-&gt;payloadMsgUnion.dbDataPayload._accType;
+dbWriteReqEvt-&gt;dataLen        = me-&gt;payloadMsgUnion.dbDataPayload._dataBuf_len;
+MEMCPY(
+    dbWriteReqEvt-&gt;dataBuf,
+    me-&gt;payloadMsgUnion.dbDataPayload._dataBuf,
+    dbWriteReqEvt-&gt;dataLen
+);
+
+QACTIVE_POST(AO_SysMgr, (QEvt *)(dbWriteReqEvt), me);</action>
+          <choice_glyph conn="97,95,4,1,-4,-16">
+           <action box="-10,-4,10,2"/>
+          </choice_glyph>
+         </choice>
+         <choice_glyph conn="110,25,4,-1,70,-13">
+          <action box="-10,68,9,2"/>
+         </choice_glyph>
+        </choice>
+        <tran_glyph conn="110,19,2,-1,6">
          <action box="0,0,12,2"/>
         </tran_glyph>
        </tran>
-       <state_glyph node="109,13,14,6">
+       <state_glyph node="108,13,14,6">
         <entry box="1,2,6,2"/>
         <exit box="1,4,6,2"/>
        </state_glyph>
@@ -769,16 +896,13 @@ me-&gt;payloadMsgUnion.statusPayload._errorCode = me-&gt;errorCode;
 me-&gt;errorCode = ERR_COMM_I2C_READ_CMD_TIMEOUT; /* Set the error in case we timeout */</entry>
        <exit>QTimeEvt_disarm(&amp;me-&gt;commOpTimerEvt);                  /* Disarm timer on exit */
 
-if ( ERR_NONE != me-&gt;errorCode ) {
-    ERR_printf(&quot;Leaving state with error: 0x%08x\n&quot;, me-&gt;errorCode);
-}</exit>
-       <tran trig="COMM_OP_TIMEOUT" target="../../../1">
-        <action>ERR_printf(&quot;COMM_OP_TIMEOUT trying to process %d basic msg, error: 0x%08x\n&quot;, 
-    me-&gt;basicMsg._msgName, me-&gt;errorCode);</action>
-        <tran_glyph conn="66,48,3,1,-32">
-         <action box="-19,-2,19,2"/>
-        </tran_glyph>
-       </tran>
+/* Only print error if something went wrong */
+ERR_COND_OUTPUT(
+    me-&gt;errorCode,
+    _DC3_ACCESS_QPC,
+    &quot;Leaving WaitForRespFromI2C state with error 0x%08x\n&quot;,
+    me-&gt;errorCode
+);</exit>
        <tran trig="I2C1_DEV_READ_DONE" target="../../../1">
         <action>me-&gt;errorCode = ((I2CReadDoneEvt const *) e)-&gt;status;
 if ( ERR_NONE == me-&gt;errorCode ) {
@@ -792,7 +916,7 @@ if ( ERR_NONE == me-&gt;errorCode ) {
 }
 
 me-&gt;payloadMsgUnion.i2cDataPayload._errorCode = me-&gt;errorCode;</action>
-        <tran_glyph conn="66,51,3,1,-32">
+        <tran_glyph conn="62,49,3,1,-28">
          <action box="-19,-2,15,2"/>
         </tran_glyph>
        </tran>
@@ -803,16 +927,73 @@ if ( ERR_NONE == me-&gt;errorCode ) {
 }
 
 me-&gt;payloadMsgUnion.statusPayload._errorCode = me-&gt;errorCode;</action>
-        <tran_glyph conn="66,54,3,1,-32">
+        <tran_glyph conn="62,52,3,1,-28">
          <action box="-19,-2,15,2"/>
         </tran_glyph>
        </tran>
-       <state_glyph node="66,46,19,10">
+       <state_glyph node="62,47,16,7">
         <entry box="1,2,6,2"/>
         <exit box="1,4,6,2"/>
        </state_glyph>
       </state>
-      <state_glyph node="62,8,67,128">
+      <state name="WaitForRespFromSysMgr">
+       <documentation>/**
+ * @brief    State that waits for a response from SysMgr AO.
+ *
+ * @param  [in|out] me: Pointer to the state machine
+ * @param  [in|out]  e:  Pointer to the event being processed.
+ * @return status: QState type that specifies where the state
+ * machine is going next.
+ */</documentation>
+       <entry>QTimeEvt_rearm(                                       /* Re-arm timer on entry */
+    &amp;me-&gt;commOpTimerEvt,
+    SEC_TO_TICKS( LL_MAX_TOUT_SEC_DB_ACCESS )
+);
+
+me-&gt;errorCode = ERR_COMM_DB_ACCESS_CMD_TIMEOUT; /* Set the error in case we timeout */</entry>
+       <exit>QTimeEvt_disarm(&amp;me-&gt;commOpTimerEvt);                  /* Disarm timer on exit */
+
+/* Only print error if something went wrong */
+ERR_COND_OUTPUT(
+    me-&gt;errorCode,
+    _DC3_ACCESS_QPC,
+    &quot;Leaving WaitForRespFromSysMgr state with error 0x%08x\n&quot;,
+    me-&gt;errorCode
+);</exit>
+       <tran trig="DB_GET_ELEM_DONE" target="../../../1">
+        <action>me-&gt;errorCode = ((DBReadDoneEvt const *) e)-&gt;status;
+me-&gt;payloadMsgUnion.dbDataPayload._errorCode = me-&gt;errorCode;
+me-&gt;payloadMsgUnion.dbDataPayload._elem      = ((DBReadDoneEvt const *) e)-&gt;dbElem;
+
+/* Only copy data from the event if no errors occurred to avoid reading invalid data */
+if ( ERR_NONE == me-&gt;errorCode ) {
+    me-&gt;payloadMsgUnion.dbDataPayload._dataBuf_len = ((DBReadDoneEvt const *) e)-&gt;dataLen;
+    MEMCPY(
+        me-&gt;payloadMsgUnion.dbDataPayload._dataBuf,
+        ((DBReadDoneEvt const *) e)-&gt;dataBuf,
+        me-&gt;payloadMsgUnion.dbDataPayload._dataBuf_len
+    );
+} else {
+    me-&gt;payloadMsgUnion.dbDataPayload._dataBuf_len = 0;
+}</action>
+        <tran_glyph conn="62,89,3,1,-28">
+         <action box="-19,-2,15,2"/>
+        </tran_glyph>
+       </tran>
+       <tran trig="DB_SET_ELEM_DONE" target="../../../1">
+        <action>me-&gt;errorCode = ((DBWriteDoneEvt const *) e)-&gt;status;
+me-&gt;payloadMsgUnion.dbDataPayload._errorCode = me-&gt;errorCode;
+me-&gt;payloadMsgUnion.dbDataPayload._elem      = ((DBReadDoneEvt const *) e)-&gt;dbElem;</action>
+        <tran_glyph conn="62,92,3,1,-28">
+         <action box="-19,-2,15,2"/>
+        </tran_glyph>
+       </tran>
+       <state_glyph node="62,87,19,7">
+        <entry box="1,2,6,2"/>
+        <exit box="1,4,6,2"/>
+       </state_glyph>
+      </state>
+      <state_glyph node="61,8,67,128">
        <entry box="1,2,6,2"/>
        <exit box="1,4,6,2"/>
       </state_glyph>
@@ -915,18 +1096,19 @@ return status;</code>
 
 /* Includes ------------------------------------------------------------------*/
 #include &quot;CommMgr.h&quot;
+
 #include &quot;project_includes.h&quot;           /* Includes common to entire project. */
-#include &quot;bsp.h&quot;                              /* For time to ticks conversion */
-#include &quot;I2C1DevMgr.h&quot;                                  /* For I2C Evt types */
-#include &quot;time.h&quot;
-#include &quot;stm32f4x7_eth.h&quot;
-#include &quot;serial.h&quot;                               /* For serial functionality */
-#include &quot;LWIPMgr.h&quot;                        /* For UDP ethernet functionality */
+#include &quot;bsp_defs.h&quot;                         /* For time to ticks conversion */
 #include &quot;base64_wrapper.h&quot;                            /* For base64 encoding */
-#include &quot;SerialMgr.h&quot;
-#include &quot;LWIPMgr.h&quot;
-#include &quot;SysMgr.h&quot;
-#include &quot;version.h&quot;
+#include &quot;crc32compat.h&quot;                             /* For CRC functionality */
+#include &quot;version.h&quot;                               /* For version information */
+#include &quot;i2c_dev.h&quot;                          /* For I2C device functionality */
+#include &quot;serial.h&quot;                               /* For serial functionality */
+
+#include &quot;I2C1DevMgr.h&quot;                                  /* For I2C Evt types */
+#include &quot;LWIPMgr.h&quot;                           /* For ethernet events and AOs */
+#include &quot;SerialMgr.h&quot;                           /* For serial events and AOs */
+#include &quot;SysMgr.h&quot;                 /* For Database and SysMgr events and AOs */
 
 /* Compile-time called macros ------------------------------------------------*/
 Q_DEFINE_THIS_FILE;                 /* For QSPY to know the name of this file */

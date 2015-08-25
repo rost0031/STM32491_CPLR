@@ -37,10 +37,10 @@ DBG_DEFINE_THIS_MODULE( DC3_DBG_MODL_I2C_DEV ); /* For debug system to ID this m
 const DC3Error_t I2C_readDevMemFRT(
       const DC3I2CDevice_t iDev,
       const uint16_t offset,
-      uint8_t* const pBuffer,
+      const uint16_t nBytesToRead,
       const uint16_t nBufferSize,
-      uint16_t* pBytesRead,
-      const uint16_t nBytesToRead
+      uint8_t* const pBuffer,
+      uint16_t* pBytesRead
 )
 {
    DC3Error_t status = ERR_NONE; /* Keep track of the errors that may occur.
@@ -58,12 +58,14 @@ const DC3Error_t I2C_readDevMemFRT(
    }
 
    /* Issue a non-blocking call to read I2C */
-   status = I2C_readDevMemEVT(
-         iDev,                                        // DC3I2CDevice_t iDev,
-         offset,                                      // uint16_t offset,
-         nBytesToRead,                                // uint16_t bytesToRead,
-         _DC3_ACCESS_FRT,                             // AccessType_t accType,
-         (QActive *)NULL                              // QActive* callingAO
+   status = I2C_readDevMem(
+         _DC3_ACCESS_FRT,                             // const AccessType_t accType,
+         iDev,                                        // const DC3I2CDevice_t iDev,
+         offset,                                      // const uint16_t offset,
+         nBytesToRead,                                // const uint16_t bytesToRead,
+         nBufferSize,                                 // const uint16_t bufferSize,
+         pBuffer,                                     // uint8_t* const pBuffer,
+         pBytesRead                                   // uint16_t* pBytesRead
    );
 
    if( ERR_NONE != status ) {
@@ -118,10 +120,10 @@ I2C_readDevMemFRT_ERR_HANDLER:    /* Handle any error that may have occurred. */
 const DC3Error_t I2C_writeDevMemFRT(
       const DC3I2CDevice_t iDev,
       const uint16_t offset,
-      const uint8_t* const pBuffer,
+      const uint16_t nBytesToWrite,
       const uint16_t nBufferSize,
-      uint16_t *pBytesWritten,
-      const uint16_t nBytesToWrite
+      const uint8_t* const pBuffer,
+      uint16_t* pBytesWritten
 )
 {
    DC3Error_t status = ERR_NONE; /* Keep track of the errors that may occur.
@@ -139,13 +141,14 @@ const DC3Error_t I2C_writeDevMemFRT(
    }
 
    /* Issue a non-blocking call to read I2C */
-   status = I2C_writeDevMemEVT(
-         iDev,                                        // DC3I2CDevice_t iDev,
-         offset,                                      // uint16_t offset,
-         nBytesToWrite,                               // uint16_t bytesToRead,
-         _DC3_ACCESS_FRT,                             // AccessType_t accType,
-         (QActive *)NULL,                             // QActive* callingAO
-         pBuffer                                      // uint8_t* pBuffer
+   status = I2C_writeDevMem(
+         _DC3_ACCESS_FRT,                             // const AccessType_t accType,
+         iDev,                                        // const DC3I2CDevice_t iDev,
+         offset,                                      // const uint16_t offset,
+         nBytesToWrite,                               // const uint16_t bytesToWrite,
+         nBufferSize,                                 // const uint16_t nBufferSize
+         pBuffer,                                     // const uint8_t* const pBuffer
+         pBytesWritten                                // uint16_t pBytesWritten
    );
 
    if( ERR_NONE != status ) {

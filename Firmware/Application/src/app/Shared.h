@@ -54,6 +54,8 @@ enum AO_Priorities {
 };
 
 /* Exported constants --------------------------------------------------------*/
+extern QMPool * const p_glbMemPool;         /**< Global pointer to memory pool */
+
 /* Exported functions --------------------------------------------------------*/
 #endif                                                           /* SHARED_H_ */
 /******** Copyright (C) 2014 Datacard. All rights reserved *****END OF FILE****/

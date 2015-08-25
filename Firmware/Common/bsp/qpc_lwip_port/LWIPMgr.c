@@ -136,7 +136,7 @@ typedef struct {
     QEQueue deferredEvtQueue;
 
     /**< Storage for deferred event queue. */
-    QTimeEvt const * deferredEvtQSto[100];
+    QEvt const * deferredEvtQSto[100];
 
     /**< Local timer for LWIP slow tick. */
     QTimeEvt te_LWIP_SLOW_TICK;

@@ -49,22 +49,22 @@ extern "C" {
  * @param [in] offset: uint8_t offset from beginning of the device where to read
  *             the data from.  Lower level functions will calculate the
  *             appropriate memory addresses.
- * @param [out] *pBuffer: uint8_t pointer to the buffer to store read data.
+ * @param [in] bytesToRead: uint8_t variable specifying how many bytes to read
  * @param [in] nBufferSize: size of storage pointed to by *pBuffer.  Used for
  *             error checking.
+ * @param [out] *pBuffer: uint8_t pointer to the buffer to store read data.
  * @param [out] *pBytesRead: number of bytes read as returned from the
  *             I2CxDevMgr AO that performs the actual read operation.
- * @param [in] bytesToRead: uint8_t variable specifying how many bytes to read
  * @return DC3Error_t: status of the read operation
  *    @arg ERR_NONE: if no errors occurred
  */
 const DC3Error_t I2C_readDevMemFRT(
       const DC3I2CDevice_t iDev,
       const uint16_t offset,
-      uint8_t* const pBuffer,
+      const uint16_t nBytesToRead,
       const uint16_t nBufferSize,
-      uint16_t* pBytesRead,
-      const uint16_t nBytesToRead
+      uint8_t* const pBuffer,
+      uint16_t* pBytesRead
 );
 
 /**
@@ -82,22 +82,22 @@ const DC3Error_t I2C_readDevMemFRT(
  * @param [in] offset: uint8_t offset from beginning of the device where to write
  *             the data to.  Lower level functions will calculate the
  *             appropriate memory addresses.
- * @param [in] *pBuffer: uint8_t pointer to the buffer containing data to write.
+ * @param [in] bytesToWrite: uint8_t variable specifying how many bytes to write
  * @param [in] nBufferSize: size of storage pointed to by *pBuffer.  Used for
  *             error checking.
- * @param [out] *pBytesWrite: number of bytes written as returned from the
+ * @param [in] *pBuffer: uint8_t pointer to the buffer containing data to write.
+ * @param [out] *pBytesWritten: number of bytes written as returned from the
  *             I2CxDevMgr AO that performs the actual write operation.
- * @param [in] bytesToWrite: uint8_t variable specifying how many bytes to write
  * @return DC3Error_t: status of the write operation
  *    @arg ERR_NONE: if no errors occurred
  */
 const DC3Error_t I2C_writeDevMemFRT(
       const DC3I2CDevice_t iDev,
       const uint16_t offset,
-      const uint8_t* const pBuffer,
+      const uint16_t nBytesToWrite,
       const uint16_t nBufferSize,
-      uint16_t* pBytesWritten,
-      const uint16_t nBytesToWrite
+      const uint8_t* const pBuffer,
+      uint16_t* pBytesWritten
 );
 
 /**

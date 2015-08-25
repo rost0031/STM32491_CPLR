@@ -70,7 +70,7 @@ typedef struct {
     QEQueue deferredEvtQueue;
 
     /**< Storage for deferred event queue. */
-    QTimeEvt const * deferredEvtQSto[20];
+    QEvt const * deferredEvtQSto[20];
 
     /**< QPC timer Used to timeout overall SysMgr interactions. */
     QTimeEvt sysTimerEvt;

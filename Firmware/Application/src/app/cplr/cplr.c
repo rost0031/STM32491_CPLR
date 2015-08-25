@@ -112,12 +112,12 @@ void CPLR_Task( void* pvParameters )
 
                DBG_printf("Issuing I2C_readDevMemFRT()\n");
                status = I2C_readDevMemFRT(
-                     _DC3_EEPROM,                     // DC3I2CDevice_t iDev,
-                     0x00,                            // uint16_t offset,
-                     buffer,                          // uint8_t *pBuffer,
-                     sizeof(buffer),                  // uint16_t nBufferSize,
-                     &bytesRead,                      // uint16_t *pBytesRead,
-                     17                               // uint16_t nBytesToRead
+                     _DC3_EEPROM,                     // const DC3I2CDevice_t iDev,
+                     0x00,                            // const uint16_t offset,
+                     17,                              // const uint16_t nBytesToRead
+                     sizeof(buffer),                  // const uint16_t nBufferSize,
+                     buffer,                          // uint8_t const *pBuffer,
+                     &bytesRead                       // uint16_t *pBytesRead,
                );
 
                char tmp[120];

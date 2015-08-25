@@ -177,6 +177,7 @@ typedef enum DBG_MODULES {
    DC3_DBG_MODL_DB       = 0x00000800, /**< Database module debugging. */
    DC3_DBG_MODL_FLASH    = 0x00001000, /**< Flash module debugging (only in bootloader) */
    DC3_DBG_MODL_SYS      = 0x00002000, /**< System module debugging */
+   DC3_DBG_MODL_SPI      = 0x00004000, /**< SPI module debugging */
 } DC3DbgModule_t;
 
 

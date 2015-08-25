@@ -408,14 +408,15 @@ ERR_COND_OUTPUT(
     me-&gt;errorCode
 );</exit>
       <tran trig="COMM_MGR_TIMEOUT" target="../../1">
-       <action>ERR_printf(&quot;COMM_MGR_TIMEOUT trying to process %d basic msg, error: 0x%08x\n&quot;,
-    me-&gt;basicMsg._msgName, me-&gt;errorCode);</action>
+       <action>ERR_printf( &quot;COMM_MGR_TIMEOUT running BasicMsg: %s (%d) with PayloadMsg %s (%d): Error: 0x%08x\n&quot;,
+    CON_msgNameToStr(me-&gt;basicMsg._msgName), me-&gt;basicMsg._msgName,
+    CON_msgNameToStr( me-&gt;msgPayloadName),  me-&gt;msgPayloadName, me-&gt;errorCode );</action>
        <tran_glyph conn="62,20,3,1,-29">
         <action box="-19,-2,19,2"/>
        </tran_glyph>
       </tran>
       <tran trig="COMM_OP_TIMEOUT" target="../../1">
-       <action>ERR_printf( &quot;COMM_OP_TIMEOUT running BasicMsg: %s (%d) with PayloadMsg: %s (%d), error: 0x%08x\n&quot;,
+       <action>ERR_printf( &quot;COMM_OP_TIMEOUT running BasicMsg: %s (%d) with PayloadMsg %s (%d): Error: 0x%08x\n&quot;,
     CON_msgNameToStr(me-&gt;basicMsg._msgName), me-&gt;basicMsg._msgName,
     CON_msgNameToStr( me-&gt;msgPayloadName),  me-&gt;msgPayloadName, me-&gt;errorCode );</action>
        <tran_glyph conn="62,23,3,1,-29">
@@ -775,7 +776,7 @@ ERR_printf(&quot;Unexpected payload %s (%d) msg for basic msg: %s (%d). Error: 0
 /* Has to be set after checking for a valid payload */
 me-&gt;msgPayloadName = _DC3StatusPayloadMsg;
 me-&gt;basicMsg._msgPayload = me-&gt;msgPayloadName;</action>
-          <choice_glyph conn="100,64,5,1,-65,0,-2">
+          <choice_glyph conn="100,64,5,1,-67">
            <action box="-6,0,6,2"/>
           </choice_glyph>
          </choice>
@@ -951,7 +952,7 @@ DBG_printf(&quot;Setting dbgPayload payload with dbgSettings: 0x%08x\n&quot;, me
          </choice_glyph>
         </choice>
         <choice target="../../../../1">
-         <guard brief="DC3DbgEnable?">_DC3DbgEnableMsg == me-&gt;basicMsg._msgName</guard>
+         <guard brief="DbgEnable?">_DC3DbgEnableMsg == me-&gt;basicMsg._msgName</guard>
          <action>me-&gt;errorCode = ERR_NONE;
 
 /* Compose Done response.  We can re-use the current structure and it will be used by
@@ -969,11 +970,11 @@ me-&gt;payloadMsgUnion.dbgPayload._errorCode = me-&gt;errorCode;
 me-&gt;payloadMsgUnion.dbgPayload._dbgSettings  = glbDbgModuleConfig;
 DBG_printf(&quot;Setting dbgPayload payload with dbgSettings: 0x%08x\n&quot;, me-&gt;payloadMsgUnion.dbgPayload._dbgSettings);</action>
          <choice_glyph conn="110,25,4,1,62,-77">
-          <action box="-12,60,11,2"/>
+          <action box="-9,60,11,2"/>
          </choice_glyph>
         </choice>
         <choice target="../../../../1">
-         <guard brief="DC3DbgDisable?">_DC3DbgDisableMsg == me-&gt;basicMsg._msgName</guard>
+         <guard brief="DbgDisable?">_DC3DbgDisableMsg == me-&gt;basicMsg._msgName</guard>
          <action>me-&gt;errorCode = ERR_NONE;
 
 /* Compose Done response.  We can re-use the current structure and it will be used by
@@ -991,7 +992,7 @@ me-&gt;payloadMsgUnion.dbgPayload._errorCode = me-&gt;errorCode;
 me-&gt;payloadMsgUnion.dbgPayload._dbgSettings  = glbDbgModuleConfig;
 DBG_printf(&quot;Setting dbgPayload payload with dbgSettings: 0x%08x\n&quot;, me-&gt;payloadMsgUnion.dbgPayload._dbgSettings);</action>
          <choice_glyph conn="110,25,4,1,65,-77">
-          <action box="-12,63,11,2"/>
+          <action box="-9,63,11,2"/>
          </choice_glyph>
         </choice>
         <choice target="../../../../1">
@@ -1127,7 +1128,7 @@ ERR_printf(&quot;Unexpected payload %s (%d) msg for basic msg: %s (%d). Error: 0
 /* Has to be set after checking for a valid payload */
 me-&gt;msgPayloadName = _DC3StatusPayloadMsg;
 me-&gt;basicMsg._msgPayload = me-&gt;msgPayloadName;</action>
-          <choice_glyph conn="96,115,5,1,-61,0,-2">
+          <choice_glyph conn="96,115,5,1,-63">
            <action box="-6,-2,6,2"/>
           </choice_glyph>
          </choice>
@@ -1396,19 +1397,18 @@ return status;</code>
 #include &quot;CommMgr.h&quot;
 #include &quot;project_includes.h&quot;           /* Includes common to entire project. */
 #include &quot;bsp_defs.h&quot;                         /* For time to ticks conversion */
+#include &quot;base64_wrapper.h&quot;                            /* For base64 encoding */
+#include &quot;crc32compat.h&quot;                             /* For CRC functionality */
+#include &quot;version.h&quot;                               /* For version information */
+#include &quot;i2c_dev.h&quot;                          /* For I2C device functionality */
 #include &quot;serial.h&quot;                               /* For serial functionality */
+#include &quot;flash.h&quot;                          /* For Flash device functionality */
 
 #include &quot;I2C1DevMgr.h&quot;                                  /* For I2C Evt types */
-#include &quot;LWIPMgr.h&quot;                        /* For UDP ethernet functionality */
-#include &quot;SerialMgr.h&quot;
-#include &quot;SysMgr.h&quot;
-#include &quot;FlashMgr.h&quot;
-
-#include &quot;base64_wrapper.h&quot;                            /* For base64 encoding */
-#include &quot;flash.h&quot;
-#include &quot;crc32compat.h&quot;
-#include &quot;version.h&quot;
-#include &quot;i2c_dev.h&quot;
+#include &quot;LWIPMgr.h&quot;                           /* For ethernet events and AOs */
+#include &quot;SerialMgr.h&quot;                           /* For serial events and AOs */
+#include &quot;SysMgr.h&quot;                 /* For Database and SysMgr events and AOs */
+#include &quot;FlashMgr.h&quot;                          /* For FlashMgr events and AOs */
 
 /* Compile-time called macros ------------------------------------------------*/
 Q_DEFINE_THIS_FILE;                 /* For QSPY to know the name of this file */

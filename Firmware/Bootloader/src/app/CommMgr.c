@@ -38,19 +38,18 @@
 #include "CommMgr.h"
 #include "project_includes.h"           /* Includes common to entire project. */
 #include "bsp_defs.h"                         /* For time to ticks conversion */
+#include "base64_wrapper.h"                            /* For base64 encoding */
+#include "crc32compat.h"                             /* For CRC functionality */
+#include "version.h"                               /* For version information */
+#include "i2c_dev.h"                          /* For I2C device functionality */
 #include "serial.h"                               /* For serial functionality */
+#include "flash.h"                          /* For Flash device functionality */
 
 #include "I2C1DevMgr.h"                                  /* For I2C Evt types */
-#include "LWIPMgr.h"                        /* For UDP ethernet functionality */
-#include "SerialMgr.h"
-#include "SysMgr.h"
-#include "FlashMgr.h"
-
-#include "base64_wrapper.h"                            /* For base64 encoding */
-#include "flash.h"
-#include "crc32compat.h"
-#include "version.h"
-#include "i2c_dev.h"
+#include "LWIPMgr.h"                           /* For ethernet events and AOs */
+#include "SerialMgr.h"                           /* For serial events and AOs */
+#include "SysMgr.h"                 /* For Database and SysMgr events and AOs */
+#include "FlashMgr.h"                          /* For FlashMgr events and AOs */
 
 /* Compile-time called macros ------------------------------------------------*/
 Q_DEFINE_THIS_FILE;                 /* For QSPY to know the name of this file */
@@ -679,14 +678,15 @@ static QState CommMgr_Busy(CommMgr * const me, QEvt const * const e) {
         }
         /* ${AOs::CommMgr::SM::Active::Busy::COMM_MGR_TIMEOUT} */
         case COMM_MGR_TIMEOUT_SIG: {
-            ERR_printf("COMM_MGR_TIMEOUT trying to process %d basic msg, error: 0x%08x\n",
-                me->basicMsg._msgName, me->errorCode);
+            ERR_printf( "COMM_MGR_TIMEOUT running BasicMsg: %s (%d) with PayloadMsg %s (%d): Error: 0x%08x\n",
+                CON_msgNameToStr(me->basicMsg._msgName), me->basicMsg._msgName,
+                CON_msgNameToStr( me->msgPayloadName),  me->msgPayloadName, me->errorCode );
             status_ = Q_TRAN(&CommMgr_Idle);
             break;
         }
         /* ${AOs::CommMgr::SM::Active::Busy::COMM_OP_TIMEOUT} */
         case COMM_OP_TIMEOUT_SIG: {
-            ERR_printf( "COMM_OP_TIMEOUT running BasicMsg: %s (%d) with PayloadMsg: %s (%d), error: 0x%08x\n",
+            ERR_printf( "COMM_OP_TIMEOUT running BasicMsg: %s (%d) with PayloadMsg %s (%d): Error: 0x%08x\n",
                 CON_msgNameToStr(me->basicMsg._msgName), me->basicMsg._msgName,
                 CON_msgNameToStr( me->msgPayloadName),  me->msgPayloadName, me->errorCode );
             status_ = Q_TRAN(&CommMgr_Idle);
@@ -1164,7 +1164,7 @@ static QState CommMgr_ValidateMsg(CommMgr * const me, QEvt const * const e) {
                 DBG_printf("Setting dbgPayload payload with dbgSettings: 0x%08x\n", me->payloadMsgUnion.dbgPayload._dbgSettings);
                 status_ = Q_TRAN(&CommMgr_Idle);
             }
-            /* ${AOs::CommMgr::SM::Active::Busy::ValidateMsg::MSG_PROCESS::[DC3DbgEnable?]} */
+            /* ${AOs::CommMgr::SM::Active::Busy::ValidateMsg::MSG_PROCESS::[DbgEnable?]} */
             else if (_DC3DbgEnableMsg == me->basicMsg._msgName) {
                 me->errorCode = ERR_NONE;
 
@@ -1184,7 +1184,7 @@ static QState CommMgr_ValidateMsg(CommMgr * const me, QEvt const * const e) {
                 DBG_printf("Setting dbgPayload payload with dbgSettings: 0x%08x\n", me->payloadMsgUnion.dbgPayload._dbgSettings);
                 status_ = Q_TRAN(&CommMgr_Idle);
             }
-            /* ${AOs::CommMgr::SM::Active::Busy::ValidateMsg::MSG_PROCESS::[DC3DbgDisable?]} */
+            /* ${AOs::CommMgr::SM::Active::Busy::ValidateMsg::MSG_PROCESS::[DbgDisable?]} */
             else if (_DC3DbgDisableMsg == me->basicMsg._msgName) {
                 me->errorCode = ERR_NONE;
 
