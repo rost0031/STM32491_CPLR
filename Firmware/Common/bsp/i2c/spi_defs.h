@@ -35,25 +35,81 @@ extern "C" {
 /* Exported types ------------------------------------------------------------*/
 
 /**
- * \enum I2C_Bus_t
- * I2C Busses available on the system.
+ * \enum SPI_Bus_t
+ * SPI Busses available on the system.
  */
 typedef enum SPI_Busses {
-   SPIBus3  = 0,                                        /**< SPI Bus 3 (SPI3) */
-// SPIBus5  = 1,                                        /**< SPI Bus 5 (SPI5) */
+   SPIBus5  = 0,                                        /**< SPI Bus 5 (SPI5) */
    MAX_SPI_BUS      /**< Maximum number of available SPI Busses on the system */
 } SPI_Bus_t;
 
 /**
- * \struct I2C_BusSettings_t
+ * \struct SPI_BusSettings_t
  * Most of the settings that are needed to set up all the hardware for each
- * I2C Bus.
+ * SPI Bus.
  */
 typedef struct SPI_BusSettings
 {
+
    SPI_Bus_t               spi_sys_bus;     /**< System specifier for I2C Bus */
 
+   /* SPI bus settings */
+   SPI_TypeDef*      spi_bus;                           /**< STM32 SPI bus id */
+   const uint32_t    spi_clk;                            /**< STM32 SPI clock */
 
+   /* SPI interrupt settings */
+
+   /* SPI GPIO settings for MISO */
+   GPIO_TypeDef*       miso_port;                      /**< SPI MISO pin port */
+   const uint16_t      miso_pin;                            /**< SPI MISO pin */
+   const uint16_t      miso_af_pin_source;  /**< SPI MISO alt function source */
+   const uint16_t      miso_af;                    /**< SPI MISO alt function */
+   const uint32_t      miso_clk;                     /**< SPI MISO GPIO clock */
+
+   /* SPI GPIO settings for MOSI */
+   GPIO_TypeDef*       mosi_port;                      /**< SPI MOSI pin port */
+   const uint16_t      mosi_pin;                            /**< SPI MOSI pin */
+   const uint16_t      mosi_af_pin_source;  /**< SPI MOSI alt function source */
+   const uint16_t      mosi_af;                    /**< SPI MOSI alt function */
+   const uint32_t      mosi_clk;                     /**< SPI MOSI GPIO clock */
+
+   /* SPI GPIO settings for SCK */
+   GPIO_TypeDef*       sck_port;                        /**< SPI SCK pin port */
+   const uint16_t      sck_pin;                              /**< SPI SCK pin */
+   const uint16_t      sck_af_pin_source;    /**< SPI SCK alt function source */
+   const uint16_t      sck_af;                      /**< SPI SCK alt function */
+   const uint32_t      sck_clk;                       /**< SPI SCK GPIO clock */
+
+   /* SPI GPIO settings for NSS */
+   GPIO_TypeDef*       nss_port;                        /**< SPI NSS pin port */
+   const uint16_t      nss_pin;                              /**< SPI NSS pin */
+   const uint16_t      nss_af_pin_source;    /**< SPI NSS alt function source */
+   const uint16_t      nss_af;                      /**< SPI NSS alt function */
+   const uint32_t      nss_clk;                       /**< SPI NSS GPIO clock */
+
+   /* Common SPI DMA settings */
+   DMA_TypeDef*        spi_dma;                           /**< SPI DMA device */
+   const uint32_t      spi_dma_channel;                  /**< SPI DMA channel */
+   const uint32_t      spi_dma_dr_addr;               /**< SPI DMA DR address */
+   const uint32_t      spi_dma_clk;                   /**< SPI DMA Clk source */
+
+   /* TX SPI DMA settings */
+   DMA_Stream_TypeDef* spi_dma_tx_stream;          /**< SPI DMA stream for TX */
+   const IRQn_Type     spi_dma_tx_irq_num;         /**< SPI DMA TX IRQ number */
+   const ISR_Priority  spi_dma_tx_irq_prio;      /**< SPI DMA TX IRQ priority */
+   const uint32_t      spi_dma_tx_flags;                /**< SPI DMA TX Flags */
+
+   /* RX SPI DMA settings */
+   DMA_Stream_TypeDef* spi_dma_rx_stream;          /**< SPI DMA stream for RX */
+   const IRQn_Type     spi_dma_rx_irq_num;         /**< SPI DMA RX IRQ number */
+   const ISR_Priority  spi_dma_rx_irq_prio;      /**< SPI DMA RX IRQ priority */
+   const uint32_t      spi_dma_rx_flags;                /**< SPI DMA RX Flags */
+
+   /* Buffer management */
+   uint8_t*            pRxBuffer;                     /**< SPI RX data buffer.*/
+   uint16_t            nRxIndex;          /**< SPI data RX buffer used length.*/
+   uint8_t*            pTxBuffer;                     /**< SPI TX data buffer.*/
+   uint16_t            nTxIndex;          /**< SPI TX data buffer used length.*/
 
 } SPI_BusSettings_t;
 

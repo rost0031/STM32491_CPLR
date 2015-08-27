@@ -162,10 +162,10 @@ typedef enum DC3Errors
    ERR_DB_CHK_DBG_DEVICES_MISMATCH                             = 0x0008000D,
    ERR_DB_INVALID_OP_REQUESTED                                 = 0x0008000E,
 
-   /* I2C Device general error category          0x00090000 - 0x0009FFFF */
-   ERR_I2C_DEV_INVALID_DEVICE                                  = 0x00090000,
-   ERR_I2C_DEV_EEPROM_MEM_ADDR_BOUNDARY                        = 0x00090001,
-   ERR_I2C_DEV_IS_READ_ONLY                                    = 0x00090002,
+   /* SPI Bus error category                     0x00090000 - 0x0009FFFF */
+   ERR_SPI_TXE_FLAG_TIMEOUT                                    = 0x00090000,
+   ERR_SPI_RXE_FLAG_TIMEOUT                                    = 0x00090001,
+   ERR_SPI_RX_TX_LENGTH_MISMATCH                               = 0x00090002,
 
    /* Msg device error category                  0x000A0000 - 0x000AFFFF */
    ERR_MSG_ROUTE_INVALID                                       = 0x000A0000,

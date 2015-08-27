@@ -638,6 +638,16 @@ const char* const CON_dbOpToStr( const DB_Operation_t op )
    }
 }
 
+/******************************************************************************/
+const char* const CON_spiBusToStr( const SPI_Bus_t iBus )
+{
+   switch ( iBus ) {
+      case SPIBus5:  return("SPIBus5");   break;
+      default:       return(invalidStr);  break;
+   }
+}
+
+
 /**
  * @} end group groupConOut
  */

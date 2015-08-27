@@ -308,6 +308,7 @@ C_SRCS                  = \
                           time.c \
                           i2c.c \
                           i2c_dev.c \
+                          spi.c \
                           sdram.c \
                           dbg_cntrl.c \
                           db.c \
@@ -335,6 +336,7 @@ C_SRCS                  = \
                           stm32f4xx_pwr.c \
                           stm32f4xx_rcc.c \
                           stm32f4xx_rtc.c \
+                          stm32f4xx_spi.c \
                           stm32f4xx_syscfg.c \
                           stm32f4xx_tim.c \
                           stm32f4xx_usart.c
@@ -358,7 +360,6 @@ C_SRCS                  = \
 #			      		stm32f4xx_rng.c \
 #			      		stm32f4xx_sai.c \
 #			      		stm32f4xx_sdio.c \
-#			      		stm32f4xx_spi.c \
 #			      		stm32f4xx_wwdg.c
 						
 # C++ source files

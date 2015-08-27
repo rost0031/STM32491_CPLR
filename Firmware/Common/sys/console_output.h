@@ -25,6 +25,7 @@
 #include "Shared.h"
 #include "dbg_cntrl.h"                                   /* For debug control */
 #include "i2c_defs.h"
+#include "spi_defs.h"
 #include "db.h"
 
 /* Exported defines ----------------------------------------------------------*/
@@ -431,6 +432,16 @@ const char* const CON_dbgLvlToStr( const DC3DbgLevel_t lvl );
  *             "Invalid" if not found.
  */
 const char* const CON_dbOpToStr( const DB_Operation_t op );
+
+/**
+ * @brief   Get a string representation of a DC3 SPI Bus
+ *
+ * @param  [in] msg: SPI_Bus_t that specifies what SPI Bus to convert
+ * to string.
+ * @return str: char* representation of SPI_Bus_t msg if found,
+ *             "Invalid" if not found.
+ */
+const char* const CON_spiBusToStr( const SPI_Bus_t iBus );
 
 /**
  * @} end group groupConOut

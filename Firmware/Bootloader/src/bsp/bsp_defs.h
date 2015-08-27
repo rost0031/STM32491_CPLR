@@ -98,6 +98,8 @@ Q_ASSERT_COMPILE(MAX_KERNEL_UNAWARE_CMSIS_PRI <= QF_AWARE_ISR_CMSIS_PRI);
 typedef enum KernelAwareISRs {   /* ISR priorities starting from the highest urgency */
 	SYSTICK_PRIO = QF_AWARE_ISR_CMSIS_PRI, /* see NOTE01 */
 	DMA2_Stream7_PRIO,
+	DMA2_Stream4_PRIO,
+	DMA2_Stream3_PRIO,
 	DMA1_Stream6_PRIO,
 	DMA1_Stream0_PRIO,
 	USART1_PRIO,

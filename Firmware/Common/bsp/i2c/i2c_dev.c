@@ -228,12 +228,12 @@ const DC3Error_t I2C_readDevMem(
           * on the same I2C bus) but have different bus addresses.  They can all
           * be handled by this case. */
          if ( offset + bytesToRead > I2C_getMaxMemAddr( iDev ) ) {
-            status = ERR_I2C_DEV_EEPROM_MEM_ADDR_BOUNDARY;
+            status = ERR_I2C1DEV_ACCESS_OVER_END_OF_DEVICE_MEM;
             goto I2C_readDevMem_ERR_HANDLER; /* Stop and jump to error handling */
          }
          break;
       default:
-         status = ERR_I2C_DEV_INVALID_DEVICE;
+         status = ERR_I2C1DEV_INVALID_DEVICE;
          goto I2C_readDevMem_ERR_HANDLER;    /* Stop and jump to error handling */
          break;
    }
@@ -306,7 +306,7 @@ const DC3Error_t I2C_writeDevMem(
    switch( iDev ) {
       case _DC3_EUIROM:                         /* Intentionally fall through */
       case _DC3_SNROM:
-         status = ERR_I2C_DEV_IS_READ_ONLY;
+         status = ERR_I2C1DEV_READ_ONLY_DEVICE;
          goto I2C_writeDevMem_ERR_HANDLER; /* Stop and jump to error handling */
          break;
       case _DC3_EEPROM:
@@ -314,12 +314,12 @@ const DC3Error_t I2C_writeDevMem(
           * on the same I2C bus) but have different bus addresses.  They can all
           * be handled by this case. */
          if ( offset + bytesToWrite > I2C_getMaxMemAddr( iDev ) ) {
-            status = ERR_I2C_DEV_EEPROM_MEM_ADDR_BOUNDARY;
+            status = ERR_I2C1DEV_ACCESS_OVER_END_OF_DEVICE_MEM;
             goto I2C_writeDevMem_ERR_HANDLER; /* Stop and jump to error handling */
          }
          break;
       default:
-         status = ERR_I2C_DEV_INVALID_DEVICE;
+         status = ERR_I2C1DEV_INVALID_DEVICE;
          goto I2C_writeDevMem_ERR_HANDLER;    /* Stop and jump to error handling */
          break;
    }
