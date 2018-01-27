@@ -8,8 +8,8 @@
  *
  * @date       03/19/2015
  * @author     Harry Rostovtsev
- * @email      harry_rostovtsev@datacard.com
- * Copyright (C) 2015 Datacard. All rights reserved.
+ * @email      rost0031@gmail.com
+ * Copyright (C) 2015 Harry Rostovtsev. All rights reserved.
  */
 
 /* Define to prevent recursive inclusion -------------------------------------*/
@@ -223,4 +223,4 @@ typedef union DC3PayloadMsgs {
 #endif
 
 #endif                                                       /* DC3COMMAPI_H_ */
-/******** Copyright (C) 2013 Datacard. All rights reserved *****END OF FILE****/
+/******** Copyright (C) 2013 Harry Rostovtsev. All rights reserved *****END OF FILE****/

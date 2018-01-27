@@ -4,8 +4,8 @@
  *
  * @date    08/23/2013
  * @author  Harry Rostovtsev
- * @email   harry_rostovtsev@datacard.com
- * Copyright (C) 2013 Datacard. All rights reserved.
+ * @email   rost0031@gmail.com
+ * Copyright (C) 2013 Harry Rostovtsev. All rights reserved.
  */
 
 /* Define to prevent recursive inclusion -------------------------------------*/
@@ -131,4 +131,4 @@ public:
 };
 
 #endif                                                               /* UDP_H */
-/******** Copyright (C) 2013 Datacard. All rights reserved *****END OF FILE****/
+/******** Copyright (C) 2013 Harry Rostovtsev. All rights reserved *****END OF FILE****/

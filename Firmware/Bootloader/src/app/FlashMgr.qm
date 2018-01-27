@@ -947,8 +947,8 @@ QTimeEvt_ctor(&amp;me-&gt;ramTimerEvt, RAM_TIMEOUT_SIG);</code>
  *
  * @date    04/29/2015
  * @author  Harry Rostovtsev
- * @email   harry_rostovtsev@datacard.com
- * Copyright (C) 2015 Datacard. All rights reserved.
+ * @email   rost0031@gmail.com
+ * Copyright (C) 2015 Harry Rostovtsev. All rights reserved.
  *
  * @addtogroup groupBsp
  * @{
@@ -989,7 +989,7 @@ $define(AOs::FlashMgr)
  * @} end addtogroup groupBsp
  */
 
-/******** Copyright (C) 2015 Datacard. All rights reserved *****END OF FILE****/</text>
+/******** Copyright (C) 2015 Harry Rostovtsev. All rights reserved *****END OF FILE****/</text>
   </file>
   <file name="FlashMgr_gen.h">
    <text>/**
@@ -1003,8 +1003,8 @@ $define(AOs::FlashMgr)
  *
  * @date    04/29/2015
  * @author  Harry Rostovtsev
- * @email   harry_rostovtsev@datacard.com
- * Copyright (C) 2015 Datacard. All rights reserved.
+ * @email   rost0031@gmail.com
+ * Copyright (C) 2015 Harry Rostovtsev. All rights reserved.
  *
  * @addtogroup groupBsp
  * @{
@@ -1033,7 +1033,7 @@ $declare(AOs::AO_FlashMgr)
  */
 
 #endif                                                         /* FLASHMGR_H_ */
-/******** Copyright (C) 2014 Datacard. All rights reserved *****END OF FILE****/</text>
+/******** Copyright (C) 2014 Harry Rostovtsev. All rights reserved *****END OF FILE****/</text>
   </file>
  </directory>
 </model>

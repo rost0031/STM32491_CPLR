@@ -753,8 +753,8 @@ QTimeEvt_ctor( &amp;me-&gt;dbTimerEvt, DB_ACCESS_TIMEOUT_SIG );</code>
  *
  * @date    05/13/2015
  * @author  Harry Rostovtsev
- * @email   harry_rostovtsev@datacard.com
- * Copyright (C) 2015 Datacard. All rights reserved.
+ * @email   rost0031@gmail.com
+ * Copyright (C) 2015 Harry Rostovtsev. All rights reserved.
  *
  * @addtogroup groupSys
  * @{
@@ -804,7 +804,7 @@ $define(AOs::SysMgr)
  * @} end addtogroup groupSys
  */
 
-/******** Copyright (C) 2015 Datacard. All rights reserved *****END OF FILE****/</text>
+/******** Copyright (C) 2015 Harry Rostovtsev. All rights reserved *****END OF FILE****/</text>
   </file>
   <file name="SysMgr_gen.h">
    <text>/**
@@ -818,8 +818,8 @@ $define(AOs::SysMgr)
  *
  * @date    05/13/2015
  * @author  Harry Rostovtsev
- * @email   harry_rostovtsev@datacard.com
- * Copyright (C) 2015 Datacard. All rights reserved.
+ * @email   rost0031@gmail.com
+ * Copyright (C) 2015 Harry Rostovtsev. All rights reserved.
  *
  * @addtogroup groupSys
  * @{
@@ -851,7 +851,7 @@ $declare(AOs::AO_SysMgr)
  */
 
 #endif                                                           /* SYSMGR_H_ */
-/******** Copyright (C) 2015 Datacard. All rights reserved *****END OF FILE****/</text>
+/******** Copyright (C) 2015 Harry Rostovtsev. All rights reserved *****END OF FILE****/</text>
   </file>
  </directory>
 </model>

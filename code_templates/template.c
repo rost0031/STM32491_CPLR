@@ -1,11 +1,11 @@
 /**
- * @file		template.c
+ * @file    template.c
  * @brief   <Write a brief description of what this file does here>
  *
  * @date 	Feb 13, 2015
  * @author	<Your Name>
- * @email   <your_email@datacard.com>
- * Copyright (C) <Year> Datacard.  All rights reserved.
+ * @email   <your_email@company.com>
+ * Copyright (C) <Year> Company.  All rights reserved.
  *
  * @addtogroup group<GroupNameForDoxygenDocumentation>
  * @{
@@ -37,4 +37,3 @@ void function( void* pvParameters )
  * end addtogroup group<GroupNameForDoxygenDocumentation>
  */
 
-/******** Copyright (C) <Year> Datacard. All rights reserved *****END OF FILE****/

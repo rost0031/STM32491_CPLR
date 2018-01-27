@@ -4,8 +4,8 @@
  *
  * @date   	08/24/2015
  * @author 	Harry Rostovtsev
- * @email  	harry_rostovtsev@datacard.com
- * Copyright (C) 2015 Datacard. All rights reserved.
+ * @email  	rost0031@gmail.com
+ * Copyright (C) 2015 Harry Rostovtsev. All rights reserved.
  *
  * @addtogroup groupSPI
  * @{
@@ -369,4 +369,4 @@ SPI_transceive_ERR_HANDLE:        /* Handle any error that may have occurred. */
  * end addtogroup groupI2C
  */
 
-/******** Copyright (C) 2014 Datacard. All rights reserved *****END OF FILE****/
+/******** Copyright (C) 2014 Harry Rostovtsev. All rights reserved *****END OF FILE****/

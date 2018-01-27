@@ -6,8 +6,8 @@
  *
  * @date   03/14/2013
  * @author Harry Rostovtsev
- * @email  harry_rostovtsev@datacard.com
- * Copyright (C) 2013 Datacard. All rights reserved.
+ * @email  rost0031@gmail.com
+ * Copyright (C) 2013 Harry Rostovtsev. All rights reserved.
  */
 // $Log$
 
@@ -353,19 +353,19 @@ uint8_t DFUSE_createCmd(
  * Response handler for the GET command.  Upon receiving the GET command, the
  * STM32 DFUSE interface sends the following:
  * Byte 1: ACK
- * Byte 2: N = 11 = the number of bytes to follow – 1 except current and ACKs.
+ * Byte 2: N = 11 = the number of bytes to follow ï¿½ 1 except current and ACKs.
  * Byte 3: Bootloader version (0 < Version < 255), example: 0x10 = Version 1.0
- * Byte 4: 0x00 – Get command
- * Byte 5: 0x01 – Get Version (and Read Protection Status)
- * Byte 6: 0x02 – Get ID
- * Byte 7: 0x11 – Read Memory command
- * Byte 8: 0x21 – Go command
- * Byte 9: 0x31 – Write Memory command
- * Byte 10: 0x43 or 0x44 – Erase command or Extended Erase command (mutually exclusive)
- * Byte 11: 0x63 – Write Protect command
- * Byte 12: 0x73 – Write Unprotect command
- * Byte 13: 0x82 – Readout Protect command
- * Byte 14: 0x92 – Readout Unprotect command
+ * Byte 4: 0x00 ï¿½ Get command
+ * Byte 5: 0x01 ï¿½ Get Version (and Read Protection Status)
+ * Byte 6: 0x02 ï¿½ Get ID
+ * Byte 7: 0x11 ï¿½ Read Memory command
+ * Byte 8: 0x21 ï¿½ Go command
+ * Byte 9: 0x31 ï¿½ Write Memory command
+ * Byte 10: 0x43 or 0x44 ï¿½ Erase command or Extended Erase command (mutually exclusive)
+ * Byte 11: 0x63 ï¿½ Write Protect command
+ * Byte 12: 0x73 ï¿½ Write Unprotect command
+ * Byte 13: 0x82 ï¿½ Readout Protect command
+ * Byte 14: 0x92 ï¿½ Readout Unprotect command
  * Byte 15: ACK
  *
  * The leading ACK can handled inside or outside of this handler function.
@@ -421,7 +421,7 @@ uint16_t DFUSE_handleResp_GetVer(
  * Response handler for the GET_ID. Upon receiving the GET_ID command, the STM32
  * DFUSE interface sends the following:
  * Byte 1: ACK
- * Byte 2: N = the number of bytes – 1 (N = 1 for STM32), except for current byte and ACKs.
+ * Byte 2: N = the number of bytes ï¿½ 1 (N = 1 for STM32), except for current byte and ACKs.
  * Byte 3: 0x04;   Most Sig Byte of Prod ID Code
  * Byte 4: 0x1X;   Least Sig Byte of Prod ID Code
  * Byte 5: ACK
@@ -513,4 +513,4 @@ uint8_t DFUSE_createRMDataToRead(
 );
 
 #endif                                                           /* _DFUSE_H_ */
-/******** Copyright (C) 2013 Datacard. All rights reserved *****END OF FILE****/
+/******** Copyright (C) 2013 Harry Rostovtsev. All rights reserved *****END OF FILE****/

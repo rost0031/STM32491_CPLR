@@ -5,8 +5,8 @@
  *
  * @date   08/04/2013
  * @author Harry Rostovtsev
- * @email  harry_rostovtsev@datacard.com
- * Copyright (C) 2013 Datacard. All rights reserved.
+ * @email  rost0031@gmail.com
+ * Copyright (C) 2013 Harry Rostovtsev. All rights reserved.
  */
 // $Log$
 
@@ -40,4 +40,4 @@ uint32_t UTIL_rev_uint32_bytes(uint32_t value);
 uint64_t UTIL_rev_uint64_bytes(uint64_t value);
 
 #endif                                                            /* _UTIL_H_ */
-/******** Copyright (C) 2013 Datacard. All rights reserved *****END OF FILE****/
+/******** Copyright (C) 2013 Harry Rostovtsev. All rights reserved *****END OF FILE****/

@@ -4,8 +4,8 @@
  *
  * @date    03/23/2015
  * @author  Harry Rostovtsev
- * @email   harry_rostovtsev@datacard.com
- * Copyright (C) 2015 Datacard. All rights reserved.
+ * @email   rost0031@gmail.com
+ * Copyright (C) 2015 Harry Rostovtsev. All rights reserved.
  */
 
 /* This is needed to make the windows version work. */
@@ -511,4 +511,4 @@ int main(int argc, char *argv[])
 }
 
 
-/******** Copyright (C) 2015 Datacard. All rights reserved *****END OF FILE****/
+/******** Copyright (C) 2015 Harry Rostovtsev. All rights reserved *****END OF FILE****/

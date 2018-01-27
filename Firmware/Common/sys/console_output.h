@@ -7,8 +7,8 @@
  *
  * @date   06/09/2014
  * @author Harry Rostovtsev
- * @email  harry_rostovtsev@datacard.com
- * Copyright (C) 2014 Datacard. All rights reserved.
+ * @email  rost0031@gmail.com
+ * Copyright (C) 2014 Harry Rostovtsev. All rights reserved.
  *
  * @addtogroup groupConOut
  * @{
@@ -448,4 +448,4 @@ const char* const CON_spiBusToStr( const SPI_Bus_t iBus );
  */
 
 #endif                                                   /* CONSOLE_OUTPUT_H_ */
-/******** Copyright (C) 2014 Datacard. All rights reserved *****END OF FILE****/
+/******** Copyright (C) 2014 Harry Rostovtsev. All rights reserved *****END OF FILE****/

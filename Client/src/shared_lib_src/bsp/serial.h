@@ -4,8 +4,8 @@
  *
  * @date    02/18/2013
  * @author  Harry Rostovtsev
- * @email   harry_rostovtsev@datacard.com
- * Copyright (C) 2013 Datacard. All rights reserved.
+ * @email   rost0031@gmail.com
+ * Copyright (C) 2013 Harry Rostovtsev. All rights reserved.
  */
 
 /* Define to prevent recursive inclusion -------------------------------------*/
@@ -238,4 +238,4 @@ template <> struct is_match_condition< DFUSE_delim >
 }
 
 #endif                                                            /* SERIAL_H */
-/******** Copyright (C) 2013 Datacard. All rights reserved *****END OF FILE****/
+/******** Copyright (C) 2013 Harry Rostovtsev. All rights reserved *****END OF FILE****/

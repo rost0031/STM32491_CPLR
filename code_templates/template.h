@@ -4,8 +4,8 @@
  *
  * @date    Feb 13, 2015
  * @author  <Your Name>
- * @email   <your_email@datacard.com>
- * Copyright (C) <Year> Datacard.  All rights reserved.
+ * @email   <your_email@company.com>
+ * Copyright (C) <Year> company.  All rights reserved.
  *
  * @addtogroup group<GroupNameForDoxygenDocumentation>
  * @{
@@ -46,4 +46,3 @@ void function( void* pvParameters );
  * end addtogroup group<GroupNameForDoxygenDocumentation>
  */
 #endif                                                       /* <TEMPLATE_H_> */
-/******** Copyright (C) <Year> Datacard. All rights reserved *****END OF FILE****/

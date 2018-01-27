@@ -8,8 +8,8 @@
  *
  * @date    03/31/2015
  * @author  Harry Rostovtsev
- * @email   harry_rostovtsev@datacard.com
- * Copyright (C) 2015 Datacard. All rights reserved.
+ * @email   rost0031@gmail.com
+ * Copyright (C) 2015 Harry Rostovtsev. All rights reserved.
  */
 
 /* Includes ------------------------------------------------------------------*/
@@ -216,4 +216,4 @@ BOOST_LOG_GLOBAL_LOGGER_INIT(my_menu, logger_t)
 }
 
 
-/******** Copyright (C) 2015 Datacard. All rights reserved *****END OF FILE****/
+/******** Copyright (C) 2015 Harry Rostovtsev. All rights reserved *****END OF FILE****/

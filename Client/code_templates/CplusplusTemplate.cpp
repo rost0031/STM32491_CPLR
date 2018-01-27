@@ -6,8 +6,8 @@
  *
  * @date    <mm>/<dd>/<year>
  * @author  Harry Rostovtsev
- * @email   harry_rostovtsev@datacard.com
- * Copyright (C) <YEAR> Datacard. All rights reserved.
+ * @email   rost0031@gmail.com
+ * Copyright (C) <YEAR> Harry Rostovtsev. All rights reserved.
  */
 
 /* Includes ------------------------------------------------------------------*/
@@ -25,4 +25,4 @@
 /* Private class prototypes --------------------------------------------------*/
 /* Private classes -----------------------------------------------------------*/
 
-/******** Copyright (C) <YEAR> Datacard. All rights reserved *****END OF FILE****/
+/******** Copyright (C) <YEAR> Harry Rostovtsev. All rights reserved *****END OF FILE****/

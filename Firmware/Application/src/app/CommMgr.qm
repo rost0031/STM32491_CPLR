@@ -1087,8 +1087,8 @@ return status;</code>
  *
  * @date    05/27/2014
  * @author  Harry Rostovtsev
- * @email   harry_rostovtsev@datacard.com
- * Copyright (C) 2014 Datacard. All rights reserved.
+ * @email   rost0031@gmail.com
+ * Copyright (C) 2014 Harry Rostovtsev. All rights reserved.
  *
  * @addtogroup groupComm
  * @{
@@ -1136,7 +1136,7 @@ $define(AOs::CommMgr)
  * @} end addtogroup groupComm
  */
 
-/******** Copyright (C) 2014 Datacard. All rights reserved *****END OF FILE****/</text>
+/******** Copyright (C) 2014 Harry Rostovtsev. All rights reserved *****END OF FILE****/</text>
   </file>
   <file name="CommMgr_gen.h">
    <text>/**
@@ -1151,8 +1151,8 @@ $define(AOs::CommMgr)
  *
  * @date    05/27/2014
  * @author  Harry Rostovtsev
- * @email   harry_rostovtsev@datacard.com
- * Copyright (C) 2014 Datacard. All rights reserved.
+ * @email   rost0031@gmail.com
+ * Copyright (C) 2014 Harry Rostovtsev. All rights reserved.
  *
  * @addtogroup groupComm
  * @{
@@ -1186,7 +1186,7 @@ $declare(AOs::AO_CommMgr)
  */
 
 #endif                                                          /* COMMMGR_H_ */
-/******** Copyright (C) 2014 Datacard. All rights reserved *****END OF FILE****/</text>
+/******** Copyright (C) 2014 Harry Rostovtsev. All rights reserved *****END OF FILE****/</text>
   </file>
  </directory>
 </model>

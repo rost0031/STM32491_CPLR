@@ -8,8 +8,8 @@
  *
  * @date    03/31/2015
  * @author  Harry Rostovtsev
- * @email   harry_rostovtsev@datacard.com
- * Copyright (C) 2015 Datacard. All rights reserved.
+ * @email   rost0031@gmail.com
+ * Copyright (C) 2015 Harry Rostovtsev. All rights reserved.
  */
 
 /* Includes ------------------------------------------------------------------*/
@@ -191,4 +191,4 @@ void LogStub::printDC3LogMsg(
       this->m_pDC3LogHandlerDC3Function( msg );
    }
 }
-/******** Copyright (C) 2015 Datacard. All rights reserved *****END OF FILE****/
+/******** Copyright (C) 2015 Harry Rostovtsev. All rights reserved *****END OF FILE****/

@@ -8,7 +8,7 @@
  * Technische Universitaet Muenchen
  * http://www4.in.tum.de/
  * Copyright (c) 2013
- * Datacard Group
+ * Harry Rostovtsev Group
  *                                                                                                                                  
  * Do not edit.                                                                
  ******************************************************************************/
